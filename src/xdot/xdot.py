@@ -1463,7 +1463,7 @@ class DotWidget(gtk.DrawingArea):
         #print xdotcode
         parser = XDotParser(xdotcode)
         self.graph = parser.parse()
-        self.zoom_image(self.zoom_ratio, center=True)
+        self.zoom_image(self.zoom_ratio, center=False)
 
     def reload(self):
         if self.openfilename is not None:
@@ -1777,27 +1777,28 @@ class DotWindow(gtk.Window):
         current_mtime = os.stat(filename).st_mtime
         if current_mtime != self.last_mtime:
             self.last_mtime = current_mtime
-            self.open_file(filename)
+            self.open_file(filename,True)
 
         return True
 
     def set_filter(self, filter):
         self.widget.set_filter(filter)
 
-    def set_dotcode(self, dotcode, filename='<stdin>'):
+    def set_dotcode(self, dotcode, filename='<stdin>',refresh=False):
         if self.widget.set_dotcode(dotcode, filename):
             self.set_title(os.path.basename(filename) + ' - Dot Viewer')
-            self.widget.zoom_to_fit()
+            if not refresh:
+                self.widget.zoom_to_fit()
 
     def set_xdotcode(self, xdotcode, filename='<stdin>'):
         if self.widget.set_xdotcode(xdotcode):
             self.set_title(os.path.basename(filename) + ' - Dot Viewer')
             self.widget.zoom_to_fit()
 
-    def open_file(self, filename):
+    def open_file(self, filename, refresh=False):
         try:
             fp = file(filename, 'rt')
-            self.set_dotcode(fp.read(), filename)
+            self.set_dotcode(fp.read(), filename ,refresh)
             fp.close()
         except IOError, ex:
             dlg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
