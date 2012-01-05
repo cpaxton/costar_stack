@@ -29,8 +29,6 @@
 #
 # Author: Jonathan Bohren 
 
-import roslib; roslib.load_manifest('xdot')
-
 import sys
 import xdot
 import wx
