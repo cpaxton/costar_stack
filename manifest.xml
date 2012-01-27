@@ -1,4 +1,5 @@
 <package>
+  <catkin/>
   <description brief="xdot">
     <a href="http://code.google.com/p/jrfonseca/wiki/XDot">XDot, by Jose Fonseca</a>, 
     is an interactive viewer for graphs written in Graphviz's dot
