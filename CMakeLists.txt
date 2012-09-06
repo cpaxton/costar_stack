@@ -4,4 +4,4 @@ find_package(catkin REQUIRED)
 catkin_project(xdot)
 
 install(FILES scripts/dot_viewer.py
-  DESTINATION ${PROJECT_LIBEXEC_DESTINATION})
+  DESTINATION ${CATKIN_PROJECT_BIN_DESTINATION})
