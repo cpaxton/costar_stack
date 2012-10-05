@@ -1,0 +1,23 @@
+<package>
+  <name>xdot</name>
+  <version>1.9.3</version>
+  <description>
+    <a href="http://code.google.com/p/jrfonseca/wiki/XDot">XDot, by Jose Fonseca</a>, is an interactive viewer for graphs written in Graphviz's dot language.
+
+    This package adds front-end capabilities to XDot including WX Widget support and a mechanism for receiving callbacks when nodes are clicked.
+    This extension is provided as BSD.
+  </description>
+  <maintainer email="dthomas@willowgarage.com">Dirk Thomas</maintainer>
+  <license>LGPL</license>
+  <license>BSD</license>  
+
+  <url type="website">http://www.ros.org/wiki/xdot</url>
+  <url type="repository">https://code.ros.org/svn/ros/stacks/rx</url>
+  <url type="bugtracker">https://code.ros.org/trac/ros/query?status=assigned&amp;status=new&amp;status=reopened&amp;component=rx&amp;order=priority</url>
+  <author>Jose Fonseca, ROS package and WX frontend by Jonathan Bohren</author>
+
+  <build_depend>catkin</build_depend>
+
+  <run_depend>graphviz</run_depend>
+  <run_depend>wxpython</run_depend>
+</package>
