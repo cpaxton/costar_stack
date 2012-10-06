@@ -1,6 +1,6 @@
 <package>
   <name>xdot</name>
-  <version>1.9.4</version>
+  <version>1.9.5</version>
   <description>
     <a href="http://code.google.com/p/jrfonseca/wiki/XDot">XDot, by Jose Fonseca</a>, is an interactive viewer for graphs written in Graphviz's dot language.
 
