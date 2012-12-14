@@ -16,7 +16,7 @@
   <url type="bugtracker">https://code.ros.org/trac/ros/query?status=assigned&amp;status=new&amp;status=reopened&amp;component=rx&amp;order=priority</url>
   <author>Jose Fonseca, ROS package and WX frontend by Jonathan Bohren</author>
 
-  <build_depend>catkin</build_depend>
+  <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>graphviz</run_depend>
   <run_depend>wxpython</run_depend>
