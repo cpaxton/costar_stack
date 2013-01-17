@@ -8,7 +8,7 @@
     support and a mechanism for receiving callbacks when nodes are clicked. This extension is provided as BSD.
 
   </description>
-  <author>Jose Fonseca, ROS package and WX frontend by Jonathan Bohren</author>
+  <author>Jose Fonseca, ROS package and WX frontend by Jonathan Bohren, QT version of XDot by Alex Bravo</author>
   <license>LGPL/BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://code.google.com/p/jrfonseca/wiki/XDot</url>
