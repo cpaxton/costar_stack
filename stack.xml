@@ -1,0 +1,11 @@
+<stack>
+  <description brief="The XDot cairo graphviz renderer and GUI toolkit wrappers">
+    
+  </description>
+  <author>Jose Fonseca, ROS package and GUI frontends by Jonathan Bohren</author>
+  <license>LGPL/BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://pr.willowgarage.com/wiki/xdot</url>
+  <depend stack="ros"/>
+</stack>
+
