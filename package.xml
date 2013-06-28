@@ -1,6 +1,6 @@
 <package>
   <name>xdot</name>
-  <version>0.1.0</version>
+  <version>1.10.0</version>
   <description>
     XDot.py, by Jose Fonseca, is an interactive viewer for graphs written in
     Graphviz's dot language.
