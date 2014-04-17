@@ -26,6 +26,4 @@
   <run_depend>graphviz</run_depend>
 
   <buildtool_depend>catkin</buildtool_depend>
-
->>>>>>> fuerte-devel
 </package>
