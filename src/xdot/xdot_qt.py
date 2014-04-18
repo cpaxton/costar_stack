@@ -95,15 +95,26 @@ class TextShape(Shape):
         self.pen = pen.copy()
         self.x = x
         self.y = y
-        self.j = j  #AB allignment?
+        self.j = j  #AB allignment? JRB: height.
         self.w = w
         self.t = t
 
     def draw(self, painter, highlight=False):
         pen = self.select_pen(highlight)
         painter.setPen(QColor.fromRgbF(*pen.color))
-        painter.setFont(QFont(self.pen.fontname))#, self.pen.fontsize)) #AB simply setting font size doesn't work
-        painter.drawText(self.x - self.w / 2,  self.y, self.t)
+        font = QFont(self.pen.fontname)
+
+        fontMetrics = QFontMetrics(QFont(self.pen.fontname))
+        scale = float(fontMetrics.width(self.t)) / float(self.w)
+
+        if scale < 1.0 or scale > 1.0:
+            font.setPointSizeF(font.pointSizeF()/scale);
+
+        painter.setFont(font)#, self.pen.fontsize)) #AB simply setting font size doesn't work
+        painter.drawText(
+                self.x - self.w / 2.0,
+                self.y,
+                self.t)
 #
 #        try:
 #            layout = self.layout
@@ -1207,7 +1218,7 @@ class XDotParser(DotParser):
                 x, y = fields
             except ValueError:
                 # TODO: handle start/end points
- #AB Handle data like like e,40,50 here          
+                #AB Handle data like like e,40,50 here          
                 continue
             else:
                 points.append(self.transform(float(x), float(y)))
