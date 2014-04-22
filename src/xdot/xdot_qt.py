@@ -37,6 +37,13 @@ from PyQt4 import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+#from python_qt_binding import  *
+#from python_qt_binding.QtCore import  *
+#from python_qt_binding.QtGui import  *
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-- Drawing Classes --#
+
 class Pen:
     """Store pen attributes."""
 
@@ -62,7 +69,6 @@ class Pen:
         pen.fillcolor = (1, .8, .8, 1)
         return pen
 
-
 class Shape:
     """Abstract base class for all the drawing shapes."""
 
@@ -81,9 +87,8 @@ class Shape:
         else:
             return self.pen
 
-
 class TextShape(Shape):
-
+    """Used to draw a text shape with a QPainter"""
     #fontmap = pangocairo.CairoFontMap()
     #fontmap.set_resolution(72)
     #context = fontmap.create_context()
@@ -198,9 +203,8 @@ class TextShape(Shape):
 #            cr.stroke()
         pass
 
-
 class EllipseShape(Shape):
-
+    """Used to draw an ellipse shape with a QPainter"""
     def __init__(self, pen, x0, y0, w, h, filled=False):
         Shape.__init__(self)
         self.pen = pen.copy()
@@ -211,31 +215,19 @@ class EllipseShape(Shape):
         self.filled = filled
 
     def draw(self, painter, highlight=False):
-#        cr.save()
         painter.save()
-#        cr.translate(self.x0, self.y0)
-
-#        cr.scale(self.w, self.h)
-#        cr.move_to(1.0, 0.0)
-#        cr.arc(0.0, 0.0, 1.0, 0, 2.0*math.pi)
-#        cr.restore()
         pen = self.select_pen(highlight)
         if self.filled:
-#            cr.set_source_rgba(*pen.fillcolor)
-#            cr.fill()
             painter.setPen(QColor.fromRgbF(*pen.fillcolor))
             painter.setBrush(QColor.fromRgbF(*pen.fillcolor))
         else:
-#            cr.set_dash(pen.dash)
-#            cr.set_line_width(pen.linewidth)
-#            cr.set_source_rgba(*pen.color)
-#            cr.stroke()
             painter.setPen(QPen(QBrush(QColor.fromRgbF(*pen.color)), pen.linewidth, pen.dash))
             painter.setBrush(Qt.NoBrush)
         painter.drawEllipse(self.x0 - self.w, self.y0 - self.h,  self.w * 2,  self.h * 2)
         painter.restore()
 
 class PolygonShape(Shape):
+    """Used to draw a polygon with QPainter."""
 
     def __init__(self, pen, points, filled=False):
         Shape.__init__(self)
@@ -274,8 +266,8 @@ class PolygonShape(Shape):
         painter.drawPolygon(polygon_points)
         painter.restore()
 
-
 class LineShape(Shape):
+    """Used to draw a line with QPainter."""
 
     def __init__(self, pen, points):
         Shape.__init__(self)
@@ -284,22 +276,17 @@ class LineShape(Shape):
 
     def draw(self, painter, highlight=False):
         pen = self.select_pen(highlight)
-#        cr.set_dash(pen.dash)
-#        cr.set_line_width(pen.linewidth)
-#        cr.set_source_rgba(*pen.color)
-#        cr.stroke()
         painter.setPen(QPen(QBrush(QColor.fromRgbF(*pen.color)), pen.linewidth, 
                                             pen.dash, Qt.SquareCap, Qt.MiterJoin))
 
         x0, y0 = self.points[0]
-#        cr.move_to(x0, y0)
         for x1, y1 in self.points[1:]:
-#            cr.line_to(x1, y1)
             painter.drawLine(QPointF(x0, y0),  QPointF(x1, y1))
             x0 = x1
             y0 = y1
 
 class BezierShape(Shape):
+    """Used to draw a bezier curve with QPainter."""
 
     def __init__(self, pen, points, filled=False):
         Shape.__init__(self)
@@ -309,37 +296,24 @@ class BezierShape(Shape):
 
     def draw(self, painter, highlight=False):
         painter_path = QPainterPath()
-#        x0, y0 = self.points[0]
-#        cr.move_to(x0, y0)
         painter_path.moveTo(QPointF(*self.points[0]))
         for i in xrange(1, len(self.points), 3):
-#            x1, y1 = self.points[i]
-#            x2, y2 = self.points[i + 1]
-#            x3, y3 = self.points[i + 2]
-#            cr.curve_to(x1, y1, x2, y2, x3, y3)
             painter_path.cubicTo(QPointF(*self.points[i]),  QPointF(*self.points[i + 1]),  QPointF(*self.points[i + 2]))
         pen = self.select_pen(highlight)
         qpen = QPen()
         if self.filled:
-#            cr.set_source_rgba(*pen.fillcolor)
-#            cr.fill_preserve()
-#            cr.fill()
             qpen.setColor(QColor.fromRgbF(*pen.fillcolor))
             qpen.setBrush(QColor.fromRgbF(*pen.fillcolor))
         else:
-#            cr.set_dash(pen.dash)
             qpen.setStyle(pen.dash)
-#            cr.set_line_width(pen.linewidth)
             qpen.setWidth(pen.linewidth)
-#            cr.set_source_rgba(*pen.color)
             qpen.setColor(QColor.fromRgbF(*pen.color))
-#            cr.stroke()
 
         painter.setPen(qpen)
         painter.drawPath(painter_path)
 
-
 class CompoundShape(Shape):
+    """Used to draw a set of shapes with QPainter."""
 
     def __init__(self, shapes):
         Shape.__init__(self)
@@ -349,8 +323,11 @@ class CompoundShape(Shape):
         for shape in self.shapes:
             shape.draw(cr, highlight=highlight)
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-- Metadata Classes --#
 
 class Url(object):
+    """Represents a graphviz URL."""
 
     def __init__(self, item, url, highlight=None):
         self.item = item
@@ -359,8 +336,8 @@ class Url(object):
             highlight = set([item])
         self.highlight = highlight
 
-
 class Jump(object):
+    """Represents a jump to another node's position on the canvas."""
 
     def __init__(self, item, x, y, highlight=None, url=None):
         self.item = item
@@ -371,8 +348,9 @@ class Jump(object):
         self.highlight = highlight
         self.url = url
 
-
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-- Graph Representation Classes --#
+
 class Element(CompoundShape):
     """Base class for graph nodes and edges."""
 
@@ -387,6 +365,7 @@ class Element(CompoundShape):
 
 
 class Node(Element):
+    """An abstract node in the graph, it's spatial location, and it's visual representation."""
 
     def __init__(self, x, y, w, h, shapes, url):
         Element.__init__(self, shapes)
@@ -402,12 +381,16 @@ class Node(Element):
         self.url = url
 
     def is_inside(self, x, y):
+        """Used to check for 2D-picking via the mouse.
+        param x: The x position on the canvas
+        param y: The y position on the canvas
+        """
         return self.x1 <= x and x <= self.x2 and self.y1 <= y and y <= self.y2
 
     def get_url(self, x, y):
+        """Get the elemnt's metadata."""
         if self.url is None:
             return None
-#        print (x, y), (self.x1, self.y1), "-", (self.x2, self.y2)
         if self.is_inside(x, y):
             return Url(self, self.url)
         return None
@@ -1241,7 +1224,6 @@ class Animation(object):
         self.timeout_id = None
 
     def start(self):
-#        self.timeout_id = gobject.timeout_add(int(self.step * 1000), self.tick)
         self.timeout_id = QTimer();
         self.dot_widget.connect(self.timeout_id, SIGNAL('timeout()'), self.tick)
         self.timeout_id.start(int(self.step * 1000))
@@ -1249,8 +1231,6 @@ class Animation(object):
     def stop(self):
         self.dot_widget.animation = NoAnimation(self.dot_widget)
         if self.timeout_id is not None:
-#            gobject.source_remove(self.timeout_id)
-#            self.dot_widget.disconnect(self.timeout_id, SIGNAL('timeout()'), self.tick)
             self.timeout_id.stop()
             self.timeout_id = None
 
@@ -1300,7 +1280,6 @@ class MoveToAnimation(LinearAnimation):
         tx, ty = self.target_x, self.target_y
         self.dot_widget.x = tx * t + sx * (1-t)
         self.dot_widget.y = ty * t + sy * (1-t)
-#        self.dot_widget.queue_draw()
         self.dot_widget.update()
 
 class ZoomToAnimation(MoveToAnimation):
@@ -1343,10 +1322,6 @@ class DragAction(object):
         self.start()
 
     def on_motion_notify(self, event):
-#        if event.is_hint:
-#            x, y, state = event.window.get_pointer()
-#        else:
-#            x, y, state = event.x, event.y, event.state
         deltax = self.prevmousex - event.x()
         deltay = self.prevmousey - event.y()
         self.drag(deltax, deltay)
@@ -1377,22 +1352,16 @@ class DragAction(object):
 class NullAction(DragAction):
 
     def on_motion_notify(self, event):
-#        if event.is_hint:
-#            x, y, state = event.window.get_pointer()
-#        else:
-#            x, y, state = event.x, event.y, event.state
         x, y = event.x(), event.y()
-        
+
         dot_widget = self.dot_widget
         item = dot_widget.get_url(x, y)
         if item is None:
             item = dot_widget.get_jump(x, y)
         if item is not None:
-#            dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
             dot_widget.setCursor(Qt.PointingHandCursor)
             dot_widget.set_highlight(item.highlight)
         else:
-#            dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
             dot_widget.setCursor(Qt.ArrowCursor)
             dot_widget.set_highlight(None)
 
@@ -1400,17 +1369,14 @@ class NullAction(DragAction):
 class PanAction(DragAction):
 
     def start(self):
-#        self.dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
         self.dot_widget.setCursor(Qt.ClosedHandCursor)
 
     def drag(self, deltax, deltay):
         self.dot_widget.x += deltax / self.dot_widget.zoom_ratio
         self.dot_widget.y += deltay / self.dot_widget.zoom_ratio
-#        self.dot_widget.queue_draw()
         self.dot_widget.update()
         
     def stop(self):
-#        self.dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
         self.dot_widget.cursor().setShape(Qt.ArrowCursor)
 
     abort = stop
@@ -1421,34 +1387,34 @@ class ZoomAction(DragAction):
     def drag(self, deltax, deltay):
         self.dot_widget.zoom_ratio *= 1.005 ** (deltax + deltay)
         self.dot_widget.zoom_to_fit_on_resize = False
-#        self.dot_widget.queue_draw()
         self.dot_widget.update()
 
 def stop(self):
-#        self.dot_widget.queue_draw()
         self.dot_widget.update()
 
 
 class ZoomAreaAction(DragAction):
 
     def drag(self, deltax, deltay):
-#        self.dot_widget.queue_draw()
         self.dot_widget.update()
     
-    def draw(self, cr):
-        cr.save()
-        cr.set_source_rgba(.5, .5, 1.0, 0.25)
-        cr.rectangle(self.startmousex, self.startmousey,
+    def draw(self, painter):
+        #TODO: implement this for qt
+        print "ERROR: UNIMPLEMENTED ZoomAreaAction.draw"
+        return
+        painter.save()
+        painter.set_source_rgba(.5, .5, 1.0, 0.25)
+        painter.rectangle(self.startmousex, self.startmousey,
                      self.prevmousex - self.startmousex,
                      self.prevmousey - self.startmousey)
-        cr.fill()
-        cr.set_source_rgba(.5, .5, 1.0, 1.0)
-        cr.set_line_width(1)
-        cr.rectangle(self.startmousex - .5, self.startmousey - .5,
+        painter.fill()
+        painter.set_source_rgba(.5, .5, 1.0, 1.0)
+        painter.set_line_width(1)
+        painter.rectangle(self.startmousex - .5, self.startmousey - .5,
                      self.prevmousex - self.startmousex + 1,
                      self.prevmousey - self.startmousey + 1)
-        cr.stroke()
-        cr.restore()
+        painter.stroke()
+        painter.restore()
 
     def stop(self):
         x1, y1 = self.dot_widget.window_to_graph(self.startmousex,
@@ -1458,7 +1424,6 @@ class ZoomAreaAction(DragAction):
         self.dot_widget.zoom_to_area(x1, y1, x2, y2)
 
     def abort(self):
-#        self.dot_widget.queue_draw()
         self.dot_widget.update()
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class DotWidget(QWidget):
@@ -1552,10 +1517,10 @@ class DotWidget(QWidget):
     def paintEvent (self,  event=None):
 #    def do_expose_event(self, event):
 #        cr = self.window.cairo_create()
-        cr = QPainter (self)
-        cr.setRenderHint(QPainter.Antialiasing)
-        cr.setRenderHint(QPainter.TextAntialiasing)
-        cr.setRenderHint(QPainter.HighQualityAntialiasing)
+        painter = QPainter (self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.TextAntialiasing)
+        painter.setRenderHint(QPainter.HighQualityAntialiasing)
 
         # set a clip region for the expose event
 #        cr.rectangle(
@@ -1566,19 +1531,23 @@ class DotWidget(QWidget):
 #
 #        cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
 #        cr.paint()
-#
-        cr.save()
+
+        painter.setClipping(True)
+        painter.setClipRect(self.rect())
+        painter.setBackground(QBrush(Qt.blue,Qt.SolidPattern))
+        painter.save()
+
 #        rect = self.get_allocation()
-        rect = self.rect()
+        rect = self.rect() # JRB was self.rect()
 #        cr.translate(0.5*rect.width, 0.5*rect.height)
-        cr.translate(0.5*rect.width(), 0.5*rect.height())
-        cr.scale(self.zoom_ratio, self.zoom_ratio)
-        cr.translate(-self.x, -self.y)
+        painter.translate(0.5*rect.width(), 0.5*rect.height())
+        painter.scale(self.zoom_ratio, self.zoom_ratio)
+        painter.translate(-self.x, -self.y)
 
-        self.graph.draw(cr, highlight_items=self.highlight)
-        cr.restore()
+        self.graph.draw(painter, highlight_items=self.highlight)
+        painter.restore()
 
-        self.drag_action.draw(cr)
+        self.drag_action.draw(painter)
 
 
     def get_current_pos(self):
@@ -1588,13 +1557,11 @@ class DotWidget(QWidget):
     def set_current_pos(self, x, y):
         self.x = x
         self.y = y
-#        self.queue_draw()
         self.update()
         
     def set_highlight(self, items):
         if self.highlight != items:
             self.highlight = items
-#            self.queue_draw()
             self.update()
             
     def zoom_image(self, zoom_ratio, center=False, pos=None):
@@ -1613,7 +1580,6 @@ class DotWidget(QWidget):
             self.y += y / self.zoom_ratio - y / zoom_ratio
         self.zoom_ratio = zoom_ratio
         self.zoom_to_fit_on_resize = False
-#        self.queue_draw()
         self.update()
 
     def zoom_to_area(self, x1, y1, x2, y2):
@@ -1628,7 +1594,6 @@ class DotWidget(QWidget):
         self.zoom_to_fit_on_resize = False
         self.x = (x1 + x2) / 2
         self.y = (y1 + y2) / 2
-#        self.queue_draw()
         self.update()
         
     def zoom_to_fit(self):
@@ -1668,67 +1633,35 @@ class DotWidget(QWidget):
         self.zoom_image(1.0)
         
     def keyPressEvent(self, event):
-#    def on_key_press_event(self, widget, event):
-#        if event.keyval == gtk.keysyms.Left:
         if event.key() == Qt.Key_Left:
             self.x -= self.POS_INCREMENT/self.zoom_ratio
-#            self.queue_draw()
             self.update()
-        return True
-#        if event.keyval == gtk.keysyms.Right:
-        if event.key() == Qt.Key_Right:
+        elif event.key() == Qt.Key_Right:
             self.x += self.POS_INCREMENT/self.zoom_ratio
-#            self.queue_draw()
             self.update()
-            return True
-#        if event.keyval == gtk.keysyms.Up:
         elif event.key() == Qt.Key_Up:
             self.y -= self.POS_INCREMENT/self.zoom_ratio
-#            self.queue_draw()
             self.update()
-            return True
-#        if event.keyval == gtk.keysyms.Down:
         elif event.key() == Qt.Key_Down:
             self.y += self.POS_INCREMENT/self.zoom_ratio
-#            self.queue_draw()
             self.update()
-            return True
-#        if event.keyval == gtk.keysyms.Page_Up:
         elif event.key() == Qt.Key_PageUp:
             self.zoom_image(self.zoom_ratio * self.ZOOM_INCREMENT)
-#            self.queue_draw()
             self.update()
-            return True
-#        if event.keyval == gtk.keysyms.Page_Down:
         elif event.key() == Qt.Key_PageDown:
             self.zoom_image(self.zoom_ratio / self.ZOOM_INCREMENT)
-#            self.queue_draw()
             self.update()
-            return True
-#        if event.keyval == gtk.keysyms.Escape:
         elif event.key() == Qt.Key_PageUp:
             self.drag_action.abort()
             self.drag_action = NullAction(self)
-            return True
-#        if event.keyval == gtk.keysyms.r:
         elif event.key() == "r":
             self.reload()
-            return True
-#        if event.keyval == gtk.keysyms.q:
-        elif event.key() == "q":
-#            gtk.main_quit()
-            return True
-        return False
 
     def get_drag_action(self, event):
-#        state = event.state
         modifiers = event.modifiers()
-#        if event.button in (1, 2): # left or middle button
         if event.button() in (Qt.LeftButton, Qt.MidButton):
-#            if state & gtk.gdk.CONTROL_MASK:
             if modifiers & Qt.ControlModifier:
                 return ZoomAction
-#            elif state & gtk.gdk.SHIFT_MASK:
             elif modifiers & Qt.ShiftModifier:
                 return ZoomAreaAction
             else:
@@ -1736,22 +1669,19 @@ class DotWidget(QWidget):
         return NullAction
 
     def mousePressEvent(self, event):
-#    def on_area_button_press(self, area, event):
         self.animation.stop()
         self.drag_action.abort()
+
         action_type = self.get_drag_action(event)
         self.drag_action = action_type(self)
         self.drag_action.on_button_press(event)
+
         self.presstime = time.time()
-#        self.pressx = event.x
         self.pressx = event.x()
-#        self.pressy = event.y
         self.pressy = event.y()
-#        return False
         event.accept()
         
     def is_click(self, event, click_fuzz=4, click_timeout=1.0):
-#        assert event.type == gtk.gdk.BUTTON_RELEASE
         if self.presstime is None:
             # got a button release without seeing the press?
             return False
@@ -1763,31 +1693,23 @@ class DotWidget(QWidget):
                 and math.hypot(deltax, deltay) < click_fuzz)
 
     def mouseReleaseEvent(self, event):
-#    def on_area_button_release(self, area, event):
         self.drag_action.on_button_release(event)
         self.drag_action = NullAction(self)
-#        if event.button == 1 and self.is_click(event):
         if event.button() == Qt.LeftButton and self.is_click(event):
-#            x, y = int(event.x), int(event.y)
             x, y = event.x(), event.y()
             url = self.get_url(x, y)
             if url is not None:
-#                self.emit('clicked', unicode(url.url), event)
                 self.emit(SIGNAL("clicked"), unicode(url.url), event)
             else:
                 jump = self.get_jump(x, y)
                 if jump is not None:
                     self.animate_to(jump.x, jump.y)
 
-#            return True
             event.accept()
             return
-#        if event.button == 1 or event.button == 2:
         if event.button() in (Qt.LeftButton, Qt.MidButton):
-#            return True
             event.accept()
         return
-#        return False
 
     def on_area_scroll_event(self, area, event):
 #        if event.direction == gtk.gdk.SCROLL_UP:
@@ -1800,10 +1722,16 @@ class DotWidget(QWidget):
 #            return True
         return False
 
+    def wheelEvent(self, event):
+        if event.delta() > 0:
+            self.zoom_image(self.zoom_ratio * self.ZOOM_INCREMENT,
+                            pos=(event.x(), event.y()))
+        if event.delta() < 0:
+            self.zoom_image(self.zoom_ratio / self.ZOOM_INCREMENT,
+                            pos=(event.x(), event.y()))
+
     def mouseMoveEvent(self, event):
-#    def on_area_motion_notify(self, area, event):
         self.drag_action.on_motion_notify(event)
-#        return True
 
     def on_area_size_allocate(self, area, allocation):
         if self.zoom_to_fit_on_resize:
