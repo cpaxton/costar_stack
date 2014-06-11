@@ -7,4 +7,4 @@ predicator_msgs/PredicateStatement statement
 
 # The set of values for which this statement is true, if applicable
 # Only true predicates will be published, so if there are no free variables in the statement this will be empty
-predicator_msgs/PredicatorStatement[] values
+predicator_msgs/PredicateStatement[] values

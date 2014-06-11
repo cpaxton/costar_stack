@@ -2,4 +2,4 @@
 #
 ####
 
-predicate_msgs/PredicateAssignment[] assignments
+predicator_msgs/PredicateAssignment[] assignments
