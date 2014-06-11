@@ -9,10 +9,6 @@
 # ex: left_of
 string predicate
 
-# name of the frame of reference
-# ex: ur5
-string reference_frame
-
 # first parameter value
 # ex: Ovaltine_1
 string param1
@@ -20,3 +16,7 @@ string param1
 # name of parameter 2
 # ex: Ovaltine_2
 string param2
+
+# name of the frame of reference
+# ex: ur5
+string reference_frame

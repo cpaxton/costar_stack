@@ -48,6 +48,7 @@ add_message_files(
   PredicateStatement.msg
   PredicateAssignment.msg
   PredicateSet.msg
+  PredicateList.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
