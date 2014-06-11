@@ -9,14 +9,21 @@
 # ex: left_of
 string predicate
 
+# list of params
+# ex: [Ovaltine_1, Ovaltine_2, ur5]
+string[3] params
+
+# number of parameters used
+int32 num_params
+
 # first parameter value
 # ex: Ovaltine_1
-string param1
+#string param1
 
 # name of parameter 2
 # ex: Ovaltine_2
-string param2
+#string param2
 
 # name of the frame of reference
 # ex: ur5
-string reference_frame
+#string reference_frame
