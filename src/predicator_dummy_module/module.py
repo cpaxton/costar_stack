@@ -42,7 +42,15 @@ if __name__ == '__main__':
             PredicateStatement(
                 predicate='touching',
                 num_params=2,
-                params=['Block1', 'Block2', ''])
+                params=['Block1', 'Block2', '']),
+            PredicateStatement(
+                predicate='found_object',
+                num_params=1,
+                params=['Block1','','']),
+            PredicateStatement(
+                predicate='found_object',
+                num_params=1,
+                params=['Block2','',''])
             ]
 
     rate = rospy.Rate(1)
