@@ -62,6 +62,8 @@ generate_messages(
   predicator_msgs
 )
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -94,17 +96,17 @@ include_directories(
 #   src/${PROJECT_NAME}/predicator_core.cpp
 # )
 
-## Declare a cpp executable
-# add_executable(predicator_core_node src/predicator_core_node.cpp)
+# Declare a cpp executable
+add_executable(predicator_core src/predicator_core/core.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(predicator_core_node predicator_core_generate_messages_cpp)
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(predicator_core_node
-#   ${catkin_LIBRARIES}
-# )
+# Specify libraries to link a library or executable target against
+target_link_libraries(predicator_core
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

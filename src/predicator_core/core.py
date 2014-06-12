@@ -14,6 +14,18 @@ def predicate_to_tuple(predicate):
         return (predicate.predicate, predicate.params[0], predicate.params[1], predicate.params[2])
     else:
         return (predicate.predicate)
+    #return (predicate.predicate, predicate.params[0], predicate.params[1], predicate.params[2])
+
+'''
+return a key based on a predicate
+'''
+def get_key(predicate, params):
+    return "(%s,%s,%s,%s)"%(predicate,
+            params[0],
+            params[1],
+            params[2])
+
+
 
 '''
 Predicator()
@@ -36,23 +48,22 @@ class Predicator(object):
         print self._latest
         d = {}
         for source, lst in self._latest.items():
-            print "---"
             for predicate in lst:
-                pred = predicate_to_tuple(predicate)
-                print pred
-                print "---"
-                d[pred] = []
-                '''
-                for j in range(predicate.num_params):
-                    gen_predicate = copy.deepcopy(predicate)
-                    gen_predicate.params[j] = '*'
-                    if not gen_predicate in d:
-                        d[gen_predicate] = []
-                    d[gen_predicate].append(predicate.params[j])
-                '''
+                key = get_key(predicate.predicate, predicate.params)
+                d[key] = []
 
-        print '++++++'
-        print d
+                for j in range(predicate.num_params):
+                    new_params = copy.deepcopy(predicate.params)
+                    free_vars = ['','','']
+
+                    new_params[j] = ''
+                    free_vars[j] = predicate.params[j]
+
+                    new_key = get_key(predicate.predicate, new_params)
+
+                    if not new_key in d:
+                        d[new_key] = []
+                    d[new_key].append(get_key('',free_vars))
 
     def get_assignment(self, req):
         pass
