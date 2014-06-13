@@ -44,6 +44,11 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${LIBFCL_INCLUDE_DIRS}
+)
+
+link_directories(
+  ${catkin_LIBRARY_DIRS}
 )
 
 ## Declare a cpp library
@@ -52,7 +57,11 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(predicator_geometry_node src/predicator_geometry.cpp)
+add_executable(predicator_geometry_node
+  src/predicator_geometry.cpp
+  src/predicate.h
+  src/predicate.cpp
+)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -61,7 +70,7 @@ add_executable(predicator_geometry_node src/predicator_geometry.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(predicator_geometry_node
   ${catkin_LIBRARIES}
-
+  ${LIBFCL_LIBRARIES}
 )
 
 #############
