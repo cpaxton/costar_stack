@@ -3,6 +3,9 @@ Beetree
 
 A lightweight implementation of Behavior Trees in Python that interfaces with the ROS framework.
 
+![alt text](https://raw.githubusercontent.com/futureneer/beetree/master/beetree.png "Example BeeTree behavior tree")
+
+
 BEETREE IS STILL UNDER DEVELOPMENT. SOME NODES ARE NOT IMPLEMENTED.
 
 To run an example that generates dot code for a sample tree, run the command:
