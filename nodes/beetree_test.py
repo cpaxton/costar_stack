@@ -26,3 +26,6 @@ if __name__ == '__main__':
     print ''
     print tree_dotcode
     print ''
+
+    root.execute()
+    # root.print_subtree()

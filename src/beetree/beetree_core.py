@@ -4,10 +4,10 @@ import rospy
 from std_msgs.msg import *
 
 class Node(object):
-        """Base class for beetree behavior_tree nodes.
+    """Base class for beetree behavior_tree nodes.
 
-        This node has the basic structure for a node, as well as functions for recursively printing information, generating graphviz dot code, adding child nodes and resetting variables.
-        """
+    This node has the basic structure for a node, as well as functions for recursively printing information, generating graphviz dot code, adding child nodes and resetting variables.
+    """
     def __init__(self,is_root=False,parent=None,name='',label=''):
         """Node constructor
         @type is_root: bool
@@ -154,10 +154,7 @@ class Node(object):
 
 ## Specialized Nodes
 class NodeSelector(Node):
-    """selector type node
-    
-    This node runs its children in order acording to the order of insertion.  If a child fails, this node will return FAILURE.  If a child succeeds this node will call the next child in order. When the last child succeeds this node will return SUCCESS.
-    """
+
     def __init__(self,parent,name,label):
         L = '( * )\\n ' + label.upper()
         super(NodeSelector,self).__init__(False,parent,name,L)
@@ -169,7 +166,7 @@ class NodeSelector(Node):
         return 'Selector'
 
     def execute(self):
-        print 'executing selector'
+        print 'executing selector: (' + self.name_ + ')'
         self.exec_child_ = self.first_child_
 
         for i in range(self.number_children_):
@@ -179,23 +176,30 @@ class NodeSelector(Node):
             print 'checking child status: ' + self.child_status_
             if self.child_status_ == 'NODE_ERROR':
                 self.node_status_ = 'NODE_ERROR'
+                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
                 return self.node_status_
             elif self.child_status_ == 'RUNNING':
                 self.node_status_ = 'RUNNING'
+                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
                 return self.node_status_
             elif self.child_status_ == 'SUCCESS':
                 self.node_status_ = 'SUCCESS'
+                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
                 return self.node_status_
 
             print 'pointing self.exec_child_ to next brother'
             self.exec_child_ = self.exec_child_.next_brother_
 
         self.node_status_ = 'FAILURE'
+        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
 
 
 class NodeSequence(Node):
+    """selector type node
 
+    This node runs its children in order acording to the order of insertion.  If a child fails, this node will return FAILURE.  If a child succeeds this node will call the next child in order. When the last child succeeds this node will return SUCCESS.
+    """
     def __init__(self,parent,name,label):
         L = '( --> )\\n ' + label.upper()
         super(NodeSequence,self).__init__(False,parent,name,L)
@@ -207,23 +211,27 @@ class NodeSequence(Node):
         return 'Sequence'
 
     def execute(self):
-        print 'Executing Sequence'
         self.exec_child_ = self.first_child_
+        print 'Executing Sequence: (' + self.name_ + '): current child: ' + self.exec_child_.name_
 
         for i in range(self.number_children_):
             self.child_status_ = self.exec_child_.execute()
             if self.child_status_ == 'NODE_ERROR':
                 self.node_status_ = 'NODE_ERROR'
+                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
                 return self.node_status_
             elif self.child_status_ == 'RUNNING':
                 self.node_status_ = 'RUNNING'
+                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
                 return self.node_status_
-            elif self.child_status_ == 'SUCCESS':
-                self.node_status_ = 'SUCCESS'
+            elif self.child_status_ == 'FAILURE':
+                self.node_status_ = 'FAILURE'
+                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
                 return self.node_status_
             self.exec_child_ = self.exec_child_.next_brother_
 
         self.node_status_ = 'SUCCESS'
+        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
 
 
@@ -244,7 +252,7 @@ class NodeParallel(Node):
         number_success = 0
         number_error = 0
 
-        print 'Executing Parallel'
+        print 'Executing Parallel: (' + self.name_ + ')'
         self.exec_child_ = self.first_child_
 
         for i in range(self.number_children_):
@@ -255,18 +263,23 @@ class NodeParallel(Node):
                 number_failure  += 1
             elif self.child_status_ == 'SUCCESS':
                 number_success += 1
+            self.exec_child_ = self.exec_child_.next_brother_
 
         if number_error > 0:
             self.node_status_ = 'NODE_ERROR'
+            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
             return self.node_status_
         elif number_success>= self.number_children_/2:
             self.node_status_ = 'SUCCESS'
+            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
             return self.node_status_
         elif number_failure >= self.number_children_/2:
             self.node_status_ = 'FAILURE'
+            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
             return self.node_status_
         else:
             self.node_status_ = 'RUNNING'
+            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
             return self.node_status_
 
 
@@ -283,8 +296,9 @@ class NodeRoot(Node):
         return 'Root'
 
     def execute(self):
-        print 'Executing Root'
+        print 'Executing Root: (' + self.name_ + ')'
         self.child_status_ = self.first_child_.execute()
+        print 'ROOT: Child returned status: ' + self.child_status_
         return self.child_status_
 
 # TODO
@@ -301,7 +315,11 @@ class NodeAction(Node):
         return 'Action'
 
     def execute(self):
-        print 'Executing Action: ' + self.name_
+        #TODO
+        print 'Executing Action: (' + self.name_ + ')'
+        self.node_status_ = 'SUCCESS'
+        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        return self.node_status_
 
 # TODO
 class NodeService(Node):
@@ -316,7 +334,11 @@ class NodeService(Node):
         return 'Service'
 
     def execute(self):
-        pass
+        # TODO
+        print 'Executing Service: ' + self.name_
+        self.node_status_ = 'SUCCESS'
+        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        return self.node_status_
 
 
 class NodeParamCondition(Node):
@@ -334,20 +356,29 @@ class NodeParamCondition(Node):
         return 'Condition'
 
     def execute(self):
-        print 'Executing Condition'
-        
-        if not rospy.has_param(self.param_name_):
-            self.node_status_ = 'FAILURE'
-            return self.node_status_
+        print 'Executing Condition: (' + self.name_ + ')'
 
-        value = rospy.get_param(self.param_name_)
+        ### For debugging
+        self.node_status_ = 'SUCCESS'
+        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        return self.node_status_
+        ###
 
-        if value == self.desired_value_:
-            self.node_status_ = 'SUCCESS'
-            return self.node_status_
-        else:
-            self.node_status_ = 'FAILURE'
-            return self.node_status_
+        # if not rospy.has_param(self.param_name_):
+        #     self.node_status_ = 'FAILURE'
+        #     print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        #     return self.node_status_
+
+        # value = rospy.get_param(self.param_name_)
+
+        # if value == self.desired_value_:
+        #     self.node_status_ = 'SUCCESS'
+        #     print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        #     return self.node_status_
+        # else:
+        #     self.node_status_ = 'FAILURE'
+        #     print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        #     return self.node_status_
 
 
 class NodeDecoratorRunNumber(Node):
@@ -364,7 +395,7 @@ class NodeDecoratorRunNumber(Node):
         return 'Decorator Run Number'
 
     def execute(self):
-        print 'Executing Run Number Decorator'
+        print 'Executing Run Number Decorator: (' + self.name_ + ')'
         self.exec_child_ = self.first_child_
 
         if self.num_runs_ < self.runs_:
@@ -373,9 +404,11 @@ class NodeDecoratorRunNumber(Node):
                 self.num_runs_ += 1
             elif self.child_status_ == 'FAILURE':
                 self.node_status_ = 'FAILURE'
+                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
                 return self.node_status_
         else:
             self.node_status_ = 'SUCCESS'
+            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
             return self.node_status_
 
 
