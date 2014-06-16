@@ -4,9 +4,24 @@ import rospy
 from std_msgs.msg import *
 
 class Node(object):
+        """Base class for beetree behavior_tree nodes.
 
+        This node has the basic structure for a node, as well as functions for recursively printing information, generating graphviz dot code, adding child nodes and resetting variables.
+        """
     def __init__(self,is_root=False,parent=None,name='',label=''):
+        """Node constructor
+        @type is_root: bool
+        @param is_root: determines whether the node is root or not.
 
+        @type parent: string
+        @param parent: the parent of the node if it is not root
+
+        @type name: string
+        @param name: the name of the node. This is also its graphviz URL.
+
+        @type label: string
+        @param label: the label of the node, which will be displayed in the dot output as its icon label
+        """
         self.number_children_ = 0
         self.children_number_ = 0
         self.highlighted_ = False
@@ -31,6 +46,9 @@ class Node(object):
             self.parent_.add_child(self)
 
     def generate_dot(self):
+        """generates dot code for this node
+        Also recursively calls the children's generate_dot() functions
+        """
         if self.parent_ == None:
             dot = 'digraph behavior_tree { '
         else:
@@ -57,6 +75,9 @@ class Node(object):
             return dot
 
     def execute_reset_status(self):
+        """resets the node's status
+        resets the node's status
+        """
         self.node_status_ = 'NODE_ERROR'
         self.exec_child_ = self.first_child_
 
@@ -65,6 +86,11 @@ class Node(object):
             self.exec_child_ = self.exec_child_.next_brother_
 
     def add_child(self, my_child):
+        """adds a child to the node, and adds it as a brother if there are existing NodeSelector
+
+        @type my_child: beetree.Node
+        @param my_child: the child Node to be added to this node
+        """
         if self.number_children_ == 0:
             print self.name_ + ': adding first child -> ' + my_child.name_
             self.first_child_ = self.curr_child_ = my_child
@@ -76,18 +102,33 @@ class Node(object):
         return self.curr_child_
 
     def add_brother(self,my_brother,children_number):
+        """adds a brother to the node
+        explicitely adds a node as a brother of existing child NodeSelector
+
+        @type my_brother: beetree.Node
+        @param my_brother: the node to insert as a brother
+
+        @type children_number: int
+        @param children_number: the number of children in the node
+        """
         self.next_brother_ = my_brother
         self.next_brother_.set_prev_brother(self)
         self.next_brother_.set_children_number(self.children_number_+1)
         return self.next_brother_
 
     def print_info(self):
+        """prints the nodes info
+        prints the nodes info
+        """
         print 'Depth: ' + str(self.depth_)
         print '-- Name: ' + self.name_
         print '-- Status: ' + self.node_status_
         print '-- Number of Children: ' + str(self.number_children_)
 
     def print_subtree(self):
+        """prints the info recursively for the tree under this node
+        prints the info recursively for the tree under this node
+        """
         self.print_info()
         if self.number_children_ > 0:
             self.first_child_.print_subtree()
@@ -113,7 +154,10 @@ class Node(object):
 
 ## Specialized Nodes
 class NodeSelector(Node):
-
+    """selector type node
+    
+    This node runs its children in order acording to the order of insertion.  If a child fails, this node will return FAILURE.  If a child succeeds this node will call the next child in order. When the last child succeeds this node will return SUCCESS.
+    """
     def __init__(self,parent,name,label):
         L = '( * )\\n ' + label.upper()
         super(NodeSelector,self).__init__(False,parent,name,L)
