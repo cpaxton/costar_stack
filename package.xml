@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package>
+  <name>beetree</name>
+  <version>0.0.1</version>
+  <description>The beetree package is a lightweight implementation of Behavior Trees based on the C++ implementation by Alejandro Marzinotto Cos at KTH.  His original code can be found at github.com/almc/behavior_trees.</description>
+
+  <maintainer email="futureneer@gmail.com">KelGuerin</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+    <!-- You can specify that this package is a metapackage here: -->
+  </export>
+
+</package>
