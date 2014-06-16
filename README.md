@@ -1,7 +1,7 @@
 Beetree
 =======
 
-A lightweight implementation of Behavior Trees in Python that interfaces with the ROS framework. It is based loosly on the C++ implementation by Alejandro Marzinotto Cos at KTH.  His original code can be found at [github.com/almc/behavior_trees](www.github.com/almc/behavior_trees), and a publication [here](http://www.csc.kth.se/~almc/pdf/unified_bt_framework.pdf). A great overview of behavior trees can be found [here](http://www.pirobot.org/blog/0030/). 
+A lightweight implementation of Behavior Trees in Python that interfaces with the ROS framework. It is based loosly on the C++ implementation by Alejandro Marzinotto Cos at KTH.  His original code can be found at [here](https://github.com/almc/behavior_trees), and a publication [here](http://www.csc.kth.se/~almc/pdf/unified_bt_framework.pdf). A great overview of behavior trees can be found [here](http://www.pirobot.org/blog/0030/). 
 
 ![alt text](https://raw.githubusercontent.com/futureneer/beetree/master/beetree.png "Example BeeTree behavior tree")
 
