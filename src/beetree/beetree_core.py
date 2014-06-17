@@ -21,6 +21,9 @@ class Node(object):
 
         @type label: string
         @param label: the label of the node, which will be displayed in the dot output as its icon label
+
+        @todo Make it an option to show or hide text labels on logical nodes such as parallel or selector
+        @todo Visualize the tick with graphviz color change?
         """
         self.number_children_ = 0
         self.children_number_ = 0
@@ -204,12 +207,13 @@ class NodeSelector(Node):
 
 
 class NodeSequence(Node):
-    """selector type node
+    """sequence type node
 
-    This node runs its children in order acording to the order of insertion.  If a child fails, this node will return FAILURE.  If a child succeeds this node will call the next child in order. When the last child succeeds this node will return SUCCESS.
+    This node runs its children in order acording to the order of insertion.  If any child fails, this node will return FAILURE.  If a child succeeds this node will call the next child in order. When the last child succeeds this node will return SUCCESS.
     """
     def __init__(self,parent,name,label):
-        L = '( --> )\\n ' + label.upper()
+        L = '->'
+        # L = '( --> )\\n ' + label.upper()
         super(NodeSequence,self).__init__(False,parent,name,L)
 
     def get_node_type(self):
@@ -246,7 +250,7 @@ class NodeSequence(Node):
 class NodeParallel(Node):
 
     def __init__(self,parent,name,label):
-        L = '( || )'# + label.upper()
+        L = '||'# + label.upper()
         super(NodeParallel,self).__init__(False,parent,name,L)
 
     def get_node_type(self):
@@ -294,8 +298,9 @@ class NodeParallel(Node):
 class NodeRoot(Node):
 
     def __init__(self, name, label):
-        L = '( ? )\\n ' + label.upper()
-        super(NodeRoot,self).__init__(True,None,name,L)
+        L = '?'
+        # L = '( ? )\\n ' + label.upper()
+        super(NodeRoot,self).__init__(True,None,name,L,'',)
 
     def get_node_type(self):
         return 'ROOT'
