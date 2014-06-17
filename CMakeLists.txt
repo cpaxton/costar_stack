@@ -5,7 +5,7 @@ project(predicator_geometry)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  moveit_msgs
+  moveit_msgs moveit_core moveit_ros_planning_interface moveit_ros_perception
   predicator_msgs
   tf
   urdf
@@ -64,6 +64,11 @@ add_executable(predicator_geometry_node
   src/predicate.cpp
 )
 
+# collision executable
+add_executable(predicator_collision_node
+  src/predicator_collision.cpp
+)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(predicator_geometry_node predicator_geometry_generate_messages_cpp)
@@ -72,6 +77,10 @@ add_executable(predicator_geometry_node
 target_link_libraries(predicator_geometry_node
   ${catkin_LIBRARIES}
   ${LIBFCL_LIBRARIES}
+)
+
+target_link_libraries(predicator_collision_node
+  ${catkin_LIBRARIES}
 )
 
 #############
