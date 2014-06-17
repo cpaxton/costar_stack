@@ -59,6 +59,9 @@ class Node(object):
         else:
             dot = ''
 
+        if self.number_children_ == 0:
+            dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][label="'+self.label_+'"]; '
+
         if self.number_children_ != 0:
             dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][label="'+self.label_+'"]; '
         

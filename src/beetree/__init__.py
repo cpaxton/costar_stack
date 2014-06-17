@@ -3,7 +3,8 @@ import roslib; roslib.load_manifest('beetree')
 import rospy
 
 ### Available Classes for 'from beetree import *'
-__all__ = ['NodeSelector']
+__all__ = ['Node']
+__all__ += ['NodeSelector']
 __all__ += ['NodeSequence']
 __all__ += ['NodeParallel']
 __all__ += ['NodeRoot']
@@ -13,6 +14,7 @@ __all__ += ['NodeParamCondition']
 __all__ += ['NodeDecoratorRunNumber']
 
 ### Classes
+from beetree_core import Node
 from beetree_core import NodeSelector
 from beetree_core import NodeSequence
 from beetree_core import NodeParallel
