@@ -8,6 +8,9 @@
 // ROS
 #include <ros/ros.h>
 
+// for debugging
+#include <iostream>
+
 // MoveIt!
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <moveit/robot_state/robot_state.h>
@@ -16,11 +19,15 @@
 #include <moveit/kinematic_constraints/utils.h>
 #include <eigen_conversions/eigen_msg.h>
 
+#include <moveit_msgs/PlanningScene.h>
+#include <moveit_msgs/GetPlanningScene.h>
+
 // joint states
 #include <sensor_msgs/JointState.h>
 
 // predicator
 #include <predicator_msgs/PredicateList.h>
+#include <predicator_msgs/PredicateStatement.h>
 
 using planning_scene::PlanningScene;
 using robot_model_loader::RobotModelLoader;
@@ -65,7 +72,7 @@ int main (int argc, char **argv) {
   std::string robot_description_param;
 
   ros::init(argc, argv, "predicator_robot_collision_node");
-  
+
   ros::NodeHandle nh;
   ros::NodeHandle nh_tilde("~");
 
@@ -83,12 +90,21 @@ int main (int argc, char **argv) {
 
   //void 	usePlanningSceneMsg (const moveit_msgs::PlanningScene &scene)
   //void 	setCurrentState (const moveit_msgs::RobotState &state)
-  
+
 
   // create robot state, and then update it with the joint states
   // RobotState (const robot_model::RobotModelConstPtr &kinematic_model)
   state = new robot_model::RobotState(kinematic_model);
 
+  // manually call service to set up planning scene state
+  ros::ServiceClient client = nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+  moveit_msgs::GetPlanningScene req;
+  req.request.components.components = ~0;
+
+  client.call(req);
+  scene->setPlanningSceneMsg(req.response.scene);
+
+  std::string name = scene->getRobotModel()->getName();
 
   ros::Rate rate(30);
   while(ros::ok()) {
@@ -97,15 +113,52 @@ int main (int argc, char **argv) {
     // get updates
     collision_detection::CollisionRequest collision_request;
     collision_detection::CollisionResult collision_result;
-    collision_detection::AllowedCollisionMatrix acm = scene->getAllowedCollisionMatrix();  
+    collision_detection::AllowedCollisionMatrix acm = scene->getAllowedCollisionMatrix();
 
+    collision_request.contacts = true;
+    collision_request.max_contacts = 1000;
+
+    // check collisions
     scene->checkCollision(collision_request, collision_result, *state, acm);
 
-    // create output message and send it
+    // create predicate list
     predicator_msgs::PredicateList msg;
+    for(collision_detection::CollisionResult::ContactMap::const_iterator it = collision_result.contacts.begin(); 
+        it != collision_result.contacts.end(); 
+        ++it)
+    {
+      // look at the contents of the map and print them out for now?
+      //std::cout << it->first.first << ", " << it->first.second << std::endl;
+      predicator_msgs::PredicateStatement ps;
+      ps.predicate = "colliding";
+      ps.num_params = 2;
+      ps.params[0] = it->first.first;
+      ps.params[1] = it->first.second;
+      msg.statements.push_back(ps);
+    }
+    //ROS_INFO_STREAM(name << " current state is " << (state->satisfiesBounds() ? "valid" : "not valid"));
+    //ROS_INFO_STREAM(name << " current state is " << (collision_result.collision ? "in" : "not in") << " collision");
+    if(collision_result.collision) {
+      predicator_msgs::PredicateStatement ps_collision;
+      ps_collision.predicate = "in_collision";
+      ps_collision.num_params = 1;
+      ps_collision.params[0] = name;
+      msg.statements.push_back(ps_collision);
+    }
+
+    if(state->satisfiesBounds()) {
+      predicator_msgs::PredicateStatement ps_valid;
+      ps_valid.predicate = "valid_position";
+      ps_valid.num_params = 1;
+      ps_valid.params[0] = name;
+      msg.statements.push_back(ps_valid);
+    }
+
+    // create output message and send it
     msg.header.frame_id = ros::this_node::getName();
     pub.publish(msg);
 
+    // ... and sleep
     rate.sleep();
   }
 
