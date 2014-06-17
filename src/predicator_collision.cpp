@@ -70,13 +70,18 @@ void planning_scene_callback(const moveit_msgs::PlanningScene::ConstPtr &msg) {
 int main (int argc, char **argv) {
 
   std::string robot_description_param;
+  int call_get_planning_scene;
+  int world_only;
 
   ros::init(argc, argv, "predicator_robot_collision_node");
 
   ros::NodeHandle nh;
   ros::NodeHandle nh_tilde("~");
 
-  nh_tilde.param("robot_description_param", robot_description_param, std::string("robot_description"));
+  nh_tilde.param("robot_description_param", robot_description_param, std::string("/robot_description"));
+
+  nh_tilde.param("get_planning_scene", call_get_planning_scene, 1);
+  nh_tilde.param("world_collisions_only", world_only, 1);
 
   ros::Subscriber js_sub = nh.subscribe("/joint_states", 1000, joint_state_callback);
   ros::Subscriber ps_sub = nh.subscribe("/planning_scene", 1000, planning_scene_callback);
@@ -91,35 +96,62 @@ int main (int argc, char **argv) {
   //void 	usePlanningSceneMsg (const moveit_msgs::PlanningScene &scene)
   //void 	setCurrentState (const moveit_msgs::RobotState &state)
 
-
   // create robot state, and then update it with the joint states
   // RobotState (const robot_model::RobotModelConstPtr &kinematic_model)
   state = new robot_model::RobotState(kinematic_model);
 
-  // manually call service to set up planning scene state
-  ros::ServiceClient client = nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
-  moveit_msgs::GetPlanningScene req;
-  req.request.components.components = ~0;
+  std::cout << call_get_planning_scene << std::endl;
+  if (call_get_planning_scene) {
+    // manually call service to set up planning scene state
+    ros::ServiceClient client = nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+    moveit_msgs::GetPlanningScene req;
+    req.request.components.components = ~0;
 
-  client.call(req);
-  scene->setPlanningSceneMsg(req.response.scene);
+    client.call(req);
+    scene->setPlanningSceneMsg(req.response.scene);
+  }
 
   std::string name = scene->getRobotModel()->getName();
+
+  // get updates
+  collision_detection::CollisionRequest collision_request;
+  collision_detection::CollisionResult collision_result;
+  collision_request.contacts = true;
+  collision_request.distance = true;
+  collision_request.verbose = true;
+  collision_request.cost = true;
+  collision_request.max_contacts = 1000;
+
+  // ignore all self collisions
+  collision_detection::AllowedCollisionMatrix acm = scene->getAllowedCollisionMatrix();
+
+  // set robot padding so that we actually detect collisions
+  scene->getCollisionRobotNonConst()->setPadding(300.0);
+  scene->propogateRobotPadding();
 
   ros::Rate rate(30);
   while(ros::ok()) {
     ros::spinOnce();
 
-    // get updates
-    collision_detection::CollisionRequest collision_request;
-    collision_detection::CollisionResult collision_result;
-    collision_detection::AllowedCollisionMatrix acm = scene->getAllowedCollisionMatrix();
+    if(world_only) {
+      collision_result.clear();
+      scene->checkSelfCollision(collision_request, collision_result, *state, acm);
+      for(collision_detection::CollisionResult::ContactMap::const_iterator it = collision_result.contacts.begin(); 
+          it != collision_result.contacts.end(); 
+          ++it)
+      {
+        acm.setEntry(it->first.first, it->first.second, true);    
+        std::cout << "Ignoring: " << it->first.first << " --> " << it->first.second << std::endl;
+      }
+    }
 
-    collision_request.contacts = true;
-    collision_request.max_contacts = 1000;
+    collision_result.clear();
 
     // check collisions
     scene->checkCollision(collision_request, collision_result, *state, acm);
+
+    std::cout << "Distance = " << collision_request.distance << std::endl;
+    std::cout << "Cost Sources = " << collision_result.cost_sources.size() << std::endl;
 
     // create predicate list
     predicator_msgs::PredicateList msg;
@@ -136,8 +168,8 @@ int main (int argc, char **argv) {
       ps.params[1] = it->first.second;
       msg.statements.push_back(ps);
     }
-    //ROS_INFO_STREAM(name << " current state is " << (state->satisfiesBounds() ? "valid" : "not valid"));
-    //ROS_INFO_STREAM(name << " current state is " << (collision_result.collision ? "in" : "not in") << " collision");
+    ROS_INFO_STREAM(name << " current state is " << (state->satisfiesBounds() ? "valid" : "not valid"));
+    ROS_INFO_STREAM(name << " current state is " << (collision_result.collision ? "in" : "not in") << " collision");
     if(collision_result.collision) {
       predicator_msgs::PredicateStatement ps_collision;
       ps_collision.predicate = "in_collision";
