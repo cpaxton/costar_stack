@@ -8,7 +8,7 @@ class Node(object):
 
     This node has the basic structure for a node, as well as functions for recursively printing information, generating graphviz dot code, adding child nodes and resetting variables.
     """
-    def __init__(self,is_root=False,parent=None,name='',label=''):
+    def __init__(self,is_root=False,parent=None,name='',label='',color='',shape='box'):
         """Node constructor
         @type is_root: bool
         @param is_root: determines whether the node is root or not.
@@ -36,6 +36,8 @@ class Node(object):
         self.prev_brother_ = None
         self.name_ = name
         self.label_ = label
+        self.color_ = color
+        self.shape_ = shape
                 
         if is_root:
             self.depth_ = 0
@@ -50,22 +52,28 @@ class Node(object):
         Also recursively calls the children's generate_dot() functions
         """
         if self.parent_ == None:
-            dot = 'digraph behavior_tree { '
+            dot = 'digraph behavior_tree { splines=false; '
         else:
             dot = ''
 
         if self.number_children_ != 0:
-            dot = dot + self.name_ + ' [shape=box][URL="' +self.name_+'"][label="'+self.label_+'"]; '
+            dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][label="'+self.label_+'"]; '
         
         if self.number_children_ > 0:
             current = self.first_child_
             if current.next_brother_ == None:
-                dot = dot + current.name_ + '[URL="' +current.name_+'"][label="'+current.label_+'"];' + self.name_ + '->' + current.name_ + '; '
+                if current.number_children_ != 0:
+                    dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '
+                else:
+                    dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][style="filled" fillcolor="'+current.color_+'" label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '    
                 dot = dot + current.generate_dot()
             else:
                 for n in range(self.number_children_):
                 # while current.next_brother_ != None:
-                    dot = dot + current.name_ + '[URL="' +current.name_+'"][label="'+current.label_+'"];' + self.name_ + '->' + current.name_ + '; '
+                    if current.number_children_ != 0:
+                        dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '
+                    else:
+                        dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][style="filled" fillcolor="'+current.color_+'" label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '
                     dot = dot +  current.generate_dot()
                     current = current.next_brother_
 
@@ -286,7 +294,7 @@ class NodeParallel(Node):
 class NodeRoot(Node):
 
     def __init__(self, name, label):
-        L = '( / )\\n ' + label.upper()
+        L = '( ? )\\n ' + label.upper()
         super(NodeRoot,self).__init__(True,None,name,L)
 
     def get_node_type(self):
@@ -305,8 +313,9 @@ class NodeRoot(Node):
 class NodeAction(Node):
 
     def __init__(self,parent,name,label):
-        L = '( act )\\n' + label.upper()
-        super(NodeAction,self).__init__(False,parent,name,L)
+        L = '( action )\\n' + label.upper()
+        color='#92D665'
+        super(NodeAction,self).__init__(False,parent,name,L,color)
         self.name_ = name
     def get_node_type(self):
         return 'ACTION'
@@ -344,8 +353,9 @@ class NodeService(Node):
 class NodeParamCondition(Node):
 
     def __init__(self,parent,name,label,param_name=None,desired_value=None):
-        L = '( if/then )\\n' + label.upper()
-        super(NodeParamCondition,self).__init__(False,parent,name,L)
+        L = '( condition )\\n' + label.upper()
+        color = '#FAE364'
+        super(NodeParamCondition,self).__init__(False,parent,name,L,color,'ellipse')
         self.desired_value_ = desired_value
         self.param_name_ = param_name
 
