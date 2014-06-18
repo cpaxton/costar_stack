@@ -116,7 +116,9 @@ int main (int argc, char **argv) {
     client.call(req);
     scene->setPlanningSceneMsg(req.response.scene);
   } else if (call_get_planning_scene == 2) {
-    std::cout << "!!! force publish planning scene" << std::endl;
+    if(verbosity > 0) {
+      std::cout << "!!! force publish planning scene" << std::endl;
+    }
     //send a request to republish all the important information
     ros::ServiceClient client = nh.serviceClient<std_srvs::Empty>("/publish_planning_scene");
     std_srvs::Empty req;
@@ -130,7 +132,11 @@ int main (int argc, char **argv) {
   collision_detection::CollisionResult collision_result;
   collision_request.contacts = true;
   collision_request.distance = true;
-  collision_request.verbose = true;
+  if(verbosity > 0) {
+    collision_request.verbose = true;
+  } else {
+    collision_request.verbose = false;
+  }
   collision_request.cost = true;
   collision_request.max_contacts = 1000;
 
@@ -184,8 +190,11 @@ int main (int argc, char **argv) {
       ps.params[1] = it->first.second;
       msg.statements.push_back(ps);
     }
-    ROS_INFO_STREAM(name << " current state is " << (state->satisfiesBounds() ? "valid" : "not valid"));
-    ROS_INFO_STREAM(name << " current state is " << (collision_result.collision ? "in" : "not in") << " collision");
+
+    if (verbosity > 0) {
+      ROS_INFO_STREAM(name << " current state is " << (state->satisfiesBounds() ? "valid" : "not valid"));
+      ROS_INFO_STREAM(name << " current state is " << (collision_result.collision ? "in" : "not in") << " collision");
+    }
 
     if(collision_result.collision) {
       predicator_msgs::PredicateStatement ps_collision;
