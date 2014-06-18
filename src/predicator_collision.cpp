@@ -76,6 +76,7 @@ int main (int argc, char **argv) {
   std::string robot_description_param;
   int call_get_planning_scene;
   int world_only;
+  int verbosity;
 
   ros::init(argc, argv, "predicator_robot_collision_node");
 
@@ -86,6 +87,7 @@ int main (int argc, char **argv) {
 
   nh_tilde.param("get_planning_scene", call_get_planning_scene, 1);
   nh_tilde.param("world_collisions_only", world_only, 1);
+  nh_tilde.param("verbosity", verbosity, 0);
 
   ros::Subscriber js_sub = nh.subscribe("/joint_states", 1000, joint_state_callback);
   ros::Subscriber ps_sub = nh.subscribe("/planning_scene", 1000, planning_scene_callback);
@@ -162,10 +164,10 @@ int main (int argc, char **argv) {
     // check collisions
     scene->checkCollision(collision_request, collision_result, *state, acm);
 
-    std::cout << "Distance = " << collision_request.distance << std::endl;
-    std::cout << "Cost Sources = " << collision_result.cost_sources.size() << std::endl;
-
-
+    if (verbosity > 0) {
+      std::cout << "Distance = " << collision_request.distance << std::endl;
+      std::cout << "Cost Sources = " << collision_result.cost_sources.size() << std::endl;
+    }
 
     // create predicate list
     predicator_msgs::PredicateList msg;
@@ -176,7 +178,7 @@ int main (int argc, char **argv) {
       // look at the contents of the map and print them out for now?
       //std::cout << it->first.first << ", " << it->first.second << std::endl;
       predicator_msgs::PredicateStatement ps;
-      ps.predicate = "colliding";
+      ps.predicate = "touching";
       ps.num_params = 2;
       ps.params[0] = it->first.first;
       ps.params[1] = it->first.second;
@@ -184,6 +186,7 @@ int main (int argc, char **argv) {
     }
     ROS_INFO_STREAM(name << " current state is " << (state->satisfiesBounds() ? "valid" : "not valid"));
     ROS_INFO_STREAM(name << " current state is " << (collision_result.collision ? "in" : "not in") << " collision");
+
     if(collision_result.collision) {
       predicator_msgs::PredicateStatement ps_collision;
       ps_collision.predicate = "in_collision";
