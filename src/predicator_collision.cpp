@@ -7,6 +7,7 @@
 
 // ROS
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 
 // for debugging
 #include <iostream>
@@ -58,6 +59,9 @@ void joint_state_callback(const sensor_msgs::JointState::ConstPtr &msg) {
  * planning state up-to-date so we can accurately return predicates.
  */
 void planning_scene_callback(const moveit_msgs::PlanningScene::ConstPtr &msg) {
+  std::cout << msg->world.collision_objects.size() << std::endl;
+  std::cout << msg->world.collision_objects.at(0).id << std::endl;
+  std::cout << msg->world.collision_objects.at(0).meshes.size() << std::endl;
   scene->usePlanningSceneMsg(*msg);
 }
 
@@ -101,7 +105,7 @@ int main (int argc, char **argv) {
   state = new robot_model::RobotState(kinematic_model);
 
   std::cout << call_get_planning_scene << std::endl;
-  if (call_get_planning_scene) {
+  if (call_get_planning_scene == 1) {
     // manually call service to set up planning scene state
     ros::ServiceClient client = nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
     moveit_msgs::GetPlanningScene req;
@@ -109,6 +113,12 @@ int main (int argc, char **argv) {
 
     client.call(req);
     scene->setPlanningSceneMsg(req.response.scene);
+  } else if (call_get_planning_scene == 2) {
+    std::cout << "!!! force publish planning scene" << std::endl;
+    //send a request to republish all the important information
+    ros::ServiceClient client = nh.serviceClient<std_srvs::Empty>("/publish_planning_scene");
+    std_srvs::Empty req;
+    client.call(req);
   }
 
   std::string name = scene->getRobotModel()->getName();
@@ -125,12 +135,14 @@ int main (int argc, char **argv) {
   // ignore all self collisions
   collision_detection::AllowedCollisionMatrix acm = scene->getAllowedCollisionMatrix();
 
-  // set robot padding so that we actually detect collisions
-  scene->getCollisionRobotNonConst()->setPadding(300.0);
-  scene->propogateRobotPadding();
 
   ros::Rate rate(30);
   while(ros::ok()) {
+    // set robot padding so that we actually detect collisions
+    scene->getCollisionRobotNonConst()->setPadding(0.01);
+    //scene->getCollisionRobotNonConst()->setScale(30000.0);
+    scene->propogateRobotPadding();
+
     ros::spinOnce();
 
     if(world_only) {
@@ -152,6 +164,8 @@ int main (int argc, char **argv) {
 
     std::cout << "Distance = " << collision_request.distance << std::endl;
     std::cout << "Cost Sources = " << collision_result.cost_sources.size() << std::endl;
+
+
 
     // create predicate list
     predicator_msgs::PredicateList msg;

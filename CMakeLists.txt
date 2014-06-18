@@ -6,7 +6,7 @@ project(predicator_geometry)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   moveit_msgs moveit_core moveit_ros_planning_interface moveit_ros_perception
-  predicator_msgs
+  predicator_msgs std_srvs
   tf
   urdf
 )
