@@ -9,12 +9,17 @@
 # ex: left_of
 string predicate
 
-# list of params
-# ex: [Ovaltine_1, Ovaltine_2, ur5]
-string[3] params
+# value of the predicate
+# this is not really used right now
+# could be for feature values or for truth value (probability)
+float64 value
 
 # number of parameters used
 int32 num_params
+
+# list of params
+# ex: [Ovaltine_1, Ovaltine_2, ur5]
+string[3] params
 
 # first parameter value
 # ex: Ovaltine_1
