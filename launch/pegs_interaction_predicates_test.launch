@@ -1,0 +1,21 @@
+<launch>
+  <node pkg="predicator_geometry"
+    name="predicator_robot_interaction_node"
+    type="predicator_robot_interaction_node"
+    output="screen">
+
+    <rosparam param="description_list">
+      - /gazebo/barrett_manager/robot_description
+      - /gazebo/w2barrett_manager/robot_description
+      - /peg1_description
+      - /peg2_description
+      - /ring1_description
+    </rosparam>
+
+    <rosparam param="joint_state_topic_list">
+      - /gazebo/barrett_manager/joint_states
+      - /gazebo/w2barrett_manager/joint_states
+    </rosparam>
+
+  </node>
+</launch>
