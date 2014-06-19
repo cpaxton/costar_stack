@@ -59,9 +59,6 @@ void joint_state_callback(const sensor_msgs::JointState::ConstPtr &msg) {
  * planning state up-to-date so we can accurately return predicates.
  */
 void planning_scene_callback(const moveit_msgs::PlanningScene::ConstPtr &msg) {
-  std::cout << msg->world.collision_objects.size() << std::endl;
-  std::cout << msg->world.collision_objects.at(0).id << std::endl;
-  std::cout << msg->world.collision_objects.at(0).meshes.size() << std::endl;
   scene->usePlanningSceneMsg(*msg);
 }
 
@@ -74,9 +71,10 @@ void planning_scene_callback(const moveit_msgs::PlanningScene::ConstPtr &msg) {
 int main (int argc, char **argv) {
 
   std::string robot_description_param;
-  int call_get_planning_scene;
-  int world_only;
-  int verbosity;
+  int call_get_planning_scene; // mode for retrieving the planning scene
+  int world_only; // only show collisions to the world
+  int verbosity; // how much nonsense should we print out
+  double padding; // how much padding do we give robot links?
 
   ros::init(argc, argv, "predicator_robot_collision_node");
 
@@ -85,9 +83,15 @@ int main (int argc, char **argv) {
 
   nh_tilde.param("robot_description_param", robot_description_param, std::string("/robot_description"));
 
+  /* get_planning_scene modes:
+   * 0: don't get planning scene
+   * 1: get planning scene with a moveit get_planning_scene call
+   * 2: get planning scene with a gazebo planning scene plugin call
+   */
   nh_tilde.param("get_planning_scene", call_get_planning_scene, 1);
   nh_tilde.param("world_collisions_only", world_only, 1);
   nh_tilde.param("verbosity", verbosity, 0);
+  nh_tilde.param("padding", padding, 0.01);
 
   ros::Subscriber js_sub = nh.subscribe("/joint_states", 1000, joint_state_callback);
   ros::Subscriber ps_sub = nh.subscribe("/planning_scene", 1000, planning_scene_callback);
@@ -147,7 +151,7 @@ int main (int argc, char **argv) {
   ros::Rate rate(30);
   while(ros::ok()) {
     // set robot padding so that we actually detect collisions
-    scene->getCollisionRobotNonConst()->setPadding(0.01);
+    scene->getCollisionRobotNonConst()->setPadding(padding);
     //scene->getCollisionRobotNonConst()->setScale(30000.0);
     scene->propogateRobotPadding();
 
