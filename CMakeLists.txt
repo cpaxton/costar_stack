@@ -17,7 +17,7 @@ find_library(LIBFCL_LIBRARIES_FULL ${LIBFCL_LIBRARIES} ${LIBFCL_LIBRARY_DIRS})
 set(LIBFCL_LIBRARIES "${LIBFCL_LIBRARIES_FULL}")
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 ###################################
 ## catkin specific configuration ##
@@ -69,6 +69,10 @@ add_executable(predicator_collision_node
   src/predicator_collision.cpp
 )
 
+add_executable(predicator_robot_interaction_node
+  src/predicator_robot_interaction.cpp
+)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(predicator_geometry_node predicator_geometry_generate_messages_cpp)
@@ -80,6 +84,10 @@ target_link_libraries(predicator_geometry_node
 )
 
 target_link_libraries(predicator_collision_node
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(predicator_robot_interaction_node
   ${catkin_LIBRARIES}
 )
 

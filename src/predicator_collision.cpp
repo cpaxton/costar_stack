@@ -83,7 +83,7 @@ int main (int argc, char **argv) {
 
   nh_tilde.param("robot_description_param", robot_description_param, std::string("/robot_description"));
 
-  /* get_planning_scene modes:
+  /* get_planning_scene
    * 0: don't get planning scene
    * 1: get planning scene with a moveit get_planning_scene call
    * 2: get planning scene with a gazebo planning scene plugin call
