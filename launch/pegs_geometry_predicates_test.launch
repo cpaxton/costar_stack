@@ -7,6 +7,11 @@
     output="$(arg output)">
 
     <param name="height_threshold" value="0.1"/>
+    <param name="rel_x_threshold" value="0.1"/>
+    <param name="rel_y_threshold" value="0.1"/>
+    <param name="rel_z_threshold" value="0.1"/>
+    <param name="near_2D_threshold" value="0.2"/>
+    <param name="near_3D_threshold" value="0.25"/>
 
     <rosparam param="frames">
       - ring1/ring_link
@@ -17,14 +22,14 @@
       - wam/shoulder_yaw_link
       - wam/shoulder_pitch_link
       - wam/upper_arm_link
-      - wam/forarm_link
+      - wam/forearm_link
       - wam/wrist_yaw_link
       - wam/wrist_pitch_link
       - wam/wrist_palm_link
       - wam2/shoulder_yaw_link
       - wam2/shoulder_pitch_link
       - wam2/upper_arm_link
-      - wam2/forarm_link
+      - wam2/forearm_link
       - wam2/wrist_yaw_link
       - wam2/wrist_pitch_link
       - wam2/wrist_palm_link
