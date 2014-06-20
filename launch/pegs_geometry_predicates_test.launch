@@ -6,6 +6,8 @@
     pkg="predicator_geometry"
     output="$(arg output)">
 
+    <param name="height_threshold" value="0.1"/>
+
     <rosparam param="frames">
       - ring1/ring_link
       - peg1/peg_link
@@ -26,6 +28,7 @@
       - wam2/wrist_yaw_link
       - wam2/wrist_pitch_link
       - wam2/wrist_palm_link
+      - stage_link
     </rosparam>
 
   </node>
