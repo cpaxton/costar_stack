@@ -1,5 +1,5 @@
 <launch>
-  <node pkg="predicator_geometry"
+  <node pkg="predicator_collision"
     name="predicator_robot_interaction_node"
     type="predicator_robot_interaction_node"
     output="screen">
