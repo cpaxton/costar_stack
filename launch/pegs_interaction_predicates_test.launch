@@ -10,12 +10,21 @@
       - /peg1_description
       - /peg2_description
       - /ring1_description
+      - /stage_model
     </rosparam>
 
     <rosparam param="joint_state_topic_list">
       - /gazebo/barrett_manager/joint_states
       - /gazebo/w2barrett_manager/joint_states
     </rosparam>
+
+    <rosparam param="floating_root_list">
+      - id: ring1
+        frame: ring1/ring_link
+    </rosparam>
+
+    <param name="verbosity" value="1"/>
+    <param name="world_frame" value="/world"/>
 
   </node>
 </launch>

@@ -45,6 +45,7 @@
   <build_depend>moveit_ros</build_depend>
   <build_depend>predicator_msgs</build_depend>
   <build_depend>tf</build_depend>
+  <build_depend>tf_conversions</build_depend>
   <build_depend>urdf</build_depend>
   <build_depend>urdfdom</build_depend>
   <build_depend>moveit_core</build_depend>
@@ -61,6 +62,7 @@
   <run_depend>moveit_ros</run_depend>
   <run_depend>predicator_msgs</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>tf_conversions</run_depend>
   <run_depend>urdf</run_depend>
   <run_depend>urdfdom</run_depend>
   <run_depend>moveit_core</run_depend>
