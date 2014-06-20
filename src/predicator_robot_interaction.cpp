@@ -251,6 +251,13 @@ int main(int argc, char **argv) {
       typename std::vector<PlanningScene *>::iterator it2 = it1;
       unsigned int j = i+1;
       for(++it2; it2 != scenes.end(); ++it2, ++j) {
+      //unsigned int j = 0;
+      //for(typename std::vector<PlanningScene *>::iterator it2 = scenes.begin();
+      //    it2 != scenes.end();
+      //    ++it2, ++j)
+      //{
+
+        //if (i == j) continue;
 
         collision_detection::CollisionRobotConstPtr robot2 = (*it2)->getCollisionRobot();
 
@@ -266,20 +273,30 @@ int main(int argc, char **argv) {
         robot1->checkOtherCollision(req, res, *states[i], *robot2, *states[j]);
         double dist = robot1->distanceOther(*states[i], *robot2, *states[j]);
 
+        // write distance predicate
         predicator_msgs::PredicateStatement ps_dist;
         ps_dist.predicate = "distance";
         ps_dist.value = dist;
         ps_dist.num_params = 2;
         ps_dist.params[0] = robot1->getRobotModel()->getName();
         ps_dist.params[1] = robot2->getRobotModel()->getName();
-
         output.statements.push_back(ps_dist);
+
+        // the reverse is also true, so write it as well
+        predicator_msgs::PredicateStatement ps_dist2;
+        ps_dist2.predicate = "distance";
+        ps_dist2.value = dist;
+        ps_dist2.num_params = 2;
+        ps_dist2.params[0] = robot1->getRobotModel()->getName();
+        ps_dist2.params[1] = robot2->getRobotModel()->getName();
+        output.statements.push_back(ps_dist2);
 
         // iterate over all collisions
         for(collision_detection::CollisionResult::ContactMap::const_iterator cit = res.contacts.begin(); 
             cit != res.contacts.end(); 
             ++cit)
         {
+          // write the correct predicate
           predicator_msgs::PredicateStatement ps;
           ps.predicate = "touching";
           ps.value = 1.0;
@@ -287,6 +304,15 @@ int main(int argc, char **argv) {
           ps.params[0] = cit->first.first;
           ps.params[1] = cit->first.second;
           output.statements.push_back(ps);
+
+          // the reverse is also true, so update it
+          predicator_msgs::PredicateStatement ps2;
+          ps2.predicate = "touching";
+          ps2.value = 1.0;
+          ps2.num_params = 2;
+          ps2.params[0] = cit->first.second;
+          ps2.params[1] = cit->first.first;
+          output.statements.push_back(ps2);
         }
 
         if (verbosity > 1) {
