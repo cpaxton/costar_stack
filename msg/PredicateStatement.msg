@@ -1,7 +1,7 @@
+
+######
 # Statement of a predicate
-# 
 # ex: left_of(Ovaltine_1, Ovaltine_2, ur5)
-# 
 # This predicate would mean "Ovaltine_2 is to the left of Ovaltine_1 from the point of view of the ur5 robot".
 #######
 
