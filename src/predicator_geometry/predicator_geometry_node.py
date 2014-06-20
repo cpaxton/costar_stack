@@ -19,6 +19,24 @@ class GeometryPredicator(object):
             return (trans, rot)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException): pass
 
+    '''
+    getPredicateMessage()
+    loop over all frames we are supposed to examine
+    determine if there are any interesting relationships between them
+    '''
+    def getPredicateMessage(self):
+
+        msg = PredicateList()
+        msg.header.frame_id = rospy.get_name()
+
+        for frame1 in frames:
+            for frame2 in frames:
+                if frame1 == frame2:
+                    continue
+                else:
+
+            
+
 if __name__ == "__main__":
 
     rospy.init_node('predicator_geometry_node')
@@ -34,6 +52,5 @@ if __name__ == "__main__":
 
         while not rospy.is_shutdown():
             rate.sleep()
-
 
     except rospy.ROSInterruptException: pass
