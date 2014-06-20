@@ -1,0 +1,19 @@
+<launch>
+  <arg name="output" default="screen"/>
+
+  <node name="predicator_geometry_node"
+    type="predicator_geometry_node.py"
+    pkg="predicator_geometry"
+    output="$(arg output)">
+
+    <rosparam param="frames">
+      - ring1/ring_link
+      - peg1/peg_link
+      - peg1/base_link
+      - peg2/peg_link
+      - peg2/base_link
+    </rosparam>
+
+  </node>
+
+</launch>
