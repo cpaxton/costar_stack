@@ -26,6 +26,21 @@ def get_key(predicate, params):
             params[2])
 
 '''
+'''
+def parse_key(key):
+    ps = PredicateStatement()
+
+    elems = [word for word in key[1:-1].split(',') if len(word) > 0]
+    ps.predicate = elems[0];
+    if len(elems) > 1:
+        ps.params = ['', '', '']
+        ps.params[0:(len(elems)-1)] = elems[1:len(elems)]
+        ps.num_params = len(ps.params)
+
+    return ps
+
+
+'''
 get a predicate out of a string
 '''
 def get_predicate_from_key(key):
@@ -38,9 +53,10 @@ Aggregates lists of predicates arriving on a list topic, and publishes them.
 '''
 class Predicator(object):
 
-    def __init__(self, sub_topic, pub_topic, test_srv, get_srv):
+    def __init__(self, sub_topic, pub_topic, list_pub_topic, test_srv, get_srv):
         self._subscriber = rospy.Subscriber(sub_topic, PredicateList, self.callback)
         self._publisher = rospy.Publisher(pub_topic, PredicateSet)
+        self._list_publisher = rospy.Publisher(list_pub_topic, PredicateList)
         self._testService = rospy.Service(test_srv,TestPredicate, self.test_predicate)
         self._getService = rospy.Service(get_srv,GetAssignment, self.get_assignment)
         self._latest = {}
@@ -60,7 +76,7 @@ class Predicator(object):
                     new_params = copy.deepcopy(predicate.params)
                     #free_vars = ['','','']
 
-                    new_params[j] = ''
+                    new_params[j] = '*'
                     #free_vars[j] = predicate.params[j]
 
                     new_key = get_key(predicate.predicate, new_params)
@@ -70,6 +86,11 @@ class Predicator(object):
                     d[new_key].append(copy.deepcopy(predicate.params))
 
                 if(predicate.num_params > 1):
+                    '''
+                    NOTE: I changed this to let asterisks (*) mark free variables.
+                    '''
+                    tmp = ['', '', '']
+                    tmp[1:predicate.num_params] = ['*'] * predicate.num_params
                     pred_key = get_key(predicate.predicate, ['','',''])
                     if not pred_key in d:
                         d[pred_key] = []
@@ -81,7 +102,38 @@ class Predicator(object):
     publish a message with all true things
     '''
     def publish(self):
-        pass
+
+        # create a list of all received predicates and republish it
+        list_msg = PredicateList()
+        list_msg.header.frame_id = rospy.get_name()
+        list_msg.statements = []
+        for source, lst in self._latest.items():
+            for item in lst:
+                list_msg.statements.append(item)
+
+        self._list_publisher.publish(list_msg)
+
+        # loop over all values 
+        # create PredicateStatements for keys
+        # create PredicateAssignemnts with keys, set of other predicates
+        # set of PredicateStatements from list of values goes into each Assignment
+        set_msg = PredicateSet()
+        set_msg.header.frame_id = rospy.get_name()
+        for key, values in self._predicates.items():
+            pa = PredicateAssignment()
+            pa.statement = parse_key(key)
+
+            pa.values = []
+            for val in values:
+                ps = PredicateStatement()
+                ps.predicate = pa.statement.predicate
+                ps.num_params = pa.statement.num_params
+                ps.params = val
+                pa.values.append(ps)
+
+            set_msg.assignments.append(pa)
+
+        self._publisher.publish(set_msg)
 
     '''
     test_predicate (SERVICE)
@@ -126,7 +178,8 @@ if __name__ == '__main__':
     try:
 
         pc = Predicator('predicator/input',
-                'predicator/output',
+                'predicator/all',
+                'predicator/list',
                 'predicator/test_predicate',
                 'predicator/get_assignment')
 
