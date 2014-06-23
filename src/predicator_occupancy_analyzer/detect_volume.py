@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+"""
+Detects volume
+"""
+
 import rospy
 
 import cv2
@@ -12,6 +16,23 @@ from predicator_msgs.msg import *
 
 from threading import Lock
 from copy import deepcopy
+
+
+# Volume
+bounding_box = np.zeros([2, 3], np.float)
+occupied = False
+pct_filled = 0.1
+
+# Images
+im_pos = None
+im_depth = None
+im_rgb = None
+mask = np.ones([480, 640], bool)
+image_lock = Lock()
+frame_time = 0
+frame_seq = 0
+
+markers = None
 
 
 def draw_box(img, box):
@@ -40,20 +61,6 @@ def bbox_occupancy_check(pts, bounding_box, pct_filled=.2, output_mask=False):
         return occupied, in_bounds
     else:
         return occupied
-
-im_pos = None
-im_depth = None
-im_rgb = None
-
-global occupied, frame_time, frame_seq
-occupied = False
-frame_time = 0
-frame_seq = 0
-bounding_box = np.zeros([2, 3], np.float)
-markers = None
-pct_filled = 0.1
-mask = np.ones([480, 640], bool)
-image_lock = Lock()
 
 
 def markers_callback(data):
@@ -100,11 +107,11 @@ if 0:
     marker_uri = "ar_pose_marker"
     rospy.Subscriber(marker_uri, AlvarMarkers, markers_callback, queue_size=10)
     # rospy.set_param("bounding_box", [[0, 0, 0], [2000, 2000, 2000]])
-    rospy.set_param("bounding_box", [
+    rospy.set_param("volume", [
         [-0.32434006, -2.13698213,  0.32200004],
         [-0.00134006,  0.21201787,  0.6700004]])
     pct_filled = .2
-    bounding_box = np.array(rospy.get_param("bounding_box"))
+    bounding_box = np.array(rospy.get_param("volume"))
 
     rate = rospy.Rate(1)
     rate.sleep()
@@ -124,60 +131,21 @@ if 0:
 
 
 if __name__ == '__main__':
-    global occupied, frame_time, frame_seq, pct_filled, bounding_box
+    # global occupied, frame_time, frame_seq, pct_filled, bounding_box
     rospy.init_node('occupancy_analyzer')
     pub = rospy.Publisher('predicator/input', PredicateList)
 
-<<<<<<< HEAD
     cloud_uri = "/camera/depth_registered/points"
     rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
     marker_uri = "ar_pose_marker"
     rospy.Subscriber(marker_uri, AlvarMarkers, markers_callback, queue_size=10)
-=======
-    ps = PredicateList()
-    ps.header.frame_id = rospy.get_name()
 
-    ps.statements = [
-            PredicateStatement(
-                predicate='left_of',
-                num_params=3,
-                params=['Block1', 'Block2', 'ur5']),
-            PredicateStatement(
-                predicate='right_of',
-                num_params=3,
-                params=['Block2', 'Block1', 'ur5']),
-            PredicateStatement(
-                predicate='behind',
-                num_params=3,
-                params=['Block1', 'Block2', 'Block1']),
-            PredicateStatement(
-                predicate='ahead',
-                num_params=3,
-                params=['Block2', 'Block1', 'Block2']),
-            PredicateStatement(
-                predicate='left_of',
-                num_params=3,
-                params=['ur5', 'Block1', 'Block2']),
-            PredicateStatement(
-                predicate='right_of',
-                num_params=3,
-                params=['ur5', 'Block2', 'Block2']),
-            PredicateStatement(
-                predicate='touching',
-                num_params=2,
-                params=['Block1', 'Block2', '']),
-            PredicateStatement(
-                predicate='touching',
-                num_params=2,
-                params=['Block1', 'Block2', ''])
-            ]
->>>>>>> parent of 0bbebf9... object found messages to let us do some other tests/kinds of operations
-
-    rospy.set_param("bounding_box", [
-        [-0.32434006, -2.13698213,  0.32200004],
-        [-0.00134006,  0.21201787,  0.6700004]])
+    if 0:
+        rospy.set_param("volume", [
+            [-0.32434006, -2.13698213,  0.32200004],
+            [-0.00134006,  0.21201787,  0.6700004]])
     pct_filled = .2
-    bounding_box = np.array(rospy.get_param("bounding_box"))
+    bounding_box = np.array(rospy.get_param("volume"))
 
     rate = rospy.Rate(1)
     rate.sleep()

@@ -1,4 +1,17 @@
 #!/usr/bin/python
+"""
+This contains two methods of having the user input a bounding box
+
+--Usage--
+Ensure the Kinect is running with ROS.
+    roslaunch openni_launch openni.launch depth_registration:=true
+Run this program
+    rosrun predicator_occupancy_analyzer pick_volume
+
+--Output--
+A volume is sent to the ROS parameter server (param="volume")
+
+"""
 
 import rospy
 from predicator_msgs.msg import *
@@ -8,16 +21,19 @@ from pyKinectTools.utils.transformations import *
 from sensor_msgs.msg import PointCloud2
 import cv2
 
-
+# States
+pause_video = False
+waiting_state = True
 drawing_box = False
 drawing_box_done = False
-# bbox = [0, 0, 0, 0]
+# Global images
+im_pos = None
+im_rgb = None
+# Bounding box
 bbox_img = [[0, 0], [0, 0]]
 bbox = np.zeros([2, 3], np.float)
 bbox_sliders = np.zeros([2, 3], np.int)
 box_center = [0, 0]
-pause_video = False
-waiting_state = True
 
 
 def pause_video_callback(event, x, y, flags, param):
@@ -45,15 +61,9 @@ def bounding_box_callback(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONUP:
         drawing_box = False
         drawing_box_done = True
-    # if bbox_img[2] < 0:
-        # bbox[0] += bbox[2]
-        # bbox[2] *= -1
     if bbox_img[1][0] < 0:
         bbox_img[0][0] += bbox_img[1][0]
         bbox_img[0][1] *= -1
-    # if bbox[3] < 0:
-    #     bbox[1] += bbox[3]
-    #     bbox[3] *= -1
     if bbox_img[1][1] < 0:
         bbox_img[0][1] += bbox_img[1][1]
         bbox_img[1][1] *= -1
@@ -62,25 +72,8 @@ def bounding_box_callback(event, x, y, flags, param):
         if drawing_box:
             bbox_img[1][0] = x - bbox_img[0][0]
             bbox_img[1][1] = y - bbox_img[0][1]
-            # bbox[2] = x-bbox[0]
-            # bbox[3] = y-bbox[1]
 
 
-# def slider_x_min(val, x):
-#     global bbox_sliders
-#     bbox_sliders[0][0] = val
-#     # print val, x
-
-
-# def slider_x_max(val, x):
-#     global bbox_sliders
-#     bbox_sliders[0][1] = val
-#     print val, x, "yay"
-
-
-# def draw_box(img, box):
-#     """ Function to draw the rectangle """
-#     cv2.rectangle(img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
 def draw_box(img, box):
     """ Function to draw the rectangle """
     cv2.rectangle(img, (box[0][0], box[0][1]),
@@ -90,19 +83,19 @@ def draw_box(img, box):
 
 def get_bounding_box_sliders():
     cv2.destroyAllWindows()
-    cv2.namedWindow("get_bounding_box")
+    cv2.namedWindow("learn_volume")
 
     pause_video = False
 
     txt = "Click once to pause the video"
-    cv2.setMouseCallback("get_bounding_box", pause_video_callback)
+    cv2.setMouseCallback("learn_volume", pause_video_callback)
     while not pause_video:
         img_pause_rgb = im_rgb.copy()
         img_pause_pos = im_pos.copy()
 
         img = img_pause_rgb.copy()
         cv2.putText(img, txt, (10, 25), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
-        cv2.imshow("get_bounding_box", img)
+        cv2.imshow("learn_volume", img)
         cv2.waitKey(100)
 
     img_rgb_c = img_pause_rgb.copy()
@@ -113,21 +106,21 @@ def get_bounding_box_sliders():
     pos_diff = ((pos_max - pos_min)*1000.).astype(np.int)
 
     empty_fcn = lambda _: None
-    cv2.createTrackbar("X Min", "get_bounding_box", 0, pos_diff[0], empty_fcn)
-    cv2.createTrackbar("X Max", "get_bounding_box", pos_diff[0]-1, pos_diff[0], empty_fcn)
-    cv2.createTrackbar("Y Min", "get_bounding_box", 0, pos_diff[1], empty_fcn)
-    cv2.createTrackbar("Y Max", "get_bounding_box", pos_diff[1]-1, pos_diff[1], empty_fcn)
-    cv2.createTrackbar("Z Min", "get_bounding_box", 0, pos_diff[2], empty_fcn)
-    cv2.createTrackbar("Z Max", "get_bounding_box", pos_diff[2]-1, pos_diff[2], empty_fcn)
-    cv2.imshow("get_bounding_box", img)
+    cv2.createTrackbar("X Min", "learn_volume", 0, pos_diff[0], empty_fcn)
+    cv2.createTrackbar("X Max", "learn_volume", pos_diff[0]-1, pos_diff[0], empty_fcn)
+    cv2.createTrackbar("Y Min", "learn_volume", 0, pos_diff[1], empty_fcn)
+    cv2.createTrackbar("Y Max", "learn_volume", pos_diff[1]-1, pos_diff[1], empty_fcn)
+    cv2.createTrackbar("Z Min", "learn_volume", 0, pos_diff[2], empty_fcn)
+    cv2.createTrackbar("Z Max", "learn_volume", pos_diff[2]-1, pos_diff[2], empty_fcn)
+    cv2.imshow("learn_volume", img)
 
     while 1:
-        bbox_sliders[0][0] = cv2.getTrackbarPos('X Min', 'get_bounding_box')
-        bbox_sliders[1][0] = cv2.getTrackbarPos('X Max', 'get_bounding_box')
-        bbox_sliders[0][1] = cv2.getTrackbarPos('Y Min', 'get_bounding_box')
-        bbox_sliders[1][1] = cv2.getTrackbarPos('Y Max', 'get_bounding_box')
-        bbox_sliders[0][2] = cv2.getTrackbarPos('Z Min', 'get_bounding_box')
-        bbox_sliders[1][2] = cv2.getTrackbarPos('Z Max', 'get_bounding_box')
+        bbox_sliders[0][0] = cv2.getTrackbarPos('X Min', 'learn_volume')
+        bbox_sliders[1][0] = cv2.getTrackbarPos('X Max', 'learn_volume')
+        bbox_sliders[0][1] = cv2.getTrackbarPos('Y Min', 'learn_volume')
+        bbox_sliders[1][1] = cv2.getTrackbarPos('Y Max', 'learn_volume')
+        bbox_sliders[0][2] = cv2.getTrackbarPos('Z Min', 'learn_volume')
+        bbox_sliders[1][2] = cv2.getTrackbarPos('Z Max', 'learn_volume')
         bbox[0] = pos_min + bbox_sliders[0]/1000.
         bbox[1] = pos_min + bbox_sliders[1]/1000.
 
@@ -137,60 +130,77 @@ def get_bounding_box_sliders():
         z_mask = (img_pos_c[:, :, 2] > bbox[0][2]) * (img_pos_c[:, :, 2] < bbox[1][2])
         mask = x_mask & y_mask & z_mask
         mask[img_pos_c[:, :, 2] == 0] = False
-        cv2.imshow("get_bounding_box", img_rgb_c * mask[:, :, None])
+        cv2.imshow("learn_volume", img_rgb_c * mask[:, :, None])
         cv2.waitKey(30)
 
 
-def get_bounding_box():
+def learn_volume():
+    """ User clicks on a bounding box in the color image to specify the volume """
+    global drawing_box, drawing_box_done, box_center, bbox_img
+    global waiting_state, pause_video
+
     cv2.destroyAllWindows()
-    global pause_video, drawing_box, drawing_box_done, bbox, waiting_state
-    pause_video = False
     box_center = [0, 0]
     drawing_box_done = False
     bbox_img = [[0, 0], [0, 0]]
-    cv2.namedWindow("get_bounding_box")
+    cv2.namedWindow("learn_volume")
 
+    # Step 1: pause the video
     txt = "Click once to pause the video"
-    cv2.setMouseCallback("get_bounding_box", pause_video_callback)
+    print txt
+    cv2.setMouseCallback("learn_volume", pause_video_callback)
     waiting_state = True
+    pause_video = False
     while not pause_video:
         img_pause_rgb = im_rgb.copy()
         img_pause_pos = im_pos.copy()
 
         img = img_pause_rgb.copy()
         cv2.putText(img, txt, (10, 25), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
-        cv2.imshow("get_bounding_box", img)
-        cv2.waitKey(30)
-    while waiting_state:
-        cv2.waitKey(30)
+        cv2.imshow("learn_volume", img)
+        if cv2.waitKey(30) >= 0:
+            break
 
-    txt = "Click the center of your occupancy volume"
-    cv2.setMouseCallback("get_bounding_box", center_callback)
+    # Wait until mouse up
+    while waiting_state:
+        if cv2.waitKey(30) >= 0:
+            break
+
+    # Step 2: Click on point of interest
+    txt = "Click the center of your volume"
+    print txt
+    cv2.setMouseCallback("learn_volume", center_callback)
     waiting_state = True
     while box_center[0] == 0:
         img = img_pause_rgb.copy()
         cv2.putText(img, txt, (10, 25), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
-        if drawing_box:
-            draw_box(img, bbox_img)
-        cv2.imshow("get_bounding_box", img)
-        cv2.waitKey(30)
-    while waiting_state:
-        cv2.waitKey(30)
+        cv2.imshow("learn_volume", img)
 
+        if cv2.waitKey(30) >= 0:
+            break
+
+    # Wait until mouse up
+    while waiting_state:
+        if cv2.waitKey(30) >= 0:
+            break
+
+    # Step 3: Draw box around point of interest
     txt = "Draw a box around the volume"
-    cv2.setMouseCallback("get_bounding_box", bounding_box_callback)
+    cv2.setMouseCallback("learn_volume", bounding_box_callback)
     while not drawing_box_done:
         img = img_pause_rgb.copy()
         cv2.putText(img, txt, (10, 25), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
+
         if drawing_box:
             draw_box(img, bbox_img)
-        cv2.imshow("get_bounding_box", img)
-        cv2.waitKey(30)
+        cv2.imshow("learn_volume", img)
 
+        if cv2.waitKey(30) >= 0:
+            break
 
-    # volume_center = im_pos[box_center[1], box_center[1]]
-    # box_min = volume_center.min()
-    bbox_pos = im_pos[bbox_img[0][1]:bbox_img[0][1]+bbox_img[1][1], bbox_img[0][0]:bbox_img[0][0]+bbox_img[1][0]]
+    # (Step 4): Get min/max in bounding box
+    bbox_pos = img_pause_pos[bbox_img[0][1]:bbox_img[0][1]+bbox_img[1][1],
+                             bbox_img[0][0]:bbox_img[0][0]+bbox_img[1][0]]
     bbox_min = bbox_pos[bbox_pos[:, :, 2] != 0].reshape([-1, 3]).min(0)
     bbox_max = bbox_pos[bbox_pos[:, :, 2] != 0].reshape([-1, 3]).max(0)
 
@@ -198,22 +208,15 @@ def get_bounding_box():
 
     return bounding_box
 
-    # imshow(im_pos[bbox_img[0][1]:bbox_img[0][1]+bbox_img[1][1], bbox_img[0][0]:bbox_img[0][0]+bbox_img[1][0]])
 
-
-im_pos = None
-im_depth = None
-im_rgb = None
 def pointcloud_callback(data):
     """
     data : ros msg data
     """
-    global im_pos, im_depth, im_rgb
-    x = pointcloud2_to_array(data, split_rgb=True)
-    # with self.image_lock:
-    im_pos = np.dstack([x['x'], x['y'], x['z']])
+    global im_pos, im_rgb
+    img_pos_raw = pointcloud2_to_array(data, split_rgb=True)
+    im_pos = np.dstack([img_pos_raw['x'], img_pos_raw['y'], img_pos_raw['z']])
     im_pos = np.nan_to_num(im_pos)
-    im_depth = im_pos[:, :, 2]
 
     im_rgb = np.dstack([x['r'], x['g'], x['b']])
     im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
@@ -222,38 +225,21 @@ def pointcloud_callback(data):
     # frame_seq = data.header.seq
 
 
-rospy.init_node('occupancy_predicate')
-# pub = rospy.Publisher('predicator/input', PredicateList)
-cloud_uri = "/camera/depth_registered/points"
-rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
-
-rate = rospy.Rate(1)
-while im_rgb is None or im_pos is None:
-    rate.sleep()
-volume = get_bounding_box()
-rospy.set_param("volume", volume)
-
-
 if __name__ == '__main__':
-    rospy.init_node('occupancy_predicate')
-    # pub = rospy.Publisher('predicator/input', PredicateList)
+    rospy.init_node('learn_occupancy_volume')
+
+    # Update pointcloud
     cloud_uri = "/camera/depth_registered/points"
     rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
 
+    # Wait until we have a pointcloud
     rate = rospy.Rate(1)
     while im_rgb is None or im_pos is None:
         rate.sleep()
-    volume = get_bounding_box()
+
+    # Have user add volume
+    volume = learn_volume()
     rospy.set_param("volume", volume)
-    # volume = rospy.get_param("test_param")
 
-
-    print ps
-    print type(ps.statements[0].num_params)
-
-    try:
-        while not rospy.is_shutdown():
-            # pub.publish(ps)
-            rate.sleep()
-    except rospy.ROSInterruptException:
-        pass
+    print "Volume added:"
+    print volume
