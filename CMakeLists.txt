@@ -80,7 +80,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES predicator_dummy_module
-#  CATKIN_DEPENDS predicator_msgs
+  CATKIN_DEPENDS predicator_msgs
 #  DEPENDS system_lib
 )
 
