@@ -23,6 +23,7 @@ add_service_files(
   Save.srv
   Load.srv
   List.srv
+  AddType.srv
 )
 
 # Generate added messages and services with any dependencies listed here
