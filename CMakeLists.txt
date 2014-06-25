@@ -31,7 +31,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES predicator_geometry
-  CATKIN_DEPENDS moveit_msgs moveit_ros predicator_msgs tf urdf urdfdom
+  CATKIN_DEPENDS moveit_msgs moveit_core moveit_ros_perception moveit_ros_planning_interface predicator_msgs tf urdf urdfdom
   DEPENDS PkgConfig LIBFCL
 )
 
