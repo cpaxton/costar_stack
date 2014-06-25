@@ -26,15 +26,19 @@ class Librarian(object):
     Loads in the appropriate root parameter for the library of items.
     Advertises services, and loads some information about different items.
     '''
-    def __init__(self):
+    def __init__(self, start_srvs=True):
         root = rospy.get_param('~librarian_root','~/.costar/')
         self._root = expanduser(root)
-        print self._root
+        print "Librarian working directory: %s"%(self._root)
+
         self._records = {}
-        self._save_srv = rospy.Service('librarian/save', Save, self.save)
-        self._load_srv = rospy.Service('librarian/load', Load, self.load)
-        self._list_srv = rospy.Service('librarian/list', List, self.get_list)
-        self._load_param_srv = rospy.Service('librarian/load_params', List, self.load_params)
+
+        if start_srvs == True:
+            self._save_srv = rospy.Service('librarian/save', Save, self.save)
+            self._load_srv = rospy.Service('librarian/load', Load, self.load)
+            self._list_srv = rospy.Service('librarian/list', List, self.get_list)
+            self._load_param_srv = rospy.Service('librarian/load_params', List, self.load_params)
+            self._add_type_srv = rospy.Service('librarian/add_type', AddType, self.add_type)
 
         self.init()
         self.load_records()
@@ -61,23 +65,46 @@ class Librarian(object):
             path = join(self._root, req.type)
             filename = join(path, req.id)
 
+            if not os.path.exists(path):
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.NO_SUCH_TYPE
+                resp.status.info = "Type %s does not exist!"%(req.type)
+            else:
+
+                # get the operation
+                if req.operation == SaveRequest.APPEND:
+                    op = 'a'
+                else:
+                    op = 'w'
+
+                # save the file
+                out = open(filename, op)
+                out.write(req.text)
+                out.close()
+
+                resp.status.result = Status.SUCCESS
+        
+        return resp
+
+    '''
+    add_type()
+    Add a type of object to store in the Librarian workspace.
+    '''
+    def add_type(self, req):
+        resp = AddTypeResponse()
+        if len(req.type) == 0:
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.TYPE_MISSING
+                resp.status.info = "No type provided!"
+        else:
+            path = join(self._root, req.type)
+
             # create a directory for objects of this type if necessary
             if not os.path.exists(path):
                 os.mkdir(path)
 
-            # get the operation
-            if req.operation == SaveRequest.APPEND:
-                op = 'a'
-            else:
-                op = 'w'
-
-            # save the file
-            out = open(filename, op)
-            out.write(req.text)
-            out.close()
-
             resp.status.result = Status.SUCCESS
-        
+
         return resp
 
     '''
@@ -105,7 +132,6 @@ class Librarian(object):
             else:
                 inf = open(filename, 'r')
                 resp.text = inf.read()
-                print resp.text
 
                 resp.status.result = Status.SUCCESS
 
