@@ -1,0 +1,11 @@
+string id
+string type
+string text
+
+byte operation
+
+byte WRITE_SAFE=0
+byte WRITE_OVERWRITE=1
+byte WRITE_APPEND=2
+---
+librarian_msgs/Status status
