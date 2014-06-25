@@ -208,7 +208,6 @@ class NodeSelector(Node):
         print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
 
-
 class NodeSequence(Node):
     """sequence type node
 
@@ -248,7 +247,6 @@ class NodeSequence(Node):
         self.node_status_ = 'SUCCESS'
         print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
-
 
 class NodeParallel(Node):
 
@@ -297,7 +295,6 @@ class NodeParallel(Node):
             print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
             return self.node_status_
 
-
 class NodeRoot(Node):
 
     def __init__(self, name, label):
@@ -325,6 +322,7 @@ class NodeAction(Node):
         color='#92D665'
         super(NodeAction,self).__init__(False,parent,name,L,color)
         self.name_ = name
+        
     def get_node_type(self):
         return 'ACTION'
 
