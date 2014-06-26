@@ -9,7 +9,7 @@ if __name__ == '__main__':
     para = NodeParallel(root,'para','detect_obj_move_to_bin')
     act_detect_object = NodeAction(para,'act_detect_object','detect_obj')
     sec_pick_move_to_bin = NodeSequence(para,'sec_pick_move_to_bin','pick_move_to_bin')
-    cond_found_obj = NodeParamCondition(sec_pick_move_to_bin,'cond_found_obj','object_found','test','test')
+    cond_found_obj = NodeCondition(sec_pick_move_to_bin,'cond_found_obj','object_found','test','test')
     sec_pick_up = NodeSequence(sec_pick_move_to_bin,'sec_pick_up','pick_up')
     act_move_to_obj = NodeAction(sec_pick_up,'act_move_to_obj','move_to_object')
     act_grab = NodeAction(sec_pick_up,'act_grab','grab')

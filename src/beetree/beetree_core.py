@@ -130,6 +130,52 @@ class Node(object):
         self.next_brother_.set_children_number(self.children_number_+1)
         return self.next_brother_
 
+    def remove_child(self,child_name):
+        if self.number_children_ == 0:
+            print 'node has no childern'
+        elif self.number_children_ == 1:
+            self.first_child_.remove_all_children()
+            self.first_child_ = None
+            self.curr_child_ = None
+            self.number_children_ = 0
+        else:
+            current = self.first_child_
+            for n in range(self.number_children_):
+                if child_name == current.name_:
+                    if current.prev_brother_ == None: 
+                        # This is the first child of several so we should point 
+                        # to the its brother as the first one, and remove it
+                        current.remove_all_children()
+                        current.next_brother_.prev_brother_ = None
+                        self.first_child_ = self.curr_child_ = current.next_brother_
+                        break
+                    else:
+                        # This is the brother of a previous child
+                        current.remove_all_children()
+                        if current.next_brother_ == None:
+                            # This is the last brother
+                            current.prev_brother_.next_brother_ = None
+                        else:
+                            # This has a next brother
+                            current.next_brother_.prev_brother_ = current.prev_brother_
+                            current.prev_brother_.next_brother_ = current.next_brother_
+                        break
+                else: 
+                    # get next sibling if this one doesnt match
+                    current = current.next_brother_
+            self.number_children_ -= 1
+
+    def remove_all_children(self):
+        current = self.first_child_
+        for n in range(self.number_children_):
+            current.remove_all_children()
+            current = current.next_brother_
+        self.first_child_ = self.curr_child_ = None
+        self.number_children_ = 0
+
+    def remove_self(self):
+        self.parent_.remove_child(self.name_)
+
     def print_info(self):
         """prints the nodes info
         prints the nodes info
@@ -192,16 +238,16 @@ class NodeSelector(Node):
 
             print 'checking child status: ' + self.child_status_
             if self.child_status_ == 'NODE_ERROR':
-                return set_status('NODE_ERROR')
+                return self.set_status('NODE_ERROR')
             elif self.child_status_ == 'RUNNING':
-                return set_status('RUNNING')
+                return self.set_status('RUNNING')
             elif self.child_status_ == 'SUCCESS':
-                return set_status('SUCCESS')
+                return self.set_status('SUCCESS')
 
             print 'pointing self.exec_child_ to next brother'
             self.exec_child_ = self.exec_child_.next_brother_
 
-        return set_status('FAILURE')
+        return self.set_status('FAILURE')
 
 class NodeSequence(Node):
     """sequence type node
@@ -223,14 +269,14 @@ class NodeSequence(Node):
         for i in range(self.number_children_):
             self.child_status_ = self.exec_child_.execute()
             if self.child_status_ == 'NODE_ERROR':
-                return set_status('NODE_ERROR')
+                return self.set_status('NODE_ERROR')
             elif self.child_status_ == 'RUNNING':
-                return set_status('RUNNING')
+                return self.set_status('RUNNING')
             elif self.child_status_ == 'FAILURE':
-                return set_status('FAILURE')
+                return self.set_status('FAILURE')
             self.exec_child_ = self.exec_child_.next_brother_
 
-        return set_status('SUCCESS')
+        return self.set_status('SUCCESS')
 
 class NodeParallel(Node):
     def __init__(self,parent,name,label):
@@ -259,13 +305,13 @@ class NodeParallel(Node):
             self.exec_child_ = self.exec_child_.next_brother_
 
         if number_error > 0:
-            return set_status('NODE_ERROR')
+            return self.set_status('NODE_ERROR')
         elif number_success>= self.number_children_/2:
-            return set_status('SUCCESS')
+            return self.set_status('SUCCESS')
         elif number_failure >= self.number_children_/2:
-            return set_status('FAILURE')
+            return self.set_status('FAILURE')
         else:
-            return set_status('RUNNING')
+            return self.set_status('RUNNING')
 
 class NodeRoot(Node):
     def __init__(self, name, label):
@@ -294,7 +340,7 @@ class NodeAction(Node):
         return 'Action'
     def execute(self):
         print 'Executing Action: (' + self.name_ + ')'
-        return set_status('SUCCESS')
+        return self.set_status('SUCCESS')
 
 class NodeService(Node):
     def __init__(self,parent,name,label):
@@ -306,7 +352,7 @@ class NodeService(Node):
         return 'Service'
     def execute(self):
         print 'Executing Service: ' + self.name_
-        return set_status('SUCCESS')
+        return self.set_status('SUCCESS')
 
 class NodeCondition(Node):
     def __init__(self,parent,name,label,param_name=None,desired_value=None):
@@ -321,7 +367,7 @@ class NodeCondition(Node):
         return 'Condition'
     def execute(self):
         print 'Executing Condition: (' + self.name_ + ')'
-        return set_status('SUCCESS')
+        return self.set_status('SUCCESS')
 
 class NodeDecoratorRunNumber(Node):
     def __init__(self,parent,name,label,runs=1):
@@ -342,8 +388,8 @@ class NodeDecoratorRunNumber(Node):
             elif self.child_status_ == 'RUNNING':
                 pass
             elif self.child_status_ == 'FAILURE':
-                return set_status('FAILURE')
+                return self.set_status('FAILURE')
         else:
-            return set_status('SUCCESS')
+            return self.set_status('SUCCESS')
 
 
