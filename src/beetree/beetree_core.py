@@ -46,9 +46,13 @@ class Node(object):
             self.depth_ = 0
             self.parent_ = None
         else:
-            self.depth_ = parent.depth_ + 1
-            self.parent_ = parent
-            self.parent_.add_child(self)
+            if parent != None:
+                self.depth_ = parent.depth_ + 1
+                self.parent_ = parent
+                self.parent_.add_child(self)
+            else:
+                # No Parent assigned, wont be added to the tree
+                pass
 
     def generate_dot(self):
         """generates dot code for this node
@@ -108,12 +112,24 @@ class Node(object):
         if self.number_children_ == 0:
             print self.name_ + ': adding first child -> ' + my_child.name_
             self.first_child_ = self.curr_child_ = my_child
+            self.number_children_+=1
         else:
             print self.name_ + ': adding brother -> ' + my_child.name_
             self.curr_child_ = self.curr_child_.add_brother(my_child, self.number_children_)
-
-        self.number_children_+=1
+            self.number_children_+=1
         return self.curr_child_
+
+    def add_sibling(self,sibling):
+        # Assign sibling depth and parent
+        sibling.depth_ = self.depth_
+        sibling.parent_ = self.parent_
+        # Increment parent's number of children
+        self.parent_.number_children_+=1
+        # Add sibling to the right of this node
+        next = self.next_brother_
+        self.next_brother_ = sibling
+        if next != None:
+            self.next_brother_.next_brother_ = next
 
     def add_brother(self,my_brother,children_number):
         """adds a brother to the node
