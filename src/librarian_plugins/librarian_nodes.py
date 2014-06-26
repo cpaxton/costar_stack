@@ -36,11 +36,11 @@ class LoadTextFromFileGUI(NodeGUI):
 
 class SaveParameterGUI(NodeGUI):
     def __init__(self):
-        super(SaveParametersGUI,self).__init__()
+        super(SaveParameterGUI,self).__init__()
 
     def generate(self,parent=None):
         if all([self.name.full(),self.label.full()]):
-            return SaveParameters(parent,self.get_name(),self.get_label())
+            return SaveParameter(parent,self.get_name(),self.get_label())
         else:
             return 'ERROR: node not properly defined'
 

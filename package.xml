@@ -32,20 +32,20 @@
     <!-- Beetree Service Plugins -->
     <instructor plugin="librarian_plugins.LoadParametersGUI" type="SERVICE"
       description="Load parameters to the parameter server from a Librarian file"
-      name="Load Parameters Service Node"/>
+      name="Load Parameters Service"/>
 
     <instructor plugin="librarian_plugins.SaveParameterGUI" type="SERVICE"
       description="Save a parameter to a file"
-      name="Save Parameter GUI"/>
+      name="Save Parameter Service"/>
 
     <!-- Beetree Query Plugins -->
     <instructor plugin="librarian_plugins.LoadTextFromFileGUI" type="QUERY"
       description="Retrieve the body of a Librarian file"
-      name="Load Text Query Node"/>
+      name="Load Text Query"/>
 
     <instructor plugin="librarian_plugins.LoadEntryFromFileGUI" type="QUERY"
       description="Retrieve an entry by key from a Librarian YAML file"
-      name="Load Entry Query Node"/>
+      name="Load Entry Query"/>
 
   </export>
 </package>
