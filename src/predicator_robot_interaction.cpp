@@ -23,6 +23,7 @@
 // predicator
 #include <predicator_msgs/PredicateList.h>
 #include <predicator_msgs/PredicateStatement.h>
+#include <predicator_msgs/ValidPredicates.h>
 
 // boost includes
 #include <boost/bind/bind.hpp>
@@ -87,6 +88,7 @@ int main(int argc, char **argv) {
   nh_tilde.param("world_frame", world_frame, std::string("/world"));
 
   ros::Publisher pub = nh.advertise<predicator_msgs::PredicateList>("/predicator/input", 1000);
+  ros::Publisher vpub = nh.advertise<predicator_msgs::ValidPredicates>("/predicator/valid_input", 1000);
   tf::TransformListener listener;
 
   if(nh_tilde.hasParam("description_list")) {
@@ -113,6 +115,11 @@ int main(int argc, char **argv) {
     ROS_WARN("An unequal number of joint state and robot topics was provided!");
   }
 
+  // define valid predicates topic
+  predicator_msgs::ValidPredicates pval;
+  pval.predicates.push_back("touching");
+  pval.value_predicates.push_back("mesh_distance");
+
   // read in topics and descriptions
   for(unsigned int i = 0; i < descriptions.size(); ++i) {
     std::string desc;
@@ -134,6 +141,14 @@ int main(int argc, char **argv) {
     PlanningScene *scene = new PlanningScene(model);
     scene->getCollisionRobotNonConst()->setPadding(padding);
     scene->propogateRobotPadding();
+
+    // get all link names as possible assignments
+    for(typename std::vector<std::string>::const_iterator it = model->getLinkModelNames().begin();
+        it != model->getLinkModelNames().end();
+        ++it)
+    {
+      pval.assignments.push_back(*it);
+    }
 
     robots.push_back(model);
     scenes.push_back(scene);
@@ -284,7 +299,7 @@ int main(int argc, char **argv) {
 
         // the reverse is also true, so write it as well
         predicator_msgs::PredicateStatement ps_dist2;
-        ps_dist2.predicate = "distance";
+        ps_dist2.predicate = "mesh_distance";
         ps_dist2.value = dist;
         ps_dist2.num_params = 2;
         ps_dist2.params[0] = robot1->getRobotModel()->getName();
@@ -324,6 +339,7 @@ int main(int argc, char **argv) {
     }
 
     pub.publish(output);
+    vpub.publish(pval);
 
     rate.sleep();
   }
