@@ -8,9 +8,10 @@ from predicator_msgs.msg import *
 
 class GeometryPredicator(object):
 
-    def __init__(self, pub_topic):
+    def __init__(self, pub_topic, valid_pub_topic):
         self._listener = tf.TransformListener()
         self._publisher = rospy.Publisher(pub_topic, PredicateList)
+        self._valid_publisher = rospy.Publisher(valid_pub_topic, ValidPredicates)
         self._frames = rospy.get_param('~frames')
         self._world_frame = rospy.get_param('~world_frame','world')
         self._higher_margin = rospy.get_param('~height_threshold',0.1)
@@ -178,6 +179,34 @@ class GeometryPredicator(object):
         return msg
 
     '''
+    addDistancePredicates()
+    Get the distance between two transforms
+    '''
+    def addDistancePredicates(self, msg, frame1, frame2):
+        try:
+            (trans1, rot1) = self._listener.lookupTransform(self._world_frame, frame1, rospy.Time(0))
+            (trans2, rot2) = self._listener.lookupTransform(self._world_frame, frame2, rospy.Time(0))
+
+            dx = trans2[0] - trans1[0]
+            dy = trans2[1] - trans1[1]
+            dz = trans2[2] - trans1[2]
+
+            distance = np.sqrt((dx*dx)+(dy*dy)+(dz*dz))
+            
+            ps = PredicateStatement()
+            ps.predicate = 'tf_distance'
+            ps.params[0] = frame1
+            ps.params[1] = frame2
+            ps.num_params = 2
+            ps.value = distance
+            msg.statements.append(ps) 
+
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException): pass
+
+        return msg
+
+
+    '''
     getPredicateMessage()
     loop over all frames we are supposed to examine
     determine if there are any interesting relationships between them
@@ -195,11 +224,35 @@ class GeometryPredicator(object):
                     # check height predicates
                     msg = self.addHeightPredicates(msg, frame1, frame2)
                     msg = self.addNearPredicates(msg, frame1, frame2)
+                    msg = self.addDistancePredicates(msg, frame1, frame2)
 
                     for ref in self._frames:
                         msg = self.addRelativeDirectionPredicates(msg, frame1, frame2, ref)
 
         return msg
+
+    '''
+    getValidPredicatesMessage()
+    return information about what possible things this can publish
+    '''
+    def getValidPredicatesMessage(self):
+        msg = ValidPredicates()
+        msg.predicates = ['left_of', 'right_of', 'up_from',
+                'down_from',
+                'in_front_of',
+                'in_back_of',
+                'near_xy',
+                'near_xyz',
+                'higher_than',
+                'lower_than']
+        msg.value_predicates = ['tf_distance']
+        msg.assignments = [frame for frame in self._frames]
+        msg.assignments.append(self._world_frame)
+
+        return msg
+
+    def publishValid(self, msg):
+        self._valid_publisher.publish(msg)
 
     '''
     publish()
@@ -219,11 +272,15 @@ if __name__ == "__main__":
 
     try:
 
-        gp = GeometryPredicator('/predicator/input')
+        gp = GeometryPredicator('/predicator/input', '/predicator/valid_input')
 
         while not rospy.is_shutdown():
             msg = gp.getPredicateMessage()
             gp.publish(msg)
+
+            valid_msg = gp.getValidPredicatesMessage()
+            gp.publishValid(valid_msg)
+
             rate.sleep()
 
     except rospy.ROSInterruptException: pass
