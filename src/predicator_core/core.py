@@ -26,6 +26,7 @@ def get_key(predicate, params):
             params[2])
 
 '''
+get a predicate out of a string
 '''
 def parse_key(key):
     ps = PredicateStatement()
@@ -38,13 +39,6 @@ def parse_key(key):
         ps.num_params = len(ps.params)
 
     return ps
-
-
-'''
-get a predicate out of a string
-'''
-def get_predicate_from_key(key):
-    pass
 
 '''
 Predicator()
