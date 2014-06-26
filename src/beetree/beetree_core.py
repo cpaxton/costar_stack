@@ -190,7 +190,10 @@ class Node(object):
         self.number_children_ = 0
 
     def remove_self(self):
-        self.parent_.remove_child(self.name_)
+        if self.parent_ != None:
+            self.parent_.remove_child(self.name_)
+        else:
+            print 'You cannot remove the root node'
 
     def print_info(self):
         """prints the nodes info
