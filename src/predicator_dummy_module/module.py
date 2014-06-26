@@ -6,6 +6,13 @@ from predicator_msgs.msg import *
 if __name__ == '__main__':
     rospy.init_node('predicator_dummy_module')
     pub = rospy.Publisher('predicator/input', PredicateList)
+    vpub = rospy.Publisher('predicator/valid_input', ValidPredicates)
+
+    pval = ValidPredicates()
+    pval.predicates = ['left_of', 'right_of', 'behind',
+            'ahead', 'found_object']
+    pval.value_predicates = []
+    pval.assignments = ['Block1', 'Block2', 'ur5']
 
     ps = PredicateList()
     ps.header.frame_id = rospy.get_name()
@@ -61,5 +68,6 @@ if __name__ == '__main__':
     try:
         while not rospy.is_shutdown():
             pub.publish(ps)
+            vpub.publish(pval)
             rate.sleep()
     except rospy.ROSInterruptException: pass
