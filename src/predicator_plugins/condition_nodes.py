@@ -10,6 +10,10 @@ from PyQt4.QtCore import *
 import beetree; from beetree import Node
 from instructor import NodeGUI
 from instructor.instructor_qt import NamedField
+# Thread for service calls
+from threading import Thread
+
+from predicator_core.srv import *
 
 # Node Wrappers -----------------------------------------------------------
 class NodeConditionTestPredicateGUI(NodeGUI):
@@ -33,39 +37,62 @@ class NodeConditionTestPredicateGUI(NodeGUI):
         else:
             return 'ERROR: node not properly defined'
 
-
 # Nodes -------------------------------------------------------------------
 class NodeConditionTestPredicate(Node):
     def __init__(self,parent,name,label,predicate_name=None,param1=None,param2=None,param3=None):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'
         super(NodeConditionTestPredicate,self).__init__(False,parent,name,L,color,'ellipse')
+        self.service_thread = Thread(target=self.make_service_call)
         self.predicate_ = predicate_name
         self.param1_ = param1
         self.param2_ = param2
         self.param3_ = param3
+        self.running = False
+        self.finished_with_success = None
     def get_node_type(self):
         return 'CONDITION'
     def get_node_name(self):
         return 'Condition'
+
     def execute(self):
+        #print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         print 'Executing Condition: (' + self.name_ + ')'
-        # Check for value on parameter server
-        '''
-        if not rospy.has_param(self.param_name_):
-            self.node_status_ = 'FAILURE'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
-        # Get value
-        value = rospy.get_param(self.param_name_)
-        # Check if value matches
-        if value == self.desired_value_:
-            self.node_status_ = 'SUCCESS'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
+        if not self.running: # Thread is not running
+            if self.finished_with_success == None: # Service was never called
+                try:
+                    self.service_thread.start()
+                    return set_status('RUNNING')
+                    self.running = True
+                except Exception, errtxt:
+                    return set_status('FAILURE')
+                    self.running = False
         else:
-            self.node_status_ = 'FAILURE'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
-        '''
+            # If thread is running
+            if self.service_thread.is_alive():
+                return set_status('RUNNING')
+            else:
+                if self.finished_with_success == True:
+                    return set_status('SUCCESS')
+                    self.running = False
+                else:
+                    return set_status('FAILURE')
+                    self.running = False
         return self.node_status_
+
+    def make_service_call(self,*args):
+        req = TestPredicateRequest
+        req.statement.predicate = self.predicate
+        req.params[0] = self.param1
+        req.params[1] = self.param2
+        req.params[2] = self.param3
+        rospy.wait_for_service('predicator/test_predicate')
+        try:
+            test_service = rospy.ServiceProxy('predicator/test_predicate', TestPredicate)
+            self.result = test_service(request)
+            self.finished_with_success = self.result.found
+        except rospy.ServiceException, e:
+            print e
+            self.finished_with_success = False
+
+
