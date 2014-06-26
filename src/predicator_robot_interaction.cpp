@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
 
         // write distance predicate
         predicator_msgs::PredicateStatement ps_dist;
-        ps_dist.predicate = "distance";
+        ps_dist.predicate = "mesh_distance";
         ps_dist.value = dist;
         ps_dist.num_params = 2;
         ps_dist.params[0] = robot1->getRobotModel()->getName();
