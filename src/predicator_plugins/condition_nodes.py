@@ -12,7 +12,7 @@ from instructor import NodeGUI
 from instructor.instructor_qt import NamedField
 
 # Node Wrappers -----------------------------------------------------------
-class NodeParamConditionGUI(NodeGUI):
+class NodeConditionTestPredicateGUI(NodeGUI):
     def __init__(self):
         super(NodeParamConditionGUI,self).__init__()
         self.param = NamedField('Parameter','')
@@ -22,13 +22,13 @@ class NodeParamConditionGUI(NodeGUI):
 
     def generate(self,parent=None):
         if all([self.name.full(),self.label.full(),self.param.full(),self.value.full()]):
-            return NodeParamCondition(parent,self.get_name(),self.get_label(),self.param.get(),self.value.get())
+            return NodeConditionTestPredicate(parent,self.get_name(),self.get_label(),self.param.get(),self.value.get())
         else:
             return 'ERROR: node not properly defined'
 
 
 # Nodes -------------------------------------------------------------------
-class NodeParamCondition(Node):
+class NodeConditionTestPredicate(Node):
     def __init__(self,parent,name,label,param_name=None,desired_value=None):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'

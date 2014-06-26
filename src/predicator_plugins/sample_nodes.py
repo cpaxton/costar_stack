@@ -14,6 +14,7 @@ from instructor.instructor_qt import NamedField
 from instructor_plugins.srv import *
 
 # Sample Node Wrappers -----------------------------------------------------------
+'''
 class NodeActionSampleGUI(NodeGUI):
     def __init__(self):
         super(NodeActionSampleGUI,self).__init__()
@@ -33,19 +34,20 @@ class NodeServiceSampleGUI(NodeGUI):
             return NodeServiceSample(parent,self.get_name(),self.get_label())
         else:
             return 'ERROR: node not properly defined'
+'''
 
-class NodeQuerySampleGUI(NodeGUI):
+class NodeQueryClosestObjectGUI(NodeGUI):
     def __init__(self):
         super(NodeQuerySampleGUI,self).__init__()
 
     def generate(self,parent=None):
         if all([self.name.full(),self.label.full()]):
-            return NodeQuerySample(parent,self.get_name(),self.get_label())
+            return NodeQueryClosestObject(parent,self.get_name(),self.get_label())
         else:
             return 'ERROR: node not properly defined'
 
 # Sample Nodes -------------------------------------------------------------------
-class NodeQuerySample(Node):
+class NodeQueryClosestObject(Node):
     def __init__(self,parent,name,label):
         color='#5B8EEB'
         super(NodeQuerySample,self).__init__(False,parent,name,label,color)
@@ -60,6 +62,7 @@ class NodeQuerySample(Node):
         print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
 
+'''
 from threading import Thread
 class NodeServiceSample(Node):
     def __init__(self,parent,name,label):
@@ -103,3 +106,5 @@ class NodeServiceSample(Node):
         except rospy.ServiceException, e:
             print e
             self.finished_with_success = False
+
+'''
