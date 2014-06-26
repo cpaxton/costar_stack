@@ -30,27 +30,22 @@
   <export>
 
     <!-- Beetree Service Plugins -->
-    <instructor plugin="librarian.LoadParamsGUI" type="SERVICE"
+    <instructor plugin="librarian_plugins.LoadParametersGUI" type="SERVICE"
       description="Load parameters to the parameter server from a Librarian file"
       name="Load Parameters Service Node"/>
 
-    <instructor plugin="librarian.SaveParameterGUI" type="SERVICE"
+    <instructor plugin="librarian_plugins.SaveParameterGUI" type="SERVICE"
       description="Save a parameter to a file"
       name="Save Parameter GUI"/>
 
     <!-- Beetree Query Plugins -->
-    <instructor plugin="librarian.LoadTextFromFileGUI" type="QUERY"
+    <instructor plugin="librarian_plugins.LoadTextFromFileGUI" type="QUERY"
       description="Retrieve the body of a Librarian file"
       name="Load Text Query Node"/>
 
-    <instructor plugin="librarian.LoadEntryFromFileGUI" type="QUERY"
+    <instructor plugin="librarian_plugins.LoadEntryFromFileGUI" type="QUERY"
       description="Retrieve an entry by key from a Librarian YAML file"
       name="Load Entry Query Node"/>
-
-    <!-- Beetree Condition Plugins -->
-    <instructor plugin="predicator.NodeConditionTestPredicateGUI" type="QUERY"
-      description="Test to see if a given predicate exists and is true"
-      name="Test Predicate Condition Node"/>
 
   </export>
 </package>
