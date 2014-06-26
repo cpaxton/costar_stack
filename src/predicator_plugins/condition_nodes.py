@@ -15,26 +15,35 @@ from instructor.instructor_qt import NamedField
 class NodeConditionTestPredicateGUI(NodeGUI):
     def __init__(self):
         super(NodeConditionTestPredicateGUI,self).__init__()
-        self.param = NamedField('Parameter','')
-        self.value = NamedField('Check Value','')
-        self.layout_.addWidget(self.param)
-        self.layout_.addWidget(self.value)
+        self.predicate = NamedField('Predicate','')
+        self.param1 = NamedField('Parameter 1','')
+        self.param2 = NamedField('Parameter 2','')
+        self.param3 = NamedField('Parameter 3','')
+        self.layout_.addWidget(self.predicate)
+        self.layout_.addWidget(self.param1)
+        self.layout_.addWidget(self.param2)
+        self.layout_.addWidget(self.param3)
 
     def generate(self,parent=None):
-        if all([self.name.full(),self.label.full(),self.param.full(),self.value.full()]):
-            return NodeConditionTestPredicate(parent,self.get_name(),self.get_label(),self.param.get(),self.value.get())
+        if all([self.name.full(),self.label.full(),self.predicate.full()]):
+            return NodeConditionTestPredicate(parent,self.get_name(),self.get_label(),self.predicate.get(),
+                    self.param1.get(),
+                    self.param2.get(),
+                    self.param3.get())
         else:
             return 'ERROR: node not properly defined'
 
 
 # Nodes -------------------------------------------------------------------
 class NodeConditionTestPredicate(Node):
-    def __init__(self,parent,name,label,param_name=None,desired_value=None):
+    def __init__(self,parent,name,label,predicate_name=None,param1=None,param2=None,param3=None):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'
         super(NodeConditionTestPredicate,self).__init__(False,parent,name,L,color,'ellipse')
-        self.desired_value_ = desired_value
-        self.param_name_ = param_name
+        self.predicate_ = predicate_name
+        self.param1_ = param1
+        self.param2_ = param2
+        self.param3_ = param3
     def get_node_type(self):
         return 'CONDITION'
     def get_node_name(self):
@@ -42,6 +51,7 @@ class NodeConditionTestPredicate(Node):
     def execute(self):
         print 'Executing Condition: (' + self.name_ + ')'
         # Check for value on parameter server
+        '''
         if not rospy.has_param(self.param_name_):
             self.node_status_ = 'FAILURE'
             print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
@@ -57,3 +67,5 @@ class NodeConditionTestPredicate(Node):
             self.node_status_ = 'FAILURE'
             print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
             return self.node_status_
+        '''
+        return self.node_status_
