@@ -308,7 +308,6 @@ class NodeService(Node):
         print 'Executing Service: ' + self.name_
         return set_status('SUCCESS')
 
-
 class NodeCondition(Node):
     def __init__(self,parent,name,label,param_name=None,desired_value=None):
         L = '( condition )\\n' + label.upper()
@@ -323,7 +322,6 @@ class NodeCondition(Node):
     def execute(self):
         print 'Executing Condition: (' + self.name_ + ')'
         return set_status('SUCCESS')
-
 
 class NodeDecoratorRunNumber(Node):
     def __init__(self,parent,name,label,runs=1):
