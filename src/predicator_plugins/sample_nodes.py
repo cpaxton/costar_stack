@@ -38,7 +38,7 @@ class NodeServiceSampleGUI(NodeGUI):
 
 class NodeQueryClosestObjectGUI(NodeGUI):
     def __init__(self):
-        super(NodeQuerySampleGUI,self).__init__()
+        super(NodeQueryClosestObjectGUI,self).__init__()
 
     def generate(self,parent=None):
         if all([self.name.full(),self.label.full()]):
@@ -50,7 +50,7 @@ class NodeQueryClosestObjectGUI(NodeGUI):
 class NodeQueryClosestObject(Node):
     def __init__(self,parent,name,label):
         color='#5B8EEB'
-        super(NodeQuerySample,self).__init__(False,parent,name,label,color)
+        super(NodeQueryClosestObject,self).__init__(False,parent,name,label,color)
     def get_node_type(self):
         return 'SERVICE'
     def get_node_name(self):

@@ -14,7 +14,7 @@ from instructor.instructor_qt import NamedField
 # Node Wrappers -----------------------------------------------------------
 class NodeConditionTestPredicateGUI(NodeGUI):
     def __init__(self):
-        super(NodeParamConditionGUI,self).__init__()
+        super(NodeConditionTestPredicateGUI,self).__init__()
         self.param = NamedField('Parameter','')
         self.value = NamedField('Check Value','')
         self.layout_.addWidget(self.param)
@@ -32,7 +32,7 @@ class NodeConditionTestPredicate(Node):
     def __init__(self,parent,name,label,param_name=None,desired_value=None):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'
-        super(NodeParamCondition,self).__init__(False,parent,name,L,color,'ellipse')
+        super(NodeConditionTestPredicate,self).__init__(False,parent,name,L,color,'ellipse')
         self.desired_value_ = desired_value
         self.param_name_ = param_name
     def get_node_type(self):
