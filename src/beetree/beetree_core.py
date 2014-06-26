@@ -162,9 +162,15 @@ class Node(object):
     def set_highlighted(self,highlight):
         self.highlighted_ = highlight
 
-    def set_overwrite(state,overwritten):
+    def set_overwrite(self,overwritten):
         self.overwritten_result_ = state
         self.overwritten_ = overwritten
+
+    def set_status(self,status):
+        self.node_status_ = status
+        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        return self.node_status_
+
 
 ## Specialized Nodes
 class NodeSelector(Node):
@@ -172,13 +178,10 @@ class NodeSelector(Node):
     def __init__(self,parent,name,label):
         L = '( * )\\n ' + label.upper()
         super(NodeSelector,self).__init__(False,parent,name,L)
-
     def get_node_type(self):
         return 'SELECTOR'
-
     def get_node_name(self):
         return 'Selector'
-
     def execute(self):
         print 'executing selector: (' + self.name_ + ')'
         self.exec_child_ = self.first_child_
@@ -189,24 +192,16 @@ class NodeSelector(Node):
 
             print 'checking child status: ' + self.child_status_
             if self.child_status_ == 'NODE_ERROR':
-                self.node_status_ = 'NODE_ERROR'
-                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-                return self.node_status_
+                return set_status('NODE_ERROR')
             elif self.child_status_ == 'RUNNING':
-                self.node_status_ = 'RUNNING'
-                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-                return self.node_status_
+                return set_status('RUNNING')
             elif self.child_status_ == 'SUCCESS':
-                self.node_status_ = 'SUCCESS'
-                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-                return self.node_status_
+                return set_status('SUCCESS')
 
             print 'pointing self.exec_child_ to next brother'
             self.exec_child_ = self.exec_child_.next_brother_
 
-        self.node_status_ = 'FAILURE'
-        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        return self.node_status_
+        return set_status('FAILURE')
 
 class NodeSequence(Node):
     """sequence type node
@@ -217,13 +212,10 @@ class NodeSequence(Node):
         L = '->'
         # L = '( --> )\\n ' + label.upper()
         super(NodeSequence,self).__init__(False,parent,name,L)
-
     def get_node_type(self):
         return 'SEQUENCE'
-
     def get_node_name(self):
         return 'Sequence'
-
     def execute(self):
         self.exec_child_ = self.first_child_
         print 'Executing Sequence: (' + self.name_ + '): current child: ' + self.exec_child_.name_
@@ -231,35 +223,23 @@ class NodeSequence(Node):
         for i in range(self.number_children_):
             self.child_status_ = self.exec_child_.execute()
             if self.child_status_ == 'NODE_ERROR':
-                self.node_status_ = 'NODE_ERROR'
-                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-                return self.node_status_
+                return set_status('NODE_ERROR')
             elif self.child_status_ == 'RUNNING':
-                self.node_status_ = 'RUNNING'
-                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-                return self.node_status_
+                return set_status('RUNNING')
             elif self.child_status_ == 'FAILURE':
-                self.node_status_ = 'FAILURE'
-                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-                return self.node_status_
+                return set_status('FAILURE')
             self.exec_child_ = self.exec_child_.next_brother_
 
-        self.node_status_ = 'SUCCESS'
-        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        return self.node_status_
+        return set_status('SUCCESS')
 
 class NodeParallel(Node):
-
     def __init__(self,parent,name,label):
         L = '||'# + label.upper()
         super(NodeParallel,self).__init__(False,parent,name,L)
-
     def get_node_type(self):
         return 'PARALLEL'
-
     def get_node_name(self):
         return 'Parallel'
-
     def execute(self):
         number_failure = 0
         number_success = 0
@@ -279,152 +259,93 @@ class NodeParallel(Node):
             self.exec_child_ = self.exec_child_.next_brother_
 
         if number_error > 0:
-            self.node_status_ = 'NODE_ERROR'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
+            return set_status('NODE_ERROR')
         elif number_success>= self.number_children_/2:
-            self.node_status_ = 'SUCCESS'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
+            return set_status('SUCCESS')
         elif number_failure >= self.number_children_/2:
-            self.node_status_ = 'FAILURE'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
+            return set_status('FAILURE')
         else:
-            self.node_status_ = 'RUNNING'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
+            return set_status('RUNNING')
 
 class NodeRoot(Node):
-
     def __init__(self, name, label):
         L = '?'
         # L = '( ? )\\n ' + label.upper()
         super(NodeRoot,self).__init__(True,None,name,L,'',)
-
     def get_node_type(self):
         return 'ROOT'
-
     def get_node_name(self):
         return 'Root'
-
     def execute(self):
         print 'Executing Root: (' + self.name_ + ')'
         self.child_status_ = self.first_child_.execute()
         print 'ROOT: Child returned status: ' + self.child_status_
         return self.child_status_
 
-# TODO
 class NodeAction(Node):
-
     def __init__(self,parent,name,label):
         L = '( action )\\n' + label.upper()
         color='#92D665'
         super(NodeAction,self).__init__(False,parent,name,L,color)
         self.name_ = name
-        
     def get_node_type(self):
         return 'ACTION'
-
     def get_node_name(self):
         return 'Action'
-
     def execute(self):
-        #TODO
         print 'Executing Action: (' + self.name_ + ')'
-        self.node_status_ = 'SUCCESS'
-        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        return self.node_status_
+        return set_status('SUCCESS')
 
-# TODO
 class NodeService(Node):
-
     def __init__(self,parent,name,label):
-        super(NodeService,self).__init__(False,parent,name,label)
-
+        color='#92D665'
+        super(NodeService,self).__init__(False,parent,name,label,color)
     def get_node_type(self):
         return 'SERVICE'
-
     def get_node_name(self):
         return 'Service'
-
     def execute(self):
-        # TODO
         print 'Executing Service: ' + self.name_
-        self.node_status_ = 'SUCCESS'
-        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        return self.node_status_
+        return set_status('SUCCESS')
 
 
-class NodeParamCondition(Node):
-
+class NodeCondition(Node):
     def __init__(self,parent,name,label,param_name=None,desired_value=None):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'
-        super(NodeParamCondition,self).__init__(False,parent,name,L,color,'ellipse')
+        super(NodeCondition,self).__init__(False,parent,name,L,color,'ellipse')
         self.desired_value_ = desired_value
         self.param_name_ = param_name
-
     def get_node_type(self):
         return 'CONDITION'
-
     def get_node_name(self):
         return 'Condition'
-
     def execute(self):
         print 'Executing Condition: (' + self.name_ + ')'
-
-        ### For debugging
-        self.node_status_ = 'SUCCESS'
-        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        return self.node_status_
-        ###
-
-        # if not rospy.has_param(self.param_name_):
-        #     self.node_status_ = 'FAILURE'
-        #     print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        #     return self.node_status_
-
-        # value = rospy.get_param(self.param_name_)
-
-        # if value == self.desired_value_:
-        #     self.node_status_ = 'SUCCESS'
-        #     print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        #     return self.node_status_
-        # else:
-        #     self.node_status_ = 'FAILURE'
-        #     print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-        #     return self.node_status_
+        return set_status('SUCCESS')
 
 
 class NodeDecoratorRunNumber(Node):
-
     def __init__(self,parent,name,label,runs=1):
         super(NodeDecoratorRunNumber,self).__init__(False,parent,name,label)
         self.runs_ = runs
         self.num_runs_ = 0
-
     def get_node_type(self):
         return 'DECORATOR_RUN_NUMBER'
-
     def get_node_name(self):
         return 'Decorator Run Number'
-
     def execute(self):
         print 'Executing Run Number Decorator: (' + self.name_ + ')'
         self.exec_child_ = self.first_child_
-
         if self.num_runs_ < self.runs_:
             self.child_status_ = self.exec_child_.execute()
             if self.child_status_ == 'SUCCESS':
                 self.num_runs_ += 1
+            elif self.child_status_ == 'RUNNING':
+                pass
             elif self.child_status_ == 'FAILURE':
-                self.node_status_ = 'FAILURE'
-                print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-                return self.node_status_
+                return set_status('FAILURE')
         else:
-            self.node_status_ = 'SUCCESS'
-            print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
-            return self.node_status_
+            return set_status('SUCCESS')
 
 

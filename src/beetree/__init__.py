@@ -10,7 +10,7 @@ __all__ += ['NodeParallel']
 __all__ += ['NodeRoot']
 __all__ += ['NodeAction']
 __all__ += ['NodeService']
-__all__ += ['NodeParamCondition']
+__all__ += ['NodeCondition']
 __all__ += ['NodeDecoratorRunNumber']
 
 ### Classes
@@ -21,6 +21,6 @@ from beetree_core import NodeParallel
 from beetree_core import NodeRoot
 from beetree_core import NodeAction
 from beetree_core import NodeService
-from beetree_core import NodeParamCondition
+from beetree_core import NodeCondition
 from beetree_core import NodeDecoratorRunNumber
 
