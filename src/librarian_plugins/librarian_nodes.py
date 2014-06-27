@@ -19,6 +19,8 @@ from threading import Thread
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
 
+#import rosparam
+
 
 lister = rospy.ServiceProxy('/librarian/list', List)
 saver = rospy.ServiceProxy('/librarian/save', Save)
@@ -53,8 +55,8 @@ class LoadParametersGUI(NodeGUI):
     def __init__(self):
         super(LoadParametersGUI,self).__init__()
 
-        self.type_ = NamedComboBox('Type')
-        self.file_ = NamedComboBox('Name')
+        self.type_ = NamedComboBox('Item Type')
+        self.file_ = NamedComboBox('Item Name')
         self.layout_.addWidget(self.type_)
         self.layout_.addWidget(self.file_)
         
@@ -75,15 +77,13 @@ class LoadParametersGUI(NodeGUI):
 class LoadTextFromFileGUI(NodeGUI):
     def __init__(self):
         super(LoadTextFromFileGUI,self).__init__()
-        self.type_ = NamedComboBox('Type')
-        self.file_ = NamedComboBox('Name')
+        self.type_ = NamedComboBox('Item Type')
+        self.file_ = NamedComboBox('Item Name')
         self.layout_.addWidget(self.type_)
         self.layout_.addWidget(self.file_)
 
         type_list = getList('')
         self.type_.add_items(type_list.entries)
-
-
 
 
     def generate(self,parent=None):
@@ -96,18 +96,21 @@ class LoadTextFromFileGUI(NodeGUI):
 class SaveParameterGUI(NodeGUI):
     def __init__(self):
         super(SaveParameterGUI,self).__init__()
-        self.type_ = NamedComboBox('Type')
-        self.file_ = NamedComboBox('Name')
+        self.type_ = NamedComboBox('Item Type')
+        self.file_ = NamedField('Item Name','')
         self.layout_.addWidget(self.type_)
         self.layout_.addWidget(self.file_)
-        self.param_ = NamedField('Parameter','')
+        #self.param_ = NamedComboBox('Parameter')
+        self.param_ = NamedField('ROS Parameter','')
         self.layout_.addWidget(self.param_)
 
         type_list = getList('')
         self.type_.add_items(type_list.entries)
 
+        #self.param_.add_items(rosparam.get_params(''))
+
     def generate(self,parent=None):
-        if all([self.name.full(),self.label.full()]):
+        if all([self.name.full(),self.label.full()],self.file_.full()):
             return SaveParameter(parent,self.get_name(),self.get_label(),
                     self.type_.get(), self.file_.get(), self.param_.get())
         else:
@@ -116,9 +119,9 @@ class SaveParameterGUI(NodeGUI):
 class LoadEntryFromFileGUI(NodeGUI):
     def __init__(self):
         super(LoadEntryFromFileGUI,self).__init__()
-        self.type_ = NamedComboBox('Type')
-        self.file_ = NamedComboBox('Name')
-        self.entry_ = NamedField('Entry','')
+        self.type_ = NamedComboBox('Item Type')
+        self.file_ = NamedComboBox('Item Name')
+        self.entry_ = NamedField('Item Entry','')
         self.layout_.addWidget(self.type_)
         self.layout_.addWidget(self.file_)
         self.layout_.addWidget(self.entry_)
