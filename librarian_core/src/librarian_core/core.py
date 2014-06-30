@@ -39,7 +39,7 @@ class Librarian(object):
             self._list_srv = rospy.Service('librarian/list', List, self.get_list)
             self._load_param_srv = rospy.Service('librarian/load_params', List, self.load_params)
             self._add_type_srv = rospy.Service('librarian/add_type', AddType, self.add_type)
-            self._get_path_srv = rospy.Service('librarian/get_path', GetPath, self.add_type)
+            self._get_path_srv = rospy.Service('librarian/get_path', GetPath, self.create_path)
 
         self.init()
         self.load_records()
