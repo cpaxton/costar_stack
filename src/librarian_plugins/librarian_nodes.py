@@ -82,9 +82,22 @@ class LoadTextFromFileGUI(NodeGUI):
         self.layout_.addWidget(self.type_)
         self.layout_.addWidget(self.file_)
 
-        type_list = getList('')
-        self.type_.add_items(type_list.entries)
+        self.type_list = getList('')
+        self.type_.add_items(self.type_list.entries)
+        self.type_.interface().currentIndexChanged.connect(self.selected)
+        self.file_list = []
 
+        if len(self.type_.get()) > 0:
+            self.file_list = getList(self.type_list.entries[self.type_.get()])
+            self.file_.add_items(self.file_list.entries)
+
+    def selected(self,t):
+        value = str(t)
+        print self.type_.get()
+        self.file_list = getList(self.type_list.entries[self.type_.get()])
+        self.file_.interface().clear()
+        self.file_.add_items(self.file_list.entries)
+        print "selected"
 
     def generate(self,parent=None):
         if all([self.name.full(),self.label.full()]):
