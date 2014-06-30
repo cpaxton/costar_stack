@@ -24,6 +24,7 @@ add_service_files(
   Load.srv
   List.srv
   AddType.srv
+  GetPath.srv
 )
 
 # Generate added messages and services with any dependencies listed here

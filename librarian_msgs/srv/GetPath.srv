@@ -1,0 +1,9 @@
+string id
+string type
+string text
+
+---
+
+string path
+
+librarian_msgs/Status status
