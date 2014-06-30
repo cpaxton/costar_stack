@@ -1,0 +1,7 @@
+# if empty assume top level
+# else list available elements of types
+string type
+---
+string[] entries
+
+librarian_msgs/Status status
