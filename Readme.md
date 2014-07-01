@@ -15,6 +15,10 @@ rosrun predicator_core core.py
 Once the core is up and running, you can launch different modules to produce predicates.
 Keep in mind that for our purposes, predicates are always true statements about the world.
 
+### Instructor Support
+
+Instructor plugins are in the `predicator_plugins` package.
+The user interfaces may require `predicator_core` to be running to get a list of possible predicates.
 
 ### Provided Services
 
@@ -23,6 +27,7 @@ Keep in mind that for our purposes, predicates are always true statements about 
 - **predicator_collision**: collisions between objects; uses URDFs of objects to determine spatial relationship information.
 - **predicator_geometry**: determine object spatial relationships based on positions (TF frames).
 - **predicator_occupancy_module**: select a volume, determine if anything enters that volume. 
+- **predicator_fake_classification**: publish known object class information. For use with a simulator, when a real object detector isn't in use.
 
 ### Module Setup
 
@@ -79,7 +84,7 @@ catkin_create_pkg predicator_custom_module predicator_msgs
 
 New modules should publish a list of predicates
 (a `predicator_msgs/PredicateList` message) to the appropriate topic.
-By default, predicator_core will listen to the `predicator/input` topic for information from modules.
+By default, `predicator_core` will listen to the `predicator/input` topic for information from modules.
 
 Modules need to set the `header.frame_id` field to their node name, indicating where messages are coming from.
 
