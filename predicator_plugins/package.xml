@@ -17,12 +17,12 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>beetree</build_depend>
-  <build_depend>instructor</build_depend>
+  <build_depend>instructor_core</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>predicator_core</build_depend>
   <build_depend>predicator_msgs</build_depend>
   <run_depend>beetree</run_depend>
-  <run_depend>instructor</run_depend>
+  <run_depend>instructor_core</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>predicator_core</run_depend>
   <run_depend>predicator_msgs</run_depend>

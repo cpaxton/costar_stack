@@ -6,7 +6,7 @@ project(predicator_plugins)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   beetree
-  instructor
+  instructor_core
   message_generation
   predicator_core
   predicator_msgs
@@ -84,7 +84,7 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES predicator_plugins
-  CATKIN_DEPENDS beetree instructor message_runtime predicator_core predicator_msgs
+  CATKIN_DEPENDS beetree instructor_core message_runtime predicator_core predicator_msgs
 #  DEPENDS system_lib
 )
 
