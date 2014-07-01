@@ -8,8 +8,8 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
 import beetree; from beetree import Node
-from instructor import NodeGUI
-from instructor.instructor_qt import NamedField
+from instructor_core import NodeGUI
+from instructor_core.instructor_qt import NamedField
 # Thread for service calls
 from threading import Thread
 
