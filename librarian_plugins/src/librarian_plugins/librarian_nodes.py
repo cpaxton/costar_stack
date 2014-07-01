@@ -94,7 +94,7 @@ class LoadTextFromFileGUI(NodeGUI):
     def selected(self,t):
         value = str(t)
         print self.type_.get()
-        self.file_list = getList(self.type_list.entries[self.type_.get()])
+        self.file_list = getList(self.type_list.entries[int(self.type_.get())])
         self.file_.interface().clear()
         self.file_.add_items(self.file_list.entries)
         print "selected"
