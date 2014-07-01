@@ -8,6 +8,8 @@
 
     <param name="translation_velocity_threshold" value="0.01"/>
     <param name="rotation_velocity_threshold" value="0.01"/>
+    <param name="distance_change_threshold" value="0.01"/>
+    <param name="alpha" value="0.50"/>
 
     <rosparam param="frames">
       - ring1/ring_link
