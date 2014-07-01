@@ -1,17 +1,13 @@
 <launch>
   <arg name="output" default="screen"/>
 
-  <node name="predicator_geometry_node"
-    type="predicator_geometry_node.py"
-    pkg="predicator_geometry"
+  <node name="predicator_movement_node"
+    type="predicator_movement.py"
+    pkg="predicator_movement"
     output="$(arg output)">
 
-    <param name="height_threshold" value="0.1"/>
-    <param name="rel_x_threshold" value="0.1"/>
-    <param name="rel_y_threshold" value="0.1"/>
-    <param name="rel_z_threshold" value="0.1"/>
-    <param name="near_2D_threshold" value="0.2"/>
-    <param name="near_3D_threshold" value="0.25"/>
+    <param name="translation_velocity_threshold" value="0.01"/>
+    <param name="rotation_velocity_threshold" value="0.01"/>
 
     <rosparam param="frames">
       - ring1/ring_link
@@ -26,6 +22,7 @@
       - wam/wrist_yaw_link
       - wam/wrist_pitch_link
       - wam/wrist_palm_link
+      - wam/base_link
       - wam2/shoulder_yaw_link
       - wam2/shoulder_pitch_link
       - wam2/upper_arm_link
@@ -33,6 +30,7 @@
       - wam2/wrist_yaw_link
       - wam2/wrist_pitch_link
       - wam2/wrist_palm_link
+      - wam2/base_link
       - stage_link
     </rosparam>
 
