@@ -88,7 +88,7 @@ class LoadTextFromFileGUI(NodeGUI):
         self.file_list = []
 
         if len(self.type_.get()) > 0:
-            self.file_list = getList(self.type_list.entries[self.type_.get()])
+            self.file_list = getList(self.type_list.entries[int(self.type_.get())])
             self.file_.add_items(self.file_list.entries)
 
     def selected(self,t):
