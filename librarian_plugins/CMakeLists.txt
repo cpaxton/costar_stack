@@ -6,7 +6,7 @@ project(librarian_plugins)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   beetree
-  instructor
+  instructor_core
   librarian_msgs
   message_generation
 )
@@ -83,7 +83,7 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES librarian_plugins
- CATKIN_DEPENDS beetree instructor librarian_msgs message_runtime
+ CATKIN_DEPENDS beetree instructor_core librarian_msgs message_runtime
 #  DEPENDS system_lib
 )
 
