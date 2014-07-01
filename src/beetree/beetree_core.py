@@ -388,17 +388,18 @@ class NodeCondition(Node):
         print 'Executing Condition: (' + self.name_ + ')'
         return self.set_status('SUCCESS')
 
-class NodeDecoratorRunNumber(Node):
+class NodeDecoratorRepeat(Node):
     def __init__(self,parent,name,label,runs=1):
-        super(NodeDecoratorRunNumber,self).__init__(False,parent,name,label)
+        L = '(runs)\\n['+str(runs)+']'
+        super(NodeDecoratorRepeat,self).__init__(False,parent,name,L,shape='diamond')
         self.runs_ = runs
         self.num_runs_ = 0
     def get_node_type(self):
-        return 'DECORATOR_RUN_NUMBER'
+        return 'DECORATOR_REPEAT'
     def get_node_name(self):
-        return 'Decorator Run Number'
+        return 'Decorator Repeat'
     def execute(self):
-        print 'Executing Run Number Decorator: (' + self.name_ + ')'
+        print 'Executing Repeat Decorator: (' + self.name_ + ')'
         self.exec_child_ = self.first_child_
         if self.num_runs_ < self.runs_:
             self.child_status_ = self.exec_child_.execute()

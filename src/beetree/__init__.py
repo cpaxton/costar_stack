@@ -11,7 +11,7 @@ __all__ += ['NodeRoot']
 __all__ += ['NodeAction']
 __all__ += ['NodeService']
 __all__ += ['NodeCondition']
-__all__ += ['NodeDecoratorRunNumber']
+__all__ += ['NodeDecoratorRepeat']
 
 ### Classes
 from beetree_core import Node
@@ -22,5 +22,5 @@ from beetree_core import NodeRoot
 from beetree_core import NodeAction
 from beetree_core import NodeService
 from beetree_core import NodeCondition
-from beetree_core import NodeDecoratorRunNumber
+from beetree_core import NodeDecoratorRepeat
 
