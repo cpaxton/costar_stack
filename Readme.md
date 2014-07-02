@@ -4,7 +4,26 @@ Predicator is the CoSTAR package for logical statements.
 
 ## Using Predicator
 
-### Launching Predicator
+### Using Launch Files
+
+There is a package called `predicator_bringup` that will start different predicator modules and the predicator core.
+
+## Launch the Core Only
+
+```
+roslaunch predicator_bringup core.launch
+```
+
+## Launch the Peg Simulation Example
+
+This launch file uses the configuration included to test predicator in the simulation.
+It depends on having `lcsr_collab` and optionally `lcsr_spacenav` running, so that there is a Gazebo world containing two Barrett WAM arms, two pegs, a stage, and a ring.
+
+```
+roslaunch predicator_bringup pegs_sim_test.launch
+```
+
+### Starting Predicator from Rosrun
 
 Start `predicator_core` to listen to predicate statements from modules:
 
