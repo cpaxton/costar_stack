@@ -1,0 +1,6 @@
+<launch>
+
+  <!-- predicator core: test to determine if something has happened -->
+  <node name="predicator_core" pkg="predicator_core" type="core.py"/>
+
+</launch>
