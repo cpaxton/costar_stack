@@ -8,7 +8,7 @@ class Node(object):
 
     This node has the basic structure for a node, as well as functions for recursively printing information, generating graphviz dot code, adding child nodes and resetting variables.
     """
-    def __init__(self,is_root=False,parent=None,name='',label='',color='',shape='box'):
+    def __init__(self,is_root=False,parent=None,name='',label='',color='',shape='box',flag=False):
         """Node constructor
         @type is_root: bool
         @param is_root: determines whether the node is root or not.
@@ -41,6 +41,7 @@ class Node(object):
         self.label_ = label
         self.color_ = color
         self.shape_ = shape
+        self.flag_ = flag
                 
         if is_root:
             self.depth_ = 0
@@ -54,39 +55,46 @@ class Node(object):
                 # No Parent assigned, wont be added to the tree
                 pass
 
+    def set_flag(self,flag):
+        """ sets a flag for whether this node will be highlighted in the dot code
+        """
+        self.flag_ = flag
+
     def generate_dot(self):
         """generates dot code for this node
         Also recursively calls the children's generate_dot() functions
         """
+        # if parent generate front end of dotcode string
         if self.parent_ == None:
             dot = 'digraph behavior_tree { splines=false; '
         else:
             dot = ''
 
-        if self.number_children_ == 0:
-            dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][label="'+self.label_+'"]; '
-
-        if self.number_children_ != 0:
-            dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][label="'+self.label_+'"]; '
-        
+        # generate this node's dot code
+        if self.flag_ == False:
+            if self.color_ == '':
+                dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][label="'+self.label_+'"]; '
+            else:
+                dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][style="filled" fillcolor="'+self.color_+'"][label="'+self.label_+'"]; '
+        else:
+            if self.color_ == '':
+                dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][style="bold" color="red"][label="'+self.label_+'"]; '
+            else:
+                dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][style="filled, bold" fillcolor="'+self.color_+'" color="red"][label="'+self.label_+'"]; '
+                
+        # recursively generate the node's child dot code
         if self.number_children_ > 0:
             current = self.first_child_
-            if current.next_brother_ == None:
-                if current.number_children_ != 0:
-                    dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '
-                else:
-                    dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][style="filled" fillcolor="'+current.color_+'" label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '    
-                dot = dot + current.generate_dot()
-            else:
-                for n in range(self.number_children_):
-                # while current.next_brother_ != None:
-                    if current.number_children_ != 0:
-                        dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '
-                    else:
-                        dot = dot + current.name_ + '[shape='+current.shape_+'][URL="' +current.name_+'"][style="filled" fillcolor="'+current.color_+'" label="'+current.label_+'"];' + self.name_ + ':s->' + current.name_ + ':n; '
-                    dot = dot +  current.generate_dot()
-                    current = current.next_brother_
+            for n in range(self.number_children_):
+                # call the current child's generate_dot function (for recursion)
+                dot += current.generate_dot()
+                # generate the dot for the connection between self and the current child
+                dot += self.name_ + ':s->' + current.name_ + ':n; '
+                current = current.next_brother_
+                if current == None:
+                    break
 
+        # if parent generate tail end of dotcode string
         if self.parent_ == None:        
             return dot + '}'
         else:
