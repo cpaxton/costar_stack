@@ -51,6 +51,11 @@ add_message_files(
   PredicateList.msg
 )
 
+add_service_files(
+  FILES
+  SetParam.srv
+)
+
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
