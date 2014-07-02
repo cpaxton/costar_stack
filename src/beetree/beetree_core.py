@@ -125,17 +125,27 @@ class Node(object):
             self.number_children_+=1
         return self.curr_child_
 
-    def add_sibling(self,sibling):
-        # Assign sibling depth and parent
-        sibling.depth_ = self.depth_
-        sibling.parent_ = self.parent_
+    def add_sibling(self,to_insert):
+        # Assign to_insert depth and parent
+        to_insert.depth_ = self.depth_
+        to_insert.parent_ = self.parent_
         # Increment parent's number of children
         self.parent_.number_children_+=1
-        # Add sibling to the right of this node
+        # Get current next brother if it exists
         next = self.next_brother_
-        self.next_brother_ = sibling
-        if next != None:
+            # Insert to_insert to the right of self
+        to_insert.prev_brother_ = self
+        self.next_brother_ = to_insert
+        if next == None:
+            # set the parent curr_child to the last node 
+            # which should be the one just inserted
+            self.parent_.curr_child_ = self.next_brother_
+        else:
+            # if there was an existing next brother at it as the inserted's next brother
+            next.prev_brother_ = self.next_brother_
             self.next_brother_.next_brother_ = next
+            # since we are inserting in the middle, the parent's curr_child
+            # pointer should still be valid
 
     def add_brother(self,my_brother,children_number):
         """adds a brother to the node
@@ -169,7 +179,8 @@ class Node(object):
                         # to the its brother as the first one, and remove it
                         current.remove_all_children()
                         current.next_brother_.prev_brother_ = None
-                        self.first_child_ = self.curr_child_ = current.next_brother_
+                        # self.first_child_ = self.curr_child_ = current.next_brother_ # this might be a problem
+                        self.first_child_ = current.next_brother_
                         break
                     else:
                         # This is the brother of a previous child
