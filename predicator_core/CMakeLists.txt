@@ -54,6 +54,8 @@ add_service_files(
   FILES
   GetAssignment.srv
   TestPredicate.srv
+  GetList.srv
+  GetTypedList.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

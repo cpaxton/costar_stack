@@ -47,17 +47,49 @@ Aggregates lists of predicates arriving on a list topic, and publishes them.
 '''
 class Predicator(object):
 
-    def __init__(self, sub_topic, pub_topic, list_pub_topic, test_srv, get_srv):
-        self._subscriber = rospy.Subscriber(sub_topic, PredicateList, self.callback)
-        self._publisher = rospy.Publisher(pub_topic, PredicateSet)
-        self._list_publisher = rospy.Publisher(list_pub_topic, PredicateList)
-        self._testService = rospy.Service(test_srv,TestPredicate, self.test_predicate)
-        self._getService = rospy.Service(get_srv,GetAssignment, self.get_assignment)
+    def __init__(self) #, sub_topic, pub_topic, list_pub_topic, test_srv, get_srv, valid_srv, preds_srv, assgn_srv):
+        self._subscriber = rospy.Subscriber('predicator/input', PredicateList, self.callback)
+        self._validSubscriber = rospy.Subscriber('predicator/valid_input', ValidPredicates, self.validCallback)
+        self._publisher = rospy.Publisher('predicator/all', PredicateSet)
+        self._list_publisher = rospy.Publisher('predicator/list', PredicateList)
+        self._testService = rospy.Service('predicator/test_predicate', TestPredicate, self.test_predicate)
+        self._getService = rospy.Service('predicator/get_assignment', GetAssignment, self.get_assignment)
+        self._valuePredicatesService = rospy.Service('predicator/get_value_predicates', GetList, self.get_value_predicates)
+        self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
+        self._assignmentsService = rospy.Service('predicator/get_assignments', GetTypedList, self.get_assignments)
         self._latest = {}
+        self._latest_valid = {}
         self._predicates = {}
 
+    def get_value_predicates(self, req):
+        pass
+
+    def get_predicates(self, req):
+        pass
+
+    def get_assignments(self, req):
+
+        if len(req.id) == 0:
+            # get a list of all possible assignments
+            pass
+        else:
+            # get a list of all possible assignments received for that predicate as of the last message
+            pass
+        pass
+
+    '''
+    callback()
+    read in predicate messages and record their source
+    '''
     def callback(self, msg):
         self._latest[msg.header.frame_id] = msg.statements
+
+    '''
+    validCallback()
+    read in sets of valid predicates from various sources
+    '''
+    def validCallback(self, msg):
+        self._latest_valid[msg.header.frame_id] = msg
 
     def aggregate(self):
         d = {}
@@ -171,11 +203,12 @@ if __name__ == '__main__':
 
     try:
 
-        pc = Predicator('predicator/input',
-                'predicator/all',
-                'predicator/list',
-                'predicator/test_predicate',
-                'predicator/get_assignment')
+        pc = Predicator()
+        #        'predicator/input',
+        #        'predicator/all',
+        #        'predicator/list',
+        #        'predicator/test_predicate',
+        #        'predicator/get_assignment')
 
         while not rospy.is_shutdown():
             pc.aggregate()
