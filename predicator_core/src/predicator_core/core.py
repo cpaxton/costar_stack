@@ -5,6 +5,8 @@ import copy
 from predicator_msgs.msg import *
 from predicator_core.srv import *
 
+import sets
+
 def predicate_to_tuple(predicate):
     if predicate.num_params == 1:
         return (predicate.predicate, predicate.params[0])
@@ -58,8 +60,11 @@ class Predicator(object):
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
         self._assignmentsService = rospy.Service('predicator/get_assignments', GetTypedList, self.get_assignments)
         self._latest = {}
-        self._latest_valid = {}
         self._predicates = {}
+
+        self._all_predicates = sets.Set()
+        self._all_value_predicates = sets.Set()
+        self._all_assignments = sets.Set()
 
     def get_value_predicates(self, req):
         pass
@@ -90,6 +95,13 @@ class Predicator(object):
     '''
     def validCallback(self, msg):
         self._latest_valid[msg.header.frame_id] = msg
+
+        for item in msg.predicates:
+            self._all_predicates.add(item)
+        for item in msg.value_predicates:
+            self._all_value_predicates.add(item)
+        for item in msg.assignments:
+            self._all_assignments.add(item)
 
     def aggregate(self):
         d = {}
