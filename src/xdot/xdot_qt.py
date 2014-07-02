@@ -1701,6 +1701,7 @@ class DotWidget(QWidget):
             if url is not None:
                 self.emit(SIGNAL("clicked"), unicode(url.url), event)
             else:
+                self.emit(SIGNAL("clicked"), 'none', event)
                 jump = self.get_jump(x, y)
                 if jump is not None:
                     self.animate_to(jump.x, jump.y)
