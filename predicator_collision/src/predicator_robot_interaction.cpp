@@ -117,6 +117,7 @@ int main(int argc, char **argv) {
 
   // define valid predicates topic
   predicator_msgs::ValidPredicates pval;
+  pval.header.frame_id = ros::this_node::getName()
   pval.predicates.push_back("touching");
   pval.value_predicates.push_back("mesh_distance");
 

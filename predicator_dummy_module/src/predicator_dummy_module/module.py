@@ -9,6 +9,7 @@ if __name__ == '__main__':
     vpub = rospy.Publisher('predicator/valid_input', ValidPredicates)
 
     pval = ValidPredicates()
+    pval.header.frame_id = rospy.get_name()
     pval.predicates = ['left_of', 'right_of', 'behind',
             'ahead', 'found_object']
     pval.value_predicates = []
