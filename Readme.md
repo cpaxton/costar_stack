@@ -8,13 +8,13 @@ Predicator is the CoSTAR package for logical statements.
 
 There is a package called `predicator_bringup` that will start different predicator modules and the predicator core.
 
-## Launch the Core Only
+#### Launch the Core Only
 
 ```
 roslaunch predicator_bringup core.launch
 ```
 
-## Launch the Peg Simulation Example
+#### Launch the Peg Simulation Example
 
 This launch file uses the configuration included to test predicator in the simulation.
 It depends on having `lcsr_collab` and optionally `lcsr_spacenav` running, so that there is a Gazebo world containing two Barrett WAM arms, two pegs, a stage, and a ring.
@@ -47,10 +47,13 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator_geometry**: determine object spatial relationships based on positions (TF frames).
 - **predicator_occupancy_module**: select a volume, determine if anything enters that volume. 
 - **predicator_fake_classification**: publish known object class information. For use with a simulator, when a real object detector isn't in use.
+- **predicator_movement**: publish movement information, such as whether an object is approaching another object.
 
 ### Module Setup
 
-#### Geometry Module Configuration Example
+#### Geometry Module
+
+##### Geometry Module Configuration Example
 
 Nodes like the `predicator_geometry` module can be configured from the ROS parameter server.
 It may be best to start them from a launch file, like the example launch file in `predicator_geometry/launch/pegs_geometry_predicates_test.launch`.
