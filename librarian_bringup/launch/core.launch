@@ -1,0 +1,10 @@
+<launch>
+
+  <arg name="librarian_root" default="~/.costar"/>
+  <arg name="output" default="screen"/>
+
+  <node name="librarian_core" pkg="librarian_core" type="core.py" output="$(arg output)">
+    <param name="librarian_root" value="$(arg librarian_root)"/>
+  </node>
+
+</launch>
