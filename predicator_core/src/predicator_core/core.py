@@ -49,7 +49,7 @@ Aggregates lists of predicates arriving on a list topic, and publishes them.
 '''
 class Predicator(object):
 
-    def __init__(self) #, sub_topic, pub_topic, list_pub_topic, test_srv, get_srv, valid_srv, preds_srv, assgn_srv):
+    def __init__(self): #, sub_topic, pub_topic, list_pub_topic, test_srv, get_srv, valid_srv, preds_srv, assgn_srv):
         self._subscriber = rospy.Subscriber('predicator/input', PredicateList, self.callback)
         self._validSubscriber = rospy.Subscriber('predicator/valid_input', ValidPredicates, self.validCallback)
         self._publisher = rospy.Publisher('predicator/all', PredicateSet)
@@ -94,8 +94,6 @@ class Predicator(object):
     read in sets of valid predicates from various sources
     '''
     def validCallback(self, msg):
-        self._latest_valid[msg.header.frame_id] = msg
-
         for item in msg.predicates:
             self._all_predicates.add(item)
         for item in msg.value_predicates:
