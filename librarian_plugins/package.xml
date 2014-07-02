@@ -39,13 +39,13 @@
       name="Save Parameter Service"/>
 
     <!-- Beetree Query Plugins -->
-    <instructor plugin="librarian_plugins.LoadTextFromFileGUI" type="QUERY"
+    <!--<instructor plugin="librarian_plugins.LoadTextFromFileGUI" type="QUERY"
       description="Retrieve the body of a Librarian file"
-      name="Load Text Query"/>
+      name="Load Text Query"/>-->
 
-    <instructor plugin="librarian_plugins.LoadEntryFromFileGUI" type="QUERY"
+    <!--<instructor plugin="librarian_plugins.LoadEntryFromFileGUI" type="QUERY"
       description="Retrieve an entry by key from a Librarian YAML file"
-      name="Load Entry Query"/>
+      name="Load Entry Query"/>-->
 
   </export>
 </package>
