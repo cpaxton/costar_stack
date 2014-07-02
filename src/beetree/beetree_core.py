@@ -61,7 +61,7 @@ class Node(object):
         self.flag_ = flag
 
     def generate_dot(self):
-        """generates dot code for this node
+        """generates dot code for this node and its connection to its children
         Also recursively calls the children's generate_dot() functions
         """
         # if parent generate front end of dotcode string
@@ -69,7 +69,6 @@ class Node(object):
             dot = 'digraph behavior_tree { splines=false; '
         else:
             dot = ''
-
         # generate this node's dot code
         if self.flag_ == False:
             if self.color_ == '':
@@ -80,8 +79,7 @@ class Node(object):
             if self.color_ == '':
                 dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][style="bold" color="red"][label="'+self.label_+'"]; '
             else:
-                dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][style="filled, bold" fillcolor="'+self.color_+'" color="red"][label="'+self.label_+'"]; '
-                
+                dot = dot + self.name_ + ' [shape='+self.shape_+'][URL="' +self.name_+'"][style="filled, bold" fillcolor="'+self.color_+'" color="red"][label="'+self.label_+'"]; '   
         # recursively generate the node's child dot code
         if self.number_children_ > 0:
             current = self.first_child_
@@ -179,10 +177,19 @@ class Node(object):
                         if current.next_brother_ == None:
                             # This is the last brother
                             current.prev_brother_.next_brother_ = None
+                            self.curr_child_ = current.prev_brother_
+                            print 'removed last child'
+                            print self.first_child_.name_
+                            print self.curr_child_.name_
                         else:
                             # This has a next brother
                             current.next_brother_.prev_brother_ = current.prev_brother_
                             current.prev_brother_.next_brother_ = current.next_brother_
+                            # here the last child shouldnt change, just the middle child
+                            # so curr_child should still be valid (I think)
+                            print 'removed middle child'
+                            print self.first_child_.name_
+                            print self.curr_child_.name_
                         break
                 else: 
                     # get next sibling if this one doesnt match
@@ -200,8 +207,10 @@ class Node(object):
     def remove_self(self):
         if self.parent_ != None:
             self.parent_.remove_child(self.name_)
+            return True
         else:
-            print 'You cannot remove the root node'
+            print 'You cannot remove the root node.'
+            return False
 
     def print_info(self):
         """prints the nodes info
