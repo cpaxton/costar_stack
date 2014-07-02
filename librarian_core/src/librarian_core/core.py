@@ -37,7 +37,7 @@ class Librarian(object):
             self._save_srv = rospy.Service('librarian/save', Save, self.save)
             self._load_srv = rospy.Service('librarian/load', Load, self.load)
             self._list_srv = rospy.Service('librarian/list', List, self.get_list)
-            self._load_param_srv = rospy.Service('librarian/load_params', List, self.load_params)
+            self._load_param_srv = rospy.Service('librarian/load_params', LoadParams, self.load_params)
             self._add_type_srv = rospy.Service('librarian/add_type', AddType, self.add_type)
             self._get_path_srv = rospy.Service('librarian/get_path', GetPath, self.create_path)
 
@@ -172,9 +172,32 @@ class Librarian(object):
         paramlist=rosparam.load_file("/path/to/myfile",default_namespace="my_namespace")
         for params, ns in paramlist:
             rosparam.upload_params(ns,params)
-        '''        
+        '''
+        resp = LoadResponse()
+        if len(req.type) == 0:
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.TYPE_MISSING
+                resp.status.info = "No type provided!"
+        else:
+            path = join(self._root, req.type)
+            filename = join(path, req.id)
 
-        pass
+            if not os.path.exists(path):
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.NO_SUCH_TYPE
+                resp.status.info = "Type %s does not exist!"%(req.type)
+            elif not os.path.exists(filename):
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.FILE_MISSING
+                resp.status.info = "File %s does not exist as a member of type %s!"%(req.id, req.type)
+            else:
+                paramlist=rosparam.load_file(filename)
+                for params, ns in paramlist:
+                    rosparam.upload_params(ns,params)
+
+                resp.status.result = Status.SUCCESS
+
+        return resp
 
     '''
     get_list()
