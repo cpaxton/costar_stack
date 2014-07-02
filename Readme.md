@@ -41,13 +41,18 @@ The user interfaces may require `predicator_core` to be running to get a list of
 
 ### Provided Services
 
+- **predicator/test_predicate**: determines if a predicate is true
+- **predicator/get_assignment**: return the set of possible values for a single missing field
+
 ## Modules
 
+- **predicator_dummy_module**: publishes a bunch of dummy information for testing purposes
 - **predicator_collision**: collisions between objects; uses URDFs of objects to determine spatial relationship information.
 - **predicator_geometry**: determine object spatial relationships based on positions (TF frames).
 - **predicator_occupancy_module**: select a volume, determine if anything enters that volume. 
 - **predicator_fake_classification**: publish known object class information. For use with a simulator, when a real object detector isn't in use.
 - **predicator_movement**: publish movement information, such as whether an object is approaching another object.
+- **predicator_params**: provides a service so that you can set predicates at runtime to save information.
 
 ### Module Setup
 
