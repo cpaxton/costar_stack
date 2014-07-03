@@ -58,7 +58,7 @@ class Predicator(object):
         self._getService = rospy.Service('predicator/get_assignment', GetAssignment, self.get_assignment)
         self._valuePredicatesService = rospy.Service('predicator/get_value_predicates', GetList, self.get_value_predicates)
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
-        self._assignmentsService = rospy.Service('predicator/get_assignments', GetTypedList, self.get_assignments)
+        self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
         self._latest = {}
         self._predicates = {}
 
@@ -86,13 +86,16 @@ class Predicator(object):
 
     def get_assignments(self, req):
 
+        msg = GetTypedListResponse()
+
         if len(req.id) == 0:
             # get a list of all possible assignments
-            pass
+            msg.data = self._all_assignments
         else:
             # get a list of all possible assignments received for that predicate as of the last message
             pass
-        pass
+
+        return msg
 
     '''
     callback()
@@ -147,6 +150,7 @@ class Predicator(object):
         self._predicates = d
 
     '''
+    publish()
     publish a message with all true things
     '''
     def publish(self):
