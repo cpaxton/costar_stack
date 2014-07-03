@@ -85,20 +85,19 @@ class Node(object):
 
     def add_sibling_before(self,child_to_add):
         my_index = self.parent_.children_.index(self)
-        # if my_index == 0:
-        #     self.parent_.insert_child(0, child_to_add)
-        # else:
         self.parent_.insert_child(my_index, child_to_add)
 
     def remove_child_by_name(self,child_name):
         index = self.children_names_.index(child_name)
         self.children_.pop(index)
         self.children_names_.pop(index)
+        self.num_children_ -= 1    
 
     def remove_child(self, child_to_remove):
         index = self.children_.index(child_to_remove)
         self.children_.pop(index)
-        self.children_names_.pop(index)    
+        self.children_names_.pop(index)
+        self.num_children_ -= 1    
 
     def remove_all_children(self):
         self.children_ = []
@@ -137,7 +136,7 @@ class NodeSelector(Node):
     def get_node_name(self):
         return 'Selector'
     def execute(self):
-        print 'executing selector: (' + self.name_ + ')'
+        print 'Executing selector: (' + self.name_ + ')'
 
         if self.exec_index == None:
             self.exec_index = 0
@@ -173,20 +172,24 @@ class NodeSequence(Node):
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
-        print 'executing selector: (' + self.name_ + ')'
+        print 'Executing sequence: (' + self.name_ + ')'
 
         if self.exec_index == None:
             self.exec_index = 0
 
         self.child_status_ = self.children_[self.exec_index].execute()
         if self.child_status_ == 'SUCCESS':
+            print 'got success'
             self.exec_index += 1
+            print 'execution index =' + str(self.exec_index)
+            print 'num_children_ =' + str(self.num_children_)
             if self.exec_index == self.num_children_: # Last Child
-                return self.set_status('SUCCESS')
                 self.exec_index = None 
+                return self.set_status('SUCCESS')
             else:
                 return self.set_status('RUNNING')
         elif self.child_status_ == 'FAILURE':
+            self.exec_index = None 
             return self.set_status('FAILURE')
         else:
             return self.set_status(self.child_status_)
@@ -207,7 +210,7 @@ class NodeIterator(Node):
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
-        print 'executing selector: (' + self.name_ + ')'
+        print 'Executing selector: (' + self.name_ + ')'
 
         if self.exec_index == None:
             self.exec_index = 0
