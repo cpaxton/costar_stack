@@ -49,6 +49,8 @@ add_message_files(
   PredicateAssignment.msg
   PredicateSet.msg
   PredicateList.msg
+  ValidPredicates.msg
+  UpdateParam.msg
 )
 
 add_service_files(

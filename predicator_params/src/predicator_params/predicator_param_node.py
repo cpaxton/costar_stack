@@ -61,3 +61,21 @@ class PredicatorParams(object):
         valid_msg.predicates = [pred for pred in unique_preds]
         valid_msg.assignments = [param for param in unique_params]
 
+'''
+main loop just runs the predicator node
+'''
+if __name__ == "__main__":
+    rospy.init_node('predicator_core')
+    spin_rate = rospy.get_param('rate',10)
+    rate = rospy.Rate(spin_rate)
+
+    try:
+
+        pp = PredicatorParams()
+
+        while not rospy.is_shutdown():
+            pp.publish()
+            rate.sleep()
+
+    except rospy.ROSInterruptException: pass
+
