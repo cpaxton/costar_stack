@@ -14,6 +14,8 @@ There is a package called `predicator_bringup` that will start different predica
 roslaunch predicator_bringup core.launch
 ```
 
+This will launch the `predicator_params` module as well if `params:=true` is set (it is set by default). This is the service which lets other programs manually configure predicator parameters.
+
 #### Launch the Peg Simulation Example
 
 This launch file uses the configuration included to test predicator in the simulation.
