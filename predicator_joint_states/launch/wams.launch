@@ -9,7 +9,8 @@
     <rosparam param="js_config">
       topic: /gazebo/barrett_manager/hand/joint_states
       id: wam
-      thresholds: x
+      thresholds: 0.0009
+      idx: 1
     </rosparam>
 
   </node>
@@ -22,7 +23,8 @@
     <rosparam param="js_config">
       topic: /gazebo/w2barrett_manager/hand/joint_states
       id: wam2
-      thresholds: x
+      thresholds: 0.0009
+      idx: 1
     </rosparam>
 
   </node>
