@@ -174,13 +174,15 @@ int main(int argc, char **argv) {
     }
   }
 
-  ROS_INFO("about to parse floating: %d", floating.size());
-  // read in root TF frames
-  for(unsigned int i = 0; i < floating.size(); ++i) {
-    std::string id = floating[i]["id"];
-    std::string frame = floating[i]["frame"];
+  ROS_INFO("about to parse floating");
+  if(load_floating) {
+    // read in root TF frames
+    for(unsigned int i = 0; i < floating.size(); ++i) {
+      std::string id = floating[i]["id"];
+      std::string frame = floating[i]["frame"];
 
-    floating_frames[id] = frame;
+      floating_frames[id] = frame;
+    }
   }
   ROS_INFO("parsed floating");
 

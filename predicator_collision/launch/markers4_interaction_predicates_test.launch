@@ -17,7 +17,7 @@
       - /gazebo/w2barrett_manager/joint_states
     </rosparam>
 
-    <param name="verbosity" value="1"/>
+    <param name="verbosity" value="3"/>
     <param name="world_frame" value="/world"/>
   </node>
 </launch>
