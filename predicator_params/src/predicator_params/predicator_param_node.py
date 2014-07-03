@@ -33,8 +33,10 @@ class PredicatorParams(object):
         key = get_key(msg.statement.predicate, msg.statement.params)
 
         if msg.operation == UpdateParam.PUBLISH_PREDICATE:
+            print "Adding parameter with key %s"%(key)
             self.params_[key] = msg.statement
-        elif msg.operation == Updateparam.REMOVE_PREDICATE:
+        elif msg.operation == UpdateParam.REMOVE_PREDICATE and key in self.params_:
+            print "Removing parameter with key %s"%(key)
             del self.params_[key]
 
     '''
@@ -50,7 +52,7 @@ class PredicatorParams(object):
         unique_preds = sets.Set()
         unique_params = sets.Set()
 
-        for key, pred in self.params_:
+        for key, pred in self.params_.items():
             unique_preds.add(pred.predicate)
             for i in range(pred.num_params):
                 unique_params.add(pred.params[i])
@@ -61,11 +63,13 @@ class PredicatorParams(object):
         valid_msg.predicates = [pred for pred in unique_preds]
         valid_msg.assignments = [param for param in unique_params]
 
+        self.valid_publisher_.publish(valid_msg)
+
 '''
 main loop just runs the predicator node
 '''
 if __name__ == "__main__":
-    rospy.init_node('predicator_core')
+    rospy.init_node('predicator_params_node')
     spin_rate = rospy.get_param('rate',10)
     rate = rospy.Rate(spin_rate)
 
