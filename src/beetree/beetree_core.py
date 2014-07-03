@@ -261,7 +261,7 @@ class Node(object):
 
     def set_status(self,status):
         self.node_status_ = status
-        print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        # print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
 
 
@@ -370,9 +370,10 @@ class NodeRoot(Node):
     def get_node_name(self):
         return 'Root'
     def execute(self):
-        print 'Executing Root: (' + self.name_ + ')'
-        self.child_status_ = self.first_child_.execute()
-        print 'ROOT: Child returned status: ' + self.child_status_
+        # print 'Executing Root: (' + self.name_ + ')'
+        if self.first_child_ != None:
+            self.child_status_ = self.first_child_.execute()
+        # print 'ROOT: Child returned status: ' + self.child_status_
         return self.child_status_
 
 class NodeAction(Node):
