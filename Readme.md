@@ -31,8 +31,9 @@ Start `predicator_core` to listen to predicate statements from modules:
 rosrun predicator_core core.py
 ```
 
-Once the core is up and running, you can launch different modules to produce predicates.
-Keep in mind that for our purposes, predicates are always true statements about the world.
+Once the core is up and running, you can launch different modules to produce predicates. Keep in mind that for our purposes, predicates are always true statements about the world.
+
+It may be best to build custom launch files for the different predicator modules instead of launching with `rosrun` since each module needs to be carefully configured.
 
 ### Instructor Support
 
@@ -48,6 +49,10 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/get_value_predicates**: list values published by Predicator modules
 
 ## Modules
+
+Predicator modules are the ROS packages that actually perform some kind of analysis and publish that analysis as predicates. They are the source of all information used by Predicator.
+
+### List of Modules
 
 - **predicator_dummy_module**: publishes a bunch of dummy information for testing purposes
 - **predicator_collision**: collisions between objects; uses URDFs of objects to determine spatial relationship information.
