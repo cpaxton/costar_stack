@@ -10,6 +10,13 @@ from beetree import *
 import sys
 from std_msgs.msg import *
 
+
+
+def walk_tree(node):
+    for C in node.children_:
+        print C.name_
+        walk_tree(C)
+
 class BTWidget(QWidget):
   def __init__(self,app):
     super(BTWidget,self).__init__()
@@ -68,6 +75,8 @@ class BTWidget(QWidget):
     sec_place.add_child(act_move_to_bin)    
     sec_place.add_child(act_release)
     #---------------------------------------------------------------------------
+
+    walk_tree(self.root)
 
     # self.pub_ = rospy.Publisher('/beetree/dot',String)
     # print self.root.generate_dot()
