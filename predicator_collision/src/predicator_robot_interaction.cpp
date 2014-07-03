@@ -105,8 +105,10 @@ int main(int argc, char **argv) {
     exit(-1);
   }
 
+  bool load_floating = false;
   if(nh_tilde.hasParam("floating_root_list")) {
     nh_tilde.param("floating_root_list", floating, floating);
+    load_floating = true;
   } else {
     ROS_INFO("No list of robots with floating root joints given.");
   }
@@ -172,6 +174,7 @@ int main(int argc, char **argv) {
     }
   }
 
+  ROS_INFO("about to parse floating: %d", floating.size());
   // read in root TF frames
   for(unsigned int i = 0; i < floating.size(); ++i) {
     std::string id = floating[i]["id"];
@@ -179,6 +182,7 @@ int main(int argc, char **argv) {
 
     floating_frames[id] = frame;
   }
+  ROS_INFO("parsed floating");
 
   // define spin rate
   ros::Rate rate(30);
