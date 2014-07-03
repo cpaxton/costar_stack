@@ -298,31 +298,42 @@ class NodeSelector(Node):
 
 class NodeSequence(Node):
     """sequence type node
-
     This node runs its children in order acording to the order of insertion.  If any child fails, this node will return FAILURE.  If a child succeeds this node will call the next child in order. When the last child succeeds this node will return SUCCESS.
     """
     def __init__(self,parent,name,label):
         L = '->'
         # L = '( --> )\\n ' + label.upper()
         super(NodeSequence,self).__init__(False,parent,name,L)
+        self.running = False
     def get_node_type(self):
         return 'SEQUENCE'
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
-        self.exec_child_ = self.first_child_
+        if self.running == False:
+            self.exec_child_ = self.first_child_
+            self.running = True
+
         print 'Executing Sequence: (' + self.name_ + '): current child: ' + self.exec_child_.name_
 
-        for i in range(self.number_children_):
-            self.child_status_ = self.exec_child_.execute()
-            if self.child_status_ == 'NODE_ERROR':
-                return self.set_status('NODE_ERROR')
-            elif self.child_status_ == 'RUNNING':
-                return self.set_status('RUNNING')
-            elif self.child_status_ == 'FAILURE':
-                return self.set_status('FAILURE')
+        # for i in range(self.number_children_):
+        self.child_status_ = self.exec_child_.execute()
+        if self.child_status_ == 'NODE_ERROR':
+            self.running = False
+            return self.set_status('NODE_ERROR')
+        elif self.child_status_ == 'RUNNING':
+            return self.set_status('RUNNING')
+        elif self.child_status_ == 'FAILURE':
+            self.running = False
+            return self.set_status('FAILURE')
+        elif self.child_status_ == 'SUCCESS':
+            print 'Child Succeeded ... sequence ('+self.name_+') switching to next child'
             self.exec_child_ = self.exec_child_.next_brother_
+            if self.exec_child_ != None:
+                return self.set_status('RUNNING')
 
+        # Done
+        self.running = False
         return self.set_status('SUCCESS')
 
 class NodeParallel(Node):
