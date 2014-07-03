@@ -7,7 +7,7 @@ in each of the modules that I will use to bring this up.
 <launch>
 
   <!-- core launch file -->
-  <include file="$(find predicator_bringup)/launch/core.launch">
+  <include file="$(find predicator_bringup)/launch/core.launch"/>
 
   <!-- touching, etc. -->
   <include file="$(find predicator_collision)/launch/pegs_interaction_predicates_test.launch">

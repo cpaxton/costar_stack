@@ -66,11 +66,23 @@ class Predicator(object):
         self._all_value_predicates = sets.Set()
         self._all_assignments = sets.Set()
 
+    '''
+    get_value_predicates()
+    returns what the input modules say is a list of valid value predicates
+    '''
     def get_value_predicates(self, req):
-        pass
+        msg = GetListResponse()
+        msg.data = self._all_value_predicates
+        return msg
 
+    '''
+    get_predicates()
+    returns what the input modules say is a list of valid nonvalue predicates
+    '''
     def get_predicates(self, req):
-        pass
+        msg = GetListResponse()
+        msg.data = self._all_predicates
+        return msg
 
     def get_assignments(self, req):
 
