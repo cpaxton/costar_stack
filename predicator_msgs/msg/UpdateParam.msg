@@ -7,5 +7,5 @@ byte operation
 byte PUBLISH_PREDICATE=0
 byte REMOVE_PREDICATE=1
 
-predicate_msgs/PredicateStatement statement
+predicator_msgs/PredicateStatement statement
 
