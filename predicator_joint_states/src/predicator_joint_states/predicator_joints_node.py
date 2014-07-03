@@ -15,4 +15,11 @@ if __name__ == "__main__":
     config = rospy.get_param('~js_config')
     print config
 
+    while not rospy.is_shutdown():
+
+        # publish predicates message
+        # publish 
+
+        rate.sleep()
+
 
