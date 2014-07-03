@@ -69,7 +69,7 @@ class LoadParametersGUI(NodeGUI):
             file_list = getList(self.type_.get())
             self.file_.add_items(file_list.entries)
 
-    def generate(self,parent=None):
+    def generate(self):
 
         if len(self.file_list.entries) > 0:
             fname = self.file_list.entries[int(self.file_.get())]
@@ -81,7 +81,7 @@ class LoadParametersGUI(NodeGUI):
         else:
             return 'ERROR: no types found!'
         if all([self.name.full(),self.label.full()]):
-            return LoadParameters(parent,self.get_name(),self.get_label(),
+            return LoadParameters(self.get_name(),self.get_label(),
                     tname, fname)
         else:
             return 'ERROR: node not properly defined'
@@ -116,7 +116,7 @@ class LoadTextFromFileGUI(NodeGUI):
         self.file_.interface().clear()
         self.file_.add_items(self.file_list.entries)
 
-    def generate(self,parent=None):
+    def generate(self):
 
         if len(self.file_list.entries) > 0:
             fname = self.file_list.entries[int(self.file_.get())]
@@ -132,7 +132,7 @@ class LoadTextFromFileGUI(NodeGUI):
         print tname
 
         if all([self.name.full(),self.label.full()]):
-            return LoadText(parent,self.get_name(),self.get_label(),
+            return LoadText(self.get_name(),self.get_label(),
                     fname, tname)
         else:
             return 'ERROR: node not properly defined'
@@ -161,7 +161,7 @@ class SaveParameterGUI(NodeGUI):
 
         #self.param_.add_items(rosparam.get_params(''))
 
-    def generate(self,parent=None):
+    def generate(self):
 
         if len(self.type_list.entries) > 0:
             tname = self.type_list.entries[int(self.type_.get())]
@@ -169,7 +169,7 @@ class SaveParameterGUI(NodeGUI):
             return 'ERROR: no types found!'
 
         if all([self.name.full(),self.label.full()],self.file_.full()):
-            return SaveParameter(parent,self.get_name(),self.get_label(),
+            return SaveParameter(self.get_name(),self.get_label(),
                     tname, self.file_.get(), self.param_.get())
         else:
             return 'ERROR: node not properly defined'
@@ -201,7 +201,7 @@ class LoadEntryFromFileGUI(NodeGUI):
         self.file_.interface().clear()
         self.file_.add_items(self.file_list.entries)
 
-    def generate(self,parent=None):
+    def generate(self):
 
         if len(self.file_list.entries) > 0:
             fname = self.file_list.entries[int(self.file_.get())]
@@ -214,7 +214,7 @@ class LoadEntryFromFileGUI(NodeGUI):
             return 'ERROR: no types found!'
 
         if all([self.name.full(),self.label.full(), self.entry_.full()]):
-            return LoadEntry(parent,self.get_name(),self.get_label(),
+            return LoadEntry(self.get_name(),self.get_label(),
                     tname, fname, self.entry_.get())
         else:
             return 'ERROR: node not properly defined'
@@ -223,7 +223,7 @@ class LoadEntryFromFileGUI(NodeGUI):
 class LoadText(Node):
     def __init__(self,parent,name,label,folder,fname):
         color='#5B8EEB'
-        super(LoadText,self).__init__(False,parent,name,label,color)
+        super(LoadText,self).__init__(name,label,color)
         self.folder_ = folder
         self.name_ = fname
 
@@ -240,7 +240,7 @@ class LoadText(Node):
 class LoadEntry(Node):
     def __init__(self,parent,name,label,folder,fname,entry):
         color='#5B8EEB'
-        super(LoadEntry,self).__init__(False,parent,name,label,color)
+        super(LoadEntry,self).__init__(name,label,color)
         self.folder_ = folder
         self.name_ = fname
         self.entry_ = entry
@@ -264,7 +264,7 @@ Loads parameters to ROS with a Librarian service call
 '''
 class LoadParameters(Node):
     def __init__(self,parent,name,label,folder,fname):
-        super(LoadParameters,self).__init__(False,parent,name,label,'#92D665')
+        super(LoadParameters,self).__init__(name,label,'#92D665')
         self.service_thread = Thread(target=self.make_service_call, args=('request',1))
         self.running = False
         self.finished_with_success = None
@@ -315,7 +315,7 @@ Take a single thing off the ROS parameter server and put it in a file
 '''
 class SaveParameter(Node):
     def __init__(self,parent,name,label,folder,fname,param):
-        super(SaveParameter,self).__init__(False,parent,name,label,'#92D665')
+        super(SaveParameter,self).__init__(name,label,'#92D665')
         self.service_thread = Thread(target=self.make_service_call, args=('request',1))
         self.running = False
         self.finished_with_success = None
