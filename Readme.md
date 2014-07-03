@@ -44,7 +44,7 @@ The user interfaces may require `predicator_core` to be running to get a list of
 
 - **predicator/test_predicate**: determines if a predicate is true
 - **predicator/get_assignment**: return the set of possible values for a single missing field
-- **predicator/get_possible_assignments**: list the set of all possible values, if you provide an empty id. List of all possible values for a valid single-term predicate (a type) if you provide an id.
+- **predicator/get_possible_assignment**: list the set of all possible values, if you provide an empty id. List of all possible values for a valid single-term predicate (a type) if you provide an id.
 - **predicator/get_predicates**: list the set of all predicates currently considered valid
 - **predicator/get_value_predicates**: list values published by Predicator modules
 
