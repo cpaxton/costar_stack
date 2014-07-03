@@ -81,14 +81,14 @@ class Node(object):
 
     def add_sibling_after(self,child_to_add):
         my_index = self.parent_.children_.index(self)
-        self.parent_.insert_child(my_index + 1,child_to_add)
+        self.parent_.insert_child(my_index + 1, child_to_add)
 
     def add_sibling_before(self,child_to_add):
         my_index = self.parent_.children_.index(self)
-        if my_index == 0:
-            self.parent_.insert_child(0, child_to_insert)
-        else:
-            self.parent_.insert_child(my_index - 1,child_to_add)
+        # if my_index == 0:
+        #     self.parent_.insert_child(0, child_to_add)
+        # else:
+        self.parent_.insert_child(my_index, child_to_add)
 
     def remove_child_by_name(self,child_name):
         index = self.children_names_.index(child_name)
@@ -107,6 +107,7 @@ class Node(object):
 
     def remove_self(self):
         self.parent_.remove_child(self)
+        return True
 
     def set_children_number(self,number):
         self.children_number_ = number
@@ -146,10 +147,13 @@ class NodeSelector(Node):
         if self.child_status_ == 'FAILURE':
             self.exec_index += 1
             if self.exec_index == self.num_children_: # Last Child
-                return self.set_status('FAILURE')
                 self.exec_index = None 
+                return self.set_status('FAILURE')
             else:
                 return self.set_status('RUNNING')
+        elif self.child_status_ == 'SUCCESS':
+            self.exec_index = None 
+            return self.set_status('SUCCESS')
         else:
             return self.set_status(self.child_status_)
 
@@ -182,6 +186,8 @@ class NodeSequence(Node):
                 self.exec_index = None 
             else:
                 return self.set_status('RUNNING')
+        elif self.child_status_ == 'FAILURE':
+            return self.set_status('FAILURE')
         else:
             return self.set_status(self.child_status_)
 
