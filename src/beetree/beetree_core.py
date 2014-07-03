@@ -4,9 +4,10 @@ import rospy
 from std_msgs.msg import *
 from collections import OrderedDict
 from copy import deepcopy
+
 class Node(object):
 
-    def __init__(self, is_root=False, parent=None, name='', label='', color='', shape='box', flag=False):
+    def __init__(self, name, label, color='', shape='box', flag=False):
 
         self.num_children_ = 0
         self.highlighted_ = False
@@ -20,6 +21,7 @@ class Node(object):
         self.children_ = []
         self.children_names_ = []
         self.exec_index = None
+        self.parent_ = None
 
                 
     def set_flag(self,flag):
@@ -126,9 +128,9 @@ class NodeSelector(Node):
     '''runs children in order until one succeeds then 
        returns success, if all fail, returns failure.
     '''
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '( * )\\n ' + label.upper()
-        super(NodeSelector,self).__init__(False,parent,name,L)
+        super(NodeSelector,self).__init__(name,L)
     def get_node_type(self):
         return 'SELECTOR'
     def get_node_name(self):
@@ -158,10 +160,10 @@ class NodeSequence(Node):
         then execute the next child until all children are executed, then return
         SUCCESS.
     """
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '->'
         # L = '( --> )\\n ' + label.upper()
-        super(NodeSequence,self).__init__(False,parent,name,L)
+        super(NodeSequence,self).__init__(name,L)
     def get_node_type(self):
         return 'SEQUENCE'
     def get_node_name(self):
@@ -190,10 +192,10 @@ class NodeIterator(Node):
         failure, and will return SUCCESS when all children have returned either 
         SUCCESS or FAILURE.
     """
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '-|'
         # L = '( --> )\\n ' + label.upper()
-        super(NodeIterator,self).__init__(False,parent,name,L)
+        super(NodeIterator,self).__init__(name,L)
     def get_node_type(self):
         return 'SEQUENCE'
     def get_node_name(self):
@@ -230,9 +232,9 @@ class NodeParallelAll(Node):
         FAILURE. Once all succeed, returns SUCCESS.  Until that point returns
         RUNNING.
     '''
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '|A|'# + label.upper()
-        super(NodeParallelAll,self).__init__(False,parent,name,L)
+        super(NodeParallelAll,self).__init__(name,L)
         self.num_success = None
     def get_node_type(self):
         return 'PARALLEL'
@@ -269,9 +271,9 @@ class NodeParallelRemove(Node):
         FAILURE. Once all succeed, returns SUCCESS.  Until that point returns
         RUNNING. As nodes succeed, they are prevented from being ticked again
     '''
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '|R|'# + label.upper()
-        super(NodeParallelRemove,self).__init__(False,parent,name,L)
+        super(NodeParallelRemove,self).__init__(name,L)
         self.exec_list_ = None
         self.num_success = None
     def get_node_type(self):
@@ -310,9 +312,9 @@ class NodeParallelOne(Node):
         FAILURE. Once ONE succeeds, returns SUCCESS.  Until that point returns
         RUNNING.
     '''
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '|1|'# + label.upper()
-        super(NodeParallelOne,self).__init__(False,parent,name,L)
+        super(NodeParallelOne,self).__init__(name,L)
     def get_node_type(self):
         return 'PARALLEL'
     def get_node_name(self):
@@ -335,9 +337,9 @@ class NodeParallelOne(Node):
         return self.set_status('RUNNING')
 
 class NodeDecoratorRepeat(Node):
-    def __init__(self,parent,name,label,runs=1):
+    def __init__(self,name,label,runs=1):
         L = '(runs)\\n['+str(runs)+']'
-        super(NodeDecoratorRepeat,self).__init__(False,parent,name,L,shape='diamond')
+        super(NodeDecoratorRepeat,self).__init__(name,L,shape='diamond')
         self.runs_ = runs
         self.num_runs_ = 0
     def get_node_type(self):
@@ -358,9 +360,9 @@ class NodeDecoratorRepeat(Node):
             return self.set_status('SUCCESS')
 
 class NodeDecoratorIgnoreFail(Node):
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '(ignore)\\n['+str(runs)+']'
-        super(NodeDecoratorIgnoreFail,self).__init__(False,parent,name,L,shape='diamond')
+        super(NodeDecoratorIgnoreFail,self).__init__(name,L,shape='diamond')
     def get_node_type(self):
         return 'DECORATOR_REPEAT'
     def get_node_name(self):
@@ -376,7 +378,7 @@ class NodeDecoratorIgnoreFail(Node):
 class NodeRoot(Node):
     def __init__(self, name, label):
         L = '(/)'
-        super(NodeRoot,self).__init__(True,None,name,L,'',)
+        super(NodeRoot,self).__init__(name,L)
     def get_node_type(self):
         return 'ROOT'
     def get_node_name(self):
@@ -388,10 +390,10 @@ class NodeRoot(Node):
         # print 'ROOT: Child returned status: ' + self.child_status_
 
 class NodeAction(Node):
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         L = '( action )\\n' + label.upper()
         color='#92D665'
-        super(NodeAction,self).__init__(False,parent,name,L,color)
+        super(NodeAction,self).__init__(name,L,color)
         self.name_ = name
     def get_node_type(self):
         return 'ACTION'
@@ -402,9 +404,9 @@ class NodeAction(Node):
         return self.set_status('SUCCESS')
 
 class NodeService(Node):
-    def __init__(self,parent,name,label):
+    def __init__(self,name,label):
         color='#92D665'
-        super(NodeService,self).__init__(False,parent,name,label,color)
+        super(NodeService,self).__init__(name,label,color)
     def get_node_type(self):
         return 'SERVICE'
     def get_node_name(self):
@@ -414,10 +416,10 @@ class NodeService(Node):
         return self.set_status('SUCCESS')
 
 class NodeCondition(Node):
-    def __init__(self,parent,name,label,param_name=None,desired_value=None):
+    def __init__(self,name,label,param_name=None,desired_value=None):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'
-        super(NodeCondition,self).__init__(False,parent,name,L,color,'ellipse')
+        super(NodeCondition,self).__init__(name,L,color,'ellipse')
         self.desired_value_ = desired_value
         self.param_name_ = param_name
     def get_node_type(self):
