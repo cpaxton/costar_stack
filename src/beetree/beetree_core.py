@@ -194,7 +194,6 @@ class NodeSequence(Node):
         else:
             return self.set_status(self.child_status_)
 
-
 class NodeIterator(Node):
     """ Iterator Node
         The iterator node executes its children in order or insertion, ignoring
@@ -232,8 +231,7 @@ class NodeIterator(Node):
             else:
                 return self.set_status('RUNNING')
         else:
-            return self.set_status(self.child_status_)
-            
+            return self.set_status(self.child_status_)        
 
 class NodeParallelAll(Node):
     ''' 
