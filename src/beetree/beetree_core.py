@@ -218,25 +218,33 @@ class NodeSequence(Node):
     def execute(self):
         # print 'Executing sequence: (' + self.name_ + ')'
 
-        if self.exec_index == None:
-            self.exec_index = 0
+        # if self.exec_index == None:
+        #     self.exec_index = 0
 
-        self.child_status_ = self.children_[self.exec_index].execute()
-        if self.child_status_ == 'SUCCESS':
-            print 'got success'
-            self.exec_index += 1
-            print 'execution index =' + str(self.exec_index)
-            print 'num_children_ =' + str(self.num_children_)
-            if self.exec_index == self.num_children_: # Last Child
-                self.exec_index = None 
-                return self.set_status('SUCCESS')
-            else:
-                return self.set_status('RUNNING')
-        elif self.child_status_ == 'FAILURE':
-            self.exec_index = None 
-            return self.set_status('FAILURE')
-        else:
-            return self.set_status(self.child_status_)
+        # self.child_status_ = self.children_[self.exec_index].execute()
+        # if self.child_status_ == 'SUCCESS':
+        #     print 'got success'
+        #     self.exec_index += 1
+        #     print 'execution index =' + str(self.exec_index)
+        #     print 'num_children_ =' + str(self.num_children_)
+        #     if self.exec_index == self.num_children_: # Last Child
+        #         self.exec_index = None 
+        #         return self.set_status('SUCCESS')
+        #     else:
+        #         return self.set_status('RUNNING')
+        # elif self.child_status_ == 'FAILURE':
+        #     self.exec_index = None 
+        #     return self.set_status('FAILURE')
+        # else:
+        #     return self.set_status(self.child_status_)
+
+        for child in self.children_:
+            status = child.execute()
+
+            if status != 'SUCCESS':
+                return self.set_status(status)
+
+        return self.set_status('SUCCESS')
 
 class NodeIterator(Node):
     """ Iterator Node
