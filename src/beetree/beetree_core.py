@@ -179,8 +179,9 @@ class Node(object):
 ### CORE LOGICAL NODES ----------------------------------------------------------------------------------------
 
 class NodeSelector(Node):
-    ''' Runs children in order until one succeeds then 
-       returns SUCCESS, if all fail, returns FAILURE.
+    ''' Selector Node
+    Runs children in order until one succeeds then 
+    returns SUCCESS, if all fail, returns FAILURE.
     '''
     def __init__(self,name,label):
         L = '( * )\\n ' + label.upper()
@@ -202,10 +203,10 @@ class NodeSelector(Node):
 
 class NodeSequence(Node):
     """ Sequence Node
-        The sequence node executes its children in order or insertion.  If a child
-        fails, the node will return FAILURE. If a child succeeds, the sequence will
-        then execute the next child until all children are executed, then return
-        SUCCESS.
+    The sequence node executes its children in order or insertion.  If a child
+    fails, the node will return FAILURE. If a child succeeds, the sequence will
+    then execute the next child until all children are executed, then return
+    SUCCESS.
     """
     def __init__(self,name,label):
         L = '->'
@@ -227,9 +228,9 @@ class NodeSequence(Node):
 
 class NodeIterator(Node):
     """ Iterator Node
-        The iterator node executes its children in order or insertion, ignoring
-        failure, and will return SUCCESS when all children have returned either 
-        SUCCESS or FAILURE.
+    The iterator node executes its children in order or insertion, ignoring
+    failure, and will return SUCCESS when all children have returned either 
+    SUCCESS or FAILURE.
     """
     def __init__(self,name,label):
         L = '1...'
@@ -250,10 +251,10 @@ class NodeIterator(Node):
         return self.set_status('SUCCESS')       
 
 class NodeParallelAll(Node):
-    ''' 
-        Executes all children close to simultaneously.  If any fail, returns
-        FAILURE. Once all succeed, returns SUCCESS.  Until that point returns
-        RUNNING.
+    ''' Parallel All Node
+    Executes all children close to simultaneously.  If any fail, returns
+    FAILURE. Once all succeed, returns SUCCESS.  Until that point returns
+    RUNNING.
     '''
     def __init__(self,name,label):
         L = '|A|'# + label.upper()
@@ -289,10 +290,10 @@ class NodeParallelAll(Node):
             return self.set_status('RUNNING')
 
 class NodeParallelRemove(Node):
-    ''' 
-        Executes all children close to simultaneously.  If any fail, returns
-        FAILURE. Once all succeed, returns SUCCESS.  Until that point returns
-        RUNNING. As nodes succeed, they are prevented from being ticked again
+    ''' Parallel Remove Node
+    Executes all children close to simultaneously.  If any fail, returns
+    FAILURE. Once all succeed, returns SUCCESS.  Until that point returns
+    RUNNING. As nodes succeed, they are prevented from being ticked again
     '''
     def __init__(self,name,label):
         L = '|R|'# + label.upper()
@@ -330,10 +331,10 @@ class NodeParallelRemove(Node):
             return self.set_status('RUNNING')
 
 class NodeParallelOne(Node):
-    ''' 
-        Executes all children close to simultaneously.  If any fail, returns
-        FAILURE. Once ONE succeeds, returns SUCCESS.  Until that point returns
-        RUNNING.
+    ''' Parallel One Node
+    Executes all children close to simultaneously.  If any fail, returns
+    FAILURE. Once ONE succeeds, returns SUCCESS.  Until that point returns
+    RUNNING.
     '''
     def __init__(self,name,label):
         L = '|1|'# + label.upper()
@@ -360,6 +361,9 @@ class NodeParallelOne(Node):
         return self.set_status('RUNNING')
 
 class NodeDecoratorRepeat(Node):
+    ''' Decorator Repeat Node
+    Executes child node N times
+    '''
     def __init__(self,name,label,runs=1):
         L = '(runs)\\n['+str(runs)+']'
         super(NodeDecoratorRepeat,self).__init__(name,L,shape='diamond')
@@ -383,6 +387,9 @@ class NodeDecoratorRepeat(Node):
             return self.set_status('SUCCESS')
 
 class NodeDecoratorIgnoreFail(Node):
+    ''' Decorator Ignore Fail
+    Returns success regardless of outcome of child
+    '''
     def __init__(self,name,label):
         L = '(ignore)\\n['+str(runs)+']'
         super(NodeDecoratorIgnoreFail,self).__init__(name,L,shape='diamond')
@@ -399,6 +406,10 @@ class NodeDecoratorIgnoreFail(Node):
             return self.set_status('SUCCESS')
 
 class NodeRoot(Node):
+    ''' Root Node
+    The root node can have only one child, and typically is used as the root of 
+    the tree
+    '''
     def __init__(self, name, label):
         L = '(/)'
         super(NodeRoot,self).__init__(name,L)
@@ -413,6 +424,9 @@ class NodeRoot(Node):
         # print 'ROOT: Child returned status: ' + self.child_status_
 
 class NodeAction(Node):
+    ''' Action Node
+    Placeholder action node
+    '''
     def __init__(self,name,label):
         L = '( action )\\n' + label.upper()
         color='#92D665'
@@ -427,6 +441,9 @@ class NodeAction(Node):
         return self.set_status('SUCCESS')
 
 class NodeService(Node):
+    ''' Service Node
+    Placeholder service node
+    '''
     def __init__(self,name,label):
         color='#92D665'
         super(NodeService,self).__init__(name,label,color)
@@ -439,6 +456,9 @@ class NodeService(Node):
         return self.set_status('SUCCESS')
 
 class NodeCondition(Node):
+    ''' Condition Node
+    Placeholder condition node
+    '''
     def __init__(self,name,label,param_name=None,desired_value=None):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'
