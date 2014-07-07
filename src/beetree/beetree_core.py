@@ -82,6 +82,7 @@ class Node(object):
     def reset(self):
         """ Resets the children of this node. useful when an execution is finished and the subtree needs to be reset
         """
+        print "Node " + self.name_ + " resetting."
         for C in self.children_:
             C.reset()
 
@@ -189,25 +190,15 @@ class NodeSelector(Node):
     def get_node_name(self):
         return 'Selector'
     def execute(self):
-        print 'Executing selector: (' + self.name_ + ')'
 
-        if self.exec_index == None:
-            self.exec_index = 0
+        for child in self.children_:
+            status = child.execute()
 
-        self.child_status_ = self.children_[self.exec_index].execute()
+            if status != 'FAILURE':
+                return self.set_status(status)
 
-        if self.child_status_ == 'FAILURE':
-            self.exec_index += 1
-            if self.exec_index == self.num_children_: # Last Child
-                self.exec_index = None 
-                return self.set_status('FAILURE')
-            else:
-                return self.set_status('RUNNING')
-        elif self.child_status_ == 'SUCCESS':
-            self.exec_index = None 
-            return self.set_status('SUCCESS')
-        else:
-            return self.set_status(self.child_status_)
+        return self.set_status('FAILURE')
+
 
 class NodeSequence(Node):
     """ Sequence Node
@@ -225,7 +216,7 @@ class NodeSequence(Node):
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
-        print 'Executing sequence: (' + self.name_ + ')'
+        # print 'Executing sequence: (' + self.name_ + ')'
 
         if self.exec_index == None:
             self.exec_index = 0
@@ -262,7 +253,7 @@ class NodeIterator(Node):
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
-        print 'Executing selector: (' + self.name_ + ')'
+        # print 'Executing selector: (' + self.name_ + ')'
 
         if self.exec_index == None:
             self.exec_index = 0
@@ -301,7 +292,7 @@ class NodeParallelAll(Node):
     def get_node_name(self):
         return 'Parallel'
     def execute(self):
-        print 'Executing Parallel: (' + self.name_ + ')'
+        # print 'Executing Parallel: (' + self.name_ + ')'
         if self.num_success == None:
             self.num_success = 0
 
@@ -346,7 +337,7 @@ class NodeParallelRemove(Node):
             self.exec_list_ = deepcopy(self.children_)
             self.num_success = 0
 
-        print 'Executing Parallel: (' + self.name_ + ')'
+        # print 'Executing Parallel: (' + self.name_ + ')'
 
         for C in self.exec_list_:
             self.child_status_ = C.execute()
@@ -381,7 +372,7 @@ class NodeParallelOne(Node):
         return 'Parallel'
     def execute(self):
 
-        print 'Executing Parallel: (' + self.name_ + ')'
+        # print 'Executing Parallel: (' + self.name_ + ')'
 
         for C in self.children_:
             self.child_status_ = C.execute()
@@ -407,7 +398,7 @@ class NodeDecoratorRepeat(Node):
     def get_node_name(self):
         return 'Decorator Repeat'
     def execute(self):
-        print 'Executing Repeat Decorator: (' + self.name_ + ')'
+        # print 'Executing Repeat Decorator: (' + self.name_ + ')'
         if self.num_runs_ < self.runs_:
             self.child_status_ = self.children_[0].execute()
             if self.child_status_ == 'SUCCESS':
@@ -428,7 +419,7 @@ class NodeDecoratorIgnoreFail(Node):
     def get_node_name(self):
         return 'Decorator Repeat'
     def execute(self):
-        print 'Executing Repeat Decorator: (' + self.name_ + ')'
+        # print 'Executing Repeat Decorator: (' + self.name_ + ')'
         self.child_status_ = self.children_[0].execute()            
         if self.child_status_ == 'RUNNING':
             return self.set_status('RUNNING')
@@ -460,7 +451,7 @@ class NodeAction(Node):
     def get_node_name(self):
         return 'Action'
     def execute(self):
-        print 'Executing Action: (' + self.name_ + ')'
+        # print 'Executing Action: (' + self.name_ + ')'
         return self.set_status('SUCCESS')
 
 class NodeService(Node):
@@ -472,7 +463,7 @@ class NodeService(Node):
     def get_node_name(self):
         return 'Service'
     def execute(self):
-        print 'Executing Service: ' + self.name_
+        # print 'Executing Service: ' + self.name_
         return self.set_status('SUCCESS')
 
 class NodeCondition(Node):
@@ -487,7 +478,7 @@ class NodeCondition(Node):
     def get_node_name(self):
         return 'Condition'
     def execute(self):
-        print 'Executing Condition: (' + self.name_ + ')'
+        # print 'Executing Condition: (' + self.name_ + ')'
         return self.set_status('SUCCESS')
 
 
