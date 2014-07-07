@@ -232,7 +232,7 @@ class NodeIterator(Node):
         SUCCESS or FAILURE.
     """
     def __init__(self,name,label):
-        L = '-|'
+        L = '1...'
         # L = '( --> )\\n ' + label.upper()
         super(NodeIterator,self).__init__(name,L)
     def get_node_type(self):
