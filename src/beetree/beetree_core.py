@@ -216,27 +216,6 @@ class NodeSequence(Node):
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
-        # print 'Executing sequence: (' + self.name_ + ')'
-
-        # if self.exec_index == None:
-        #     self.exec_index = 0
-
-        # self.child_status_ = self.children_[self.exec_index].execute()
-        # if self.child_status_ == 'SUCCESS':
-        #     print 'got success'
-        #     self.exec_index += 1
-        #     print 'execution index =' + str(self.exec_index)
-        #     print 'num_children_ =' + str(self.num_children_)
-        #     if self.exec_index == self.num_children_: # Last Child
-        #         self.exec_index = None 
-        #         return self.set_status('SUCCESS')
-        #     else:
-        #         return self.set_status('RUNNING')
-        # elif self.child_status_ == 'FAILURE':
-        #     self.exec_index = None 
-        #     return self.set_status('FAILURE')
-        # else:
-        #     return self.set_status(self.child_status_)
 
         for child in self.children_:
             status = child.execute()
@@ -261,29 +240,14 @@ class NodeIterator(Node):
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
-        # print 'Executing selector: (' + self.name_ + ')'
 
-        if self.exec_index == None:
-            self.exec_index = 0
+        for child in self.children_:
+            status = child.execute()
 
-        self.child_status_ = self.children_[self.exec_index].execute()
-        # If child reports success or failure, execute next child
-        if self.child_status_ == 'SUCCESS':
-            self.exec_index += 1
-            if self.exec_index == self.num_children_: # Last Child
-                return self.set_status('SUCCESS')
-                self.exec_index = None 
-            else:
-                return self.set_status('RUNNING')
-        elif self.child_status_ == 'FAILURE':
-            self.exec_index += 1
-            if self.exec_index == self.num_children_: # Last Child
-                return self.set_status('SUCCESS')
-                self.exec_index = None 
-            else:
-                return self.set_status('RUNNING')
-        else:
-            return self.set_status(self.child_status_)        
+            if status != 'SUCCESS' and status != 'FAILURE':
+                return self.set_status(status)
+            
+        return self.set_status('SUCCESS')       
 
 class NodeParallelAll(Node):
     ''' 
