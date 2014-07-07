@@ -1708,6 +1708,17 @@ class DotWidget(QWidget):
 
             event.accept()
             return
+        if event.button() == Qt.RightButton and self.is_click(event):
+            x, y = event.x(), event.y()
+            url = self.get_url(x, y)
+            if url is not None:
+                self.emit(SIGNAL("right_clicked"), unicode(url.url), event)
+            else:
+                self.emit(SIGNAL("right_clicked"), 'none', event)
+                jump = self.get_jump(x, y)
+                if jump is not None:
+                    self.animate_to(jump.x, jump.y)
+        
         if event.button() in (Qt.LeftButton, Qt.MidButton):
             event.accept()
         return
