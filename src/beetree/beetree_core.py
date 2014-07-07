@@ -6,9 +6,25 @@ from collections import OrderedDict
 from copy import deepcopy
 
 class Node(object):
+    """ Beetree Node
+    The core class for beetree nodes.  Beetree nodes are connected together in a tree 
+    using the add_child and related functions.  A beetree node can generate a graphviz
+    dot file for visualization purposes.
+    """
 
     def __init__(self, name, label, color='', shape='box', flag=False):
-
+        """ Beetree Node Constructor
+        @type name: String
+        @param name: the name of the node
+        @type label: String
+        @param label: the label that will appear for the node in the generated dotcode
+        @type color: String
+        @param color: the color the node will appear as in dotcode
+        @type shape: String
+        @param shape: the shape the node will appear as in dotcode
+        @type flag: Bool
+        @param flag: a boolean which determines whether this node will be drawn in dotcode as highlighted 
+        """
         self.num_children_ = 0
         self.highlighted_ = False
         self.node_status_ = 'NODE_ERROR'
@@ -25,12 +41,12 @@ class Node(object):
 
                 
     def set_flag(self,flag):
-        """ sets a flag for whether this node will be highlighted in the dot code
+        """ Sets a flag for whether this node will be highlighted in the dot code
         """
         self.flag_ = flag
 
     def generate_dot(self):
-        """generates dot code for this node and its connection to its children
+        """ Generates dot code for this node and its connection to its children
         Also recursively calls the children's generate_dot() functions
         """
         # if parent generate front end of dotcode string
@@ -64,69 +80,106 @@ class Node(object):
             return dot
 
     def reset(self):
+        """ Resets the children of this node. useful when an execution is finished and the subtree needs to be reset
+        """
         for C in self.children_:
             C.reset()
 
     def add_child(self, child_to_add):
+        """ Adds a child to this node
+        @type child_to_add: Node
+        @param child_to_add: the node to add as a child
+        """
         child_to_add.parent_ = self
         self.children_.append(child_to_add)
         self.children_names_.append(child_to_add.name_)
         self.num_children_+=1
 
     def insert_child(self,index,child_to_insert):
+        """ Insert a child at a position in the existing children of this node
+        @type index: Int
+        @param index: the position to insert the child
+        @type child_to_insert: Node
+        @param child_to_insert: the node to insert as a child
+        """
         child_to_insert.parent_ = self
         self.children_.insert(index,child_to_insert)
         self.children_names_.insert(index,child_to_insert.name_)
         self.num_children_+=1
 
     def add_sibling_after(self,child_to_add):
+        """ Add a sibling after this node as a child of this nodes parent
+        @type child_to_add: Node
+        @param child_to_add: the node to add as a sibling
+        """
         my_index = self.parent_.children_.index(self)
         self.parent_.insert_child(my_index + 1, child_to_add)
 
     def add_sibling_before(self,child_to_add):
+        """ Add a sibling before this node as a child of this nodes parent
+        @type child_to_add: Node
+        @param child_to_add: the node to add as a sibling
+        """
         my_index = self.parent_.children_.index(self)
         self.parent_.insert_child(my_index, child_to_add)
 
     def remove_child_by_name(self,child_name):
+        """ Remove a child by name
+        @type child_name: String
+        @param child_name: the name of the child to remove
+        """
         index = self.children_names_.index(child_name)
         self.children_.pop(index)
         self.children_names_.pop(index)
         self.num_children_ -= 1    
 
     def remove_child(self, child_to_remove):
+        """ Remove a child by reference
+        @type child_to_remove: Node
+        @param child_to_remove: reference to the child to remove
+        """
         index = self.children_.index(child_to_remove)
         self.children_.pop(index)
         self.children_names_.pop(index)
         self.num_children_ -= 1    
 
     def remove_all_children(self):
+        """ Remove all children of this node
+        """
         self.children_ = []
         self.children_names_ = []
         self.num_children_ = 0
 
     def remove_self(self):
+        """ Remove this node from its parents list of children and all connections to the tree
+        """
         self.parent_.remove_child(self)
         return True
 
     def set_children_number(self,number):
+        """ Set the number of children this node has
+        """
         self.children_number_ = number
 
-    def set_next_brother(self,brother):
-        self.next_brother_ = brother
-
-    def set_prev_brother(self,brother):
-        self.prev_brother_ = brother
-
     def set_status(self,status):
+        """ Set the status of this node as SUCCESS, RUNNING, FAILURE or NODE_ERROR
+        @type status: String
+        @param status: the status value
+        """
         self.node_status_ = status
         # print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
 
+    def execute(self):
+        """ Virtual function that each node runs when that node gets ticked
+        """
+        pass
 
-## Specialized Nodes
+### CORE LOGICAL NODES ----------------------------------------------------------------------------------------
+
 class NodeSelector(Node):
-    '''runs children in order until one succeeds then 
-       returns success, if all fail, returns failure.
+    ''' Runs children in order until one succeeds then 
+       returns SUCCESS, if all fail, returns FAILURE.
     '''
     def __init__(self,name,label):
         L = '( * )\\n ' + label.upper()
