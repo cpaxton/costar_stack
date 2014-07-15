@@ -11,15 +11,22 @@ string predicate
 
 # value of the predicate
 # this is not really used right now
-# could be for feature values or for truth value (probability)
 float64 value
 
+# probability that this predicate is true
+float64 confidence
+
 # number of parameters used
+# TODO: remove this
 int32 num_params
 
 # list of params
 # ex: [Ovaltine_1, Ovaltine_2, ur5]
+# TODO: remove the fixed number of parameters from this
 string[3] params
+
+# class of the parameter
+string[] param_classes
 
 # first parameter value
 # ex: Ovaltine_1

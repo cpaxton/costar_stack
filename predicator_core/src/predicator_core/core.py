@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
+import pprint
 import rospy
 import copy
 from predicator_msgs.msg import *
 from predicator_core.srv import *
 
 import sets
+
+pp = pprint.PrettyPrinter()
 
 def predicate_to_tuple(predicate):
     if predicate.num_params == 1:
@@ -61,6 +64,8 @@ class Predicator(object):
         self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
         self._latest = {}
         self._predicates = {}
+
+        self._verbosity = rospy.get_param('~verbosity',0)
 
         self._all_predicates = sets.Set()
         self._all_value_predicates = sets.Set()
@@ -149,6 +154,9 @@ class Predicator(object):
                     d[pred_key].append(copy.deepcopy(predicate.params))
                 
         self._predicates = d
+
+        if(self._verbosity > 0):
+            pp.pprint(d)
 
     '''
     publish()
