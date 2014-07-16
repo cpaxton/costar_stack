@@ -153,7 +153,7 @@ if __name__ == '__main__':
     try:
         while not rospy.is_shutdown():
             ps = PredicateList()
-            ps.header.frame_id = rospy.get_name()
+            ps.pheader.source = rospy.get_name()
             ps.statements = [
                 PredicateStatement(
                     predicate='volume_occupied',

@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
   // define valid predicates topic
   predicator_msgs::ValidPredicates pval;
-  pval.header.frame_id = ros::this_node::getName();
+  pval.pheader.source = ros::this_node::getName();
   pval.predicates.push_back("touching");
   pval.value_predicates.push_back("mesh_distance");
 
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
     ros::spinOnce();
 
     predicator_msgs::PredicateList output;
-    output.header.frame_id = ros::this_node::getName();
+    output.pheader.source = ros::this_node::getName();
 
     unsigned int i = 0;
 

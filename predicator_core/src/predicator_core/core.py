@@ -108,7 +108,14 @@ class Predicator(object):
     read in predicate messages and record their source
     '''
     def callback(self, msg):
-        self._latest[msg.header.frame_id] = msg.statements
+
+        if len(msg.pheader.source] == 0:
+            if len(msg.predicates) > 0:
+                rospy.logerr("Could not recognize sender of predicate \"%s\", was source provided?", msg.predicates[0].predicate)
+            else 
+                rospy.logerr("Could not recognize sender of empty predicate list, was source provided?")
+
+        self._latest[msg.pheader.source] = msg.statements
 
     '''
     validCallback()
@@ -166,7 +173,7 @@ class Predicator(object):
 
         # create a list of all received predicates and republish it
         list_msg = PredicateList()
-        list_msg.header.frame_id = rospy.get_name()
+        list_msg.pheader.source = rospy.get_name()
         list_msg.statements = []
         for source, lst in self._latest.items():
             for item in lst:
@@ -179,7 +186,7 @@ class Predicator(object):
         # create PredicateAssignemnts with keys, set of other predicates
         # set of PredicateStatements from list of values goes into each Assignment
         set_msg = PredicateSet()
-        set_msg.header.frame_id = rospy.get_name()
+        set_msg.pheader.source = rospy.get_name()
         for key, values in self._predicates.items():
             pa = PredicateAssignment()
             pa.statement = parse_key(key)

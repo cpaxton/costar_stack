@@ -217,7 +217,7 @@ int main (int argc, char **argv) {
     }
 
     // create output message and send it
-    msg.header.frame_id = ros::this_node::getName();
+    msg.pheader.source = ros::this_node::getName();
     pub.publish(msg);
 
     // ... and sleep

@@ -214,7 +214,7 @@ class GeometryPredicator(object):
     def getPredicateMessage(self):
 
         msg = PredicateList()
-        msg.header.frame_id = rospy.get_name()
+        msg.pheader.source = rospy.get_name()
 
         for frame1 in self._frames:
             for frame2 in self._frames:

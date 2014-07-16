@@ -80,7 +80,7 @@ class MovementPredicator(object):
     '''
     def getMessage(self):
         msg = PredicateList()
-        msg.header.frame_id = rospy.get_name()
+        msg.pheader.source = rospy.get_name()
 
         '''
         iterate over all frames to get movement stuff

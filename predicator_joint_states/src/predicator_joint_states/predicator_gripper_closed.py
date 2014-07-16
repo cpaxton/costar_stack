@@ -11,6 +11,7 @@ def cb(msg):
     js = [x for x in msg.position]
 
     msg = PredicateList()
+    msg.pheader.source = rospy.get_name()
     ps = PredicateStatement()
     ps.predicate = 'is_closed'
     ps.num_params = 1

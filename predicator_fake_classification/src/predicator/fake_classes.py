@@ -29,8 +29,8 @@ if __name__ == '__main__':
 
     msg = PredicateList()
     valid_msg = ValidPredicates()
-    msg.header.frame_id = rospy.get_name()
-    valid_msg.header.frame_id = rospy.get_name()
+    msg.pheader.source = rospy.get_name()
+    valid_msg.pheader.source = rospy.get_name()
 
     class_info = rospy.get_param('~class_info')
     print "BASIC CLASS INFO: " + str(class_info)
