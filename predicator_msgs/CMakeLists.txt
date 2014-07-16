@@ -51,6 +51,7 @@ add_message_files(
   PredicateList.msg
   ValidPredicates.msg
   UpdateParam.msg
+  Header.msg
 )
 
 add_service_files(
