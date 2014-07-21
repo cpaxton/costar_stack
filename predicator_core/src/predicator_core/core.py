@@ -53,6 +53,13 @@ Aggregates lists of predicates arriving on a list topic, and publishes them.
 class Predicator(object):
 
     def __init__(self): #, sub_topic, pub_topic, list_pub_topic, test_srv, get_srv, valid_srv, preds_srv, assgn_srv):
+
+        self._latest = {}
+        self._predicates = {}
+        self._all_predicates = sets.Set()
+        self._all_value_predicates = sets.Set()
+        self._all_assignments = sets.Set()
+
         self._subscriber = rospy.Subscriber('predicator/input', PredicateList, self.callback)
         self._validSubscriber = rospy.Subscriber('predicator/valid_input', ValidPredicates, self.validCallback)
         self._publisher = rospy.Publisher('predicator/all', PredicateSet)
@@ -62,14 +69,8 @@ class Predicator(object):
         self._valuePredicatesService = rospy.Service('predicator/get_value_predicates', GetList, self.get_value_predicates)
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
         self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
-        self._latest = {}
-        self._predicates = {}
 
         self._verbosity = rospy.get_param('~verbosity',0)
-
-        self._all_predicates = sets.Set()
-        self._all_value_predicates = sets.Set()
-        self._all_assignments = sets.Set()
 
     '''
     get_value_predicates()
