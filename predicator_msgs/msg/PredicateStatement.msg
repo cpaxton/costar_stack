@@ -15,6 +15,9 @@ float64 value
 
 # probability that this predicate is true
 float64 confidence
+float64 TRUE=1.0
+float64 UNKNOWN=0.0
+float64 FALSE=-1.0
 
 # adding truth
 bool enabled
