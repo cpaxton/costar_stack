@@ -16,6 +16,9 @@ float64 value
 # probability that this predicate is true
 float64 confidence
 
+# adding truth
+bool enabled
+
 # number of parameters used
 # TODO: remove this
 int32 num_params
