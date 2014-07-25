@@ -83,7 +83,8 @@ Predicator modules are the ROS packages that actually perform some kind of analy
 Nodes like the `predicator_geometry` module can be configured from the ROS parameter server.
 It may be best to start them from a launch file, like the example launch file in `predicator_geometry/launch/pegs_geometry_predicates_test.launch`.
 
-```
+
+```xml
 <node name="predicator_geometry_node"
   type="predicator_geometry_node.py"
   pkg="predicator_geometry"
