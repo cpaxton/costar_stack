@@ -57,6 +57,10 @@ add_message_files(
 add_service_files(
   FILES
   SetParam.srv
+  GetAssignment.srv
+  TestPredicate.srv
+  GetList.srv
+  GetTypedList.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
