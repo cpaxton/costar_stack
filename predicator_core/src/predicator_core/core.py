@@ -111,8 +111,8 @@ class Predicator(object):
     def callback(self, msg):
 
         if len(msg.pheader.source) == 0:
-            if len(msg.predicates) > 0:
-                rospy.logerr("Could not recognize sender of predicate \"%s\", was source provided?", msg.predicates[0].predicate)
+            if len(msg.statements) > 0:
+                rospy.logerr("Could not recognize sender of predicate \"%s\", was source provided?", msg.statements[0].predicate)
             else :
                 rospy.logerr("Could not recognize sender of empty predicate list, was source provided?")
 

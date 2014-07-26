@@ -2,7 +2,7 @@
 
 import rospy
 from predicator_msgs.msg import *
-from predicator_core.srv import *
+from predicator_msgs.srv import *
 
 import sets
 
@@ -46,7 +46,7 @@ class PredicatorParams(object):
     def publish(self):
         msg = PredicateList()
         valid_msg = ValidPredicates()
-        msg.header.frame_id = rospy.get_name()
+        msg.pheader.source = rospy.get_name()
         valid_msg.header.frame_id = rospy.get_name()
 
         unique_preds = sets.Set()
