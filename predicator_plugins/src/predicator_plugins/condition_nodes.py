@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('instructor_plugins')
+import roslib; roslib.load_manifest('predicator_core')
 import rospy 
 from std_msgs.msg import *
 # Qt
@@ -13,7 +13,7 @@ from instructor_core.instructor_qt import NamedField
 # Thread for service calls
 from threading import Thread
 
-from predicator_core.srv import *
+from predicator_msgs.srv import *
 
 # Node Wrappers -----------------------------------------------------------
 class NodeConditionTestPredicateGUI(NodeGUI):
