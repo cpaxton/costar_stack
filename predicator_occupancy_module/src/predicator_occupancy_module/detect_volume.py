@@ -150,7 +150,7 @@ if __name__ == '__main__':
         ps.pheader.source = rospy.get_name()
         ps.statements = [PredicateStatement(predicate='occupied',
                                             confidence=occupied_confidence,
-                                            enabled=occupied,
+                                            value=TRUE,
                                             num_params=1,
                                             params=["occupancy_sensor", "", ""])]
         pub_list.publish(ps)
