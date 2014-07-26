@@ -4,7 +4,7 @@ import pprint
 import rospy
 import copy
 from predicator_msgs.msg import *
-from predicator_core.srv import *
+from predicator_msgs.srv import *
 
 import sets
 

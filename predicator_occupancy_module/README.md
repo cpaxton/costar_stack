@@ -1,4 +1,4 @@
-==Usage==
+## Usage
 Pick a new volume (GUI):
 ```rosrun predicator_occupancy_module pick_volume.py```
 The centroid and radius of the volume are added to the parameter server ("occupancy_center", "occupancy_radius")

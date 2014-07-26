@@ -2,7 +2,7 @@
 
 Predicator is the CoSTAR package for logical statements.
 
-## Using Predicator
+## Starting Predicator
 
 ### Using Launch Files
 
@@ -37,6 +37,12 @@ Once the core is up and running, you can launch different modules to produce pre
 
 It may be best to build custom launch files for the different predicator modules instead of launching with `rosrun` since each module needs to be carefully configured.
 
+## Querying Predicator
+
+The Predicator core just aggregates predicates from a number of different topics.
+
+Predicator works through a few different services, described below.
+
 ### Instructor Support
 
 Instructor plugins are in the `predicator_plugins` package.
@@ -49,6 +55,10 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/get_possible_assignment**: list the set of all possible values, if you provide an empty id. List of all possible values for a valid single-term predicate (a type) if you provide an id.
 - **predicator/get_predicates**: list the set of all predicates currently considered valid
 - **predicator/get_value_predicates**: list values published by Predicator modules
+
+Common usage is to call **test_predicate** with a certain predicate to see if it exists, or **get_assigment** with a certain predicate to see what possible values there are for one of its arguments. To use **get_assignment** in this way, fill out a `predicator_msgs::PredicateStatement` object, but replace one argument with an asterisk (\*). Predicates will be returned for all possible values of this argument.
+
+I provided a helper function in **get_possible_assignments** for one-parameter predicates, which returns all possible values as a string. This is used for classes (ex: getting all possible locations or objects).
 
 ## Modules
 
@@ -72,6 +82,7 @@ Predicator modules are the ROS packages that actually perform some kind of analy
 
 Nodes like the `predicator_geometry` module can be configured from the ROS parameter server.
 It may be best to start them from a launch file, like the example launch file in `predicator_geometry/launch/pegs_geometry_predicates_test.launch`.
+
 
 ```xml
 <node name="predicator_geometry_node"
@@ -123,7 +134,32 @@ New modules should publish a list of predicates
 (a `predicator_msgs/PredicateList` message) to the appropriate topic.
 By default, `predicator_core` will listen to the `predicator/input` topic for information from modules.
 
-Modules need to set the `header.frame_id` field to their node name, indicating where messages are coming from.
+Modules need to set the `pheader.frame_id` field to their node name, indicating where messages are coming from.
+
+### Creating a Predicate
+
+Create a `predicator_msgs::PredicateStatement` object and add it to the list of items in the `predicator_msgs::PredicateList` published by each module.
+
+Make sure to fill out the fields:
+
+- `predicate`: the name of the predicate to publish
+- `params`: 3-tuple containing the arguments to this predicate
+- `num_params`: number of these parameters you are actually using
+- `param_classes`: descriptions of the parameters you are using (i.e., "object", "robot" -- class information)
+- `confidence`: how accurate this predicate is believed to be (currently not really used for anything)
+- `value`: the value associated with a predicate.
+
+Boolean predicates can be given the values `predicator_msgs::PredicateStatement::TRUE`, `predicator_msgs::PredicateStatement::FALSE`, and `predicator_msgs::PredicateStatement::UNKNOWN`.
+
+### Specifying Valid Predicates
+
+You can send a `predicator_msgs::ValidPredicates` object to help specify what types of predicates your modules can publish that are valid.
+
+Fill out the following fields:
+
+- `assignments`: the possible parameter arguments to your predicates (a union of any predicates you publish)
+- `predicates`: the normal, boolean predicates you send out
+- `valid_predicates`: floating point valued features such as distance, etc. that your module may compute.
 
 #### Example Module
 

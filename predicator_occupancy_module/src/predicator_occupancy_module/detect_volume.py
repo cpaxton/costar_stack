@@ -78,6 +78,7 @@ def markers_callback(data):
 
 
 def pointcloud_callback(data):
+    rospy.logwarn('got image')
     """
     data : ros msg data
     """
@@ -138,10 +139,13 @@ if __name__ == '__main__':
     pval.assignments = ['occupancy_sensor']
     pub_valid.publish(pval)
 
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(30)
     rate.sleep()
-
+    
     while not rospy.is_shutdown():
+        while im_pos == None:
+            rate.sleep()
+
         # Tell predicator if the sensor is true/false
         occupied_confidence = (occupied*1-.5)*2
 
