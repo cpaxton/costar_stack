@@ -19,9 +19,6 @@ float64 TRUE=1.0
 float64 UNKNOWN=0.0
 float64 FALSE=-1.0
 
-# adding truth
-bool enabled
-
 # number of parameters used
 # TODO: remove this
 int32 num_params
