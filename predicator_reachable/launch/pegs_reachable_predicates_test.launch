@@ -10,7 +10,6 @@
 
     <!-- what groups of frames are we interested in -->
     <rosparam param="groups">
-      - grasp_point
       - location
     </rosparam>
 
