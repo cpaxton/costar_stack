@@ -23,7 +23,6 @@ def flip_rotation_frame(trans, rot):
 
     return tfc.toTf(tfc.Frame(ir, f.p))
 
-
 '''
 PredicatorReachability
 Module that produces messages given some group names
@@ -36,6 +35,7 @@ class PredicatorReachability(object):
 
         self.getter = rospy.ServiceProxy('/predicator/get_possible_assignment', predicator_msgs.srv.GetTypedList)
         self.getter2 = rospy.ServiceProxy("/predicator/get_assignment", pcs.GetAssignment)
+        self.verbose = rospy.get_param("~verbose", 1) == 1
 
         self.ids = []
         self.robots = {}
@@ -82,7 +82,9 @@ class PredicatorReachability(object):
 
             for frame in self.ids:
 
-                print "Robot: " + robot + " , target frame: " + frame + ", getting transform..."
+                if self.verbose:
+                    print "Robot: " + robot + " , target frame: " + frame + ", getting transform..."
+
                 tf_done = False
 
                 while not tf_done:
@@ -146,10 +148,12 @@ class PredicatorReachability(object):
         ik_req.group_name = "arm"
         ik_req.pose_stamped = p
 
-        print "Getting IK position..."
+        if self.verbose:
+            print "Getting IK position..."
         ik_resp = srv(ik_req)
 
-        print "IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val)
+        if self.verbose:
+            print "IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val)
 
         return ik_resp.error_code.val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS
 
