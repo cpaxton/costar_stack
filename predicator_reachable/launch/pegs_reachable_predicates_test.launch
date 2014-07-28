@@ -4,7 +4,7 @@
   <node name="predicator_reachable_node"
     type="predicator_reachable_node.py"
     pkg="predicator_reachable"
-    output="$(arg output">
+    output="$(arg output)">
 
     <param name="rate" value="1"/>
 
