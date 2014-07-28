@@ -116,8 +116,8 @@ def pointcloud_callback(data):
 if __name__ == '__main__':
     # Setup ros/publishers
     rospy.init_node('occupancy_module')
-    pub_list = rospy.Publisher('predicator/input', PredicateList)
-    pub_valid = rospy.Publisher('predicator/input', ValidPredicates)
+    pub_list = rospy.Publisher('/predicator/input', PredicateList)
+    pub_valid = rospy.Publisher('/predicator/input', ValidPredicates)
 
     # Setup subscribers
     cloud_uri = "/camera/depth_registered/points"
@@ -149,14 +149,23 @@ if __name__ == '__main__':
         # Tell predicator if the sensor is true/false
         occupied_confidence = (occupied*1-.5)*2
 
-        # Publish occupancy predicate
+        # Publish occupancy predicates
         ps = PredicateList()
         ps.pheader.source = rospy.get_name()
-        ps.statements = [PredicateStatement(predicate='occupied',
-                                            confidence=occupied_confidence,
-                                            value=TRUE,
-                                            num_params=1,
-                                            params=["occupancy_sensor", "", ""])]
+        ps.statements = []
+
+        if occupied_confidence == 1: # Publish a filled statement, meaning TRUE
+            ps.statements.append(PredicateStatement(predicate='occupied',
+                                                confidence=occupied_confidence,
+                                                value=PredicateStatement.TRUE,
+                                                num_params=1,
+                                                params=["occupancy_sensor", "", ""]))
+        elif occupied_confidence == -1:
+            ps.statements.append(PredicateStatement(predicate='empty',
+                                                confidence=occupied_confidence,
+                                                value=PredicateStatement.TRUE,
+                                                num_params=1,
+                                                params=["occupancy_sensor", "", ""]))
         pub_list.publish(ps)
 
         # Show colored image to reflect if a space is occupied

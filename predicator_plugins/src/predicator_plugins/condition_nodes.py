@@ -43,11 +43,12 @@ class NodeConditionTestPredicate(Node):
         L = '( condition )\\n' + label.upper()
         color = '#FAE364'
         super(NodeConditionTestPredicate,self).__init__(False,parent,name,L,color,'ellipse')
-        self.service_thread = Thread(target=self.make_service_call)
         self.predicate_ = predicate_name
         self.param1_ = param1
         self.param2_ = param2
         self.param3_ = param3
+        # Reset params
+        self.service_thread = Thread(target=self.make_service_call)
         self.running = False
         self.finished_with_success = None
     def get_node_type(self):
@@ -94,5 +95,11 @@ class NodeConditionTestPredicate(Node):
         except rospy.ServiceException, e:
             print e
             self.finished_with_success = False
+
+    def reset_self(self):
+        self.service_thread = Thread(target=self.make_service_call)
+        self.running = False
+        self.finished_with_success = None
+
 
 
