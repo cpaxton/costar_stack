@@ -40,6 +40,7 @@ class Librarian(object):
             self._load_param_srv = rospy.Service('librarian/load_params', LoadParams, self.load_params)
             self._add_type_srv = rospy.Service('librarian/add_type', AddType, self.add_type)
             self._get_path_srv = rospy.Service('librarian/get_path', GetPath, self.create_path)
+            self._delete_srv = rospy.Service('librarian/delete', Delete, self.delete)
 
         self.init()
         self.load_records()
@@ -75,14 +76,18 @@ class Librarian(object):
     def init(self):
         if not os.path.exists(self._root):
             os.mkdir(self._root)
-
+    
+    '''
+    delete()
+    Remove an item tracked by librarian.
+    '''
     def delete(self, req):
         resp = DeleteResponse()
 
-         if len(req.type) == 0:
-                resp.status.result = Status.FAILURE
-                resp.status.error = Status.TYPE_MISSING
-                resp.status.info = "No type provided!"
+        if len(req.type) == 0:
+            resp.status.result = Status.FAILURE
+            resp.status.error = Status.TYPE_MISSING
+            resp.status.info = "No type provided!"
         else:
             path = join(self._root, req.type)
             filename = join(path, req.id)
@@ -92,6 +97,7 @@ class Librarian(object):
                 resp.status.error = Status.NO_SUCH_TYPE
                 resp.status.info = "Type %s does not exist!"%(req.type)
             else:
+                os.remove(filename)
                 resp.status.result = Status.SUCCESS
         
         return resp
