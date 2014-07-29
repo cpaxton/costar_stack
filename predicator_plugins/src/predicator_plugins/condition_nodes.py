@@ -19,6 +19,8 @@ from predicator_msgs.srv import *
 class NodeConditionTestPredicateGUI(NodeGUI):
     def __init__(self):
         super(NodeConditionTestPredicateGUI,self).__init__()
+        self.title.setText('PREDICATE CONDITION')
+        self.title.setStyleSheet('background-color:#FADA07;color:#ffffff')
         self.predicate = NamedField('Predicate','')
         self.param1 = NamedField('Parameter 1','')
         self.param2 = NamedField('Parameter 2','')
@@ -58,6 +60,7 @@ class NodeConditionTestPredicate(Node):
         return 'Condition'
 
     def execute(self):
+        rospy.logwarn('TEST PREDICATE ['+self.name_+']: EXECUTING')
         if self.needs_reset:
             rospy.loginfo('Sleep Service [' + self.name_ + '] already returned ['+self.get_status()+'], needs reset')
             return self.get_status()
@@ -100,6 +103,7 @@ class NodeConditionTestPredicate(Node):
             rospy.logerr('TEST PREDICATE CONDITION ['+self.name_+']: Could not find service')
             self.finished_with_success = False
         try:
+            rospy.logwarn('TEST PREDICATE CONDITION ['+self.name_+']: TESTING')
             test_service = rospy.ServiceProxy('predicator/test_predicate', TestPredicate)
             self.result = test_service(req)
             self.finished_with_success = self.result.found
