@@ -16,6 +16,7 @@ __all__ += ['NodeService']
 __all__ += ['NodeCondition']
 __all__ += ['NodeDecoratorRepeat']
 __all__ += ['NodeDecoratorIgnoreFail']
+__all__ += ['NodeDecoratorWaitForSuccess']
 
 ### Classes
 from beetree_core import Node
@@ -31,4 +32,6 @@ from beetree_core import NodeService
 from beetree_core import NodeCondition
 from beetree_core import NodeDecoratorRepeat
 from beetree_core import NodeDecoratorIgnoreFail
+from beetree_core import NodeDecoratorWaitForSuccess
+
 

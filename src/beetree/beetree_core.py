@@ -84,8 +84,13 @@ class Node(object):
         """ Resets the children of this node. useful when an execution is finished and the subtree needs to be reset
         """
         print "Node " + self.name_ + " resetting."
+        self.reset_self()
         for C in self.children_:
             C.reset()
+
+    def reset_self(self):
+        # To be implemented by child class
+        pass
 
     def add_child(self, child_to_add):
         """ Adds a child to this node
@@ -170,6 +175,9 @@ class Node(object):
         """
         self.node_status_ = status
         # print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
+        return self.node_status_
+
+    def get_status(self):
         return self.node_status_
 
     def execute(self):
@@ -363,10 +371,14 @@ class NodeParallelOne(Node):
 
 class NodeDecoratorRepeat(Node):
     ''' Decorator Repeat Node
-    Executes child node N times
+    Executes child node N times. If N = -1, will repeat forever, ignoring failures
     '''
     def __init__(self,name,label,runs=1):
-        L = '(runs)\\n['+str(runs)+']'
+        if runs == -1:
+            L = '(runs)\\n['+'INF'+']'
+        else:
+            L = '(runs)\\n['+str(runs)+']'
+        
         super(NodeDecoratorRepeat,self).__init__(name,L,shape='diamond')
         self.runs_ = runs
         self.num_runs_ = 0
@@ -375,17 +387,29 @@ class NodeDecoratorRepeat(Node):
     def get_node_name(self):
         return 'Decorator Repeat'
     def execute(self):
-        # print 'Executing Repeat Decorator: (' + self.name_ + ')'
-        if self.num_runs_ < self.runs_:
+        if self.runs_ == -1: # run forever
             self.child_status_ = self.children_[0].execute()
             if self.child_status_ == 'SUCCESS':
-                self.num_runs_ += 1
+                rospy.logwarn('REPEAT DECORATOR ['+self.name_+']: SUCCEEDED, RESET')
+                self.children_[0].reset()
+                return self.set_status('RUNNING')
             elif self.child_status_ == 'RUNNING':
-                returnself.set_status('RUNNING')
+                return self.set_status('RUNNING')
             elif self.child_status_ == 'FAILURE':
-                return self.set_status('FAILURE')
+                rospy.logwarn('REPEAT DECORATOR ['+self.name_+']: FAILED, RESET')
+                self.children_[0].reset()
+                return self.set_status('RUNNING')
         else:
-            return self.set_status('SUCCESS')
+            if self.num_runs_ < self.runs_:
+                self.child_status_ = self.children_[0].execute()
+                if self.child_status_ == 'SUCCESS':
+                    self.num_runs_ += 1
+                elif self.child_status_ == 'RUNNING':
+                    return self.set_status('RUNNING')
+                elif self.child_status_ == 'FAILURE':
+                    return self.set_status('FAILURE')
+            else:
+                return self.set_status('SUCCESS')
 
 class NodeDecoratorIgnoreFail(Node):
     ''' Decorator Ignore Fail
@@ -405,6 +429,71 @@ class NodeDecoratorIgnoreFail(Node):
             return self.set_status('RUNNING')
         else:
             return self.set_status('SUCCESS')
+
+class NodeDecoratorWaitForSuccess(Node):
+    ''' Decorator Wait for Success
+    Returns running while waiting for child node to be true
+    '''
+    def __init__(self,name,label,timeout):
+        L = 'wait\\nsuccess'
+        super(NodeDecoratorWaitForSuccess,self).__init__(name,L,shape='diamond')
+        self.timeout = timeout # seconds
+        self.timer = None
+        self.started = False
+        self.finished = False
+        self.needs_reset = False
+    def get_node_type(self):
+        return 'DECORATOR_REPEAT'
+    def get_node_name(self):
+        return 'Decorator Repeat'
+    def execute(self):
+        if self.needs_reset:
+            rospy.logwarn('Success Decorator needs already returned '+ self.get_status())
+            return self.get_status()
+
+        if not self.finished:
+            if not self.started:
+                if self.timeout == -1: # dont start timer, wait forever
+                    self.started = True
+                else:
+                    self.timer = rospy.Timer(rospy.Duration(1.0*self.timeout), self.timed_out, oneshot=True)
+                    self.started = True
+                self.child_status_ = self.children_[0].execute()
+                if self.child_status_ == 'SUCCESS':
+                    rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: REPORTED SUCCESS')
+                    self.needs_reset = True
+                    return self.set_status('SUCCESS')
+                elif self.child_status_ == 'RUNNING':
+                    rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: CHILD RUNNING, WAITING')
+                    return self.set_status('RUNNING')
+                else:
+                    rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: CHILD FAILED, RESET, WAITING')
+                    self.children_[0].reset()
+                    return self.set_status('RUNNING')
+            else: # started
+                self.child_status_ = self.children_[0].execute()
+                if self.child_status_ == 'SUCCESS':
+                    rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: REPORTED SUCCESS')
+                    self.needs_reset = True
+                    return self.set_status('SUCCESS')
+                elif self.child_status_ == 'RUNNING':
+                    rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: CHILD RUNNING, WAITING')
+                    return self.set_status('RUNNING')
+                else:
+                    rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: CHILD FAILED, RESET, WAITING')
+                    self.children_[0].reset()
+                    return self.set_status('RUNNING')
+        else: # finished
+            rospy.logwarn('Success Decorator timed out')
+            return self.set_status('FAILURE')
+
+    def reset_self(self):
+        self.started = False
+        self.timer = None
+        self.finished = False
+        self.needs_reset = False
+    def timed_out(self,event):
+        self.finished = True
 
 class NodeRoot(Node):
     ''' Root Node
