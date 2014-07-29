@@ -76,6 +76,29 @@ class Librarian(object):
         if not os.path.exists(self._root):
             os.mkdir(self._root)
 
+    def delete(self, req):
+        resp = DeleteResponse()
+
+         if len(req.type) == 0:
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.TYPE_MISSING
+                resp.status.info = "No type provided!"
+        else:
+            path = join(self._root, req.type)
+            filename = join(path, req.id)
+
+            if not os.path.exists(path):
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.NO_SUCH_TYPE
+                resp.status.info = "Type %s does not exist!"%(req.type)
+            else:
+                resp.status.result = Status.SUCCESS
+        
+        return resp
+
+
+       
+
     '''
     save()
     Save text to a file.
