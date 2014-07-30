@@ -50,6 +50,7 @@ class Node(object):
         """ Generates dot code for this node and its connection to its children
         Also recursively calls the children's generate_dot() functions
         """
+
         # if parent generate front end of dotcode string
         if self.parent_ == None:
             dot = 'digraph behavior_tree { splines=false; '
@@ -92,6 +93,10 @@ class Node(object):
         # To be implemented by child class
         pass
 
+    def get_position(self):
+        position = self.parent_.children_.index(self)
+        return position
+
     def add_child(self, child_to_add):
         """ Adds a child to this node
         @type child_to_add: Node
@@ -113,6 +118,22 @@ class Node(object):
         self.children_.insert(index,child_to_insert)
         self.children_names_.insert(index,child_to_insert.name_)
         self.num_children_+=1
+
+    def replace_child(self,existing_child,replacement_child):
+        if existing_child in self.children_:
+            replacement_child.parent_ = self
+            existing_child_index = self.children_.index(existing_child)
+            existing_children = existing_child.children_
+            existing_children_names = existing_child.children_names_
+            for e in existing_children:
+                e.parent_ = replacement_child
+            replacement_child.set_num_children(len(existing_children))
+            replacement_child.children_ = existing_children
+            replacement_child.children_names_ = existing_children_names
+            self.children_[existing_child_index] = replacement_child
+            return True
+        else:
+            return False
 
     def add_sibling_after(self,child_to_add):
         """ Add a sibling after this node as a child of this nodes parent
@@ -163,10 +184,10 @@ class Node(object):
         self.parent_.remove_child(self)
         return True
 
-    def set_children_number(self,number):
+    def set_num_children(self,number):
         """ Set the number of children this node has
         """
-        self.children_number_ = number
+        self.num_children_ = number
 
     def set_status(self,status):
         """ Set the status of this node as SUCCESS, RUNNING, FAILURE or NODE_ERROR
@@ -176,6 +197,9 @@ class Node(object):
         self.node_status_ = status
         # print '  -  Node: ' + self.name_ + ' returned status: ' + self.node_status_
         return self.node_status_
+
+    def get_parent(self):
+        return self.parent_
 
     def get_status(self):
         return self.node_status_
