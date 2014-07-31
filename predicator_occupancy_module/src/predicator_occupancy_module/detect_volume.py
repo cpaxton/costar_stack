@@ -118,8 +118,12 @@ if __name__ == '__main__':
     parser = optparse.OptionParser()
     parser.add_option("-c", "--camera", dest="camera",
                       help="name of camera", default="camera")
+    parser.add_option("-n", "--namespace", dest="namespace",
+                      help="namespace for occupancy data", default="")    
     (options, args) = parser.parse_args()
+
     camera_name = options.camera
+    namespace = options.namespace
 
     # Setup ros/publishers
     rospy.init_node('occupancy_module')
@@ -134,16 +138,17 @@ if __name__ == '__main__':
     # rospy.Subscriber(marker_uri, AlvarMarkers, markers_callback, queue_size=10)
 
     # Get occupancy params
-    occupancy_center = np.array(rospy.get_param("occupancy_center"))
-    occupancy_radius = np.array(rospy.get_param("occupancy_radius"))
+    occupancy_center = np.array(rospy.get_param("/{}/occupancy_center".format(namespace)))
+    occupancy_radius = np.array(rospy.get_param("/{}/occupancy_radius".format(namespace)))
 
     display = rospy.get_param('display', True)
 
     # Setup valid predicates
+    predicate_param = '{}/occupancy_sensor'.format(namespace)
     pval = ValidPredicates()
     pval.predicates = ['occupied']
     pval.value_predicates = ['']
-    pval.assignments = ['occupancy_sensor']
+    pval.assignments = [predicate_param]
     pub_valid.publish(pval)
 
     rate = rospy.Rate(30)
@@ -166,13 +171,13 @@ if __name__ == '__main__':
                                                 confidence=occupied_confidence,
                                                 value=PredicateStatement.TRUE,
                                                 num_params=1,
-                                                params=["occupancy_sensor", "", ""]))
+                                                params=[predicate_param, "", ""]))
         elif occupied_confidence == -1:
             ps.statements.append(PredicateStatement(predicate='empty',
                                                 confidence=occupied_confidence,
                                                 value=PredicateStatement.TRUE,
                                                 num_params=1,
-                                                params=["occupancy_sensor", "", ""]))
+                                                params=[predicate_param, "", ""]))
         pub_list.publish(ps)
 
         # Show colored image to reflect if a space is occupied

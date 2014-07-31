@@ -385,11 +385,15 @@ if __name__ == '__main__':
     parser = optparse.OptionParser()
     parser.add_option("-c", "--camera", dest="camera",
                       help="name of camera", default="camera")
+    parser.add_option("-n", "--namespace", dest="namespace",
+                      help="namespace for occupancy data", default="")    
     (options, args) = parser.parse_args()
 
     camera_name = options.camera
+    namespace = options.namespace
     # Update pointcloud
     cloud_uri = "/{}/depth_registered/points".format(camera_name)
+    print cloud_uri
     rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
 
     # Wait until we have a pointcloud
