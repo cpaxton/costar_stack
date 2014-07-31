@@ -13,6 +13,7 @@ A volume is sent to the ROS parameter server (param="volume")
 
 """
 
+import optparse
 import rospy
 from predicator_msgs.msg import *
 from pyKinectTools.utils.pointcloud_conversions import *
@@ -366,7 +367,6 @@ def learn_volume_sphere():
 
     return rgbd_center, radius
 
-
 def pointcloud_callback(data):
     """
     data : ros msg data
@@ -379,12 +379,17 @@ def pointcloud_callback(data):
     im_rgb = np.dstack([img_pos_raw['r'], img_pos_raw['g'], img_pos_raw['b']])
     im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
 
-
 if __name__ == '__main__':
     rospy.init_node('learn_occupancy_volume')
 
+    parser = optparse.OptionParser()
+    parser.add_option("-c", "--camera", dest="camera",
+                      help="name of camera", default="camera")
+    (options, args) = parser.parse_args()
+
+    camera_name = options.camera
     # Update pointcloud
-    cloud_uri = "/camera/depth_registered/points"
+    cloud_uri = "/{}/depth_registered/points".format(camera_name)
     rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
 
     # Wait until we have a pointcloud

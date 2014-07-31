@@ -4,6 +4,7 @@
 Detects if sphere is occupied or not.
 """
 
+import optparse
 import rospy
 
 import cv2
@@ -11,7 +12,6 @@ from pyKinectTools.utils.pointcloud_conversions import *
 from pyKinectTools.utils.transformations import *
 
 from sensor_msgs.msg import PointCloud2
-# from ar_track_alvar.msg import AlvarMarkers
 from predicator_msgs.msg import *
 
 from threading import Lock
@@ -114,13 +114,20 @@ def pointcloud_callback(data):
 
 
 if __name__ == '__main__':
+
+    parser = optparse.OptionParser()
+    parser.add_option("-c", "--camera", dest="camera",
+                      help="name of camera", default="camera")
+    (options, args) = parser.parse_args()
+    camera_name = options.camera
+
     # Setup ros/publishers
     rospy.init_node('occupancy_module')
     pub_list = rospy.Publisher('/predicator/input', PredicateList)
     pub_valid = rospy.Publisher('/predicator/input', ValidPredicates)
 
     # Setup subscribers
-    cloud_uri = "/camera/depth_registered/points"
+    cloud_uri = "/{}/depth_registered/points".format(camera_name)
     rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
 
     # marker_uri = "ar_pose_marker"
@@ -141,7 +148,7 @@ if __name__ == '__main__':
 
     rate = rospy.Rate(30)
     rate.sleep()
-    
+
     while not rospy.is_shutdown():
         while im_pos == None:
             rate.sleep()
