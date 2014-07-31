@@ -1,10 +1,9 @@
 <launch>
 
     <arg name="namespace" default="volume_1" />
+    <arg name="camera_name" default="camera_2" />
 
     <group ns="$(arg namespace)">
-        <!-- Change this camera name -->
-        <arg name="camera_name" default="camera_2" />
         <node pkg="predicator_occupancy_module" 
               type="detect_volume.py" 
               name="detect_volume"  
