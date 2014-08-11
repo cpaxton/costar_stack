@@ -56,6 +56,7 @@ class Predicator(object):
 
         self._latest = {}
         self._predicates = {}
+        self._stored_params = {}
         self._all_predicates = sets.Set()
         self._all_value_predicates = sets.Set()
         self._all_assignments = sets.Set()
@@ -70,7 +71,32 @@ class Predicator(object):
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
         self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
 
+        # adding in functionality from predicator_params module
+        self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
+        self.publisher_ = rospy.Publisher('predicator/input', PredicateList)
+        self.valid_publisher_ = rospy.Publisher('predicator/valid_input', ValidPredicates)
+
         self._verbosity = rospy.get_param('~verbosity',0)
+
+
+    '''
+    updateCallback()
+    update the set of parameters we have stored to predicator
+    '''
+    def updateCallback(self, msg):
+
+        key = get_key(msg.statement.predicate, msg.statement.params)
+
+        if msg.operation == UpdateParam.PUBLISH_PREDICATE:
+            if self._verbosity > 0:
+                print "Adding parameter with key %s"%(key)
+            self._stored_params[key] = msg.statement
+        elif msg.operation == UpdateParam.REMOVE_PREDICATE and key in self._stored_params:
+            if self._verbosity > 0:
+                print "Removing parameter with key %s"%(key)
+            del self._stored_params[key]
+
+        self._latest["~stored_params"] = [pred for key, pred in self._stored_params.items()]
 
     '''
     get_value_predicates()
@@ -90,6 +116,10 @@ class Predicator(object):
         msg.data = self._all_predicates
         return msg
 
+    '''
+    get_assignments()
+    get the possible list of assignments to a 1-param predicate (class predicate)
+    '''
     def get_assignments(self, req):
 
         msg = GetTypedListResponse()
