@@ -130,7 +130,9 @@ class Predicator(object):
         else:
             # get a list of all possible assignments received for that predicate as of the last message
             key = get_key(req.id, ['*','',''])
-            msg.data = [ params[0] for params in self._predicates[key] ]
+
+            if key in self._predicates:
+                msg.data = [ params[0] for params in self._predicates[key] ]
 
         return msg
 
