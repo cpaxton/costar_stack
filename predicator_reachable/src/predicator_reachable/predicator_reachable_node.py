@@ -176,6 +176,8 @@ if __name__=="__main__":
 
     try:
 
+        rospy.wait_for_service('predicator/get_assignment')
+
         # need to wait for everything to load
         delay = rospy.get_param('load_delay', 0.5)
         spin_rate = rospy.get_param('rate', 1)
