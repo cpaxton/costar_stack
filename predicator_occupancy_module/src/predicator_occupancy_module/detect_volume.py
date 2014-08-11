@@ -4,6 +4,7 @@
 Detects if sphere is occupied or not.
 """
 
+import optparse
 import rospy
 
 import cv2
@@ -11,7 +12,6 @@ from pyKinectTools.utils.pointcloud_conversions import *
 from pyKinectTools.utils.transformations import *
 
 from sensor_msgs.msg import PointCloud2
-# from ar_track_alvar.msg import AlvarMarkers
 from predicator_msgs.msg import *
 
 from threading import Lock
@@ -114,34 +114,46 @@ def pointcloud_callback(data):
 
 
 if __name__ == '__main__':
+
+    parser = optparse.OptionParser()
+    parser.add_option("-c", "--camera", dest="camera",
+                      help="name of camera", default="camera")
+    parser.add_option("-n", "--namespace", dest="namespace",
+                      help="namespace for occupancy data", default="")    
+    (options, args) = parser.parse_args()
+
+    camera_name = options.camera
+    namespace = options.namespace
+
     # Setup ros/publishers
     rospy.init_node('occupancy_module')
-    pub_list = rospy.Publisher('predicator/input', PredicateList)
-    pub_valid = rospy.Publisher('predicator/input', ValidPredicates)
+    pub_list = rospy.Publisher('/predicator/input', PredicateList)
+    pub_valid = rospy.Publisher('/predicator/input', ValidPredicates)
 
     # Setup subscribers
-    cloud_uri = "/camera/depth_registered/points"
+    cloud_uri = "/{}/depth_registered/points".format(camera_name)
     rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
 
     # marker_uri = "ar_pose_marker"
     # rospy.Subscriber(marker_uri, AlvarMarkers, markers_callback, queue_size=10)
 
     # Get occupancy params
-    occupancy_center = np.array(rospy.get_param("occupancy_center"))
-    occupancy_radius = np.array(rospy.get_param("occupancy_radius"))
+    occupancy_center = np.array(rospy.get_param("/{}/occupancy_center".format(namespace)))
+    occupancy_radius = np.array(rospy.get_param("/{}/occupancy_radius".format(namespace)))
 
     display = rospy.get_param('display', True)
 
     # Setup valid predicates
+    predicate_param = '{}/occupancy_sensor'.format(namespace)
     pval = ValidPredicates()
     pval.predicates = ['occupied']
     pval.value_predicates = ['']
-    pval.assignments = ['occupancy_sensor']
+    pval.assignments = [predicate_param]
     pub_valid.publish(pval)
 
     rate = rospy.Rate(30)
     rate.sleep()
-    
+
     while not rospy.is_shutdown():
         while im_pos == None:
             rate.sleep()
@@ -149,14 +161,23 @@ if __name__ == '__main__':
         # Tell predicator if the sensor is true/false
         occupied_confidence = (occupied*1-.5)*2
 
-        # Publish occupancy predicate
+        # Publish occupancy predicates
         ps = PredicateList()
         ps.pheader.source = rospy.get_name()
-        ps.statements = [PredicateStatement(predicate='occupied',
-                                            confidence=occupied_confidence,
-                                            value=TRUE,
-                                            num_params=1,
-                                            params=["occupancy_sensor", "", ""])]
+        ps.statements = []
+
+        if occupied_confidence == 1: # Publish a filled statement, meaning TRUE
+            ps.statements.append(PredicateStatement(predicate='occupied',
+                                                confidence=occupied_confidence,
+                                                value=PredicateStatement.TRUE,
+                                                num_params=1,
+                                                params=[predicate_param, "", ""]))
+        elif occupied_confidence == -1:
+            ps.statements.append(PredicateStatement(predicate='empty',
+                                                confidence=occupied_confidence,
+                                                value=PredicateStatement.TRUE,
+                                                num_params=1,
+                                                params=[predicate_param, "", ""]))
         pub_list.publish(ps)
 
         # Show colored image to reflect if a space is occupied
