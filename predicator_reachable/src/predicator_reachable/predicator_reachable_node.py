@@ -42,19 +42,21 @@ class PredicatorReachability(object):
 
         self.tfl = tf.TransformListener()
 
-        print "starting"
+        if self.verbose == 1:
+            print "starting"
 
         groups = rospy.get_param("~groups")
 
-        print groups
+        if self.verbose == 1:
+            print groups
 
         for group in groups:
             ids = self.getter(group).data
             for id_ in ids:
                 self.ids.append(id_)
 
-        print self.ids
-
+        if self.verbose == 1:
+           print self.ids
 
         robots = self.getter("robot").data
 

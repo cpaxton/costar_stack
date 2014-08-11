@@ -7,6 +7,7 @@
     output="$(arg output)">
 
     <param name="rate" value="1"/>
+    <param name="load_delay" value="1.5"/>
 
     <!-- what groups of frames are we interested in -->
     <rosparam param="groups">
