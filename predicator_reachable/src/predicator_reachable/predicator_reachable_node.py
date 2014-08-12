@@ -15,6 +15,7 @@ from moveit_msgs.srv import *
 
 # import transform messages
 from geometry_msgs.msg import *
+from predicator_reachable.srv import CheckReachability
 
 
 def flip_rotation_frame(trans, rot):
@@ -45,33 +46,35 @@ class PredicatorReachability(object):
         if self.verbose == 1:
             print "starting"
 
-        groups = rospy.get_param("~groups")
+        while len(self.ids) == 0 or len(self.robots) == 0:
 
-        if self.verbose == 1:
-            print groups
+            groups = rospy.get_param("~groups")
 
-        for group in groups:
-            ids = self.getter(group).data
-            for id_ in ids:
-                self.ids.append(id_)
+            if self.verbose == 1:
+                print groups
 
-        if self.verbose == 1:
-           print self.ids
+            for group in groups:
+                ids = self.getter(group).data
+                for id_ in ids:
+                    self.ids.append(id_)
 
-        robots = self.getter("robot").data
+            if self.verbose == 1:
+               print self.ids
 
-        # NOTE: this only runs with the IROS code for now!
-        # you need the peg_assist_demo settings working
-        for robot_ in robots:
-            statement = PredicateStatement()
-            statement.predicate = "robot_namespace"
-            statement.params[1] = robot_
-            statement.params[0] = "*"
-            resp = self.getter2(statement)
+            robots = self.getter("robot").data
 
-            self.robots[robot_] = resp.values[0].params[0]
+            # NOTE: this only runs with the IROS code for now!
+            # you need the peg_assist_demo settings working
+            for robot_ in robots:
+                statement = PredicateStatement()
+                statement.predicate = "robot_namespace"
+                statement.params[1] = robot_
+                statement.params[0] = "*"
+                resp = self.getter2(statement)
 
-        print self.robots
+                self.robots[robot_] = resp.values[0].params[0]
+
+            print self.robots
 
     def getPredicateMessage(self):
         msg = PredicateList()
