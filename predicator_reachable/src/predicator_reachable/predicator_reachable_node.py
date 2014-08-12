@@ -16,6 +16,7 @@ from moveit_msgs.srv import *
 # import transform messages
 from geometry_msgs.msg import *
 from predicator_reachable.srv import CheckReachability
+from predicator_reachable.srv import CheckReachabilityResponse
 
 
 def flip_rotation_frame(trans, rot):
@@ -32,11 +33,57 @@ Uses these members to compute reachable and inverse_reachable predicates
 '''
 class PredicatorReachability(object):
 
+    '''
+    handleCheckReachability()
+    Service call to run a quick check as to whether a single frame is reachable.
+    '''
+    def handleCheckReachability(self, req):
+
+        resp = CheckReachabilityResponse()
+
+        if not req.robot in self.robots:
+            resp.error_code = CheckReachabilityResponse.ERROR_NO_SUCH_ROBOT
+            return resp
+        else:
+            namespace = self.robots[req.robot]
+
+        # service to compute ik for this position
+        srv = rospy.ServiceProxy(namespace + "/compute_ik", moveit_msgs.srv.GetPositionIK)
+
+        if self.verbose:
+            print "[SERVICE CALL] Robot: " + req.robot + " , target frame: " + req.frame + ", getting transform..."
+
+        tf_done = False
+
+        start_time = rospy.Time.now()
+        while not tf_done and (rospy.Time.now() - start_time).to_sec() < 1.0:
+            try:
+                (trans, rot) = self.tfl.lookupTransform("/world", req.frame, rospy.Time(0))
+                tf_done = True
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+
+        if not tf_done:
+            resp.error_code = CheckReachabilityResponse.ERROR_TF_LOOKUP_FAILED
+            return resp
+
+        if req.is_inverse:
+            (trans, rot) = flip_rotation_frame(trans, rot)
+
+        is_reachable = self.reachable(req.robot, trans, rot, srv)
+ 
+        resp.error_code = CheckReachabilityResponse.SUCCESS
+        resp.reachable = is_reachable
+
+        return resp
+
     def __init__(self):
 
         self.getter = rospy.ServiceProxy('/predicator/get_possible_assignment', predicator_msgs.srv.GetTypedList)
         self.getter2 = rospy.ServiceProxy("/predicator/get_assignment", pcs.GetAssignment)
         self.verbose = rospy.get_param("~verbose", 1) == 1
+
+        self.service = rospy.Service('/predicator/reachable', CheckReachability, self.handleCheckReachability)
 
         self.ids = []
         self.robots = {}
@@ -46,39 +93,43 @@ class PredicatorReachability(object):
         if self.verbose == 1:
             print "starting"
 
-        while len(self.ids) == 0 or len(self.robots) == 0:
+        self.check_setup()
 
-            groups = rospy.get_param("~groups")
+    def check_setup(self):
 
-            if self.verbose == 1:
-                print groups
+        groups = rospy.get_param("~groups")
 
-            for group in groups:
-                ids = self.getter(group).data
-                for id_ in ids:
-                    self.ids.append(id_)
+        if self.verbose == 1:
+            print groups
 
-            if self.verbose == 1:
-               print self.ids
+        for group in groups:
+            ids = self.getter(group).data
+            for id_ in ids:
+                self.ids.append(id_)
 
-            robots = self.getter("robot").data
+        if self.verbose == 1:
+           print self.ids
 
-            # NOTE: this only runs with the IROS code for now!
-            # you need the peg_assist_demo settings working
-            for robot_ in robots:
-                statement = PredicateStatement()
-                statement.predicate = "robot_namespace"
-                statement.params[1] = robot_
-                statement.params[0] = "*"
-                resp = self.getter2(statement)
+        robots = self.getter("robot").data
 
-                self.robots[robot_] = resp.values[0].params[0]
+        # NOTE: this only runs with the IROS code for now!
+        # you need the peg_assist_demo settings working
+        for robot_ in robots:
+            statement = PredicateStatement()
+            statement.predicate = "robot_namespace"
+            statement.params[1] = robot_
+            statement.params[0] = "*"
+            resp = self.getter2(statement)
 
-            print self.robots
+            self.robots[robot_] = resp.values[0].params[0]
+
+        print self.robots
 
     def getPredicateMessage(self):
         msg = PredicateList()
         msg.pheader.source = rospy.get_name()
+
+        self.check_setup()
 
         for robot, namespace in self.robots.items():
 
@@ -177,6 +228,7 @@ class PredicatorReachability(object):
         return msg
 
 if __name__=="__main__":
+
     rospy.init_node("predicator_reachability_node")
 
     try:
@@ -184,8 +236,8 @@ if __name__=="__main__":
         rospy.wait_for_service('predicator/get_assignment')
 
         # need to wait for everything to load
-        delay = rospy.get_param('load_delay', 0.5)
-        spin_rate = rospy.get_param('rate', 1)
+        delay = rospy.get_param('~load_delay', 0.5)
+        spin_rate = rospy.get_param('~rate', 1)
 
         print "loaded params, waiting for service..."
 
@@ -194,7 +246,10 @@ if __name__=="__main__":
         print "found service"
 
         if (delay > 0):
+            print "sleeping for %f seconds"%(delay)
             rospy.sleep(delay)
+
+        print "done sleeping"
 
         rate = rospy.Rate(spin_rate)
     
