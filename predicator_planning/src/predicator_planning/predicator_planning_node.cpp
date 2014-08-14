@@ -1,45 +1,16 @@
 // ROS
 #include <ros/ros.h>
-#include <tf/transform_listener.h>
-#include <tf_conversions/tf_eigen.h>
 #include <XmlRpcValue.h>
 
 // for debugging
 #include <iostream>
 
-// stl
-#include <vector>
-#include <set>
+// predicator stuff
+#include <predicator.h>
 
-// MoveIt!
-#include <moveit/collision_detection/collision_robot.h>
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit/robot_state/robot_state.h>
-#include <moveit/planning_scene/planning_scene.h>
 
-// joint states
-#include <sensor_msgs/JointState.h>
 
-// predicator
-#include <predicator_msgs/PredicateList.h>
-#include <predicator_msgs/PredicateStatement.h>
-#include <predicator_msgs/ValidPredicates.h>
-
-// boost includes
-#include <boost/bind/bind.hpp>
-
-using planning_scene::PlanningScene;
-using robot_model_loader::RobotModelLoader;
-using robot_model::RobotModelPtr;
-using robot_state::RobotState;
-using collision_detection::CollisionRobot;
-
-std::vector<RobotModelPtr> robots;
-std::vector<RobotState *> states;
-std::vector<PlanningScene *> scenes;
-std::vector<ros::Subscriber> subs;
-
-/**
+/*
  * joint_state_callback()
  * Update the robot state variable values
  */
@@ -89,124 +60,6 @@ int main(int argc, char **argv) {
 
   ros::Publisher pub = nh.advertise<predicator_msgs::PredicateList>("/predicator/input", 1000);
   ros::Publisher vpub = nh.advertise<predicator_msgs::ValidPredicates>("/predicator/valid_input", 1000);
-  tf::TransformListener listener;
-
-  if(nh_tilde.hasParam("description_list")) {
-    nh_tilde.param("description_list", descriptions, descriptions);
-  } else {
-    ROS_ERROR("No list of robot description parameters!");
-    exit(-1);
-  }
-
-  if(nh_tilde.hasParam("joint_state_topic_list")) {
-    nh_tilde.param("joint_state_topic_list", topics, topics);
-  } else {
-    ROS_ERROR("No list of joint state topics!");
-    exit(-1);
-  }
-
-  bool load_floating = false;
-  if(nh_tilde.hasParam("floating_root_list")) {
-    nh_tilde.param("floating_root_list", floating, floating);
-    load_floating = true;
-  } else {
-    ROS_INFO("No list of robots with floating root joints given.");
-  }
-
-  if(descriptions.size() != topics.size()) {
-    ROS_WARN("An unequal number of joint state and robot topics was provided!");
-  }
-
-  // define valid predicates topic
-  predicator_msgs::ValidPredicates pval;
-  pval.pheader.source = ros::this_node::getName();
-  pval.predicates.push_back("touching");
-  pval.value_predicates.push_back("mesh_distance");
-
-  // read in topics and descriptions
-  for(unsigned int i = 0; i < descriptions.size(); ++i) {
-    std::string desc;
-    std::string topic;
-
-    if(descriptions[i].getType() == XmlRpc::XmlRpcValue::TypeString) {
-      desc = static_cast<std::string>(descriptions[i]);
-      if(verbosity > 0) {
-        std::cout << "Robot Description parameter name: " << desc << std::endl;
-      }
-    } else {
-      ROS_WARN("Description %u was not of type \"string\"!", i);
-      continue;
-    }
-
-    // create a robot model with state desc
-    robot_model_loader::RobotModelLoader robot_model_loader(desc);
-    robot_model::RobotModelPtr model = robot_model_loader.getModel();
-    PlanningScene *scene = new PlanningScene(model);
-    scene->getCollisionRobotNonConst()->setPadding(padding);
-    scene->propogateRobotPadding();
-
-    // get all link names as possible assignments
-    for(typename std::vector<std::string>::const_iterator it = model->getLinkModelNames().begin();
-        it != model->getLinkModelNames().end();
-        ++it)
-    {
-      pval.assignments.push_back(*it);
-    }
-
-    robots.push_back(model);
-    scenes.push_back(scene);
-
-    RobotState *state = new RobotState(model);
-    states.push_back(state);
-
-    if(i < topics.size() && topics[i].getType() == XmlRpc::XmlRpcValue::TypeString) {
-      topic = static_cast<std::string>(topics[i]);
-      if(verbosity > 0) {
-        std::cout << "JointState topic name: " << topic << std::endl;
-      }
-
-      // create the subscriber
-      subs.push_back(nh.subscribe<sensor_msgs::JointState>
-                     (topic, 1000,
-                      boost::bind(joint_state_callback, _1, state)));
-    } else if (verbosity > 0) {
-      ROS_WARN("no topic corresponding to description %s!", desc.c_str());
-    }
-  }
-
-  ROS_INFO("about to parse floating");
-  if(load_floating) {
-    // read in root TF frames
-    for(unsigned int i = 0; i < floating.size(); ++i) {
-      std::string id = floating[i]["id"];
-      std::string frame = floating[i]["frame"];
-
-      floating_frames[id] = frame;
-    }
-  }
-  ROS_INFO("parsed floating");
-
-  // define spin rate
-  ros::Rate rate(30);
-
-  // print out information on all the different joints
-  if(verbosity > 0) {
-    unsigned int i = 0;
-    for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
-        it1 != scenes.end();
-        ++it1, ++i)
-    {
-      collision_detection::CollisionRobotConstPtr robot1 = (*it1)->getCollisionRobot();
-      // -----------------------------------------------------------
-      std::cout << std::endl;
-      std::cout << "PRINTING STATE INFO:";
-      std::cout << robot1->getRobotModel()->getName() << std::endl;
-      std::cout << robots[i]->getRootJointName() << std::endl;
-      states[i]->update(true);
-      states[i]->printStateInfo(std::cout);
-      // -----------------------------------------------------------
-    }
-  }
 
   // start main loop
   while(ros::ok()) {
