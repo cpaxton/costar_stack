@@ -227,7 +227,7 @@ namespace predicator_planning {
    * checks for all pairs of objects, determines collisions and distances
    * publishes the relationships between all of these objects
    */
-  void PredicateContext::addCollisionPredicates(PredicateList &output, std::vector<double> &heuristics) {
+  void PredicateContext::addCollisionPredicates(PredicateList &output, std::vector<double> &heuristics, const std::vector<RobotState *> &states) {
     unsigned i = 0;
     for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
         it1 != scenes.end();
@@ -318,12 +318,30 @@ namespace predicator_planning {
     predicator_msgs::PredicateList output;
     output.pheader.source = ros::this_node::getName();
 
+    std::vector<double> heuristics;
+
     updateRobotStates();
-
-
+    addCollisionPredicates(output, heuristics, states);
+    addGeometryPredicates(output, heuristics, states);
+    addReachabilityPredicates(output, heuristics, states);
 
     pub.publish(output);
     vpub.publish(pval);
   }
 
+  /**
+   * addReachabilityPredicates()
+   * compute whether or not we can reach certain points or waypoints
+   */
+  void PredicateContext::addReachabilityPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states) {
+
+  }
+
+  /**
+   * addGeometryPredicates()
+   * compute the set of geometry predicates
+   */
+  void PredicateContext::addGeometryPredicates(PredicateList &list, std::vector<double> &heuristic, const std::vector<RobotState *> &states) {
+
+  }
 }

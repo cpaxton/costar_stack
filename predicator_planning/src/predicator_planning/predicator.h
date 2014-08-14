@@ -116,11 +116,18 @@ namespace predicator_planning {
      * checks for all pairs of objects, determines collisions and distances
      * publishes the relationships between all of these objects
      */
-    void addCollisionPredicates(PredicateList &list, std::vector<double> &heuristics);
+    void addCollisionPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states);
 
     /**
+     * addGeometryPredicates()
      * compute the set of geometry predicates
      */
-    void addGeometryPredicates(PredicateList &list, std::vector<double> &heuristics);
+    void addGeometryPredicates(PredicateList &list, std::vector<double> &heuristic, const std::vector<RobotState *> &states);
+
+    /**
+     * addReachabilityPredicates()
+     * compute whether or not we can reach certain points or waypoints
+     */
+    void addReachabilityPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states);
   };
 }
