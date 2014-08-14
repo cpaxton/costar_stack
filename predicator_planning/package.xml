@@ -42,10 +42,8 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>moveit_core</build_depend>
   <build_depend>moveit_msgs</build_depend>
-  <build_depend>moveit_ros</build_depend>
   <build_depend>moveit_ros_perception</build_depend>
-  <build_depend>moveit_ros_planing_interface</build_depend>
-  <build_depend>moviet_ros_move_group</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
   <build_depend>predicator_msgs</build_depend>
   <build_depend>shape_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
@@ -54,14 +52,12 @@
   <build_depend>urdf</build_depend>
   <build_depend>urdfdom</build_depend>
   <build_depend>xacro</build_depend>
-  <build_depend>joint_trajectory_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
 
   <run_depend>moveit_core</run_depend>
   <run_depend>moveit_msgs</run_depend>
-  <run_depend>moveit_ros</run_depend>
   <run_depend>moveit_ros_perception</run_depend>
-  <run_depend>moveit_ros_planing_interface</run_depend>
-  <run_depend>moviet_ros_move_group</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
   <run_depend>predicator_msgs</run_depend>
   <run_depend>shape_msgs</run_depend>
   <run_depend>std_srvs</run_depend>
@@ -70,7 +66,7 @@
   <run_depend>urdf</run_depend>
   <run_depend>urdfdom</run_depend>
   <run_depend>xacro</run_depend>
-  <run_depend>joint_trajectory_msgs</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

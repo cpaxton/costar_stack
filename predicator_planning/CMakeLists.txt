@@ -7,10 +7,8 @@ project(predicator_planning)
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_msgs
-  moveit_ros
   moveit_ros_perception
-  moveit_ros_planing_interface
-  moviet_ros_move_group
+  moveit_ros_planning_interface
   predicator_msgs
   shape_msgs
   std_srvs
@@ -54,32 +52,18 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
-
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
-## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  PredicatePlan.srv
+)
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   moveit_msgs#   predicator_msgs#   shape_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  predicator_msgs
+  trajectory_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -93,7 +77,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES predicator_planning
-#  CATKIN_DEPENDS moveit_core moveit_msgs moveit_ros moveit_ros_perception moveit_ros_planing_interface moviet_ros_move_group predicator_msgs shape_msgs std_srvs tf tf_conversions urdf urdfdom xacro
+  CATKIN_DEPENDS moveit_core moveit_msgs moveit_ros_perception moveit_ros_planning_interface predicator_msgs shape_msgs std_srvs tf tf_conversions urdf xacro
 #  DEPENDS system_lib
 )
 

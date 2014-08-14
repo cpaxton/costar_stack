@@ -1,0 +1,13 @@
+
+string robot
+
+predicator_msgs/PredicateStatement[] required_true
+predicator_msgs/PredicateStatement[] required_false
+
+predicator_msgs/PredicateStatement[] goal_true
+predicator_msgs/PredicateStatement[] goal_false
+
+---
+bool found
+trajectory_msgs/JointTrajectory path
+int32 iter
