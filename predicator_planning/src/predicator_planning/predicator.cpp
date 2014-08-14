@@ -171,6 +171,10 @@ namespace predicator_planning {
     }
   }
 
+  void getCollisionPredicates(PlanningScene *scene, RobotState *state) {
+
+  }
+
   /**
    * tick()
    * Run one iteration of the predicator computations 
@@ -237,11 +241,6 @@ namespace predicator_planning {
       typename std::vector<PlanningScene *>::iterator it2 = it1;
       unsigned int j = i+1;
       for(++it2; it2 != scenes.end(); ++it2, ++j) {
-        //unsigned int j = 0;
-        //for(typename std::vector<PlanningScene *>::iterator it2 = scenes.begin();
-        //    it2 != scenes.end();
-        //    ++it2, ++j)
-        //{
 
         //if (i == j) continue;
 
@@ -258,6 +257,7 @@ namespace predicator_planning {
         states[j]->update(true);
         robot1->checkOtherCollision(req, res, *states[i], *robot2, *states[j]);
         double dist = robot1->distanceOther(*states[i], *robot2, *states[j]);
+
 
         // write distance predicate
         predicator_msgs::PredicateStatement ps_dist;
@@ -304,13 +304,13 @@ namespace predicator_planning {
         if (verbosity > 1) {
           std::cout << "(" << robot1->getRobotModel()->getName()
             << ", " << robot2->getRobotModel()->getName()
-            << ": Distance to collision: " << dist << std::endl;
+            << ") : Distance to collision: " << dist << std::endl;
         }
       }
-      }
-
-      pub.publish(output);
-      vpub.publish(pval);
     }
 
+    pub.publish(output);
+    vpub.publish(pval);
   }
+
+}

@@ -22,6 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -101,11 +103,12 @@ add_executable(predicator_planning_node
   src/predicator_planning/predicator_planning_node.cpp
   src/predicator_planning/predicator.h
   src/predicator_planning/predicator.cpp
+  src/predicator_planning/utility.hpp
 )
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(predicator_planning_node predicator_planning_generate_messages_cpp)
+add_dependencies(predicator_planning_node predicator_planning_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(predicator_planning_node

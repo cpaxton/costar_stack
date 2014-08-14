@@ -28,6 +28,8 @@
 // boost includes
 #include <boost/bind/bind.hpp>
 
+#include "utility.hpp"
+
 using planning_scene::PlanningScene;
 using robot_model_loader::RobotModelLoader;
 using robot_model::RobotModelPtr;
@@ -42,6 +44,19 @@ namespace predicator_planning {
    */
   void joint_state_callback(const sensor_msgs::JointState::ConstPtr &msg, RobotState *state);
  
+
+  /**
+   * Predicate
+   * Simple internal representation of a predicate
+   */
+  struct Predicate {
+    std::string predicate;
+    std::string param1;
+    std::string param2;
+    std::string param3;
+
+    Predicate(std::string predicate, std::string param1, std::string param2, std::string param3);
+  };
 
   /**
    * PredicateContext
