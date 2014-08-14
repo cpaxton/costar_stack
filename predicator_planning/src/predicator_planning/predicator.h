@@ -36,6 +36,13 @@ using collision_detection::CollisionRobot;
 
 namespace predicator_planning {
 
+  /*
+   * joint_state_callback()
+   * Update the robot state variable values
+   */
+  void joint_state_callback(const sensor_msgs::JointState::ConstPtr &msg, RobotState *state);
+ 
+
   /**
    * PredicateContext
    *
@@ -45,20 +52,39 @@ namespace predicator_planning {
     std::vector<RobotState *> states;
     std::vector<PlanningScene *> scenes;
     std::vector<ros::Subscriber> subs;
+
     tf::TransformListener listener;
+
     double padding; // how much padding do we give robot links?
     int verbosity; // how much should get printed for debugging purposes
+
     std::map<std::string, std::string> floating_frames;
-
-
     std::string world_frame;
 
-    void initialize(bool publish);
+
+    ros::Publisher pub;
+    ros::Publisher vpub;
+    
+    // valid predicates message
+    predicator_msgs::ValidPredicates pval;
+
+    /**
+     * Create a PredicateContext()
+     * Sets up space, collision robots, etc.
+     * This will produce the low-level world predicates
+     */
+    PredicateContext(bool publish);
 
     /**
      * cleanup()
      * Delete memory allocated for robot states and subscribers
      */
     void cleanup();
+
+    /**
+     * tick()
+     * Run one iteration of the predicator computations 
+     */
+    void tick();
   };
 }
