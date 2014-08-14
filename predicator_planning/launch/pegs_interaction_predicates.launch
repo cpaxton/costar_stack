@@ -61,6 +61,5 @@
       - stage_link
     </rosparam>
 
-
   </node>
 </launch>
