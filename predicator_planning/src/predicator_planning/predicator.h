@@ -101,5 +101,13 @@ namespace predicator_planning {
      * Run one iteration of the predicator computations 
      */
     void tick();
+
+  /**
+   * updatRobotStates()
+   * make sure base frames are up to date
+   * some objects, such as free-floating robots (aka the ring) need to be updated by TF
+   * not sure why this doesn't work naturally
+   */
+  void updateRobotStates();
   };
 }

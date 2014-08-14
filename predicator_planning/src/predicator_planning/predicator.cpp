@@ -171,23 +171,17 @@ namespace predicator_planning {
     }
   }
 
-  void getCollisionPredicates(PlanningScene *scene, RobotState *state) {
-
-  }
 
   /**
-   * tick()
-   * Run one iteration of the predicator computations 
+   * updatRobotStates()
+   * make sure base frames are up to date
+   * some objects, such as free-floating robots (aka the ring) need to be updated by TF
+   * not sure why this doesn't work naturally
    */
-  void PredicateContext::tick() {
-    predicator_msgs::PredicateList output;
-    output.pheader.source = ros::this_node::getName();
-
+  void PredicateContext::updateRobotStates() {
     unsigned int i = 0;
 
-    // make sure base frames are up to date
-    // some objects, such as free-floating robots (aka the ring) need to be updated by TF
-    // not sure why this doesn't work naturally
+
     for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
         it1 != scenes.end();
         ++it1, ++i)
@@ -225,11 +219,22 @@ namespace predicator_planning {
         continue;
       }
     }
+  }
+
+  /**
+   * tick()
+   * Run one iteration of the predicator computations 
+   */
+  void PredicateContext::tick() {
+    predicator_msgs::PredicateList output;
+    output.pheader.source = ros::this_node::getName();
+
+    updateRobotStates();
 
     // main collision checking loop
     // checks for all pairs of objects, determines collisions and distances
     // publishes the relationships between all of these objects
-    i = 0;
+    unsigned i = 0;
     for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
         it1 != scenes.end();
         ++it1, ++i)
