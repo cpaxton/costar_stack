@@ -222,18 +222,12 @@ namespace predicator_planning {
   }
 
   /**
-   * tick()
-   * Run one iteration of the predicator computations 
+   * addCollisionPredicates()
+   * main collision checking loop
+   * checks for all pairs of objects, determines collisions and distances
+   * publishes the relationships between all of these objects
    */
-  void PredicateContext::tick() {
-    predicator_msgs::PredicateList output;
-    output.pheader.source = ros::this_node::getName();
-
-    updateRobotStates();
-
-    // main collision checking loop
-    // checks for all pairs of objects, determines collisions and distances
-    // publishes the relationships between all of these objects
+  void PredicateContext::addCollisionPredicates(PredicateList &output, std::vector<double> &heuristics) {
     unsigned i = 0;
     for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
         it1 != scenes.end();
@@ -313,6 +307,20 @@ namespace predicator_planning {
         }
       }
     }
+
+  }
+
+  /**
+   * tick()
+   * Run one iteration of the predicator computations 
+   */
+  void PredicateContext::tick() {
+    predicator_msgs::PredicateList output;
+    output.pheader.source = ros::this_node::getName();
+
+    updateRobotStates();
+
+
 
     pub.publish(output);
     vpub.publish(pval);

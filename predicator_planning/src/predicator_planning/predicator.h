@@ -43,7 +43,7 @@ namespace predicator_planning {
    * Update the robot state variable values
    */
   void joint_state_callback(const sensor_msgs::JointState::ConstPtr &msg, RobotState *state);
- 
+
 
   /**
    * Predicate
@@ -79,7 +79,7 @@ namespace predicator_planning {
 
     ros::Publisher pub;
     ros::Publisher vpub;
-    
+
     // valid predicates message
     predicator_msgs::ValidPredicates pval;
 
@@ -102,12 +102,25 @@ namespace predicator_planning {
      */
     void tick();
 
-  /**
-   * updatRobotStates()
-   * make sure base frames are up to date
-   * some objects, such as free-floating robots (aka the ring) need to be updated by TF
-   * not sure why this doesn't work naturally
-   */
-  void updateRobotStates();
+    /**
+     * updatRobotStates()
+     * make sure base frames are up to date
+     * some objects, such as free-floating robots (aka the ring) need to be updated by TF
+     * not sure why this doesn't work naturally
+     */
+    void updateRobotStates();
+
+    /**
+     * addCollisionPredicates()
+     * main collision checking loop
+     * checks for all pairs of objects, determines collisions and distances
+     * publishes the relationships between all of these objects
+     */
+    void addCollisionPredicates(PredicateList &list, std::vector<double> &heuristics);
+
+    /**
+     * compute the set of geometry predicates
+     */
+    void addGeometryPredicates(PredicateList &list, std::vector<double> &heuristics);
   };
 }
