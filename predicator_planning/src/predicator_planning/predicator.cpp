@@ -388,18 +388,19 @@ namespace predicator_planning {
    * compute the set of geometry predicates
    *
    * Links for the different world objects from the peg demo:
-      world wam/base_link wam/shoulder_yaw_link wam/shoulder_pitch_link wam/upper_arm_link wam/forearm_link wam/wrist_yaw_link wam/wrist_pitch_link wam/wrist_palm_link wam/hand/bhand_palm_link wam/hand/bhand_grasp_link wam/hand/bhand_palm_surface_link wam/hand/finger_1/prox_link wam/hand/finger_1/med_link wam/hand/finger_1/dist_link wam/hand/finger_2/prox_link wam/hand/finger_2/med_link wam/hand/finger_2/dist_link wam/hand/finger_3/med_link wam/hand/finger_3/dist_link wam/wrist_palm_stump_link 
-      world wam2/base_link wam2/shoulder_yaw_link wam2/shoulder_pitch_link wam2/upper_arm_link wam2/forearm_link wam2/wrist_yaw_link wam2/wrist_pitch_link wam2/wrist_palm_link wam2/hand/bhand_palm_link wam2/hand/bhand_grasp_link wam2/hand/bhand_palm_surface_link wam2/hand/finger_1/prox_link wam2/hand/finger_1/med_link wam2/hand/finger_1/dist_link wam2/hand/finger_2/prox_link wam2/hand/finger_2/med_link wam2/hand/finger_2/dist_link wam2/hand/finger_3/med_link wam2/hand/finger_3/dist_link wam2/wrist_palm_stump_link 
-      world peg1/base_link peg1/peg_link peg1/peg_top_link 
-      world peg2/base_link peg2/peg_link peg2/peg_top_link 
-      ring1/ring_link 
-      world stage_link 
+   world wam/base_link wam/shoulder_yaw_link wam/shoulder_pitch_link wam/upper_arm_link wam/forearm_link wam/wrist_yaw_link wam/wrist_pitch_link wam/wrist_palm_link wam/hand/bhand_palm_link wam/hand/bhand_grasp_link wam/hand/bhand_palm_surface_link wam/hand/finger_1/prox_link wam/hand/finger_1/med_link wam/hand/finger_1/dist_link wam/hand/finger_2/prox_link wam/hand/finger_2/med_link wam/hand/finger_2/dist_link wam/hand/finger_3/med_link wam/hand/finger_3/dist_link wam/wrist_palm_stump_link 
+   world wam2/base_link wam2/shoulder_yaw_link wam2/shoulder_pitch_link wam2/upper_arm_link wam2/forearm_link wam2/wrist_yaw_link wam2/wrist_pitch_link wam2/wrist_palm_link wam2/hand/bhand_palm_link wam2/hand/bhand_grasp_link wam2/hand/bhand_palm_surface_link wam2/hand/finger_1/prox_link wam2/hand/finger_1/med_link wam2/hand/finger_1/dist_link wam2/hand/finger_2/prox_link wam2/hand/finger_2/med_link wam2/hand/finger_2/dist_link wam2/hand/finger_3/med_link wam2/hand/finger_3/dist_link wam2/wrist_palm_stump_link 
+   world peg1/base_link peg1/peg_link peg1/peg_top_link 
+   world peg2/base_link peg2/peg_link peg2/peg_top_link 
+   ring1/ring_link 
+   world stage_link 
    */
   void PredicateContext::addGeometryPredicates(PredicateList &list, std::vector<double> &heuristic, const std::vector<RobotState *> &states) {
 
+    unsigned int i = 0;
     for(typename std::vector<RobotState *>::const_iterator it = states.begin();
         it != states.end();
-        ++it)
+        ++it, ++i)
     {
 
       // get the list of joints for the robot state
@@ -414,6 +415,22 @@ namespace predicator_planning {
         if link1->compare(std::string("world")) {
           continue;
         }
+
+        // loop over the other objects in the world
+
+        unsigned int j = 0;
+        for(typename std::vector<RobotState *>::const_iterator it2 = states.begin();
+            it2 != states.end();
+            ++it2, ++j)
+        {
+          if (i == j) {
+            continue;
+          }
+
+
+          // loop over the non-world links of this object
+        }
+
       }
 
       if (verbosity > 3) {
