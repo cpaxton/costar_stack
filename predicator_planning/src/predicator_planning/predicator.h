@@ -130,5 +130,12 @@ namespace predicator_planning {
      * compute whether or not we can reach certain points or waypoints
      */
     void addReachabilityPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states);
+
+    /**
+     * getLinkTransform
+     * Check to see if this is in the list of floating transfoms
+     * If so, compose with TF frame
+     */
+    Eigen::Affine3d getLinkTransform(const RobotState *state, const std::string &linkName) const;
   };
 }

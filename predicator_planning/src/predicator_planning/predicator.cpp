@@ -384,6 +384,40 @@ namespace predicator_planning {
   }
 
   /**
+   * getLinkTransform
+   * Check to see if this is in the list of floating transfoms
+   * If so, compose with TF frame
+   * NOTE: actually, it looks like we don't need this at all
+   */
+  Eigen::Affine3d PredicateContext::getLinkTransform(const RobotState *state, const std::string &linkName) const {
+
+      std::string name = state->getRobotModel()->getName();
+      Eigen::Affine3d tf1 = state->getGlobalLinkTransform(linkName);
+
+      //std::cout << tf1.translation()[0] << "," << tf1.translation()[1] << "," << tf1.translation()[2] << std::endl;
+      /*if(floating_frames.find(name) != floating_frames.end()) {
+        std::string base_frame = floating_frames.at(name);
+
+        tf::StampedTransform transform;
+        Eigen::Affine3d t;
+
+        try{
+          listener.lookupTransform(world_frame, base_frame,
+                                   ros::Time(0), transform);
+          tf::transformTFToEigen(transform,t);
+        }
+        catch (tf::TransformException ex){
+          ROS_ERROR("%s",ex.what());
+        }
+        return t * tf1;
+      } else {
+        return tf1;
+      }*/
+
+      return tf1;
+  }
+
+  /**
    * addGeometryPredicates()
    * compute the set of geometry predicates
    *
@@ -414,7 +448,7 @@ namespace predicator_planning {
 
         // access world coordinates
         // NOTE: does not work for the ring yet!
-        Eigen::Affine3d tf1 = (*it)->getGlobalLinkTransform(*link1);
+        Eigen::Affine3d tf1 = getLinkTransform(*it, *link1);
         std::cout << tf1.translation()[0] << "," << tf1.translation()[1] << "," << tf1.translation()[2] << std::endl;
 
         // loop over the other objects in the world
