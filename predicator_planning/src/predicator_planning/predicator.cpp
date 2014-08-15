@@ -408,13 +408,14 @@ namespace predicator_planning {
            link1 != (*it)->getRobotModel()->getLinkModelNames().end();
            ++link1)
       {
-        if (verbosity > 3) {
-          std::cout << *link1 << " ";
-        }
-
-        if (link1->compare(std::string("world"))) {
+        if (link1->compare(std::string("world")) == 0) {
           continue;
         }
+
+        // access world coordinates
+        // NOTE: does not work for the ring yet!
+        Eigen::Affine3d tf1 = (*it)->getGlobalLinkTransform(*link1);
+        std::cout << tf1.translation()[0] << "," << tf1.translation()[1] << "," << tf1.translation()[2] << std::endl;
 
         // loop over the other objects in the world
 
@@ -427,14 +428,21 @@ namespace predicator_planning {
             continue;
           }
 
-
           // loop over the non-world links of this object
+          // get the list of joints for the robot state
+          for (typename std::vector<std::string>::const_iterator link2 = (*it2)->getRobotModel()->getLinkModelNames().begin();
+               link2 != (*it2)->getRobotModel()->getLinkModelNames().end();
+               ++link2)
+          {
+            if (link2->compare(std::string("world")) == 0) {
+              continue;
+            }
+
+            if (verbosity > 0) {
+              std::cout << *link1 << ", " << *link2 << std::endl;
+            }
+          }
         }
-
-      }
-
-      if (verbosity > 3) {
-        std::cout << std::endl;
       }
     }
   }
