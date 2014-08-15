@@ -412,7 +412,7 @@ namespace predicator_planning {
           std::cout << *link1 << " ";
         }
 
-        if link1->compare(std::string("world")) {
+        if (link1->compare(std::string("world"))) {
           continue;
         }
 

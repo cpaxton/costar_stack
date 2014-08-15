@@ -104,6 +104,8 @@ add_executable(predicator_planning_node
   src/predicator_planning/predicator.h
   src/predicator_planning/predicator.cpp
   src/predicator_planning/utility.hpp
+  src/predicator_planning/planning.h
+  src/predicator_planning/planning.cpp
 )
 
 ## Add cmake target dependencies of the executable/library
