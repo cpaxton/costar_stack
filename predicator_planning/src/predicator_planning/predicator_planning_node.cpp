@@ -7,15 +7,11 @@
 // predicator stuff
 #include "predicator.h"
 
-using namespace predicator_planning;
-
-
-
 int main(int argc, char **argv) {
 
-  ros::init(argc, argv, "predicator_robot_planning_node");
+  ros::init(argc, argv, "predicator_planning_node");
 
-  PredicateContext pc(true);
+  predicator_planning::PredicateContext pc(true);
 
   // define spin rate
   ros::Rate rate(30);

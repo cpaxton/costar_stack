@@ -8,6 +8,28 @@
 namespace predicator_planning {
 
   /*
+   * createStatement()
+   * Simple helper function to create predicates with
+   */
+  PredicateStatement createStatement(std::string predicate, double value, std::string param1, std::string param2, std::string param3 = "") {
+    PredicateStatement ps;
+    ps.predicate = predicate;
+    ps.params[0] = param1;
+    ps.params[1] = param2;
+    ps.value = value;
+
+    int num_params = 2;
+
+    if (param3.size() > 0) {
+      ++num_params;
+      ps.params[2] = param3;
+    }
+    ps.num_params = num_params;
+
+    return ps;
+  }
+
+  /*
    * joint_state_callback()
    * Update the robot state variable values
    */
@@ -19,6 +41,7 @@ namespace predicator_planning {
     ros::NodeHandle nh_tilde("~");
     ros::NodeHandle nh;
 
+    XmlRpc::XmlRpcValue frames_list;
     XmlRpc::XmlRpcValue descriptions;
     XmlRpc::XmlRpcValue topics;
     XmlRpc::XmlRpcValue floating; // set of floating root joints that need to be updated
@@ -39,6 +62,13 @@ namespace predicator_planning {
       nh_tilde.param("description_list", descriptions, descriptions);
     } else {
       ROS_ERROR("No list of robot description parameters!");
+      exit(-1);
+    }
+
+    if(nh_tilde.hasParam("frames")) {
+      nh_tilde.param("frames", frames_list, frames_list);
+    } else {
+      ROS_ERROR("No list of frames for geometryic predicates!");
       exit(-1);
     }
 
@@ -117,6 +147,23 @@ namespace predicator_planning {
       }
     }
 
+    // read in frames of interest
+    for(unsigned int i = 0; i < frames_list.size(); ++i) {
+      std::string frame;
+
+      if(frames_list[i].getType() == XmlRpc::XmlRpcValue::TypeString) {
+        frame = static_cast<std::string>(frames_list[i]);
+        if(verbosity > 0) {
+          std::cout << "Including frame: " << frame << std::endl;
+        }
+        frames.push_back(frame);
+      } else {
+        ROS_WARN("Frame list entry %u was not of type \"string\"!", i);
+        continue;
+      }
+    }
+
+
     ROS_INFO("about to parse floating");
     if(load_floating) {
       // read in root TF frames
@@ -147,8 +194,6 @@ namespace predicator_planning {
         // -----------------------------------------------------------
       }
     }
-
-
   }
 
   /**
@@ -228,6 +273,7 @@ namespace predicator_planning {
    * publishes the relationships between all of these objects
    */
   void PredicateContext::addCollisionPredicates(PredicateList &output, std::vector<double> &heuristics, const std::vector<RobotState *> &states) {
+
     unsigned i = 0;
     for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
         it1 != scenes.end();
@@ -340,8 +386,39 @@ namespace predicator_planning {
   /**
    * addGeometryPredicates()
    * compute the set of geometry predicates
+   *
+   * Links for the different world objects from the peg demo:
+      world wam/base_link wam/shoulder_yaw_link wam/shoulder_pitch_link wam/upper_arm_link wam/forearm_link wam/wrist_yaw_link wam/wrist_pitch_link wam/wrist_palm_link wam/hand/bhand_palm_link wam/hand/bhand_grasp_link wam/hand/bhand_palm_surface_link wam/hand/finger_1/prox_link wam/hand/finger_1/med_link wam/hand/finger_1/dist_link wam/hand/finger_2/prox_link wam/hand/finger_2/med_link wam/hand/finger_2/dist_link wam/hand/finger_3/med_link wam/hand/finger_3/dist_link wam/wrist_palm_stump_link 
+      world wam2/base_link wam2/shoulder_yaw_link wam2/shoulder_pitch_link wam2/upper_arm_link wam2/forearm_link wam2/wrist_yaw_link wam2/wrist_pitch_link wam2/wrist_palm_link wam2/hand/bhand_palm_link wam2/hand/bhand_grasp_link wam2/hand/bhand_palm_surface_link wam2/hand/finger_1/prox_link wam2/hand/finger_1/med_link wam2/hand/finger_1/dist_link wam2/hand/finger_2/prox_link wam2/hand/finger_2/med_link wam2/hand/finger_2/dist_link wam2/hand/finger_3/med_link wam2/hand/finger_3/dist_link wam2/wrist_palm_stump_link 
+      world peg1/base_link peg1/peg_link peg1/peg_top_link 
+      world peg2/base_link peg2/peg_link peg2/peg_top_link 
+      ring1/ring_link 
+      world stage_link 
    */
   void PredicateContext::addGeometryPredicates(PredicateList &list, std::vector<double> &heuristic, const std::vector<RobotState *> &states) {
 
+    for(typename std::vector<RobotState *>::const_iterator it = states.begin();
+        it != states.end();
+        ++it)
+    {
+
+      // get the list of joints for the robot state
+      for (typename std::vector<std::string>::const_iterator link1 = (*it)->getRobotModel()->getLinkModelNames().begin();
+           link1 != (*it)->getRobotModel()->getLinkModelNames().end();
+           ++link1)
+      {
+        if (verbosity > 3) {
+          std::cout << *link1 << " ";
+        }
+
+        if link1->compare(std::string("world")) {
+          continue;
+        }
+      }
+
+      if (verbosity > 3) {
+        std::cout << std::endl;
+      }
+    }
   }
 }

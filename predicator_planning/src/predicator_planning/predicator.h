@@ -63,8 +63,9 @@ namespace predicator_planning {
    *
    */
   struct PredicateContext {
-    std::vector<RobotModelPtr> robots;
-    std::vector<RobotState *> states;
+    std::vector<std::string> frames; // frames that we will look at for geometry predicates
+    std::vector<RobotModelPtr> robots; // robot models
+    std::vector<RobotState *> states; // configured robot states
     std::vector<PlanningScene *> scenes;
     std::vector<ros::Subscriber> subs;
 
