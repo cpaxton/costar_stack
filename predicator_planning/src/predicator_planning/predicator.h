@@ -69,6 +69,10 @@ namespace predicator_planning {
     std::vector<PlanningScene *> scenes;
     std::vector<ros::Subscriber> subs;
 
+    double rel_x_threshold;
+    double rel_y_threshold;
+    double rel_z_threshold;
+
     tf::TransformListener listener;
 
     double padding; // how much padding do we give robot links?

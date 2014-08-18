@@ -58,6 +58,10 @@ namespace predicator_planning {
       vpub = nh.advertise<predicator_msgs::ValidPredicates>("/predicator/valid_input", 1000);
     }
 
+    nh_tilde.param("rel_x_threshold", rel_x_threshold, 0.1);
+    nh_tilde.param("rel_y_threshold", rel_y_threshold, 0.1);
+    nh_tilde.param("rel_z_threshold", rel_z_threshold, 0.1);
+
     if(nh_tilde.hasParam("description_list")) {
       nh_tilde.param("description_list", descriptions, descriptions);
     } else {
@@ -394,26 +398,6 @@ namespace predicator_planning {
       std::string name = state->getRobotModel()->getName();
       Eigen::Affine3d tf1 = state->getGlobalLinkTransform(linkName);
 
-      //std::cout << tf1.translation()[0] << "," << tf1.translation()[1] << "," << tf1.translation()[2] << std::endl;
-      /*if(floating_frames.find(name) != floating_frames.end()) {
-        std::string base_frame = floating_frames.at(name);
-
-        tf::StampedTransform transform;
-        Eigen::Affine3d t;
-
-        try{
-          listener.lookupTransform(world_frame, base_frame,
-                                   ros::Time(0), transform);
-          tf::transformTFToEigen(transform,t);
-        }
-        catch (tf::TransformException ex){
-          ROS_ERROR("%s",ex.what());
-        }
-        return t * tf1;
-      } else {
-        return tf1;
-      }*/
-
       return tf1;
   }
 
@@ -449,10 +433,10 @@ namespace predicator_planning {
         // access world coordinates
         // NOTE: does not work for the ring yet!
         Eigen::Affine3d tf1 = getLinkTransform(*it, *link1);
-        std::cout << tf1.translation()[0] << "," << tf1.translation()[1] << "," << tf1.translation()[2] << std::endl;
 
         // loop over the other objects in the world
-
+        // this does NOT include waypoints or anything like that -- we need a separate loop
+        // the second loop can handle abstract entities like these
         unsigned int j = 0;
         for(typename std::vector<RobotState *>::const_iterator it2 = states.begin();
             it2 != states.end();
@@ -472,9 +456,43 @@ namespace predicator_planning {
               continue;
             }
 
-            if (verbosity > 0) {
+            Eigen::Affine3d tf2 = getLinkTransform(*it2, *link2);
+
+            if (verbosity > 2) {
               std::cout << *link1 << ", " << *link2 << std::endl;
             }
+
+            if (verbosity > 3) {
+              std::cout << tf1.translation()[0] << "," << tf1.translation()[1] << "," << tf1.translation()[2] << " --> ";
+              std::cout << tf2.translation()[0] << "," << tf2.translation()[1] << "," << tf2.translation()[2] << std::endl;
+            }
+
+            double xdiff = tf1.translation()[1] - tf2.translation()[1]; // x = red = front/back from stage
+            double ydiff = tf1.translation()[0] - tf2.translation()[0]; // y = green = left/right?
+            double zdiff = tf1.translation()[2] - tf2.translation()[2]; // z = blue = up/down
+
+            // x is left/right
+            if (xdiff < -1.0 * rel_x_threshold){
+              list.statements.push_back(createStatement("left_of",xdiff,*link1,*link2,"world"));
+            } else if (xdiff > rel_x_threshold) {
+              list.statements.push_back(createStatement("right_of",xdiff,*link1,*link2,"world"));
+            }
+
+            // y is front/back
+            if (ydiff < -1.0 * rel_y_threshold) {
+              list.statements.push_back(createStatement("in_front_of",ydiff,*link1,*link2,"world"));
+            } else if (ydiff > rel_y_threshold) {
+              list.statements.push_back(createStatement("behind",ydiff,*link1,*link2,"world"));
+            }
+
+            // z is front/back
+            if (zdiff < -1.0 * rel_z_threshold) {
+              list.statements.push_back(createStatement("below",zdiff,*link1,*link2,"world"));
+            } else if (zdiff > rel_z_threshold) {
+              list.statements.push_back(createStatement("above",zdiff,*link1,*link2,"world"));
+            }
+
+            // somehow we need to do this from other points of view as well... but maybe not for now
           }
         }
       }
