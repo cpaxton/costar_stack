@@ -467,29 +467,36 @@ namespace predicator_planning {
               std::cout << tf2.translation()[0] << "," << tf2.translation()[1] << "," << tf2.translation()[2] << std::endl;
             }
 
-            double xdiff = tf1.translation()[1] - tf2.translation()[1]; // x = red = front/back from stage
-            double ydiff = tf1.translation()[0] - tf2.translation()[0]; // y = green = left/right?
+            double xdiff = tf1.translation()[0] - tf2.translation()[0]; // x = red = front/back from stage
+            double ydiff = tf1.translation()[1] - tf2.translation()[1]; // y = green = left/right?
             double zdiff = tf1.translation()[2] - tf2.translation()[2]; // z = blue = up/down
+
+            PredicateStatement left = createStatement("left_of",xdiff,*link1,*link2,"world");
+            PredicateStatement right = createStatement("right_of",xdiff,*link1,*link2,"world");
+            PredicateStatement front = createStatement("in_front_of",ydiff,*link1,*link2,"world");
+            PredicateStatement back = createStatement("behind",ydiff,*link1,*link2,"world");
+            PredicateStatement up = createStatement("above",zdiff,*link1,*link2,"world");
+            PredicateStatement down = createStatement("below",zdiff,*link1,*link2,"world");
 
             // x is left/right
             if (xdiff < -1.0 * rel_x_threshold){
-              list.statements.push_back(createStatement("left_of",xdiff,*link1,*link2,"world"));
+              list.statements.push_back(right);
             } else if (xdiff > rel_x_threshold) {
-              list.statements.push_back(createStatement("right_of",xdiff,*link1,*link2,"world"));
+              list.statements.push_back(left);
             }
 
             // y is front/back
             if (ydiff < -1.0 * rel_y_threshold) {
-              list.statements.push_back(createStatement("in_front_of",ydiff,*link1,*link2,"world"));
+              list.statements.push_back(back);
             } else if (ydiff > rel_y_threshold) {
-              list.statements.push_back(createStatement("behind",ydiff,*link1,*link2,"world"));
+              list.statements.push_back(front);
             }
 
             // z is front/back
             if (zdiff < -1.0 * rel_z_threshold) {
-              list.statements.push_back(createStatement("below",zdiff,*link1,*link2,"world"));
+              list.statements.push_back(down);
             } else if (zdiff > rel_z_threshold) {
-              list.statements.push_back(createStatement("above",zdiff,*link1,*link2,"world"));
+              list.statements.push_back(up);
             }
 
             // somehow we need to do this from other points of view as well... but maybe not for now
