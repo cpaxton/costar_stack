@@ -78,6 +78,12 @@ namespace predicator_planning {
     double padding; // how much padding do we give robot links?
     int verbosity; // how much should get printed for debugging purposes
 
+    /*
+     * heuristic_indices
+     * Stores the locations in a double array of the indices for different features (heuristics)
+     */
+    std::unordered_map<predicator_msgs::PredicateStatement, unsigned int> heuristic_indices;
+    
     std::map<std::string, std::string> floating_frames;
     std::string world_frame;
 
@@ -94,6 +100,14 @@ namespace predicator_planning {
      * This will produce the low-level world predicates
      */
     PredicateContext(bool publish);
+
+
+    /**
+     * updateWaypoints()
+     * Get the list of waypoints from predicator
+     * These are for reachability I guess
+     */
+    void updateWaypoints();
 
     /**
      * cleanup()

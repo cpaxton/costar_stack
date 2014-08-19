@@ -198,6 +198,55 @@ namespace predicator_planning {
         // -----------------------------------------------------------
       }
     }
+
+    unsigned int i = 0;
+    ROS_INFO("creating list of heuristic indices for possible values");
+    for(typename std::vector<RobotState *>::const_iterator it = states.begin();
+        it != states.end();
+        ++it, ++i)
+    {
+
+      // get the list of joints for the robot state
+      for (typename std::vector<std::string>::const_iterator link1 = (*it)->getRobotModel()->getLinkModelNames().begin();
+           link1 != (*it)->getRobotModel()->getLinkModelNames().end();
+           ++link1)
+      {
+        if (link1->compare(std::string("world")) == 0) {
+          continue;
+        }
+
+        // access world coordinates
+        // NOTE: does not work for the ring yet!
+        Eigen::Affine3d tf1 = getLinkTransform(*it, *link1);
+
+        // loop over the other objects in the world
+        // this does NOT include waypoints or anything like that -- we need a separate loop
+        // the second loop can handle abstract entities like these
+        unsigned int j = 0;
+        for(typename std::vector<RobotState *>::const_iterator it2 = states.begin();
+            it2 != states.end();
+            ++it2, ++j)
+        {
+          if (i == j) {
+            continue;
+          }
+
+          // loop over the non-world links of this object
+          // get the list of joints for the robot state
+          for (typename std::vector<std::string>::const_iterator link2 = (*it2)->getRobotModel()->getLinkModelNames().begin();
+               link2 != (*it2)->getRobotModel()->getLinkModelNames().end();
+               ++link2)
+          {
+            if (link2->compare(std::string("world")) == 0) {
+              continue;
+            }
+
+            // what's going on right here?
+            // add to the heuristic index
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -384,7 +433,10 @@ namespace predicator_planning {
    * compute whether or not we can reach certain points or waypoints
    */
   void PredicateContext::addReachabilityPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states) {
+    // update list of reachable waypoints
+    // use a service call to predicator to get the relevant waypoints
 
+    // compute whether or not that point can be reached
   }
 
   /**
@@ -395,10 +447,10 @@ namespace predicator_planning {
    */
   Eigen::Affine3d PredicateContext::getLinkTransform(const RobotState *state, const std::string &linkName) const {
 
-      std::string name = state->getRobotModel()->getName();
-      Eigen::Affine3d tf1 = state->getGlobalLinkTransform(linkName);
+    std::string name = state->getRobotModel()->getName();
+    Eigen::Affine3d tf1 = state->getGlobalLinkTransform(linkName);
 
-      return tf1;
+    return tf1;
   }
 
   /**
