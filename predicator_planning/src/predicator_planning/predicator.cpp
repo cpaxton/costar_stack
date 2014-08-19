@@ -231,6 +231,9 @@ namespace predicator_planning {
             continue;
           }
 
+          PredicateStatement near_mesh = createStatement("near_mesh",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());
+          PredicateStatement touching_robot = createStatement("touching",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());
+
           // loop over the non-world links of this object
           // get the list of joints for the robot state
           for (typename std::vector<std::string>::const_iterator link2 = (*it2)->getRobotModel()->getLinkModelNames().begin();
@@ -241,8 +244,14 @@ namespace predicator_planning {
               continue;
             }
 
-            // what's going on right here?
-            // add to the heuristic index
+            // create the predicates
+            PredicateStatement left = createStatement("left_of",0,*link1,*link2,"world");
+            PredicateStatement right = createStatement("right_of",0,*link1,*link2,"world");
+            PredicateStatement front = createStatement("in_front_of",0,*link1,*link2,"world");
+            PredicateStatement back = createStatement("behind",0,*link1,*link2,"world");
+            PredicateStatement up = createStatement("above",0,*link1,*link2,"world");
+            PredicateStatement down = createStatement("below",0,*link1,*link2,"world");
+            PredicateStatement touching = createStatement("touching",0,*link1,*link2);
           }
         }
       }
@@ -522,6 +531,8 @@ namespace predicator_planning {
             double xdiff = tf1.translation()[0] - tf2.translation()[0]; // x = red = front/back from stage
             double ydiff = tf1.translation()[1] - tf2.translation()[1]; // y = green = left/right?
             double zdiff = tf1.translation()[2] - tf2.translation()[2]; // z = blue = up/down
+            double dist_xy; // compute xy distance only
+            double dist; // compute xyz distance
 
             PredicateStatement left = createStatement("left_of",xdiff,*link1,*link2,"world");
             PredicateStatement right = createStatement("right_of",xdiff,*link1,*link2,"world");
