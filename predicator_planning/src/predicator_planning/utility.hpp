@@ -38,8 +38,7 @@ namespace predicator_planning {
         msg1.num_params == msg2.num_params &&
         msg1.params[0] == msg2.params[0] &&
         msg1.params[1] == msg2.params[1] &&
-        msg1.params[2] == msg2.params[2] &&
-        msg1.params[3] == msg2.params[3];
+        msg1.params[2] == msg2.params[2];
     }
   };
 }

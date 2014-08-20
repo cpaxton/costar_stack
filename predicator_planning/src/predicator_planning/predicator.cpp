@@ -201,6 +201,7 @@ namespace predicator_planning {
 
     ROS_INFO("creating list of heuristic indices for possible values");
     updateIndices();
+    ROS_INFO("list created");
   }
 
   /**
@@ -211,9 +212,9 @@ namespace predicator_planning {
                                     heuristic_map_t &indices,
                                     unsigned int &next_idx)
   {
-    typename std::unordered_map<predicator_msgs::PredicateStatement, unsigned int>::const_iterator it = indices.find(pred);
-    if (it == indices.end()) {
+    if (indices.find(pred) == indices.end()) {
         indices[pred] = next_idx++;
+        //std::cout << next_idx << " ";
     }
   }
 
@@ -239,6 +240,8 @@ namespace predicator_planning {
           continue;
         }
 
+        //std::cout << *link1 << std::endl;
+
         // access world coordinates
         // NOTE: does not work for the ring yet!
         Eigen::Affine3d tf1 = getLinkTransform(*it, *link1);
@@ -258,8 +261,12 @@ namespace predicator_planning {
           PredicateStatement near_mesh = createStatement("near_mesh",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());
           PredicateStatement touching_robot = createStatement("touching",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());
 
+          //std::cout << heuristic_indices.size() << ", idx = " << idx << std::endl;
+
           checkAndUpdate(near_mesh, heuristic_indices, idx);
           checkAndUpdate(touching_robot, heuristic_indices, idx);
+
+          //std::cout << (*it)->getRobotModel()->getName() << ", " << (*it2)->getRobotModel()->getName() << std::endl;
 
           // loop over the non-world links of this object
           // get the list of joints for the robot state
@@ -287,6 +294,8 @@ namespace predicator_planning {
             checkAndUpdate(up, heuristic_indices, idx);
             checkAndUpdate(down, heuristic_indices, idx);
             checkAndUpdate(touching, heuristic_indices, idx);
+
+            //std::cout << *link1 << ", " << *link2 << std::endl;
           }
         }
       }
@@ -462,6 +471,7 @@ namespace predicator_planning {
     output.pheader.source = ros::this_node::getName();
 
     std::vector<double> heuristics;
+    heuristics.resize(heuristic_indices.size());
 
     updateRobotStates();
     addCollisionPredicates(output, heuristics, states);
@@ -498,6 +508,14 @@ namespace predicator_planning {
   }
 
   /**
+   * updateHeuristics
+   * helper function to store heuristic values
+   */
+  static inline void updateHeuristics(const PredicateStatement &pred, const heuristic_map_t &indices, std::vector<double> &heuristics) {
+    heuristics[indices.at(pred)] = pred.value;
+  }
+
+  /**
    * addGeometryPredicates()
    * compute the set of geometry predicates
    *
@@ -509,7 +527,7 @@ namespace predicator_planning {
    ring1/ring_link 
    world stage_link 
    */
-  void PredicateContext::addGeometryPredicates(PredicateList &list, std::vector<double> &heuristic, const std::vector<RobotState *> &states) {
+  void PredicateContext::addGeometryPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states) {
 
     unsigned int i = 0;
     for(typename std::vector<RobotState *>::const_iterator it = states.begin();
@@ -570,11 +588,18 @@ namespace predicator_planning {
             double dist; // compute xyz distance
 
             PredicateStatement left = createStatement("left_of",xdiff,*link1,*link2,"world");
-            PredicateStatement right = createStatement("right_of",xdiff,*link1,*link2,"world");
+            PredicateStatement right = createStatement("right_of",-1.0 * xdiff,*link1,*link2,"world");
             PredicateStatement front = createStatement("in_front_of",ydiff,*link1,*link2,"world");
-            PredicateStatement back = createStatement("behind",ydiff,*link1,*link2,"world");
+            PredicateStatement back = createStatement("behind",-1.0 * ydiff,*link1,*link2,"world");
             PredicateStatement up = createStatement("above",zdiff,*link1,*link2,"world");
-            PredicateStatement down = createStatement("below",zdiff,*link1,*link2,"world");
+            PredicateStatement down = createStatement("below",-1.0 * zdiff,*link1,*link2,"world");
+
+            updateHeuristics(left, heuristic_indices, heuristics);
+            updateHeuristics(right, heuristic_indices, heuristics);
+            updateHeuristics(front, heuristic_indices, heuristics);
+            updateHeuristics(back, heuristic_indices, heuristics);
+            updateHeuristics(up, heuristic_indices, heuristics);
+            updateHeuristics(down, heuristic_indices, heuristics);
 
             // x is left/right
             if (xdiff < -1.0 * rel_x_threshold){
