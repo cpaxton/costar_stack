@@ -10,7 +10,7 @@ using std::string;
 using std::unordered_map;
 using namespace predicator_msgs;
 
-namespace std {
+namespace predicator_planning {
 
   struct Hash {
 
@@ -18,7 +18,7 @@ namespace std {
 
     Hash() : hash_str() {}
 
-    size_t operator()(const PredicateStatement &msg) {
+    size_t operator()(const PredicateStatement &msg) const {
 
       size_t res = hash_str(msg.predicate);
 
@@ -32,7 +32,7 @@ namespace std {
 
   struct Equals {
     bool operator()(const PredicateStatement &msg1,
-                    const PredicateStatement &msg2)
+                    const PredicateStatement &msg2) const
     {
       return msg1.predicate == msg2.predicate &&
         msg1.num_params == msg2.num_params &&

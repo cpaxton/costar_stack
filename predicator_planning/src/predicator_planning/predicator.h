@@ -38,6 +38,11 @@ using collision_detection::CollisionRobot;
 
 namespace predicator_planning {
 
+  typedef std::unordered_map<predicator_msgs::PredicateStatement,
+          unsigned int,
+          predicator_planning::Hash,
+          predicator_planning::Equals> heuristic_map_t;
+
   /*
    * joint_state_callback()
    * Update the robot state variable values
@@ -82,8 +87,8 @@ namespace predicator_planning {
      * heuristic_indices
      * Stores the locations in a double array of the indices for different features (heuristics)
      */
-    std::unordered_map<predicator_msgs::PredicateStatement, unsigned int> heuristic_indices;
-    
+    heuristic_map_t heuristic_indices;
+
     std::map<std::string, std::string> floating_frames;
     std::string world_frame;
 
@@ -155,5 +160,13 @@ namespace predicator_planning {
      * If so, compose with TF frame
      */
     Eigen::Affine3d getLinkTransform(const RobotState *state, const std::string &linkName) const;
+
+
+    /**
+     * updateIndices()
+     * Records where the values we can use as heuristics are going to be stored.
+     * May also look at things like waypoints, etc.
+     */
+    void updateIndices();
   };
 }

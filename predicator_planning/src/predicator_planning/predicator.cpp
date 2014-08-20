@@ -199,8 +199,32 @@ namespace predicator_planning {
       }
     }
 
-    unsigned int i = 0;
     ROS_INFO("creating list of heuristic indices for possible values");
+    updateIndices();
+  }
+
+  /**
+   * checkAndUpdate
+   * helper function
+   */
+  static inline void checkAndUpdate(const PredicateStatement &pred,
+                                    heuristic_map_t &indices,
+                                    unsigned int &next_idx)
+  {
+    typename std::unordered_map<predicator_msgs::PredicateStatement, unsigned int>::const_iterator it = indices.find(pred);
+    if (it == indices.end()) {
+        indices[pred] = next_idx++;
+    }
+  }
+
+  /**
+   * updateIndices()
+   * Records where the values we can use as heuristics are going to be stored.
+   * May also look at things like waypoints, etc.
+   */
+  void PredicateContext::updateIndices() {
+    unsigned int idx = 0;
+    unsigned int i = 0;
     for(typename std::vector<RobotState *>::const_iterator it = states.begin();
         it != states.end();
         ++it, ++i)
@@ -234,6 +258,9 @@ namespace predicator_planning {
           PredicateStatement near_mesh = createStatement("near_mesh",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());
           PredicateStatement touching_robot = createStatement("touching",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());
 
+          checkAndUpdate(near_mesh, heuristic_indices, idx);
+          checkAndUpdate(touching_robot, heuristic_indices, idx);
+
           // loop over the non-world links of this object
           // get the list of joints for the robot state
           for (typename std::vector<std::string>::const_iterator link2 = (*it2)->getRobotModel()->getLinkModelNames().begin();
@@ -252,6 +279,14 @@ namespace predicator_planning {
             PredicateStatement up = createStatement("above",0,*link1,*link2,"world");
             PredicateStatement down = createStatement("below",0,*link1,*link2,"world");
             PredicateStatement touching = createStatement("touching",0,*link1,*link2);
+
+            checkAndUpdate(left, heuristic_indices, idx);
+            checkAndUpdate(right, heuristic_indices, idx);
+            checkAndUpdate(front, heuristic_indices, idx);
+            checkAndUpdate(back, heuristic_indices, idx);
+            checkAndUpdate(up, heuristic_indices, idx);
+            checkAndUpdate(down, heuristic_indices, idx);
+            checkAndUpdate(touching, heuristic_indices, idx);
           }
         }
       }
