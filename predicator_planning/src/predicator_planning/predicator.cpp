@@ -373,6 +373,14 @@ namespace predicator_planning {
   }
 
   /**
+   * updateHeuristics
+   * helper function to store heuristic values
+   */
+  static inline void updateHeuristics(const PredicateStatement &pred, const heuristic_map_t &indices, std::vector<double> &heuristics) {
+    heuristics[indices.at(pred)] = pred.value;
+  }
+
+  /**
    * addCollisionPredicates()
    * main collision checking loop
    * checks for all pairs of objects, determines collisions and distances
@@ -409,24 +417,17 @@ namespace predicator_planning {
         robot1->checkOtherCollision(req, res, *states[i], *robot2, *states[j]);
         double dist = robot1->distanceOther(*states[i], *robot2, *states[j]);
 
+        if (dist <= 0) {
+          PredicateStatement ps = createStatement("touching", -1.0 * dist,
+                               robot1->getRobotModel()->getName(),
+                               robot2->getRobotModel()->getName());
+          PredicateStatement ps2 = createStatement("touching", -1.0 * dist,
+                               robot2->getRobotModel()->getName(),
+                               robot1->getRobotModel()->getName());
 
-        // write distance predicate
-        predicator_msgs::PredicateStatement ps_dist;
-        ps_dist.predicate = "mesh_distance";
-        ps_dist.value = dist;
-        ps_dist.num_params = 2;
-        ps_dist.params[0] = robot1->getRobotModel()->getName();
-        ps_dist.params[1] = robot2->getRobotModel()->getName();
-        output.statements.push_back(ps_dist);
-
-        // the reverse is also true, so write it as well
-        predicator_msgs::PredicateStatement ps_dist2;
-        ps_dist2.predicate = "mesh_distance";
-        ps_dist2.value = dist;
-        ps_dist2.num_params = 2;
-        ps_dist2.params[0] = robot1->getRobotModel()->getName();
-        ps_dist2.params[1] = robot2->getRobotModel()->getName();
-        output.statements.push_back(ps_dist2);
+          output.statements.push_back(ps);
+          output.statements.push_back(ps2);
+        }
 
         // iterate over all collisions
         for(collision_detection::CollisionResult::ContactMap::const_iterator cit = res.contacts.begin(); 
@@ -436,7 +437,7 @@ namespace predicator_planning {
           // write the correct predicate
           predicator_msgs::PredicateStatement ps;
           ps.predicate = "touching";
-          ps.value = 1.0;
+          ps.value = -1.0 * dist;
           ps.num_params = 2;
           ps.params[0] = cit->first.first;
           ps.params[1] = cit->first.second;
@@ -445,11 +446,14 @@ namespace predicator_planning {
           // the reverse is also true, so update it
           predicator_msgs::PredicateStatement ps2;
           ps2.predicate = "touching";
-          ps2.value = 1.0;
+          ps2.value = -1.0 * dist;
           ps2.num_params = 2;
           ps2.params[0] = cit->first.second;
           ps2.params[1] = cit->first.first;
           output.statements.push_back(ps2);
+
+          updateHeuristics(ps, heuristic_indices, heuristics);
+          updateHeuristics(ps2, heuristic_indices, heuristics);
         }
 
         if (verbosity > 1) {
@@ -505,14 +509,6 @@ namespace predicator_planning {
     Eigen::Affine3d tf1 = state->getGlobalLinkTransform(linkName);
 
     return tf1;
-  }
-
-  /**
-   * updateHeuristics
-   * helper function to store heuristic values
-   */
-  static inline void updateHeuristics(const PredicateStatement &pred, const heuristic_map_t &indices, std::vector<double> &heuristics) {
-    heuristics[indices.at(pred)] = pred.value;
   }
 
   /**
