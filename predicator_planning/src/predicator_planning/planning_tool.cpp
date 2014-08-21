@@ -39,12 +39,14 @@ namespace predicator_planning {
     for (unsigned int iter = 0; iter < max_iter; ++iter) {
       // either generate a starting position at random or...
       // step in a direction from a "good" position (as determined by high heuristics)
+      
+      for (unsigned int i = 0; i < children; ++i) {
+        
+      }
 
     }
 
 
     return true;
   }
-
-
 }

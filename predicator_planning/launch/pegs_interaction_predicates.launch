@@ -1,6 +1,7 @@
 <launch>
   
   <arg name="output" default="screen"/>
+  <arg name="verbosity" default="0"/>
 
   <node pkg="predicator_planning"
     name="predicator_planning_node"
@@ -26,7 +27,7 @@
         frame: ring1/ring_link
     </rosparam>
 
-    <param name="verbosity" value="2"/>
+    <param name="verbosity" value="$(arg verbosity)"/>
     <param name="world_frame" value="/world"/>
 
     <param name="height_threshold" value="0.1"/>

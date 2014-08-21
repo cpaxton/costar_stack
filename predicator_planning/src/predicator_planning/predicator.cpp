@@ -169,9 +169,10 @@ namespace predicator_planning {
       }
     }
 
-
-    ROS_INFO("about to parse floating");
-    if(load_floating) {
+    if (load_floating) {
+      if (verbosity > 0) {
+        ROS_INFO("about to parse floating");
+      }
       // read in root TF frames
       for(unsigned int i = 0; i < floating.size(); ++i) {
         std::string id = floating[i]["id"];
@@ -180,30 +181,32 @@ namespace predicator_planning {
         floating_frames[id] = frame;
       }
     }
-    ROS_INFO("parsed floating");
 
     // print out information on all the different joints
-    if(verbosity > 0) {
-      unsigned int i = 0;
-      for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
-          it1 != scenes.end();
-          ++it1, ++i)
-      {
-        collision_detection::CollisionRobotConstPtr robot1 = (*it1)->getCollisionRobot();
-        // -----------------------------------------------------------
+    unsigned int i = 0;
+    for (typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
+        it1 != scenes.end();
+        ++it1, ++i)
+    {
+      collision_detection::CollisionRobotConstPtr robot1 = (*it1)->getCollisionRobot();
+      // -----------------------------------------------------------
+      if (verbosity > 0) {
         std::cout << std::endl;
         std::cout << "PRINTING STATE INFO:";
         std::cout << robot1->getRobotModel()->getName() << std::endl;
         std::cout << robots[i]->getRootJointName() << std::endl;
-        states[i]->update(true);
-        states[i]->printStateInfo(std::cout);
-        // -----------------------------------------------------------
       }
+      states[i]->update(true);
+      if (verbosity > 0) {
+        states[i]->printStateInfo(std::cout);
+      }
+      // -----------------------------------------------------------
     }
 
-    ROS_INFO("creating list of heuristic indices for possible values");
+    if (verbosity > 0) {
+      ROS_INFO("creating list of heuristic indices for possible values");
+    }
     updateIndices();
-    ROS_INFO("list created");
   }
 
   /**
@@ -215,8 +218,8 @@ namespace predicator_planning {
                                     unsigned int &next_idx)
   {
     if (indices.find(pred) == indices.end()) {
-        indices[pred] = next_idx++;
-        //std::cout << next_idx << " ";
+      indices[pred] = next_idx++;
+      //std::cout << next_idx << " ";
     }
   }
 
@@ -288,6 +291,8 @@ namespace predicator_planning {
             PredicateStatement up = createStatement("above",0,*link1,*link2,"world");
             PredicateStatement down = createStatement("below",0,*link1,*link2,"world");
             PredicateStatement touching = createStatement("touching",0,*link1,*link2);
+            PredicateStatement near = createStatement("near",0,*link1,*link2,"world");
+            PredicateStatement near_xy = createStatement("near_xy",0,*link1,*link2,"world");
 
             checkAndUpdate(left, heuristic_indices, idx);
             checkAndUpdate(right, heuristic_indices, idx);
@@ -296,6 +301,8 @@ namespace predicator_planning {
             checkAndUpdate(up, heuristic_indices, idx);
             checkAndUpdate(down, heuristic_indices, idx);
             checkAndUpdate(touching, heuristic_indices, idx);
+            checkAndUpdate(near, heuristic_indices, idx);
+            checkAndUpdate(near_xy, heuristic_indices, idx);
 
             //std::cout << *link1 << ", " << *link2 << std::endl;
           }
@@ -379,6 +386,12 @@ namespace predicator_planning {
    * helper function to store heuristic values
    */
   static inline void updateHeuristics(const PredicateStatement &pred, const heuristic_map_t &indices, std::vector<double> &heuristics) {
+    if (indices.find(pred) == indices.end()) {
+      ROS_ERROR("Failed to lookup predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+                pred.params[0].c_str(),
+                pred.params[1].c_str(),
+                pred.params[2].c_str());
+    }
     heuristics[indices.at(pred)] = pred.value;
   }
 
@@ -421,11 +434,11 @@ namespace predicator_planning {
 
         if (dist <= 0) {
           PredicateStatement ps = createStatement("touching", -1.0 * dist,
-                               robot1->getRobotModel()->getName(),
-                               robot2->getRobotModel()->getName());
+                                                  robot1->getRobotModel()->getName(),
+                                                  robot2->getRobotModel()->getName());
           PredicateStatement ps2 = createStatement("touching", -1.0 * dist,
-                               robot2->getRobotModel()->getName(),
-                               robot1->getRobotModel()->getName());
+                                                   robot2->getRobotModel()->getName(),
+                                                   robot1->getRobotModel()->getName());
 
           output.statements.push_back(ps);
           output.statements.push_back(ps2);
