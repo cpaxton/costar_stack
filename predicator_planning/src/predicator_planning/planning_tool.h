@@ -18,6 +18,7 @@ namespace predicator_planning {
     PredicateContext * context;
     ros::ServiceServer planServer;
 
+    int verbosity;
     unsigned int max_iter; // maximum iterations to attempt to find destination
     unsigned int children; // number of children to create at each step
     double step; // distance to move

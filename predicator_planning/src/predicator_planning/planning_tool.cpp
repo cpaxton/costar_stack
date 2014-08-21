@@ -10,6 +10,7 @@ namespace predicator_planning {
   {
     ros::NodeHandle nh;
     planServer = nh.advertiseService("predicator/plan", &Planner::plan, this);
+    nh.param("verbosity", verbosity, 0);
   }
 
   bool Planner::plan(predicator_planning::PredicatePlan::Request &req,
@@ -24,8 +25,8 @@ namespace predicator_planning {
     // find the index of the current robot state
     unsigned int idx = 0;
     for (RobotModelPtr &ptr: context->robots) {
-      std::cout << ptr->getName() << std::endl;
-      if (ptr->getName().compare(req.robot)) {
+      if (ptr->getName().compare(req.robot) == 0) {
+        std::cout << "Robot \"" << ptr->getName() << "\" found at index=" << idx << std::endl;
         break;
       }
       ++idx;
