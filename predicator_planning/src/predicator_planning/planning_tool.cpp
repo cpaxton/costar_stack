@@ -1,6 +1,8 @@
 #include "predicator.h"
 #include "planning_tool.h"
 
+#include <moveit/robot_model/joint_model_group.h>
+
 #include <boost/bind/bind.hpp>
 
 namespace predicator_planning {
@@ -32,17 +34,34 @@ namespace predicator_planning {
       ++idx;
     }
 
+    // get the robots' group
+    moveit::core::JointModelGroup *group = NULL;
+    if (context->robots[idx]->hasJointModelGroup(req.group)) {
+        group = context->robots[idx]->getJointModelGroup(req.group);
+    } else {
+      ROS_ERROR("Unable to get group %s for robot %s!", req.group.c_str(), req.robot.c_str());
+      return false;
+    }
+
+    RobotState **next = new RobotState *[children];
+    for (unsigned int i = 0; i < children; ++i) {
+      next[i] = new RobotState(context->robots[idx]);
+      next[i]->setToRandomPositionsNearBy(group, *starting_states[idx], step);
+    }
+
     // loop over 
     for (unsigned int iter = 0; iter < max_iter; ++iter) {
       // either generate a starting position at random or...
       // step in a direction from a "good" position (as determined by high heuristics)
 
-      for (unsigned int i = 0; i < children; ++i) {
-
-      }
 
     }
 
+    // clean up
+    for (unsigned int i = 0; i < children; ++i) {
+      delete next[i];
+    }
+    delete next;
 
     return true;
   }

@@ -1,5 +1,6 @@
 
 string robot
+string group
 
 predicator_msgs/PredicateStatement[] required_true
 predicator_msgs/PredicateStatement[] required_false
