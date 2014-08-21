@@ -20,11 +20,25 @@ namespace predicator_planning {
                      predicator_planning::PredicatePlan::Response &res)
   {
 
+    // get starting states
+    // these are the states as recorded in the context
+    // they will be updated as we go on if this takes a while -- might be bad
+    std::vector<RobotState *> starting_states = context->states;
 
+    // find the index of the current robot state
+    for (RobotModelPtr &ptr: context->robots) {
+      std::cout << ptr->getName() << std::endl;
+    }
+
+    // loop over 
     for (unsigned int iter = 0; iter < max_iter; ++iter) {
+      // either generate a starting position at random or...
+      // step in a direction from a "good" position (as determined by high heuristics)
 
     }
 
+
+    return true;
   }
 
 
