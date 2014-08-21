@@ -9,11 +9,7 @@ namespace predicator_planning {
     context(_context), max_iter(_max_iter), children(_children), step(_step)
   {
     ros::NodeHandle nh;
-    planServer = nh.advertiseService <
-      predicator_planning::PredicatePlan::Request,
-      predicator_planning::PredicatePlan::Response>
-        ("/predicator/plan",
-         boost::bind(&Planner::plan, *this, _1, _2));
+    planServer = nh.advertiseService("predicator/plan", &Planner::plan, this);
   }
 
   bool Planner::plan(predicator_planning::PredicatePlan::Request &req,
@@ -30,7 +26,7 @@ namespace predicator_planning {
     for (RobotModelPtr &ptr: context->robots) {
       std::cout << ptr->getName() << std::endl;
       if (ptr->getName().compare(req.robot)) {
-          break;
+        break;
       }
       ++idx;
     }
@@ -39,9 +35,9 @@ namespace predicator_planning {
     for (unsigned int iter = 0; iter < max_iter; ++iter) {
       // either generate a starting position at random or...
       // step in a direction from a "good" position (as determined by high heuristics)
-      
+
       for (unsigned int i = 0; i < children; ++i) {
-        
+
       }
 
     }
