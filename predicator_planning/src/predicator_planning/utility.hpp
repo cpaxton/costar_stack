@@ -1,3 +1,6 @@
+#ifndef _PP_UTILITY
+#define _PP_UTILITY
+
 #include <unordered_map>
 #include <predicator_msgs/PredicateStatement.h>
 #include <predicator_msgs/PredicateSet.h>
@@ -43,3 +46,4 @@ namespace predicator_planning {
   };
 }
 
+#endif

@@ -61,6 +61,8 @@ namespace predicator_planning {
     nh_tilde.param("rel_x_threshold", rel_x_threshold, 0.1);
     nh_tilde.param("rel_y_threshold", rel_y_threshold, 0.1);
     nh_tilde.param("rel_z_threshold", rel_z_threshold, 0.1);
+    nh_tilde.param("near_2D_threshold", near_2d_threshold, 0.2);
+    nh_tilde.param("near_3D_threshold", near_3d_threshold, 0.2);
 
     if(nh_tilde.hasParam("description_list")) {
       nh_tilde.param("description_list", descriptions, descriptions);
@@ -580,8 +582,8 @@ namespace predicator_planning {
             double xdiff = tf1.translation()[0] - tf2.translation()[0]; // x = red = front/back from stage
             double ydiff = tf1.translation()[1] - tf2.translation()[1]; // y = green = left/right?
             double zdiff = tf1.translation()[2] - tf2.translation()[2]; // z = blue = up/down
-            double dist_xy; // compute xy distance only
-            double dist; // compute xyz distance
+            double dist_xy = sqrt((xdiff*xdiff) + (ydiff*ydiff)); // compute xy distance only
+            double dist = sqrt((xdiff*xdiff) + (ydiff*ydiff) + (zdiff*zdiff)); // compute xyz distance
 
             PredicateStatement left = createStatement("left_of",xdiff,*link1,*link2,"world");
             PredicateStatement right = createStatement("right_of",-1.0 * xdiff,*link1,*link2,"world");
@@ -589,6 +591,8 @@ namespace predicator_planning {
             PredicateStatement back = createStatement("behind",-1.0 * ydiff,*link1,*link2,"world");
             PredicateStatement up = createStatement("above",zdiff,*link1,*link2,"world");
             PredicateStatement down = createStatement("below",-1.0 * zdiff,*link1,*link2,"world");
+            PredicateStatement near = createStatement("near",-1.0 * dist,*link1,*link2,"world");
+            PredicateStatement near_xy = createStatement("near_xy",-1.0 * dist_xy,*link1,*link2,"world");
 
             updateHeuristics(left, heuristic_indices, heuristics);
             updateHeuristics(right, heuristic_indices, heuristics);
@@ -596,6 +600,8 @@ namespace predicator_planning {
             updateHeuristics(back, heuristic_indices, heuristics);
             updateHeuristics(up, heuristic_indices, heuristics);
             updateHeuristics(down, heuristic_indices, heuristics);
+            updateHeuristics(near, heuristic_indices, heuristics);
+            updateHeuristics(near_xy, heuristic_indices, heuristics);
 
             // x is left/right
             if (xdiff < -1.0 * rel_x_threshold){
@@ -616,6 +622,14 @@ namespace predicator_planning {
               list.statements.push_back(down);
             } else if (zdiff > rel_z_threshold) {
               list.statements.push_back(up);
+            }
+
+            if (dist < near_3d_threshold) {
+              list.statements.push_back(near);
+            }
+
+            if (dist_xy < near_2d_threshold) {
+              list.statements.push_back(near_xy);
             }
 
             // somehow we need to do this from other points of view as well... but maybe not for now

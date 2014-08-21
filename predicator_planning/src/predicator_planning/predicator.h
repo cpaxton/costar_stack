@@ -1,3 +1,6 @@
+#ifndef _PREDICATOR_PLANNING
+#define _PREDICATOR_PLANNING
+
 // ROS
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -77,6 +80,8 @@ namespace predicator_planning {
     double rel_x_threshold;
     double rel_y_threshold;
     double rel_z_threshold;
+    double near_2d_threshold;
+    double near_3d_threshold;
 
     tf::TransformListener listener;
 
@@ -170,3 +175,5 @@ namespace predicator_planning {
     void updateIndices();
   };
 }
+
+#endif
