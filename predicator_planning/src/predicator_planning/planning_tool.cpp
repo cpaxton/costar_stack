@@ -1,9 +1,11 @@
 #include "predicator.h"
 #include "planning_tool.h"
 
+// joint model group -- which joints are we solving for?
 #include <moveit/robot_model/joint_model_group.h>
 
-#include <boost/bind/bind.hpp>
+// standard libraries for random
+#include <cstdlib>
 
 namespace predicator_planning {
 
@@ -23,6 +25,9 @@ namespace predicator_planning {
     // these are the states as recorded in the context
     // they will be updated as we go on if this takes a while -- might be bad
     std::vector<RobotState *> starting_states = context->states;
+
+    // this is the list of states we are searching in
+    std::vector<RobotState *> search;
 
     // find the index of the current robot state
     unsigned int idx = 0;
@@ -53,8 +58,21 @@ namespace predicator_planning {
     for (unsigned int iter = 0; iter < max_iter; ++iter) {
       // either generate a starting position at random or...
       // step in a direction from a "good" position (as determined by high heuristics)
+      
+      // case 1: choose a random position
+      RobotState *rs = new RobotState(context->robots[idx]);
+      rs->setToRandomPositions();
 
+      // find the nearest state to this step
+      // then step in the direction of this state rs
+      // NOTE: should be interpolating from some other state, not the initial one here
+      RobotState *step_rs = new RobotState(context->robots[idx]);
+      starting_states[idx]->interpolate(*rs, step, *step_rs, group);
+      search.push_back(step_rs);
 
+      // add to the list of states
+      // then delete
+      delete rs;
     }
 
     // clean up
