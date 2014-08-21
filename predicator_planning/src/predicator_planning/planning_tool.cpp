@@ -26,8 +26,13 @@ namespace predicator_planning {
     std::vector<RobotState *> starting_states = context->states;
 
     // find the index of the current robot state
+    unsigned int idx = 0;
     for (RobotModelPtr &ptr: context->robots) {
       std::cout << ptr->getName() << std::endl;
+      if (ptr->getName().compare(req.robot)) {
+          break;
+      }
+      ++idx;
     }
 
     // loop over 
