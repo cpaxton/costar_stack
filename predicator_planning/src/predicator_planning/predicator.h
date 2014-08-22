@@ -111,7 +111,6 @@ namespace predicator_planning {
      */
     PredicateContext(bool publish);
 
-
     /**
      * updateWaypoints()
      * Get the list of waypoints from predicator

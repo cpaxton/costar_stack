@@ -24,10 +24,8 @@ namespace predicator_planning {
      */
     struct SearchPose {
       RobotState *state;
-      std::vector<bool> matching_true;
-      std::vector<bool> mathing_false;
-      std::vector<double> true_heuristics;
-      std::vector<double> false_heuristics;
+      std::vector<bool> matching;
+      std::vector<double> heuristics;
       unsigned int count_best; // number of heuristics for which this is best
 
       SearchPose *parent; // which one comes before this in the path
@@ -41,7 +39,7 @@ namespace predicator_planning {
                  RobotState *state);
 
       // update with information from the context
-      void update(PredicatePlan::Request &req, PredicateContext *context);
+      void update(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx);
     };
 
     // context contains information about the world and will produce new predicates

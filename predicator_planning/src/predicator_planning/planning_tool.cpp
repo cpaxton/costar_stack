@@ -35,18 +35,38 @@ namespace predicator_planning {
   }
 
   // update with information from the context
-  void Planner::SearchPose::update(PredicatePlan::Request &req, PredicateContext *context) {
+  void Planner::SearchPose::update(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx) {
 
+    // get starting states
+    // these are the states as recorded in the context
+    // they will be updated as we go on if this takes a while -- might be bad
+    std::vector<RobotState *> states = context->states;
+    states[idx] = state; // set to this state
+
+    std::vector<double> all_heuristics;
+    PredicateList list;
+
+    context->updateRobotStates();
+    context->addCollisionPredicates(list, all_heuristics, states);
+    context->addGeometryPredicates(list, all_heuristics, states);
+    context->addReachabilityPredicates(list, all_heuristics, states);
+
+    // compute predicate stuff right here
+    for (PredicateStatement &ps: req.goal_true) {
+      // look at the predicates
+      // get a heuristic value from context
+      // update this pose based on that
+    }
+    for (PredicateStatement &ps: req.goal_false) {
+      // look at the predicates
+      // get a heuristic value from context
+      // update this pose based on that
+    }
   }
 
   bool Planner::plan(predicator_planning::PredicatePlan::Request &req,
                      predicator_planning::PredicatePlan::Response &res)
   {
-
-    // get starting states
-    // these are the states as recorded in the context
-    // they will be updated as we go on if this takes a while -- might be bad
-    std::vector<RobotState *> starting_states = context->states;
 
     // this is the list of states we are searching in
     std::deque<SearchPose *> search;
@@ -70,11 +90,11 @@ namespace predicator_planning {
       return false;
     }
 
-    RobotState **next = new RobotState *[children];
-    for (unsigned int i = 0; i < children; ++i) {
-      next[i] = new RobotState(context->robots[idx]);
-      next[i]->setToRandomPositionsNearBy(group, *starting_states[idx], step);
-    }
+    SearchPose *first = new SearchPose();
+    first->state = context->states[idx];
+    first->update(req, context, idx);
+
+    search.push_back(first);
 
     // loop over 
     for (unsigned int iter = 0; iter < max_iter; ++iter) {
@@ -104,7 +124,7 @@ namespace predicator_planning {
         // then step in the direction of this state rs
         // NOTE: should be interpolating from some other state, not the initial one here
         RobotState *step_rs = new RobotState(context->robots[idx]);
-        starting_states[idx]->interpolate(*rs, step, *step_rs, group);
+        //starting_states[idx]->interpolate(*rs, step, *step_rs, group);
         //search.push_back(step_rs);
 
         // add to the list of states
@@ -114,10 +134,10 @@ namespace predicator_planning {
     }
 
     // clean up
-    for (unsigned int i = 0; i < children; ++i) {
-      delete next[i];
+    for (unsigned int i = 0; i < search.size(); ++i) {
+      delete search[i]->state;
+      delete search[i];
     }
-    delete next;
 
     return true;
   }
