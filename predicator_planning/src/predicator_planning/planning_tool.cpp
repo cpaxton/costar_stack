@@ -18,24 +18,24 @@ namespace predicator_planning {
   }
 
   // default constructor
-  Planner::SearchPose() : state(NULL), count_best(0), parent(NULL), child(NULL) {}
+  Planner::SearchPose::SearchPose() : state(NULL), count_best(0), parent(NULL), child(NULL) {}
 
   // initialize parents, variables
-  Planner::SearchPose(std::vector<SearchPose> &search, RobotState *_state) :
+  Planner::SearchPose::SearchPose(std::deque<SearchPose *> &search, RobotState *_state) :
     count_best(0), parent(NULL), child(NULL), state(_state)
   {
     double shortest_dist = 999999.;
-    for(SearchPose &sp: search) {
+    for(unsigned int i = 0; i < search.size(); ++i) {
       // compare distance
-      double dist = sp.state->distance(*state);
+      double dist = search[i]->state->distance(*state);
       if (parent == NULL || dist < shortest_dist) {
-        parent = sp.state;
+        parent = search[i];
       }
     }
   }
 
   // update with information from the context
-  void Planner::SearchPose::update(PredicatePlan::Request &req, PlanningContext *context) {
+  void Planner::SearchPose::update(PredicatePlan::Request &req, PredicateContext *context) {
 
   }
 
@@ -49,7 +49,7 @@ namespace predicator_planning {
     std::vector<RobotState *> starting_states = context->states;
 
     // this is the list of states we are searching in
-    std::vector<SearchPose> search;
+    std::deque<SearchPose *> search;
 
     // find the index of the current robot state
     unsigned int idx = 0;
@@ -105,7 +105,7 @@ namespace predicator_planning {
         // NOTE: should be interpolating from some other state, not the initial one here
         RobotState *step_rs = new RobotState(context->robots[idx]);
         starting_states[idx]->interpolate(*rs, step, *step_rs, group);
-        search.push_back(step_rs);
+        //search.push_back(step_rs);
 
         // add to the list of states
         // then delete

@@ -9,6 +9,9 @@
 
 #include "predicator.h"
 
+// deque more efficient for long arrays
+#include <deque>
+
 namespace predicator_planning {
 
 
@@ -34,11 +37,11 @@ namespace predicator_planning {
       SearchPose();
 
       // initialize parents, variables
-      SearchPose(std::vector<SearchPose> &search,
+      SearchPose(std::deque<SearchPose *> &search,
                  RobotState *state);
 
       // update with information from the context
-      update(PredicatePlan::Request &req, PlanningContext *context);
+      void update(PredicatePlan::Request &req, PredicateContext *context);
     };
 
     // context contains information about the world and will produce new predicates
