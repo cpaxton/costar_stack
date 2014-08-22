@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 
   predicator_planning::PredicateContext pc(true);
 
-  unsigned int max_iter = 10000u;
+  unsigned int max_iter = 1000u;
   unsigned int children = 10u;
   double step = 0.1;
 
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   while(ros::ok()) {
     ros::spinOnce();
 
-    pc.tick();
+    //pc.tick();
 
     rate.sleep();
   }

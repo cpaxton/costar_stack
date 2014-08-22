@@ -1,6 +1,9 @@
 #include "predicator.h"
 #include "planning_tool.h"
 
+#include <trajectory_msgs/JointTrajectory.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
+
 // joint model group -- which joints are we solving for?
 #include <moveit/robot_model/joint_model_group.h>
 
@@ -18,11 +21,11 @@ namespace predicator_planning {
   }
 
   // default constructor
-  Planner::SearchPose::SearchPose() : state(NULL), count_best(0), parent(NULL), child(NULL) {}
+  Planner::SearchPose::SearchPose() : state(NULL), count_best(0), parent(NULL), child(NULL), cost(0) {}
 
   // initialize parents, variables
   Planner::SearchPose::SearchPose(std::deque<SearchPose *> &search, RobotState *_state) :
-    count_best(0), parent(NULL), child(NULL), state(_state)
+    count_best(0), parent(NULL), child(NULL), state(_state), cost(0)
   {
     double shortest_dist = 999999.;
     for(unsigned int i = 0; i < search.size(); ++i) {
@@ -30,6 +33,7 @@ namespace predicator_planning {
       double dist = search[i]->state->distance(*state);
       if (parent == NULL || dist < shortest_dist) {
         parent = search[i];
+        cost = parent->cost + dist;
       }
     }
   }
@@ -43,10 +47,11 @@ namespace predicator_planning {
     std::vector<RobotState *> states = context->states;
     states[idx] = state; // set to this state
 
-    std::vector<double> all_heuristics;
+    std::vector<double> all_heuristics(context->numHeuristics());
     PredicateList list;
 
     context->updateRobotStates();
+
     context->addCollisionPredicates(list, all_heuristics, states);
     context->addGeometryPredicates(list, all_heuristics, states);
     context->addReachabilityPredicates(list, all_heuristics, states);
@@ -68,6 +73,8 @@ namespace predicator_planning {
                      predicator_planning::PredicatePlan::Response &res)
   {
 
+    ROS_INFO("Received planning request.");
+
     // this is the list of states we are searching in
     std::deque<SearchPose *> search;
 
@@ -86,15 +93,18 @@ namespace predicator_planning {
     if (context->robots[idx]->hasJointModelGroup(req.group)) {
         group = context->robots[idx]->getJointModelGroup(req.group);
     } else {
-      ROS_ERROR("Unable to get group %s for robot %s!", req.group.c_str(), req.robot.c_str());
+      ROS_ERROR("Unable to get group \"%s\" for robot \"%s\"!", req.group.c_str(), req.robot.c_str());
       return false;
     }
+    ROS_INFO("Found group \"%s\" for robot \"%s\".", req.group.c_str(), req.robot.c_str());
 
     SearchPose *first = new SearchPose();
-    first->state = context->states[idx];
+    first->state = new RobotState(*context->states[idx]);
     first->update(req, context, idx);
 
     search.push_back(first);
+
+    ROS_INFO("Added first state.");
 
     // loop over 
     for (unsigned int iter = 0; iter < max_iter; ++iter) {
@@ -102,6 +112,7 @@ namespace predicator_planning {
       // step in a direction from a "good" position (as determined by high heuristics)
       
       double choose_op = (double)rand() / (double)RAND_MAX;
+      std::cout << "Iteration " << iter << ", random value = " << choose_op << std::endl;
       if(choose_op > chance) {
         // spawn children from the thing with the highest heuristic
  
@@ -113,6 +124,7 @@ namespace predicator_planning {
           // find the BEST state and step from there
           // best being defined as "the most matching predicates and highest heuristics"
           
+          delete rs;
         }
 
       } else {
@@ -123,15 +135,41 @@ namespace predicator_planning {
         // find the nearest state to this step
         // then step in the direction of this state rs
         // NOTE: should be interpolating from some other state, not the initial one here
-        RobotState *step_rs = new RobotState(context->robots[idx]);
-        //starting_states[idx]->interpolate(*rs, step, *step_rs, group);
-        //search.push_back(step_rs);
+        SearchPose *new_sp = new SearchPose(search, rs);
 
-        // add to the list of states
-        // then delete
-        delete rs;
+        new_sp->parent->state->interpolate(*rs, step, *rs, group);
+        search.push_back(new_sp);
+      }
+
+      res.iter = iter;
+
+      if (res.found == true) {
+        break;
       }
     }
+
+    // get a path from the last thing we added
+    // by going backwards to the start
+    std::deque<RobotState *> path;
+    SearchPose *cur = *search.rbegin();
+    path.push_front(cur->state);
+    while (cur->parent != NULL) {
+        cur = cur->parent;
+        path.push_front(cur->state);
+    }
+
+    // now go forward over the list
+    for(std::deque<RobotState *>::const_iterator it = path.begin();
+        it != path.end();
+        ++it)
+    {
+      const double *positions = (*it)->getVariablePositions();
+      trajectory_msgs::JointTrajectoryPoint pt;
+      pt.positions.assign(positions, positions + (*it)->getVariableCount());
+      res.path.points.push_back(pt);
+    }
+    res.path.joint_names = path[0]->getVariableNames();
+
 
     // clean up
     for (unsigned int i = 0; i < search.size(); ++i) {
@@ -139,6 +177,7 @@ namespace predicator_planning {
       delete search[i];
     }
 
+    std::cout << "returning" << std::endl;
     return true;
   }
 }

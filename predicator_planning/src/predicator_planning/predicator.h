@@ -112,6 +112,11 @@ namespace predicator_planning {
     PredicateContext(bool publish);
 
     /**
+     * numHeuristics()
+     */
+    size_t numHeuristics() const;
+
+    /**
      * updateWaypoints()
      * Get the list of waypoints from predicator
      * These are for reachability I guess

@@ -391,6 +391,12 @@ namespace predicator_planning {
                 pred.params[0].c_str(),
                 pred.params[1].c_str(),
                 pred.params[2].c_str());
+    } else if (indices.at(pred) > heuristics.size()) {
+      ROS_ERROR("Indexing error from predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+                pred.params[0].c_str(),
+                pred.params[1].c_str(),
+                pred.params[2].c_str());
+      ROS_ERROR("index = %u, length=%lu", indices.at(pred), heuristics.size());
     }
     heuristics[indices.at(pred)] = pred.value;
   }
@@ -411,7 +417,6 @@ namespace predicator_planning {
 
       collision_detection::CollisionRobotConstPtr robot1 = (*it1)->getCollisionRobot();
 
-
       typename std::vector<PlanningScene *>::iterator it2 = it1;
       unsigned int j = i+1;
       for(++it2; it2 != scenes.end(); ++it2, ++j) {
@@ -429,6 +434,7 @@ namespace predicator_planning {
         // source: https://groups.google.com/forum/#!topic/moveit-users/O9CEef6sxbE
         states[i]->update(true);
         states[j]->update(true);
+
         robot1->checkOtherCollision(req, res, *states[i], *robot2, *states[j]);
         double dist = robot1->distanceOther(*states[i], *robot2, *states[j]);
 
@@ -442,6 +448,10 @@ namespace predicator_planning {
 
           output.statements.push_back(ps);
           output.statements.push_back(ps2);
+        }
+
+        if (verbosity > 4) {
+          std::cout << res.contacts.size() << " contacts found" << std::endl;
         }
 
         // iterate over all collisions
@@ -479,6 +489,13 @@ namespace predicator_planning {
       }
     }
 
+  }
+
+  /**
+   * numHeuristics()
+   */
+  size_t PredicateContext::numHeuristics() const {
+    return heuristic_indices.size();
   }
 
   /**
