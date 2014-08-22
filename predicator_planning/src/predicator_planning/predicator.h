@@ -177,6 +177,12 @@ namespace predicator_planning {
      * May also look at things like waypoints, etc.
      */
     void updateIndices();
+
+    /**
+     * getHeuristic
+     * Looks up a score from a vector of possible values
+     */
+    double getHeuristic(const PredicateStatement &pred, const std::vector<double> &heuristics) const;
   };
 }
 

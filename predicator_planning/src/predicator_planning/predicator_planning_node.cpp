@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
   unsigned int max_iter = 1000u;
   unsigned int children = 10u;
-  double step = 0.1;
+  double step = 0.25;
 
   predicator_planning::Planner planner(&pc, max_iter, children, step);
 
@@ -26,9 +26,7 @@ int main(int argc, char **argv) {
   // start main loop
   while(ros::ok()) {
     ros::spinOnce();
-
-    //pc.tick();
-
+    pc.tick();
     rate.sleep();
   }
 

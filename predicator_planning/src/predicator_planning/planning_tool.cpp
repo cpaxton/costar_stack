@@ -60,12 +60,18 @@ namespace predicator_planning {
     for (PredicateStatement &ps: req.goal_true) {
       // look at the predicates
       // get a heuristic value from context
+      double val = context->getHeuristic(ps, all_heuristics);
+
       // update this pose based on that
+      heuristics.push_back(val);
     }
     for (PredicateStatement &ps: req.goal_false) {
       // look at the predicates
       // get a heuristic value from context
+      double val = context->getHeuristic(ps, all_heuristics);
+
       // update this pose based on that
+      heuristics.push_back(val);
     }
   }
 
@@ -138,7 +144,13 @@ namespace predicator_planning {
         SearchPose *new_sp = new SearchPose(search, rs);
 
         new_sp->parent->state->interpolate(*rs, step, *rs, group);
-        search.push_back(new_sp);
+
+        if (new_sp->state->satisfiesBounds()) {
+          search.push_back(new_sp);
+        } else {
+          delete new_sp->state;
+          delete new_sp;
+        }
       }
 
       res.iter = iter;

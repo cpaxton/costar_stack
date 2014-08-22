@@ -499,6 +499,28 @@ namespace predicator_planning {
   }
 
   /**
+   * getHeuristic
+   * Looks up a score from a vector of possible values
+   */
+  double PredicateContext::getHeuristic(const PredicateStatement &pred, const std::vector<double> &heuristics) const {
+    if (heuristic_indices.find(pred) == heuristic_indices.end()) {
+      ROS_ERROR("Failed to lookup predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+                pred.params[0].c_str(),
+                pred.params[1].c_str(),
+                pred.params[2].c_str());
+      return 0;
+    } else if (heuristic_indices.at(pred) > heuristics.size()) {
+      ROS_ERROR("Indexing error from predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+                pred.params[0].c_str(),
+                pred.params[1].c_str(),
+                pred.params[2].c_str());
+      ROS_ERROR("index = %u, length=%lu", heuristic_indices.at(pred), heuristics.size());
+      return 0;
+    }
+    return heuristics.at(heuristic_indices.at(pred));
+  }
+
+  /**
    * tick()
    * Run one iteration of the predicator computations 
    */
