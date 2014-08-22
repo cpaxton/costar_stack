@@ -14,6 +14,33 @@ namespace predicator_planning {
 
   struct Planner {
 
+    /**
+     * SearchPose
+     * Struct holding information on how good this RobotState is.
+     * We use these to construct the 
+     */
+    struct SearchPose {
+      RobotState *state;
+      std::vector<bool> matching_true;
+      std::vector<bool> mathing_false;
+      std::vector<double> true_heuristics;
+      std::vector<double> false_heuristics;
+      unsigned int count_best; // number of heuristics for which this is best
+
+      SearchPose *parent; // which one comes before this in the path
+      SearchPose *child; // which one comes next
+
+      // default constructor
+      SearchPose();
+
+      // initialize parents, variables
+      SearchPose(std::vector<SearchPose> &search,
+                 RobotState *state);
+
+      // update with information from the context
+      update(PredicatePlan::Request &req, PlanningContext *context);
+    };
+
     // context contains information about the world and will produce new predicates
     PredicateContext * context;
     ros::ServiceServer planServer;

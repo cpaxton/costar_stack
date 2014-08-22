@@ -17,6 +17,28 @@ namespace predicator_planning {
     nh.param("verbosity", verbosity, 0);
   }
 
+  // default constructor
+  Planner::SearchPose() : state(NULL), count_best(0), parent(NULL), child(NULL) {}
+
+  // initialize parents, variables
+  Planner::SearchPose(std::vector<SearchPose> &search, RobotState *_state) :
+    count_best(0), parent(NULL), child(NULL), state(_state)
+  {
+    double shortest_dist = 999999.;
+    for(SearchPose &sp: search) {
+      // compare distance
+      double dist = sp.state->distance(*state);
+      if (parent == NULL || dist < shortest_dist) {
+        parent = sp.state;
+      }
+    }
+  }
+
+  // update with information from the context
+  void Planner::SearchPose::update(PredicatePlan::Request &req, PlanningContext *context) {
+
+  }
+
   bool Planner::plan(predicator_planning::PredicatePlan::Request &req,
                      predicator_planning::PredicatePlan::Response &res)
   {
@@ -27,7 +49,7 @@ namespace predicator_planning {
     std::vector<RobotState *> starting_states = context->states;
 
     // this is the list of states we are searching in
-    std::vector<RobotState *> search;
+    std::vector<SearchPose> search;
 
     // find the index of the current robot state
     unsigned int idx = 0;
@@ -62,6 +84,16 @@ namespace predicator_planning {
       double choose_op = (double)rand() / (double)RAND_MAX;
       if(choose_op > chance) {
         // spawn children from the thing with the highest heuristic
+ 
+        for (unsigned int c = 0; c < children; ++c) {
+
+          RobotState *rs = new RobotState(context->robots[idx]);
+          rs->setToRandomPositions();
+
+          // find the BEST state and step from there
+          // best being defined as "the most matching predicates and highest heuristics"
+          
+        }
 
       } else {
         // case 2: choose a random position
