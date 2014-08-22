@@ -9,8 +9,8 @@
 
 namespace predicator_planning {
 
-  Planner::Planner(PredicateContext *_context, unsigned int _max_iter, unsigned int _children, double _step) :
-    context(_context), max_iter(_max_iter), children(_children), step(_step)
+  Planner::Planner(PredicateContext *_context, unsigned int _max_iter, unsigned int _children, double _step, double _chance) :
+    context(_context), max_iter(_max_iter), children(_children), step(_step), chance(_chance)
   {
     ros::NodeHandle nh;
     planServer = nh.advertiseService("predicator/plan", &Planner::plan, this);
@@ -59,20 +59,26 @@ namespace predicator_planning {
       // either generate a starting position at random or...
       // step in a direction from a "good" position (as determined by high heuristics)
       
-      // case 1: choose a random position
-      RobotState *rs = new RobotState(context->robots[idx]);
-      rs->setToRandomPositions();
+      double choose_op = (double)rand() / (double)RAND_MAX;
+      if(choose_op > chance) {
+        // spawn children from the thing with the highest heuristic
 
-      // find the nearest state to this step
-      // then step in the direction of this state rs
-      // NOTE: should be interpolating from some other state, not the initial one here
-      RobotState *step_rs = new RobotState(context->robots[idx]);
-      starting_states[idx]->interpolate(*rs, step, *step_rs, group);
-      search.push_back(step_rs);
+      } else {
+        // case 2: choose a random position
+        RobotState *rs = new RobotState(context->robots[idx]);
+        rs->setToRandomPositions();
 
-      // add to the list of states
-      // then delete
-      delete rs;
+        // find the nearest state to this step
+        // then step in the direction of this state rs
+        // NOTE: should be interpolating from some other state, not the initial one here
+        RobotState *step_rs = new RobotState(context->robots[idx]);
+        starting_states[idx]->interpolate(*rs, step, *step_rs, group);
+        search.push_back(step_rs);
+
+        // add to the list of states
+        // then delete
+        delete rs;
+      }
     }
 
     // clean up
