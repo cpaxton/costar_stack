@@ -68,7 +68,7 @@ namespace predicator_planning {
     for (PredicateStatement &ps: req.goal_false) {
       // look at the predicates
       // get a heuristic value from context
-      double val = context->getHeuristic(ps, all_heuristics);
+      double val = -1 * context->getHeuristic(ps, all_heuristics);
 
       // update this pose based on that
       heuristics.push_back(val);
