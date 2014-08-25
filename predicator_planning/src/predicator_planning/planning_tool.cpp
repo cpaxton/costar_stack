@@ -107,6 +107,14 @@ namespace predicator_planning {
       }
     }
 
+    std::cout << "values = [";
+    if(goals == false) {
+      for (double &d: heuristics) {
+        std::cout << (1.0 * d) << ", ";
+      }
+    }
+    std::cout << "]" << std::endl;
+
     return true;
   }
 
@@ -115,6 +123,12 @@ namespace predicator_planning {
   {
 
     ROS_INFO("Received planning request.");
+
+    for (typename heuristic_map_t::const_iterator it = context->heuristic_indices.begin();
+         it != context->heuristic_indices.end();
+         ++it) {
+      // print out the keys
+    }
 
     // this is the list of states we are searching in
     std::deque<SearchPose *> search;
@@ -154,20 +168,17 @@ namespace predicator_planning {
       // step in a direction from a "good" position (as determined by high heuristics)
       
       double choose_op = (double)rand() / (double)RAND_MAX;
-      std::cout << "Iteration " << iter << ", random value = " << choose_op << std::endl;
+      std::cout << "Iteration " << iter << ":"; //, random value = " << choose_op << std::endl;
       if(choose_op > chance) {
         // spawn children from the thing with the highest heuristic
- 
-        for (unsigned int c = 0; c < children; ++c) {
 
-          RobotState *rs = new RobotState(context->robots[idx]);
-          rs->setToRandomPositions();
+        RobotState *rs = new RobotState(context->robots[idx]);
+        rs->setToRandomPositions();
 
-          // find the BEST state and step from there
-          // best being defined as "the most matching predicates and highest heuristics"
-          
-          delete rs;
-        }
+        // find the BEST state and step from there
+        // best being defined as "the most matching predicates and highest heuristics"
+
+        delete rs;
 
       } else {
         // case 2: choose a random position
