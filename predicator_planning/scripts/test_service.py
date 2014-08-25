@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+from predicator_msgs.msg import PredicateStatement
 from predicator_planning.srv import *
 from trajectory_msgs.msg import JointTrajectory
 from moveit_msgs.msg import *
@@ -19,6 +20,8 @@ req.robot = 'wam'
 for obj in others:
     req.required_false.append(PredicateStatement(predicate="touching",params=['wam',obj,''],num_params=3))
     req.goal_false.append(PredicateStatement(predicate="touching",params=['wam',obj,''],num_params=3))
+
+req.goal_true.append(PredicateStatement(predicate="below",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
 
 res = planner(req)
 

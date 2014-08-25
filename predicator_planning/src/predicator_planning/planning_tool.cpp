@@ -40,7 +40,7 @@ namespace predicator_planning {
   }
 
   // update with information from the context
-  bool Planner::SearchPose::update(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx) {
+  bool Planner::SearchPose::checkPredicates(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx, bool &goals) {
 
     // get starting states
     // these are the states as recorded in the context
@@ -60,14 +60,26 @@ namespace predicator_planning {
     std::unordered_set<PredicateStatement, Hash, Equals> lookup;
 
     for (PredicateStatement &ps: list.statements) {
-      ROS_INFO("%s(%s,%s,%s)",ps.predicate.c_str(),
-               ps.params[0].c_str(),
-               ps.params[1].c_str(),
-               ps.params[2].c_str());
+      //ROS_INFO("%s(%s,%s,%s)",ps.predicate.c_str(),
+      //         ps.params[0].c_str(),
+      //         ps.params[1].c_str(),
+      //         ps.params[2].c_str());
       lookup.insert(ps);
     }
 
-    bool goals = true;
+    // check requirements
+    for (PredicateStatement &ps: req.required_true) {
+      if (lookup.find(ps) == lookup.end()) {
+        return false;
+      }
+    }
+    for (PredicateStatement &ps: req.required_false) {
+      if (lookup.find(ps) != lookup.end()) {
+        return false;
+      }
+    }
+
+    goals = true;
 
     // compute predicate stuff right here
     for (PredicateStatement &ps: req.goal_true) {
@@ -94,6 +106,8 @@ namespace predicator_planning {
         goals = false;
       }
     }
+
+    return true;
   }
 
   bool Planner::plan(predicator_planning::PredicatePlan::Request &req,
@@ -126,15 +140,16 @@ namespace predicator_planning {
     ROS_INFO("Found group \"%s\" for robot \"%s\".", req.group.c_str(), req.robot.c_str());
 
     SearchPose *first = new SearchPose();
+    bool goals_found = false;
     first->state = new RobotState(*context->states[idx]);
-    first->update(req, context, idx);
+    first->checkPredicates(req, context, idx, goals_found);
 
     search.push_back(first);
 
     ROS_INFO("Added first state.");
 
     // loop over 
-    for (unsigned int iter = 0; iter < max_iter; ++iter) {
+    for (unsigned int iter = 0; iter < max_iter && !res.found; ++iter) {
       // either generate a starting position at random or...
       // step in a direction from a "good" position (as determined by high heuristics)
       
@@ -165,14 +180,17 @@ namespace predicator_planning {
         SearchPose *new_sp = new SearchPose(search, rs);
 
         new_sp->parent->state->interpolate(*rs, step, *rs, group);
-        new_sp->update(req, context, idx);
 
-        if (new_sp->state->satisfiesBounds()) {
+        goals_found = false;
+
+        if (new_sp->checkPredicates(req, context, idx, goals_found) && new_sp->state->satisfiesBounds()) {
           search.push_back(new_sp);
         } else {
           delete new_sp->state;
           delete new_sp;
         }
+
+        res.found = goals_found;
       }
 
       res.iter = iter;
