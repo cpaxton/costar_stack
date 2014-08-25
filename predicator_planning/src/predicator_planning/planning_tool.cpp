@@ -166,6 +166,8 @@ namespace predicator_planning {
     SearchPose *cur = *search.rbegin();
     path.push_front(cur->state);
     while (cur->parent != NULL) {
+        // instead of finding parents we may want to find the closest node
+        // or the node with the least distance (COST) within some threshold
         cur = cur->parent;
         path.push_front(cur->state);
     }
