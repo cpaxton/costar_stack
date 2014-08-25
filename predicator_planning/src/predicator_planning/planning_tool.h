@@ -40,7 +40,7 @@ namespace predicator_planning {
                  RobotState *state);
 
       // update with information from the context
-      void update(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx);
+      bool update(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx);
     };
 
     // context contains information about the world and will produce new predicates

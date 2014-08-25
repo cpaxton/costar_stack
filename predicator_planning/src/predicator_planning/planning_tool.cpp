@@ -9,6 +9,7 @@
 
 // standard libraries for random
 #include <cstdlib>
+#include <unordered_set>
 
 namespace predicator_planning {
 
@@ -39,7 +40,7 @@ namespace predicator_planning {
   }
 
   // update with information from the context
-  void Planner::SearchPose::update(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx) {
+  bool Planner::SearchPose::update(PredicatePlan::Request &req, PredicateContext *context, unsigned int idx) {
 
     // get starting states
     // these are the states as recorded in the context
@@ -56,14 +57,30 @@ namespace predicator_planning {
     context->addGeometryPredicates(list, all_heuristics, states);
     context->addReachabilityPredicates(list, all_heuristics, states);
 
+    std::unordered_set<PredicateStatement, Hash, Equals> lookup;
+
+    for (PredicateStatement &ps: list.statements) {
+      ROS_INFO("%s(%s,%s,%s)",ps.predicate.c_str(),
+               ps.params[0].c_str(),
+               ps.params[1].c_str(),
+               ps.params[2].c_str());
+      lookup.insert(ps);
+    }
+
+    bool goals = true;
+
     // compute predicate stuff right here
     for (PredicateStatement &ps: req.goal_true) {
       // look at the predicates
       // get a heuristic value from context
       double val = context->getHeuristic(ps, all_heuristics);
 
-      // update this pose based on that
+      // supdate this pose based on that
       heuristics.push_back(val);
+
+      if(lookup.find(ps) == lookup.end()) {
+        goals = false;
+      }
     }
     for (PredicateStatement &ps: req.goal_false) {
       // look at the predicates
@@ -72,6 +89,10 @@ namespace predicator_planning {
 
       // update this pose based on that
       heuristics.push_back(val);
+
+      if(lookup.find(ps) != lookup.end()) {
+        goals = false;
+      }
     }
   }
 
