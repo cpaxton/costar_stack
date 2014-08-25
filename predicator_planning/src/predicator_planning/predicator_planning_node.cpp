@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
   unsigned int max_iter = 100u;
   unsigned int children = 10u;
-  double step = 0.25;
+  double step = 0.05;
 
   predicator_planning::Planner planner(&pc, max_iter, children, step);
 

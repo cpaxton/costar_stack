@@ -10,9 +10,16 @@ planner = rospy.ServiceProxy('predicator/plan', PredicatePlan)
 pub = rospy.Publisher('gazebo/traj_rml/joint_traj_cmd', JointTrajectory)
 display_pub = rospy.Publisher('predicator/display_plan', DisplayTrajectory)
 
+others = ['wam2', 'peg1', 'peg2', 'ring1', 'stage']
+
 req = PredicatePlanRequest()
 req.group = 'arm'
 req.robot = 'wam'
+
+for obj in others:
+    req.required_false.append(PredicateStatement(predicate="touching",params=['wam',obj,''],num_params=3))
+    req.goal_false.append(PredicateStatement(predicate="touching",params=['wam',obj,''],num_params=3))
+
 res = planner(req)
 
 print res

@@ -165,6 +165,7 @@ namespace predicator_planning {
         SearchPose *new_sp = new SearchPose(search, rs);
 
         new_sp->parent->state->interpolate(*rs, step, *rs, group);
+        new_sp->update(req, context, idx);
 
         if (new_sp->state->satisfiesBounds()) {
           search.push_back(new_sp);
