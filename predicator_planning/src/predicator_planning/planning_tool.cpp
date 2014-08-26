@@ -71,6 +71,11 @@ namespace predicator_planning {
     for (PredicateStatement &ps: req.required_true) {
       if (lookup.find(ps) == lookup.end()) {
         return false;
+      } else {
+        ROS_INFO("found goal state for predicate %s(%s,%s,%s)",ps.predicate.c_str(),
+               ps.params[0].c_str(),
+               ps.params[1].c_str(),
+               ps.params[2].c_str());
       }
     }
     for (PredicateStatement &ps: req.required_false) {
@@ -85,6 +90,7 @@ namespace predicator_planning {
     for (PredicateStatement &ps: req.goal_true) {
       // look at the predicates
       // get a heuristic value from context
+
       double val = context->getHeuristic(ps, all_heuristics);
 
       // supdate this pose based on that
@@ -101,7 +107,6 @@ namespace predicator_planning {
 
       // update this pose based on that
       heuristics.push_back(val);
-
       if(lookup.find(ps) != lookup.end()) {
         goals = false;
       }
@@ -128,6 +133,19 @@ namespace predicator_planning {
          it != context->heuristic_indices.end();
          ++it) {
       // print out the keys
+      if (it->first.predicate.compare("near") == 0) {
+        ROS_INFO("%s(%s, %s, %s)", it->first.predicate.c_str(),
+                 it->first.params[0].c_str(),
+                 it->first.params[1].c_str(),
+                 it->first.params[2].c_str());
+      }
+    }
+
+    if(context->heuristic_indices.find(createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link"))
+       != context->heuristic_indices.end())
+    {
+      ROS_INFO("FOUND NEAR");
+      ROS_INFO("INDEX = %u", context->heuristic_indices[createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link")]);
     }
 
     // this is the list of states we are searching in
@@ -146,7 +164,7 @@ namespace predicator_planning {
     // get the robots' group
     moveit::core::JointModelGroup *group = NULL;
     if (context->robots[idx]->hasJointModelGroup(req.group)) {
-        group = context->robots[idx]->getJointModelGroup(req.group);
+      group = context->robots[idx]->getJointModelGroup(req.group);
     } else {
       ROS_ERROR("Unable to get group \"%s\" for robot \"%s\"!", req.group.c_str(), req.robot.c_str());
       return false;
@@ -157,7 +175,12 @@ namespace predicator_planning {
     bool goals_found = false;
     first->state = new RobotState(*context->states[idx]);
     first->checkPredicates(req, context, idx, goals_found);
-
+    if(context->heuristic_indices.find(createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link"))
+       != context->heuristic_indices.end())
+    {
+      ROS_INFO("FOUND NEAR");
+      ROS_INFO("INDEX = %u", context->heuristic_indices[createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link")]);
+    }
     search.push_back(first);
 
     ROS_INFO("Added first state.");
@@ -166,9 +189,9 @@ namespace predicator_planning {
     for (unsigned int iter = 0; iter < max_iter && !res.found; ++iter) {
       // either generate a starting position at random or...
       // step in a direction from a "good" position (as determined by high heuristics)
-      
+
       double choose_op = (double)rand() / (double)RAND_MAX;
-      std::cout << "Iteration " << iter << ":"; //, random value = " << choose_op << std::endl;
+      std::cout << "Iteration " << iter << ": "; //, random value = " << choose_op << std::endl;
       if(choose_op > chance) {
         // spawn children from the thing with the highest heuristic
 
@@ -217,10 +240,10 @@ namespace predicator_planning {
     SearchPose *cur = *search.rbegin();
     path.push_front(cur->state);
     while (cur->parent != NULL) {
-        // instead of finding parents we may want to find the closest node
-        // or the node with the least distance (COST) within some threshold
-        cur = cur->parent;
-        path.push_front(cur->state);
+      // instead of finding parents we may want to find the closest node
+      // or the node with the least distance (COST) within some threshold
+      cur = cur->parent;
+      path.push_front(cur->state);
     }
 
     // now go forward over the list

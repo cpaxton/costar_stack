@@ -52,6 +52,12 @@ namespace predicator_planning {
    */
   void joint_state_callback(const sensor_msgs::JointState::ConstPtr &msg, RobotState *state);
 
+  /*
+   * createStatement()
+   * Simple helper function to create predicates with
+   */
+  PredicateStatement createStatement(std::string predicate, double value, std::string param1, std::string param2, std::string param3 = "");
+ 
 
   /**
    * Predicate

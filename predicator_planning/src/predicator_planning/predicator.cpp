@@ -11,7 +11,7 @@ namespace predicator_planning {
    * createStatement()
    * Simple helper function to create predicates with
    */
-  PredicateStatement createStatement(std::string predicate, double value, std::string param1, std::string param2, std::string param3 = "") {
+  PredicateStatement createStatement(std::string predicate, double value, std::string param1, std::string param2, std::string param3) {
     PredicateStatement ps;
     ps.predicate = predicate;
     ps.params[0] = param1;
@@ -291,8 +291,8 @@ namespace predicator_planning {
             PredicateStatement up = createStatement("above",0,*link1,*link2,"world");
             PredicateStatement down = createStatement("below",0,*link1,*link2,"world");
             PredicateStatement touching = createStatement("touching",0,*link1,*link2);
-            PredicateStatement near = createStatement("near",0,*link1,*link2,"world");
-            PredicateStatement near_xy = createStatement("near_xy",0,*link1,*link2,"world");
+            PredicateStatement near = createStatement("near",0,*link1,*link2);
+            PredicateStatement near_xy = createStatement("near_xy",0,*link1,*link2);
 
             checkAndUpdate(left, heuristic_indices, idx);
             checkAndUpdate(right, heuristic_indices, idx);
@@ -387,12 +387,12 @@ namespace predicator_planning {
    */
   static inline void updateHeuristics(const PredicateStatement &pred, const heuristic_map_t &indices, std::vector<double> &heuristics) {
     if (indices.find(pred) == indices.end()) {
-      ROS_ERROR("Failed to lookup predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+      ROS_ERROR("(UPDATE) Failed to look up predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
                 pred.params[0].c_str(),
                 pred.params[1].c_str(),
                 pred.params[2].c_str());
     } else if (indices.at(pred) > heuristics.size()) {
-      ROS_ERROR("Indexing error from predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+      ROS_ERROR("(UPDATE) Indexing error from predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
                 pred.params[0].c_str(),
                 pred.params[1].c_str(),
                 pred.params[2].c_str());
@@ -504,13 +504,13 @@ namespace predicator_planning {
    */
   double PredicateContext::getHeuristic(const PredicateStatement &pred, const std::vector<double> &heuristics) const {
     if (heuristic_indices.find(pred) == heuristic_indices.end()) {
-      ROS_ERROR("Failed to lookup predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+      ROS_ERROR("(GET) Failed to lookup predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
                 pred.params[0].c_str(),
                 pred.params[1].c_str(),
                 pred.params[2].c_str());
       return 0;
     } else if (heuristic_indices.at(pred) > heuristics.size()) {
-      ROS_ERROR("Indexing error from predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
+      ROS_ERROR("(GET) Indexing error from predicate \"%s\" with arguments (%s, %s, %s)", pred.predicate.c_str(),
                 pred.params[0].c_str(),
                 pred.params[1].c_str(),
                 pred.params[2].c_str());
@@ -643,8 +643,8 @@ namespace predicator_planning {
             PredicateStatement back = createStatement("behind",-1.0 * ydiff,*link1,*link2,"world");
             PredicateStatement up = createStatement("above",zdiff,*link1,*link2,"world");
             PredicateStatement down = createStatement("below",-1.0 * zdiff,*link1,*link2,"world");
-            PredicateStatement near = createStatement("near",-1.0 * dist,*link1,*link2,"world");
-            PredicateStatement near_xy = createStatement("near_xy",-1.0 * dist_xy,*link1,*link2,"world");
+            PredicateStatement near = createStatement("near",-1.0 * dist,*link1,*link2);
+            PredicateStatement near_xy = createStatement("near_xy",-1.0 * dist_xy,*link1,*link2);
 
             updateHeuristics(left, heuristic_indices, heuristics);
             updateHeuristics(right, heuristic_indices, heuristics);
