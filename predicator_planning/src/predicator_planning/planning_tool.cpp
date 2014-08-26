@@ -22,11 +22,11 @@ namespace predicator_planning {
   }
 
   // default constructor
-  Planner::SearchPose::SearchPose() : state(NULL), count_best(0), parent(NULL), child(NULL), cost(0) {}
+  Planner::SearchPose::SearchPose() : state(NULL), count_best(0), parent(NULL), child(NULL), cost(0), count_met(0), hsum(0.) {}
 
   // initialize parents, variables
   Planner::SearchPose::SearchPose(std::deque<SearchPose *> &search, RobotState *_state) :
-    count_best(0), parent(NULL), child(NULL), state(_state), cost(0)
+    count_best(0), parent(NULL), child(NULL), state(_state), cost(0), count_met(0), hsum(0.)
   {
     double shortest_dist = 999999.;
     for(unsigned int i = 0; i < search.size(); ++i) {
@@ -93,29 +93,39 @@ namespace predicator_planning {
 
       double val = context->getHeuristic(ps, all_heuristics);
 
-      // supdate this pose based on that
-      heuristics.push_back(val);
-
       if(lookup.find(ps) == lookup.end()) {
         goals = false;
+      } else if (val < 0) {
+        val = 0;
       }
+
+      // update this pose based on that
+      heuristics.push_back(val);
     }
     for (PredicateStatement &ps: req.goal_false) {
       // look at the predicates
       // get a heuristic value from context
       double val = -1 * context->getHeuristic(ps, all_heuristics);
 
-      // update this pose based on that
-      heuristics.push_back(val);
       if(lookup.find(ps) != lookup.end()) {
         goals = false;
+      } else if (val < 0) {
+        val = 0;
       }
+
+      // update this pose based on that
+      heuristics.push_back(val);
     }
 
     std::cout << "values = [";
     if(goals == false) {
       for (double &d: heuristics) {
-        std::cout << (1.0 * d) << ", ";
+        std::cout << d << ", ";
+        if (d >= 0) {
+          ++count_met;
+        } else {
+          hsum += d;
+        }
       }
     }
     std::cout << "]" << std::endl;
@@ -128,13 +138,6 @@ namespace predicator_planning {
   {
 
     ROS_INFO("Received planning request.");
-
-    if(context->heuristic_indices.find(createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link"))
-       != context->heuristic_indices.end())
-    {
-      ROS_INFO("FOUND NEAR");
-      ROS_INFO("INDEX = %u", context->heuristic_indices[createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link")]);
-    }
 
     // this is the list of states we are searching in
     std::deque<SearchPose *> search;
@@ -166,6 +169,7 @@ namespace predicator_planning {
     search.push_back(first);
 
     ROS_INFO("Added first state.");
+    std::vector<double> unmet_goals(req.goal_true.size() + req.goal_false.size());
 
     // loop over 
     for (unsigned int iter = 0; iter < max_iter && !res.found; ++iter) {
@@ -176,19 +180,42 @@ namespace predicator_planning {
       std::cout << "Iteration " << iter << ": "; //, random value = " << choose_op << std::endl;
       if(choose_op > chance) {
         // spawn children from the thing with the highest heuristic
-
-        RobotState *rs = new RobotState(context->robots[idx]);
-        rs->setToRandomPositions();
+        // first, iterate over all poses
+        // track the best number of goals met and best values for unmet goals
+        SearchPose *best = NULL;
+        unsigned int best_met = 0;
+        double best_hsum = 99999.9;
+        for (std::deque<SearchPose *>::iterator it = search.begin();
+             it != search.end();
+             ++it) {
+          if (((*it)->count_met > best_met) ||
+               (((*it)->count_met == best_met) && (*it)->hsum > best_hsum) ||
+              best == NULL)
+          {
+            best = *it;
+            best_hsum = best->hsum;
+            best_met = best->count_met;
+          }
+        }
 
         // find the BEST state and step from there
         // best being defined as "the most matching predicates and highest heuristics"
+        RobotState *rs = new RobotState(context->robots[idx]);
+        rs->setToRandomPositionsNearBy(group, *best->state, 0.25);
+        SearchPose *new_sp = new SearchPose(search, rs);
 
-        delete rs;
+        // check and add or delete
+        if (new_sp->checkPredicates(req, context, idx, goals_found) && new_sp->state->satisfiesBounds()) {
+          search.push_back(new_sp);
+        } else {
+          delete new_sp->state;
+          delete new_sp;
+        }
 
       } else {
         // case 2: choose a random position
         RobotState *rs = new RobotState(context->robots[idx]);
-        rs->setToRandomPositions();
+        rs->setToRandomPositions(group);
 
         // find the nearest state to this step
         // then step in the direction of this state rs
@@ -216,16 +243,46 @@ namespace predicator_planning {
       }
     }
 
+    SearchPose *cur = *search.rbegin();
+    if(res.found != true) {
+      ROS_INFO("selecting final node based on goal performance");
+      SearchPose *best = NULL;
+      unsigned int best_met = 0;
+      double best_hsum = 99999.9;
+      for (std::deque<SearchPose *>::iterator it = search.begin();
+           it != search.end();
+           ++it) {
+        if (((*it)->count_met > best_met) ||
+            (((*it)->count_met == best_met) && (*it)->hsum > best_hsum) ||
+            best == NULL)
+        {
+          best = *it;
+          best_hsum = best->hsum;
+          best_met = best->count_met;
+        }
+      }
+
+      // take the best pose
+      cur = best;
+    }
+
+    ROS_INFO("selected final node");
+
     // get a path from the last thing we added
     // by going backwards to the start
     std::deque<RobotState *> path;
-    SearchPose *cur = *search.rbegin();
     path.push_front(cur->state);
     while (cur->parent != NULL) {
       // instead of finding parents we may want to find the closest node
       // or the node with the least distance (COST) within some threshold
       cur = cur->parent;
       path.push_front(cur->state);
+      std::cout << cur->hsum;
+      if(cur->parent != NULL) {
+        std::cout << ", dist = ";
+        std::cout << cur->state->distance(*cur->parent->state);
+      }
+      std::cout << std::endl; 
     }
 
     // now go forward over the list

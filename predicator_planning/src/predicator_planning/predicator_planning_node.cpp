@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   unsigned int children = 10u;
   double step = 0.02;
 
-  predicator_planning::Planner planner(&pc, max_iter, children, step, 1.0);
+  predicator_planning::Planner planner(&pc, max_iter, children, step, 0.0);
 
   // define spin rate
   ros::Rate rate(30);

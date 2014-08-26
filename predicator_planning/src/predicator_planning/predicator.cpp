@@ -438,14 +438,17 @@ namespace predicator_planning {
         robot1->checkOtherCollision(req, res, *states[i], *robot2, *states[j]);
         double dist = robot1->distanceOther(*states[i], *robot2, *states[j]);
 
-        if (dist <= 0) {
-          PredicateStatement ps = createStatement("touching", -1.0 * dist,
-                                                  robot1->getRobotModel()->getName(),
-                                                  robot2->getRobotModel()->getName());
-          PredicateStatement ps2 = createStatement("touching", -1.0 * dist,
-                                                   robot2->getRobotModel()->getName(),
-                                                   robot1->getRobotModel()->getName());
+        PredicateStatement ps = createStatement("touching", -1.0 * dist,
+                                                robot1->getRobotModel()->getName(),
+                                                robot2->getRobotModel()->getName());
+        PredicateStatement ps2 = createStatement("touching", -1.0 * dist,
+                                                 robot2->getRobotModel()->getName(),
+                                                 robot1->getRobotModel()->getName());
 
+        updateHeuristics(ps, heuristic_indices, heuristics);
+        updateHeuristics(ps2, heuristic_indices, heuristics);
+
+        if (dist <= 0) {
           output.statements.push_back(ps);
           output.statements.push_back(ps2);
         }

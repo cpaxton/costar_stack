@@ -27,6 +27,8 @@ namespace predicator_planning {
       std::vector<bool> matching;
       std::vector<double> heuristics;
       unsigned int count_best; // number of heuristics for which this is best
+      unsigned int count_met; // number of goal conditions met
+      double hsum; // sum of negative heuristics
       double cost; // minimize distance
 
       SearchPose *parent; // which one comes before this in the path
