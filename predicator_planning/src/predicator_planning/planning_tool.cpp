@@ -129,18 +129,6 @@ namespace predicator_planning {
 
     ROS_INFO("Received planning request.");
 
-    for (typename heuristic_map_t::const_iterator it = context->heuristic_indices.begin();
-         it != context->heuristic_indices.end();
-         ++it) {
-      // print out the keys
-      if (it->first.predicate.compare("near") == 0) {
-        ROS_INFO("%s(%s, %s, %s)", it->first.predicate.c_str(),
-                 it->first.params[0].c_str(),
-                 it->first.params[1].c_str(),
-                 it->first.params[2].c_str());
-      }
-    }
-
     if(context->heuristic_indices.find(createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link"))
        != context->heuristic_indices.end())
     {
@@ -175,12 +163,6 @@ namespace predicator_planning {
     bool goals_found = false;
     first->state = new RobotState(*context->states[idx]);
     first->checkPredicates(req, context, idx, goals_found);
-    if(context->heuristic_indices.find(createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link"))
-       != context->heuristic_indices.end())
-    {
-      ROS_INFO("FOUND NEAR");
-      ROS_INFO("INDEX = %u", context->heuristic_indices[createStatement("near", 0, "wam/wrist_palm_link", "peg1/peg_top_link")]);
-    }
     search.push_back(first);
 
     ROS_INFO("Added first state.");
