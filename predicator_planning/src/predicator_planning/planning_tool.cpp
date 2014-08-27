@@ -295,7 +295,7 @@ namespace predicator_planning {
         ++j;
         parent = parent->parent;
 
-        double dist = cur->state->distance(*parent->state);
+        double dist = cur->state->distance(*parent->state, group);
 
         std::cout << "(" << i << ", " << j << ") ";
         std::cout << cur->hsum;
@@ -311,7 +311,7 @@ namespace predicator_planning {
         }
       }
 
-      path.push_front(cur->state);
+      path.push_front(parent->state);
     }
 
     // now go forward over the list
