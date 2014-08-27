@@ -640,14 +640,14 @@ namespace predicator_planning {
             double dist_xy = sqrt((xdiff*xdiff) + (ydiff*ydiff)); // compute xy distance only
             double dist = sqrt((xdiff*xdiff) + (ydiff*ydiff) + (zdiff*zdiff)); // compute xyz distance
 
-            PredicateStatement left = createStatement("left_of",xdiff,*link1,*link2,"world");
-            PredicateStatement right = createStatement("right_of",-1.0 * xdiff,*link1,*link2,"world");
-            PredicateStatement front = createStatement("in_front_of",ydiff,*link1,*link2,"world");
-            PredicateStatement back = createStatement("behind",-1.0 * ydiff,*link1,*link2,"world");
-            PredicateStatement up = createStatement("above",zdiff,*link1,*link2,"world");
-            PredicateStatement down = createStatement("below",-1.0 * zdiff,*link1,*link2,"world");
-            PredicateStatement near = createStatement("near",-1.0 * dist,*link1,*link2);
-            PredicateStatement near_xy = createStatement("near_xy",-1.0 * dist_xy,*link1,*link2);
+            PredicateStatement left = createStatement("left_of",xdiff - rel_x_threshold,*link1,*link2,"world");
+            PredicateStatement right = createStatement("right_of",-1.0 * xdiff - rel_x_threshold,*link1,*link2,"world");
+            PredicateStatement front = createStatement("in_front_of",ydiff - rel_y_threshold,*link1,*link2,"world");
+            PredicateStatement back = createStatement("behind",-1.0 * ydiff - rel_y_threshold,*link1,*link2,"world");
+            PredicateStatement up = createStatement("above",zdiff - rel_z_threshold,*link1,*link2,"world");
+            PredicateStatement down = createStatement("below",-1.0 * zdiff - rel_z_threshold,*link1,*link2,"world");
+            PredicateStatement near = createStatement("near",-1.0 * dist + near_3d_threshold,*link1,*link2);
+            PredicateStatement near_xy = createStatement("near_xy",-1.0 * dist_xy + near_2d_threshold,*link1,*link2);
 
             updateHeuristics(left, heuristic_indices, heuristics);
             updateHeuristics(right, heuristic_indices, heuristics);

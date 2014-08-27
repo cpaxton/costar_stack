@@ -118,17 +118,19 @@ namespace predicator_planning {
     }
 
     std::cout << "values = [";
-    if(goals == false) {
-      for (double &d: heuristics) {
-        std::cout << d << ", ";
-        if (d >= 0) {
-          ++count_met;
-        } else {
-          hsum += d;
-        }
+    for (double &d: heuristics) {
+      std::cout << d << ", ";
+      if (d >= 0) {
+        ++count_met;
+      } else {
+        hsum += d;
       }
     }
-    std::cout << "]" << std::endl;
+    std::cout << "]";
+    if (goals == true) {
+      std::cout << " (MEETS GOALS)";
+    }
+    std::cout << std::endl;
 
     return true;
   }
