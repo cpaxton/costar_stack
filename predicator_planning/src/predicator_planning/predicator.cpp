@@ -634,8 +634,8 @@ namespace predicator_planning {
               std::cout << tf2.translation()[0] << "," << tf2.translation()[1] << "," << tf2.translation()[2] << std::endl;
             }
 
-            double xdiff = tf1.translation()[0] - tf2.translation()[0]; // x = red = front/back from stage
-            double ydiff = tf1.translation()[1] - tf2.translation()[1]; // y = green = left/right?
+            double xdiff = tf1.translation()[1] - tf2.translation()[1]; // x = red = front/back from stage
+            double ydiff = tf1.translation()[0] - tf2.translation()[0]; // y = green = left/right?
             double zdiff = tf1.translation()[2] - tf2.translation()[2]; // z = blue = up/down
             double dist_xy = sqrt((xdiff*xdiff) + (ydiff*ydiff)); // compute xy distance only
             double dist = sqrt((xdiff*xdiff) + (ydiff*ydiff) + (zdiff*zdiff)); // compute xyz distance

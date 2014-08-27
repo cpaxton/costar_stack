@@ -53,9 +53,14 @@ namespace predicator_planning {
 
     context->updateRobotStates();
 
+    //if (!state->satisfiesBounds()) {
+    //  return false;
+    //}
+
     context->addCollisionPredicates(list, all_heuristics, states);
     context->addGeometryPredicates(list, all_heuristics, states);
     context->addReachabilityPredicates(list, all_heuristics, states);
+
 
     std::unordered_set<PredicateStatement, Hash, Equals> lookup;
 
@@ -171,7 +176,6 @@ namespace predicator_planning {
     search.push_back(first);
 
     ROS_INFO("Added first state.");
-    std::vector<double> unmet_goals(req.goal_true.size() + req.goal_false.size());
 
     // loop over 
     for (unsigned int iter = 0; iter < max_iter && !res.found; ++iter) {
@@ -179,7 +183,7 @@ namespace predicator_planning {
       // step in a direction from a "good" position (as determined by high heuristics)
 
       double choose_op = (double)rand() / (double)RAND_MAX;
-      std::cout << "Iteration " << iter << ": "; //, random value = " << choose_op << std::endl;
+      std::cout << "Iteration " << iter << "(" << (choose_op > chance) << ") :";
       if(choose_op > chance) {
         // spawn children from the thing with the highest heuristic
         // first, iterate over all poses
@@ -203,16 +207,20 @@ namespace predicator_planning {
         // find the BEST state and step from there
         // best being defined as "the most matching predicates and highest heuristics"
         RobotState *rs = new RobotState(context->robots[idx]);
-        rs->setToRandomPositionsNearBy(group, *best->state, 0.25);
+        rs->setToRandomPositionsNearBy(group, *best->state, 0.15);
         SearchPose *new_sp = new SearchPose(search, rs);
+        new_sp->parent->state->interpolate(*rs, step, *rs, group);
 
         // check and add or delete
-        if (new_sp->checkPredicates(req, context, idx, goals_found) && new_sp->state->satisfiesBounds()) {
+        if (new_sp->checkPredicates(req, context, idx, goals_found)) {
           search.push_back(new_sp);
+          res.found = goals_found;
         } else {
+          ROS_INFO("Deleting illegal state.");
           delete new_sp->state;
           delete new_sp;
         }
+
 
       } else {
         // case 2: choose a random position
@@ -228,14 +236,14 @@ namespace predicator_planning {
 
         goals_found = false;
 
-        if (new_sp->checkPredicates(req, context, idx, goals_found) && new_sp->state->satisfiesBounds()) {
+        if (new_sp->checkPredicates(req, context, idx, goals_found)) {
           search.push_back(new_sp);
+          res.found = goals_found;
         } else {
+          ROS_INFO("Deleting illegal state.");
           delete new_sp->state;
           delete new_sp;
         }
-
-        res.found = goals_found;
       }
 
       res.iter = iter;

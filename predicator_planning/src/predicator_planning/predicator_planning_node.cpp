@@ -14,11 +14,11 @@ int main(int argc, char **argv) {
 
   predicator_planning::PredicateContext pc(true);
 
-  unsigned int max_iter = 1000u;
+  unsigned int max_iter = 100000u;
   unsigned int children = 10u;
   double step = 0.02;
 
-  predicator_planning::Planner planner(&pc, max_iter, children, step, 0.0);
+  predicator_planning::Planner planner(&pc, max_iter, children, step, 0.5);
 
   // define spin rate
   ros::Rate rate(30);
