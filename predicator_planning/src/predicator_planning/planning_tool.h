@@ -51,14 +51,14 @@ namespace predicator_planning {
 
     int verbosity;
     unsigned int max_iter; // maximum iterations to attempt to find destination
-    unsigned int children; // number of children to create at each step
     double step; // distance to move
     double chance; // percent of the time to move at random
+    double skip_distance; // used to smooth trajectories
 
     Planner(PredicateContext *context, unsigned int max_iter = 10000,
-            unsigned int children = 5,
             double step = 0.05,
-            double chance = 0.2);
+            double chance = 0.2,
+            double skip_distance = 0.5);
 
     bool plan(predicator_planning::PredicatePlan::Request &req,
               predicator_planning::PredicatePlan::Response &res);

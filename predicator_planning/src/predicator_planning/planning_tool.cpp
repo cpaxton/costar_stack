@@ -13,8 +13,8 @@
 
 namespace predicator_planning {
 
-  Planner::Planner(PredicateContext *_context, unsigned int _max_iter, unsigned int _children, double _step, double _chance) :
-    context(_context), max_iter(_max_iter), children(_children), step(_step), chance(_chance)
+  Planner::Planner(PredicateContext *_context, unsigned int _max_iter, double _step, double _chance, double _skip) :
+    context(_context), max_iter(_max_iter), step(_step), chance(_chance), skip_distance(_skip)
   {
     ros::NodeHandle nh;
     planServer = nh.advertiseService("predicator/plan", &Planner::plan, this);
@@ -282,17 +282,36 @@ namespace predicator_planning {
     // by going backwards to the start
     std::deque<RobotState *> path;
     path.push_front(cur->state);
+    int i = 0; 
     while (cur->parent != NULL) {
+      ++i;
       // instead of finding parents we may want to find the closest node
       // or the node with the least distance (COST) within some threshold
       cur = cur->parent;
-      path.push_front(cur->state);
-      std::cout << cur->hsum;
-      if(cur->parent != NULL) {
+
+      int j = i;
+      SearchPose *parent = cur;
+      while (parent->parent != NULL) {
+        ++j;
+        parent = parent->parent;
+
+        double dist = cur->state->distance(*parent->state);
+
+        std::cout << "(" << i << ", " << j << ") ";
+        std::cout << cur->hsum;
+
+        //if(cur->parent != NULL) {
         std::cout << ", dist = ";
-        std::cout << cur->state->distance(*cur->parent->state);
+        std::cout << dist;
+        //}
+        std::cout << std::endl; 
+
+        if (dist > skip_distance) {
+          break;
+        }
       }
-      std::cout << std::endl; 
+
+      path.push_front(cur->state);
     }
 
     // now go forward over the list
