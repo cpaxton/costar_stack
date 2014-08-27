@@ -75,7 +75,8 @@ Predicator modules are the ROS packages that actually perform some kind of analy
 - **predicator_occupancy_module**: select a volume, determine if anything enters that volume. 
 - **predicator_fake_classification**: publish known object class information. For use with a simulator, when a real object detector isn't in use.
 - **predicator_movement**: publish movement information, such as whether an object is approaching another object.
-- **predicator_params**: provides a service so that you can set predicates at runtime to save information **[REMOVED 2014-08-11]**.
+- ~~**predicator_params**: provides a service so that you can set predicates at runtime to save information~~ **[REMOVED 2014-08-11]**.
+- **predicator_planning**: computes many of the same predicates as **predicator_geometry** and **predicator_collision**, but also offers a simple randomized motion planning service that attempts to satisfy or negate predicates.
 
 ### Module Setup
 
