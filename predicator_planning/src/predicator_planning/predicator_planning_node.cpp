@@ -14,9 +14,9 @@ int main(int argc, char **argv) {
 
   predicator_planning::PredicateContext pc(true);
 
-  unsigned int max_iter = 1000u;
+  unsigned int max_iter = 5000u;
   double step = 0.02;
-  double chance = 0.50;
+  double chance = 0.30;
   double skip_distance = 0.50;
 
   predicator_planning::Planner planner(&pc, max_iter, step, chance, skip_distance);

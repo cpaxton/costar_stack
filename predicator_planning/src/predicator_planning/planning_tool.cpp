@@ -281,16 +281,18 @@ namespace predicator_planning {
     // get a path from the last thing we added
     // by going backwards to the start
     std::deque<RobotState *> path;
-    path.push_front(cur->state);
+    //path.push_front(cur->state);
+    //cur = cur->parent;
     int i = 0; 
-    while (cur->parent != NULL) {
+    while (cur != NULL) {
       ++i;
       // instead of finding parents we may want to find the closest node
       // or the node with the least distance (COST) within some threshold
-      cur = cur->parent;
+      path.push_front(cur->state);
 
       int j = i;
       SearchPose *parent = cur;
+      SearchPose *next = parent;
       while (parent->parent != NULL) {
         ++j;
         parent = parent->parent;
@@ -306,12 +308,11 @@ namespace predicator_planning {
         //}
         std::cout << std::endl; 
 
-        if (dist > skip_distance) {
-          break;
+        if (dist < skip_distance) {
+          cur->parent = parent->parent;
         }
       }
-
-      path.push_front(parent->state);
+      cur = cur->parent;
     }
 
     // now go forward over the list
