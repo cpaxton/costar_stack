@@ -159,6 +159,11 @@ namespace predicator_planning {
       ++idx;
     }
 
+    if (idx >= context->robots.size()) {
+      ROS_ERROR("Could not find robot \"%s\"!", req.robot.c_str());
+      return false;
+    }
+
     // get the robots' group
     moveit::core::JointModelGroup *group = NULL;
     if (context->robots[idx]->hasJointModelGroup(req.group)) {
@@ -201,13 +206,14 @@ namespace predicator_planning {
             best = *it;
             best_hsum = best->hsum;
             best_met = best->count_met;
+            //ROS_INFO("expanding from sum=%f, count=%u", best_hsum, best_met);
           }
         }
 
         // find the BEST state and step from there
         // best being defined as "the most matching predicates and highest heuristics"
         RobotState *rs = new RobotState(context->robots[idx]);
-        rs->setToRandomPositionsNearBy(group, *best->state, 0.15);
+        rs->setToRandomPositionsNearBy(group, *best->state, 0.50);
         SearchPose *new_sp = new SearchPose(search, rs);
         new_sp->parent->state->interpolate(*rs, step, *rs, group);
 
