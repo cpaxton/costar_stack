@@ -45,6 +45,14 @@ display_pub.publish(disp)
 
 client = actionlib.SimpleActionClient('/gazebo/traj_rml/action', control_msgs.msg.FollowJointTrajectoryAction)
 goal = FollowJointTrajectoryGoal()
+
+next_t = 0
+for point in res.path.points:
+    point.time_from_start.secs = next_t
+    next_t = next_t + 2
+
+print res.path
+
 goal.trajectory = res.path
 
 rospy.loginfo("Sending trajectory to trajectory action...")

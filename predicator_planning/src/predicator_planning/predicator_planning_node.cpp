@@ -14,12 +14,18 @@ int main(int argc, char **argv) {
 
   predicator_planning::PredicateContext pc(true);
 
-  unsigned int max_iter = 5000u;
+  int max_iter = 5000u;
   double step = 0.10;
   double chance = 0.30;
   double skip_distance = 0.75;
 
-  predicator_planning::Planner planner(&pc, max_iter, step, chance, skip_distance);
+  ros::NodeHandle nh("~");
+  nh.param("max_iter", max_iter, int(5000));
+  nh.param("step", step, double(0.10));
+  nh.param("chance", chance, double(0.30));
+  nh.param("skip_distance", skip_distance, double(0.75));
+
+  predicator_planning::Planner planner(&pc, (unsigned int)max_iter, step, chance, skip_distance);
 
   // define spin rate
   ros::Rate rate(30);
