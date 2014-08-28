@@ -102,6 +102,15 @@ namespace predicator_planning {
     pval.value_predicates.push_back("mesh_distance");
     pval.pheader.source = ros::this_node::getName();
 
+    pval.predicates.push_back("near_xy");
+    pval.predicates.push_back("near");
+    pval.predicates.push_back("left_of");
+    pval.predicates.push_back("right_of");
+    pval.predicates.push_back("in_front_of");
+    pval.predicates.push_back("behind");
+    pval.predicates.push_back("above");
+    pval.predicates.push_back("below");
+
     // read in topics and descriptions
     for(unsigned int i = 0; i < descriptions.size(); ++i) {
       std::string desc;
@@ -123,6 +132,8 @@ namespace predicator_planning {
       PlanningScene *scene = new PlanningScene(model);
       scene->getCollisionRobotNonConst()->setPadding(padding);
       scene->propogateRobotPadding();
+
+      pval.assignments.push_back(model->getName());
 
       // get all link names as possible assignments
       for(typename std::vector<std::string>::const_iterator it = model->getLinkModelNames().begin();
