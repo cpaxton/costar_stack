@@ -13,8 +13,8 @@
 
 namespace predicator_planning {
 
-  Planner::Planner(PredicateContext *_context, unsigned int _max_iter, double _step, double _chance, double _skip) :
-    context(_context), max_iter(_max_iter), step(_step), chance(_chance), skip_distance(_skip)
+  Planner::Planner(PredicateContext *_context, unsigned int _max_iter, double _step, double _chance, double _skip, double _search_volume) :
+    context(_context), max_iter(_max_iter), step(_step), chance(_chance), skip_distance(_skip), search_volume(_search_volume)
   {
     ros::NodeHandle nh;
     planServer = nh.advertiseService("predicator/plan", &Planner::plan, this);
@@ -213,7 +213,7 @@ namespace predicator_planning {
         // find the BEST state and step from there
         // best being defined as "the most matching predicates and highest heuristics"
         RobotState *rs = new RobotState(context->robots[idx]);
-        rs->setToRandomPositionsNearBy(group, *best->state, 0.50);
+        rs->setToRandomPositionsNearBy(group, *best->state, search_volume);
         SearchPose *new_sp = new SearchPose(search, rs);
         new_sp->parent->state->interpolate(*rs, step, *rs, group);
 

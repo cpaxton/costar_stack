@@ -51,6 +51,7 @@ namespace predicator_planning {
 
     int verbosity;
     unsigned int max_iter; // maximum iterations to attempt to find destination
+    double search_volume; // random volume around high-value (good) nodes to search in
     double step; // distance to move
     double chance; // percent of the time to move at random
     double skip_distance; // used to smooth trajectories
@@ -58,7 +59,8 @@ namespace predicator_planning {
     Planner(PredicateContext *context, unsigned int max_iter = 10000,
             double step = 0.05,
             double chance = 0.2,
-            double skip_distance = 0.5);
+            double skip_distance = 0.5,
+            double search_volume = 0.5);
 
     bool plan(predicator_planning::PredicatePlan::Request &req,
               predicator_planning::PredicatePlan::Response &res);
