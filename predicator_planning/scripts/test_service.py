@@ -27,6 +27,7 @@ for obj in others:
 #req.goal_true.append(PredicateStatement(predicate="above",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
 req.goal_true.append(PredicateStatement(predicate="near_xy",params=['wam/wrist_palm_link','peg1/peg_top_link','']))
 req.goal_true.append(PredicateStatement(predicate="in_front_of",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
+req.goal_true.append(PredicateStatement(predicate="left_of",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
 #req.goal_false.append(PredicateStatement(predicate="near",params=['wam/wrist_palm_link','peg1/peg_top_link','']))
 
 res = planner(req)
@@ -48,11 +49,15 @@ goal.trajectory = res.path
 
 rospy.loginfo("Sending trajectory to trajectory action...")
 
+client.wait_for_server()
 client.send_goal(goal)
 
 rospy.loginfo("Waiting...")
 
 client.wait_for_result()
+
+rospy.loginfo("Trajectory action finished.")
+
 res = client.get_result()
 
 print res
