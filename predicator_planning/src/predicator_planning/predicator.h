@@ -154,8 +154,11 @@ namespace predicator_planning {
      * main collision checking loop
      * checks for all pairs of objects, determines collisions and distances
      * publishes the relationships between all of these objects
+     *
+     * @param idx is the index of a particular PlanningScene.
+     * When doing planning, we don't really need to recompute all of the world collisions, just the ones that might be changing.
      */
-    void addCollisionPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states);
+    void addCollisionPredicates(PredicateList &list, std::vector<double> &heuristics, const std::vector<RobotState *> &states, unsigned int idx=~0);
 
     /**
      * addGeometryPredicates()

@@ -418,7 +418,7 @@ namespace predicator_planning {
    * checks for all pairs of objects, determines collisions and distances
    * publishes the relationships between all of these objects
    */
-  void PredicateContext::addCollisionPredicates(PredicateList &output, std::vector<double> &heuristics, const std::vector<RobotState *> &states) {
+  void PredicateContext::addCollisionPredicates(PredicateList &output, std::vector<double> &heuristics, const std::vector<RobotState *> &states, unsigned int idx) {
 
     unsigned i = 0;
     for(typename std::vector<PlanningScene *>::iterator it1 = scenes.begin();
@@ -430,9 +430,18 @@ namespace predicator_planning {
 
       typename std::vector<PlanningScene *>::iterator it2 = it1;
       unsigned int j = i+1;
+
+      // skip if we are only computing predicates for a single planning scene
+      if (idx < scenes.size() && i != idx) {
+        continue;
+      } else if (idx < scenes.size() && i == idx){
+        j = 0;
+        it2 = scenes.begin();
+      }
+
       for(++it2; it2 != scenes.end(); ++it2, ++j) {
 
-        //if (i == j) continue;
+        if (i == j) continue;
 
         collision_detection::CollisionRobotConstPtr robot2 = (*it2)->getCollisionRobot();
 

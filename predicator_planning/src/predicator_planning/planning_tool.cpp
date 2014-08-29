@@ -57,7 +57,7 @@ namespace predicator_planning {
     //  return false;
     //}
 
-    context->addCollisionPredicates(list, all_heuristics, states);
+    context->addCollisionPredicates(list, all_heuristics, states, idx);
     context->addGeometryPredicates(list, all_heuristics, states);
     context->addReachabilityPredicates(list, all_heuristics, states);
 
