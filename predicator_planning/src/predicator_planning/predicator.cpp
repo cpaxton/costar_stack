@@ -270,9 +270,6 @@ namespace predicator_planning {
             it2 != states.end();
             ++it2, ++j)
         {
-          if (i == j) {
-            continue;
-          }
 
           PredicateStatement near_mesh = createStatement("near_mesh",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());
           PredicateStatement touching_robot = createStatement("touching",0,(*it)->getRobotModel()->getName(),(*it2)->getRobotModel()->getName());

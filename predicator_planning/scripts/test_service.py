@@ -24,10 +24,13 @@ for obj in others:
     req.required_false.append(PredicateStatement(predicate="touching",params=['wam',obj,''],num_params=3))
     req.goal_false.append(PredicateStatement(predicate="touching",params=['wam',obj,''],num_params=3))
 
-#req.goal_true.append(PredicateStatement(predicate="above",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
+req.required_true.append(PredicateStatement(predicate="near_xy",params=['wam/wrist_palm_link','peg1/peg_top_link','']))
+
+req.goal_true.append(PredicateStatement(predicate="above",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
 req.goal_true.append(PredicateStatement(predicate="near_xy",params=['wam/wrist_palm_link','peg1/peg_top_link','']))
-req.goal_true.append(PredicateStatement(predicate="in_front_of",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
-req.goal_true.append(PredicateStatement(predicate="left_of",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
+#req.goal_true.append(PredicateStatement(predicate="in_front_of",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
+req.goal_true.append(PredicateStatement(predicate="behind",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
+#req.goal_true.append(PredicateStatement(predicate="left_of",params=['wam/wrist_palm_link','peg1/peg_top_link','world']))
 #req.goal_false.append(PredicateStatement(predicate="near",params=['wam/wrist_palm_link','peg1/peg_top_link','']))
 
 res = planner(req)
