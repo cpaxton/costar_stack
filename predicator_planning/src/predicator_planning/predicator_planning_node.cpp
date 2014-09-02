@@ -21,9 +21,9 @@ int main(int argc, char **argv) {
   double search_volume = 0.50;
 
   ros::NodeHandle nh("~");
-  nh.param("max_iter", max_iter, int(10000));
-  nh.param("step", step, double(0.10));
-  nh.param("chance", chance, double(0.30));
+  nh.param("max_iter", max_iter, int(5000));
+  nh.param("step", step, double(0.02));
+  nh.param("chance", chance, double(0.40));
   nh.param("skip_distance", skip_distance, double(0.75));
   nh.param("search_volume", search_volume, double(0.50));
 
