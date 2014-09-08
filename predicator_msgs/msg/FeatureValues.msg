@@ -1,2 +1,2 @@
-string [] name
-float64[] value
+string[] name # names of the feature variables
+float64[] value # values of the features
