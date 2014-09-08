@@ -13,6 +13,10 @@ class GeometryPredicator(object):
         self._publisher = rospy.Publisher(pub_topic, PredicateList)
         self._valid_publisher = rospy.Publisher(valid_pub_topic, ValidPredicates)
         self._frames = rospy.get_param('~frames')
+        self._reference_frames = rospy.get_param('~reference_frames', [])
+        if len(self._reference_frames) == 0:
+            self._reference_frames = self._frames
+        self._value_predicates = rospy.get_param('~publish_values',0) == 1
         self._world_frame = rospy.get_param('~world_frame','world')
         self._higher_margin = rospy.get_param('~height_threshold',0.1)
         self._x_threshold = rospy.get_param('~rel_x_threshold',0.1)
@@ -224,9 +228,10 @@ class GeometryPredicator(object):
                     # check height predicates
                     msg = self.addHeightPredicates(msg, frame1, frame2)
                     msg = self.addNearPredicates(msg, frame1, frame2)
-                    msg = self.addDistancePredicates(msg, frame1, frame2)
+                    if self._value_predicates:
+                        msg = self.addDistancePredicates(msg, frame1, frame2)
 
-                    for ref in self._frames:
+                    for ref in self._reference_frames:
                         msg = self.addRelativeDirectionPredicates(msg, frame1, frame2, ref)
 
         return msg
