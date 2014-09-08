@@ -29,6 +29,7 @@ class MovementPredicator(object):
         self._trans_threshold = rospy.get_param('~translation_velocity_threshold', 0.01)
         self._rot_threshold = rospy.get_param('~rotation_velocity_threshold', 0.01)
         self._dist_threshold = rospy.get_param('~distance_change_threshold', 0.01)
+        self._publish_values = rospy.get_param('~publish_values', 0) == 1
         self._alpha = rospy.get_param('~alpha', 0.50)
         self._st0 = {}
         self._st1 = {}
@@ -93,20 +94,21 @@ class MovementPredicator(object):
             tvel = np.linalg.norm(self._st1[frame] - self._st0[frame], ord=2)
             rvel = np.linalg.norm(self._sr1[frame] - self._sr0[frame], ord=2)
 
-            tps = PredicateStatement()
-            tps.predicate = "translation_velocity"
-            tps.num_params = 1
-            tps.params[0] = frame
-            tps.value = tvel
+            if self._publish_values:
+                tps = PredicateStatement()
+                tps.predicate = "translation_velocity"
+                tps.num_params = 1
+                tps.params[0] = frame
+                tps.value = tvel
 
-            rps = PredicateStatement()
-            rps.predicate = "rotation_velocity"
-            rps.num_params = 1
-            rps.params[0] = frame
-            rps.value = rvel
+                rps = PredicateStatement()
+                rps.predicate = "rotation_velocity"
+                rps.num_params = 1
+                rps.params[0] = frame
+                rps.value = rvel
 
-            msg.statements.append(tps)
-            msg.statements.append(rps)
+                msg.statements.append(tps)
+                msg.statements.append(rps)
 
             if tvel > self._trans_threshold:
                 ps = PredicateStatement()
@@ -136,22 +138,23 @@ class MovementPredicator(object):
                     tdiff = np.linalg.norm(tdiff1 - tdiff0, ord=2)
                     rdiff = np.linalg.norm(rdiff1 - rdiff0, ord=2)
                     
-                    tps = PredicateStatement()
-                    tps.predicate = "relative_translation_velocity"
-                    tps.num_params = 2
-                    tps.params[0] = frame
-                    tps.params[1] = other_frame
-                    tps.value = tdiff
-                    msg.statements.append(tps)
+                    if self._publish_values:
+                        tps = PredicateStatement()
+                        tps.predicate = "relative_translation_velocity"
+                        tps.num_params = 2
+                        tps.params[0] = frame
+                        tps.params[1] = other_frame
+                        tps.value = tdiff
+                        msg.statements.append(tps)
 
 
-                    rps = PredicateStatement()
-                    rps.predicate = "relative_rotation_velocity"
-                    rps.num_params = 2
-                    rps.params[0] = frame
-                    rps.params[1] = other_frame
-                    rps.value = rdiff
-                    msg.statements.append(rps)
+                        rps = PredicateStatement()
+                        rps.predicate = "relative_rotation_velocity"
+                        rps.num_params = 2
+                        rps.params[0] = frame
+                        rps.params[1] = other_frame
+                        rps.value = rdiff
+                        msg.statements.append(rps)
 
                     if tdiff > self._trans_threshold:
                         ps = PredicateStatement()
