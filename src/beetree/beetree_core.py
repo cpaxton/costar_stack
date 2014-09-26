@@ -13,7 +13,7 @@ class Node(object):
     dot file for visualization purposes.
     """
 
-    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None):
+    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None, attach=True):
         """ Beetree Node Constructor
         @type name: String
         @param name: the name of the node
@@ -42,6 +42,7 @@ class Node(object):
         self.alt_view = False
         self.alt_label_ = alt_label
         self.alt_shape_ = 'record'
+        self.attach = attach
 
     def set_alt_view(self,v):
         self.alt_view = v
@@ -58,7 +59,7 @@ class Node(object):
 
         # if parent generate front end of dotcode string
         if self.parent_ == None:
-            dot = 'digraph behavior_tree { splines=false; '
+            dot = 'digraph behavior_tree { nodesep=.5 ranksep=.5 rankdir=LR splines=false; '
         else:
             dot = ''
         # generate this node's dot code
@@ -88,7 +89,11 @@ class Node(object):
                 # call the current child's generate_dot function
                 dot += C.generate_dot()
                 # generate the dot for the connection between self and the current child
-                dot += self.name_ + ':s->' + C.name_ + ':n; '
+                if C.attach:
+                    # dot += self.name_ + ':s->' + C.name_ + ':n; '
+                    dot += self.name_ + ':e->' + C.name_ + ':w; '
+                else:
+                    print "NOT ATTACHED"
 
         # if parent generate tail end of dotcode string
         if self.parent_ == None:        
@@ -232,7 +237,7 @@ class NodeSelector(Node):
     returns SUCCESS, if all fail, returns FAILURE.
     '''
     def __init__(self,name,label):
-        L = '( * )\\n ' + label.upper()
+        L = '( ? )'# + label.upper()
         L_alt = '{SELECTOR | '+label.upper()+'}'
         super(NodeSelector,self).__init__(name,label=L,alt_label=L_alt)
     def get_node_type(self):
@@ -565,7 +570,7 @@ class NodeAction(Node):
     Placeholder action node
     '''
     def __init__(self,name,label):
-        L = 'Action\\n' + label.upper()
+        L = 'Action\\n' + label
         L_alt = '{ACTION|' + label.lower()+'}'
         color='#92D665'
         super(NodeAction,self).__init__(name,L,color,alt_label=L_alt)
@@ -596,10 +601,11 @@ class NodeCondition(Node):
     Placeholder condition node
     '''
     def __init__(self,name,label,param_name=None,desired_value=None):
-        L = '(condition)\\n' + label.upper()
+        L = 'Condition\\n' + label
         L_alt = '{CONDITION | ' + label.lower()+'}'
         color = '#FAE364'
-        super(NodeCondition,self).__init__(name,L,color,'ellipse',alt_label=L_alt)
+        # super(NodeCondition,self).__init__(name,L,color,'ellipse',alt_label=L_alt)
+        super(NodeCondition,self).__init__(name,L,color,alt_label=L_alt)
         self.desired_value_ = desired_value
         self.param_name_ = param_name
     def get_node_type(self):
@@ -609,3 +615,60 @@ class NodeCondition(Node):
     def execute(self):
         pass
 
+
+class NodeQuery(Node):
+    ''' Query Node
+    Placeholder Query node
+    '''
+    def __init__(self,name,label,param_name=None,desired_value=None,attach=True):
+        L = 'Query\\n' + label
+        L_alt = '{QUERY | ' + label.lower()+'}'
+        color = '#0FC7FA'
+        att = attach
+        super(NodeQuery,self).__init__(name,L,color,alt_label=L_alt,attach=att)
+        self.desired_value_ = desired_value
+        self.param_name_ = param_name
+    def get_node_type(self):
+        return 'QUERY'
+    def get_node_name(self):
+        return 'Query'
+    def execute(self):
+        pass
+
+class NodeCalculation(Node):
+    ''' Calculation Node
+    Placeholder Calculation node
+    '''
+    def __init__(self,name,label,param_name=None,desired_value=None):
+        L = 'Calculation\\n' + label
+        L_alt = '{CALCULATION | ' + label.lower()+'}'
+        color = '#BC83DE'
+        super(NodeCalculation,self).__init__(name,L,color,alt_label=L_alt)
+        self.desired_value_ = desired_value
+        self.param_name_ = param_name
+    def get_node_type(self):
+        return 'CALCULATION'
+    def get_node_name(self):
+        return 'Calculation'
+    def execute(self):
+        pass
+
+
+class NodeVariable(Node):
+    ''' Variable Node
+    Placeholder Variable node
+    '''
+    def __init__(self,name,label,param_name=None,desired_value=None,attach=False):
+        L = 'Variable\\n' + label
+        L_alt = '{VARIABLE | ' + label.lower()+'}'
+        color = '#BC83DE'
+        att = attach
+        super(NodeVariable,self).__init__(name,L,color,alt_label=L_alt,attach=att)
+        self.desired_value_ = desired_value
+        self.param_name_ = param_name
+    def get_node_type(self):
+        return 'VARIABLE'
+    def get_node_name(self):
+        return 'Variable'
+    def execute(self):
+        pass

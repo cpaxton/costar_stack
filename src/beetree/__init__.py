@@ -14,6 +14,8 @@ __all__ += ['NodeRoot']
 __all__ += ['NodeAction']
 __all__ += ['NodeService']
 __all__ += ['NodeCondition']
+__all__ += ['NodeQuery']
+__all__ += ['NodeVariable']
 __all__ += ['NodeDecoratorRepeat']
 __all__ += ['NodeDecoratorIgnoreFail']
 __all__ += ['NodeDecoratorWaitForSuccess']
@@ -30,6 +32,8 @@ from beetree_core import NodeIterator
 from beetree_core import NodeAction
 from beetree_core import NodeService
 from beetree_core import NodeCondition
+from beetree_core import NodeQuery
+from beetree_core import NodeVariable
 from beetree_core import NodeDecoratorRepeat
 from beetree_core import NodeDecoratorIgnoreFail
 from beetree_core import NodeDecoratorWaitForSuccess
