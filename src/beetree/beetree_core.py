@@ -52,10 +52,16 @@ class Node(object):
         """
         self.flag_ = flag
 
-    def generate_dot(self):
+    def generate_dot(self,run=False):
         """ Generates dot code for this node and its connection to its children
         Also recursively calls the children's generate_dot() functions
         """
+        # rospy.logwarn(run)
+        if run == True:
+            if self.node_status_ == 'RUNNING':
+                self.flag_ = True
+            else:
+                self.flag_ = False 
 
         # if parent generate front end of dotcode string
         if self.parent_ == None:
@@ -70,8 +76,8 @@ class Node(object):
             shape = self.shape_
             label = self.label_
 
-        rospy.logerr(shape)
-        rospy.logerr(label)
+        # rospy.logerr(shape)
+        # rospy.logerr(label)
 
         if self.flag_ == False:
             if self.color_ == '':
@@ -87,7 +93,7 @@ class Node(object):
         if self.num_children_ > 0:
             for C in self.children_:
                 # call the current child's generate_dot function
-                dot += C.generate_dot()
+                dot += C.generate_dot(run)
                 # generate the dot for the connection between self and the current child
                 if C.attach:
                     # dot += self.name_ + ':s->' + C.name_ + ':n; '
