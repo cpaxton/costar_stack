@@ -16,6 +16,8 @@ roslaunch predicator_bringup core.launch
 
 This will launch the `predicator_params` module as well if `params:=true` is set (it is set by default). This is the service which lets other programs manually configure predicator parameters.
 
+**UPDATE 2014-08-11:** As of today, `predicator_params` has been folded into `predicator_core` and this is no longer necessary.
+
 #### Launch the Peg Simulation Example
 
 This launch file uses the configuration included to test predicator in the simulation.
@@ -55,6 +57,7 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/get_possible_assignment**: list the set of all possible values, if you provide an empty id. List of all possible values for a valid single-term predicate (a type) if you provide an id.
 - **predicator/get_predicates**: list the set of all predicates currently considered valid
 - **predicator/get_value_predicates**: list values published by Predicator modules
+- **predicator/update_param**: manually set a predicator or remove a predicate; these are intended to be parameters that can be fixed and updated dynamically.
 
 Common usage is to call **test_predicate** with a certain predicate to see if it exists, or **get_assigment** with a certain predicate to see what possible values there are for one of its arguments. To use **get_assignment** in this way, fill out a `predicator_msgs::PredicateStatement` object, but replace one argument with an asterisk (\*). Predicates will be returned for all possible values of this argument.
 
@@ -72,7 +75,8 @@ Predicator modules are the ROS packages that actually perform some kind of analy
 - **predicator_occupancy_module**: select a volume, determine if anything enters that volume. 
 - **predicator_fake_classification**: publish known object class information. For use with a simulator, when a real object detector isn't in use.
 - **predicator_movement**: publish movement information, such as whether an object is approaching another object.
-- **predicator_params**: provides a service so that you can set predicates at runtime to save information.
+- ~~**predicator_params**: provides a service so that you can set predicates at runtime to save information~~ **[REMOVED 2014-08-11]**.
+- **predicator_planning**: computes many of the same predicates as **predicator_geometry** and **predicator_collision**, but also offers a simple randomized motion planning service that attempts to satisfy or negate predicates.
 
 ### Module Setup
 

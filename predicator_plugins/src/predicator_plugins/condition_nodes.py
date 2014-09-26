@@ -7,7 +7,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+import beetree; from beetree import Node, NodeCondition
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField
 # Thread for service calls
@@ -40,11 +40,9 @@ class NodeConditionTestPredicateGUI(NodeGUI):
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
-class NodeConditionTestPredicate(Node):
+class NodeConditionTestPredicate(NodeCondition):
     def __init__(self,name,label,predicate_name=None,param1=None,param2=None,param3=None):
-        L = '( condition )\\n' + label.upper()
-        color = '#FAE364'
-        super(NodeConditionTestPredicate,self).__init__(name,L,color,'ellipse')
+        super(NodeConditionTestPredicate,self).__init__(name,label)
         self.predicate_ = predicate_name
         self.param1_ = param1
         self.param2_ = param2

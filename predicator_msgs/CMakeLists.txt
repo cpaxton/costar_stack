@@ -52,6 +52,7 @@ add_message_files(
   ValidPredicates.msg
   UpdateParam.msg
   Header.msg
+  FeatureValues.msg
 )
 
 add_service_files(

@@ -1,5 +1,6 @@
 <launch>
   <arg name="output" default="screen"/>
+  <arg name="publish_values" default="0"/>
 
   <node name="predicator_movement_node"
     type="predicator_movement.py"
@@ -10,6 +11,7 @@
     <param name="rotation_velocity_threshold" value="0.01"/>
     <param name="distance_change_threshold" value="0.01"/>
     <param name="alpha" value="0.50"/>
+    <param name="publish_values" value="$(arg publish_values)"/>
 
     <rosparam param="frames">
       - ring1/ring_link
