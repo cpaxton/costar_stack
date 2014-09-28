@@ -57,7 +57,7 @@ def pick_bounding_box(im_rgb):
         ret = cv2.waitKey(30)
     cv2.destroyWindow("pick_region")
 
-    return bounding_box
+    return np.array(bounding_box)
 
 
 def extract_foreground_poly(im_rgb, bounding_box):
@@ -148,14 +148,17 @@ def extract_holes(im, pred_mask, objects, props, im_pos, im_rgb):
             
             clf = KMeans(2)
             pred = clf.fit_predict(im_obj.reshape([-1, 3])).reshape(im_obj.shape[:2])
-            if clf.cluster_centers_[0][0] > clf.cluster_centers_[1][0]:
+            if np.sum(pred==0) > np.sum(pred==1):
+            # if clf.cluster_centers_[0][0] > clf.cluster_centers_[1][0]:
                 pred = pred==0
+
             obj_hull = mo.convex_hull_image(obj_mask)
             obj_hull[:,0]=0
             obj_hull[:,-1]=0
             obj_hull[0,:]=0
             obj_hull[-1,:]=0
-            obj_hull = cv2.erode(obj_hull.astype(np.uint8), np.ones([11,11]))
+            obj_hull = cv2.erode(obj_hull.astype(np.uint8), np.ones([7,7]))
+            # obj_hull = cv2.erode(obj_hull.astype(np.uint8), np.ones([9,9]))
             obj_mask = (1-pred) * obj_hull
             mask_diff = obj_mask
 
