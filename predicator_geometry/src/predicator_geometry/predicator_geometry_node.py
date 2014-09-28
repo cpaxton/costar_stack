@@ -8,11 +8,16 @@ from predicator_msgs.msg import *
 
 class GeometryPredicator(object):
 
-    def __init__(self, pub_topic, valid_pub_topic):
+    def __init__(self, pub_topic, valid_pub_topic, value_pub_topic):
         self._listener = tf.TransformListener()
         self._publisher = rospy.Publisher(pub_topic, PredicateList)
         self._valid_publisher = rospy.Publisher(valid_pub_topic, ValidPredicates)
+        self._value_publisher = rospy.Publisher(value_pub_topic, FeatureValues)
         self._frames = rospy.get_param('~frames')
+        self._reference_frames = rospy.get_param('~reference_frames', [])
+        if len(self._reference_frames) == 0:
+            self._reference_frames = self._frames
+        self._value_predicates = rospy.get_param('~publish_values',0) == 1
         self._world_frame = rospy.get_param('~world_frame','world')
         self._higher_margin = rospy.get_param('~height_threshold',0.1)
         self._x_threshold = rospy.get_param('~rel_x_threshold',0.1)
@@ -20,6 +25,8 @@ class GeometryPredicator(object):
         self._z_threshold = rospy.get_param('~rel_z_threshold',0.1)
         self._near_2d_threshold = rospy.get_param('~near_2D_threshold',0.2)
         self._near_3d_threshold = rospy.get_param('~near_3D_threshold',0.2)
+
+        self._values = {}
 
     '''
     addHeightPredicates()
@@ -34,6 +41,8 @@ class GeometryPredicator(object):
             (trans2, rot2) = self._listener.lookupTransform(self._world_frame, frame2, rospy.Time(0))
         
             height_difference = trans2[2] - trans1[2]
+
+            self._values["height_difference_" + str(frame1) + "_" + str(frame2)] = height_difference
 
             if height_difference > self._higher_margin:
                 ps = PredicateStatement()
@@ -72,6 +81,9 @@ class GeometryPredicator(object):
 
             dist = np.sqrt((dx*dx)+(dy*dy))
             dist_xyz = np.sqrt((dx*dx)+(dy*dy)+(dz*dz))
+
+            self._values["distance_xy_" + str(frame1) + "_" + str(frame2)] = dist
+            self._values["distance_xyz_" + str(frame1) + "_" + str(frame2)] = dist_xyz
 
             if dist <= self._near_2d_threshold:
                 ps = PredicateStatement()
@@ -116,6 +128,10 @@ class GeometryPredicator(object):
             x_diff = trans2[0] - trans1[0]
             y_diff = trans2[1] - trans1[1]
             z_diff = trans2[2] - trans1[2]
+
+            self._values["x_diff_" + str(frame1) + "_" + str(frame2)] = x_diff
+            self._values["y_diff_" + str(frame1) + "_" + str(frame2)] = y_diff
+            self._values["z_diff_" + str(frame1) + "_" + str(frame2)] = z_diff
 
             if x_diff > self._x_threshold:
                 ps = PredicateStatement()
@@ -224,9 +240,10 @@ class GeometryPredicator(object):
                     # check height predicates
                     msg = self.addHeightPredicates(msg, frame1, frame2)
                     msg = self.addNearPredicates(msg, frame1, frame2)
-                    msg = self.addDistancePredicates(msg, frame1, frame2)
+                    if self._value_predicates:
+                        msg = self.addDistancePredicates(msg, frame1, frame2)
 
-                    for ref in self._frames:
+                    for ref in self._reference_frames:
                         msg = self.addRelativeDirectionPredicates(msg, frame1, frame2, ref)
 
         return msg
@@ -251,6 +268,23 @@ class GeometryPredicator(object):
 
         return msg
 
+    '''
+    getFeatureValues()
+    returns most recent updated set of values
+    '''
+    def getValuesMessage(self):
+        msg = FeatureValues()
+        msg.pheader.source = rospy.get_name()
+
+        for k, v in self._values.iteritems():
+            msg.name.append(k)
+            msg.value.append(v)
+
+        return msg
+
+    def publishValues(self, msg):
+        self._value_publisher.publish(msg)
+
     def publishValid(self, msg):
         self._valid_publisher.publish(msg)
 
@@ -272,7 +306,7 @@ if __name__ == "__main__":
 
     try:
 
-        gp = GeometryPredicator('/predicator/input', '/predicator/valid_input')
+        gp = GeometryPredicator('/predicator/input', '/predicator/valid_input', '/predicator/values')
 
         while not rospy.is_shutdown():
             msg = gp.getPredicateMessage()
@@ -280,6 +314,9 @@ if __name__ == "__main__":
 
             valid_msg = gp.getValidPredicatesMessage()
             gp.publishValid(valid_msg)
+
+            value_msg = gp.getValuesMessage()
+            gp.publishValues(value_msg)
 
             rate.sleep()
 

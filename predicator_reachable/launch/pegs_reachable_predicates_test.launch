@@ -7,10 +7,10 @@
     output="$(arg output)">
 
     <param name="rate" value="1"/>
+    <param name="load_delay" value="0.0"/>
 
     <!-- what groups of frames are we interested in -->
     <rosparam param="groups">
-      - grasp_point
       - location
     </rosparam>
 

@@ -1,11 +1,34 @@
 <launch>
+  
   <arg name="output" default="screen"/>
-  <arg name="publish_values" default="0"/>
+  <arg name="verbosity" default="0"/>
 
-  <node name="predicator_geometry_node"
-    type="predicator_geometry_node.py"
-    pkg="predicator_geometry"
+  <node pkg="predicator_planning"
+    name="predicator_planning_node"
+    type="predicator_planning_node"
     output="$(arg output)">
+
+    <rosparam param="description_list">
+      - /gazebo/barrett_manager/robot_description
+      - /gazebo/w2barrett_manager/robot_description
+      - /peg1_description
+      - /peg2_description
+      - /ring1_description
+      - /stage_model
+    </rosparam>
+
+    <rosparam param="joint_state_topic_list">
+      - /gazebo/barrett_manager/joint_states
+      - /gazebo/w2barrett_manager/joint_states
+    </rosparam>
+
+    <rosparam param="floating_root_list">
+      - id: ring1
+        frame: ring1/ring_link
+    </rosparam>
+
+    <param name="verbosity" value="$(arg verbosity)"/>
+    <param name="world_frame" value="/world"/>
 
     <param name="height_threshold" value="0.1"/>
     <param name="rel_x_threshold" value="0.1"/>
@@ -13,7 +36,6 @@
     <param name="rel_z_threshold" value="0.1"/>
     <param name="near_2D_threshold" value="0.2"/>
     <param name="near_3D_threshold" value="0.25"/>
-    <param name="publish_values" value="$(arg publish_values)"/>
 
     <rosparam param="frames">
       - ring1/ring_link
@@ -40,12 +62,5 @@
       - stage_link
     </rosparam>
 
-    <rosparam param="reference_frames">
-      - ring1/ring_link
-      - peg1/peg_top_link
-      - peg2/peg_top_link
-    </rosparam>
-
   </node>
-
 </launch>

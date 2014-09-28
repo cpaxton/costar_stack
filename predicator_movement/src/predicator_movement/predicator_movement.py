@@ -20,15 +20,17 @@ Module running exponential filtering/smoothing of new inputs and
 '''
 class MovementPredicator(object):
 
-    def __init__(self, topic, valid_topic):
+    def __init__(self, topic, valid_topic, value_topic):
         self._listener = tf.TransformListener()
         self._publisher = rospy.Publisher(topic, PredicateList)
         self._valid_publisher = rospy.Publisher(valid_topic, ValidPredicates)
+        self._value_publisher = rospy.Publisher(value_topic, FeatureValues)
         self._frames = rospy.get_param('~frames')
         self._world_frame = rospy.get_param('~world_frame','world')
         self._trans_threshold = rospy.get_param('~translation_velocity_threshold', 0.01)
         self._rot_threshold = rospy.get_param('~rotation_velocity_threshold', 0.01)
         self._dist_threshold = rospy.get_param('~distance_change_threshold', 0.01)
+        self._publish_values = rospy.get_param('~publish_values', 0) == 1
         self._alpha = rospy.get_param('~alpha', 0.50)
         self._st0 = {}
         self._st1 = {}
@@ -39,6 +41,7 @@ class MovementPredicator(object):
         self._r0 = {}
         self._r1 = {}
         self._started = False
+        self._values = {}
         pass
 
     '''
@@ -93,20 +96,24 @@ class MovementPredicator(object):
             tvel = np.linalg.norm(self._st1[frame] - self._st0[frame], ord=2)
             rvel = np.linalg.norm(self._sr1[frame] - self._sr0[frame], ord=2)
 
-            tps = PredicateStatement()
-            tps.predicate = "translation_velocity"
-            tps.num_params = 1
-            tps.params[0] = frame
-            tps.value = tvel
+            if self._publish_values:
+                tps = PredicateStatement()
+                tps.predicate = "translation_velocity"
+                tps.num_params = 1
+                tps.params[0] = frame
+                tps.value = tvel
 
-            rps = PredicateStatement()
-            rps.predicate = "rotation_velocity"
-            rps.num_params = 1
-            rps.params[0] = frame
-            rps.value = rvel
+                rps = PredicateStatement()
+                rps.predicate = "rotation_velocity"
+                rps.num_params = 1
+                rps.params[0] = frame
+                rps.value = rvel
 
-            msg.statements.append(tps)
-            msg.statements.append(rps)
+                msg.statements.append(tps)
+                msg.statements.append(rps)
+
+            self._values["rotation_velocity_" + str(frame)] = rvel
+            self._values["translation_velocity_" + str(frame)] = tvel
 
             if tvel > self._trans_threshold:
                 ps = PredicateStatement()
@@ -135,23 +142,27 @@ class MovementPredicator(object):
 
                     tdiff = np.linalg.norm(tdiff1 - tdiff0, ord=2)
                     rdiff = np.linalg.norm(rdiff1 - rdiff0, ord=2)
-                    
-                    tps = PredicateStatement()
-                    tps.predicate = "relative_translation_velocity"
-                    tps.num_params = 2
-                    tps.params[0] = frame
-                    tps.params[1] = other_frame
-                    tps.value = tdiff
-                    msg.statements.append(tps)
+
+                    self._values["relative_rotation_velocity_" + str(frame) + "_" + str(other_frame)] = rdiff
+                    self._values["relative_translation_velocity_" + str(frame) + "_" + str(other_frame)] = tdiff
+
+                    if self._publish_values:
+                        tps = PredicateStatement()
+                        tps.predicate = "relative_translation_velocity"
+                        tps.num_params = 2
+                        tps.params[0] = frame
+                        tps.params[1] = other_frame
+                        tps.value = tdiff
+                        msg.statements.append(tps)
 
 
-                    rps = PredicateStatement()
-                    rps.predicate = "relative_rotation_velocity"
-                    rps.num_params = 2
-                    rps.params[0] = frame
-                    rps.params[1] = other_frame
-                    rps.value = rdiff
-                    msg.statements.append(rps)
+                        rps = PredicateStatement()
+                        rps.predicate = "relative_rotation_velocity"
+                        rps.num_params = 2
+                        rps.params[0] = frame
+                        rps.params[1] = other_frame
+                        rps.value = rdiff
+                        msg.statements.append(rps)
 
                     if tdiff > self._trans_threshold:
                         ps = PredicateStatement()
@@ -175,6 +186,9 @@ class MovementPredicator(object):
                     '''
                     tnorm1 = np.linalg.norm(tdiff1, ord=2)
                     tnorm0 = np.linalg.norm(tdiff0, ord=2)
+
+                    self._values["change_distance_" + str(frame) + "_" + str(other_frame)] = tnorm1 - tnorm0
+
                     if tnorm1 - tnorm0 > self._dist_threshold:
                         ps = PredicateStatement()
                         ps.predicate = "departing"
@@ -208,6 +222,19 @@ class MovementPredicator(object):
 
         return msg
 
+    def getValuesMessage(self):
+        msg = FeatureValues()
+        msg.pheader.source = rospy.get_name()
+
+        for k, v in self._values.iteritems():
+            msg.name.append(k)
+            msg.value.append(v)
+
+        return msg
+
+    def publishValues(self, msg):
+        self._value_publisher.publish(msg)
+
     def publishValid(self, msg):
         self._valid_publisher.publish(msg)
 
@@ -223,7 +250,7 @@ if __name__ == "__main__":
     print "starting movement node"
 
     try:
-        mp = MovementPredicator('/predicator/input','/predicator/valid_input')
+        mp = MovementPredicator('/predicator/input','/predicator/valid_input', '/predicator/values')
 
         while not rospy.is_shutdown():
             
@@ -234,6 +261,10 @@ if __name__ == "__main__":
         
             valid_msg = mp.getValidMessage()
             mp.publishValid(valid_msg)
+
+            value_msg = mp.getValuesMessage()
+            mp.publishValues(value_msg)
+            print value_msg
 
             rate.sleep()
 
