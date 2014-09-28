@@ -1,36 +1,41 @@
 #!/usr/bin/python
 
 """
-Detects if sphere is occupied or not.
+Detects if plates are on the table 
+Plates have 3, 4, or 8 holes
 """
 
+import numpy as np
 import optparse
 import rospy
+import tf
 
 import cv2
 from pyKinectTools.utils.pointcloud_conversions import *
-from pyKinectTools.utils.transformations import *
+# from pyKinectTools.utils.transformations import *
 
 from sensor_msgs.msg import PointCloud2
 from predicator_msgs.msg import *
+from std_msgs.msg import Empty
+from predicator_8020_module.utils_8020 import *
 
 from threading import Lock
 from copy import deepcopy
 
-# Volume
-bounding_box = np.zeros([2, 3], np.float)
-occupied = False
-pct_filled = 0.1
-occupancy_center = None
-occupancy_radius = None
-
 # Images
+im_display = None
 im_pos = None
 im_depth = None
 im_rgb = None
 mask = np.ones([480, 640], bool)
 image_lock = Lock()
+
+# 8020 Detector
 display = False
+clf_mean = None
+clf_w = None
+closest_parts = {x:None for x in [3,4,8]}
+pub_list = None
 
 
 def draw_box(img, box):
@@ -38,52 +43,17 @@ def draw_box(img, box):
     cv2.rectangle(img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
 
 
-def bbox_occupancy_check(pts, bounding_box, pct_filled=.2, output_mask=False):
-    x_check_lower = pts[:, 0] > bounding_box[0][0]
-    x_check_upper = pts[:, 0] < bounding_box[1][0]
-    y_check_lower = pts[:, 1] > bounding_box[0][1]
-    y_check_upper = pts[:, 1] < bounding_box[1][1]
-    z_check_lower = pts[:, 2] > bounding_box[0][2]
-    z_check_upper = pts[:, 2] < bounding_box[1][2]
-
-    in_bounds = x_check_lower & x_check_upper &\
-        y_check_lower & y_check_upper &\
-        z_check_lower & z_check_upper
-
-    occupied = in_bounds.sum() / (pts.shape[0]*pct_filled) > pct_filled
-    print "pct filled:", in_bounds.sum() / (pts.shape[0]*pct_filled)
-
-    if output_mask:
-        return occupied, in_bounds
-    else:
-        return occupied
-
-
-def sphere_occupancy_check(pts, center, radius, px_thresh=1000, output_mask=False):
-    global occupancy_center, occupancy_radius
-    img_radius = np.sqrt(np.nansum((pts - center)**2, -1))
-    mask = img_radius < radius
-
-    occupied = np.sum(mask) > px_thresh
-
-    if output_mask:
-        return occupied, mask
-    else:
-        return occupied
-
-
-def markers_callback(data):
-    global markers
-    markers = deepcopy(data)
-
-
 def pointcloud_callback(data):
     rospy.logwarn('got image')
     """
     data : ros msg data
     """
-    global im_pos, im_depth, im_rgb, image_lock, occupied, bounding_box, markers, pct_filled, mask
-    global frame_time, frame_seq
+    # global im_display
+    global im_pos, im_depth, im_rgb, image_lock
+    # , bounding_box, mask
+    # global frame_time, frame_seq
+    # global clf_mean, clf_w
+    # global closest_parts
 
     with image_lock:
         frame_time = data.header.stamp
@@ -103,50 +73,123 @@ def pointcloud_callback(data):
         # marker_ids = [m.id for m in markers.markers]
         # if 1 in marker_ids:
 
-        px_thresh = 1000
-        occupied, mask = sphere_occupancy_check(im_pos.reshape([-1, 3]),
-                                              occupancy_center, occupancy_radius, px_thresh, output_mask=True)
+        # px_thresh = 1000
+        # occupied, mask = sphere_occupancy_check(im_pos.reshape([-1, 3]),
+                                              # occupancy_center, occupancy_radius, px_thresh, output_mask=True)
         # occupied, mask = bbox_occupancy_check(im_pos.reshape([-1, 3]),
                                               # bounding_box, pct_filled, output_mask=True)
         # print "Occupied:", occupied
 
-        mask = mask.reshape([480, 640])
+        # mask = mask.reshape([480, 640])
+
+        # im, mask = extract_foreground_poly(im_rgb, bounding_box)
+        # clf_mean, clf_w = train_clf(im, mask)
+        # pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
+        # all_centroids = all_holes = extract_holes(im, pred_mask, objects, props)
+
+        # parts, classes = get_closest_part(all_centroids, all_holes)
+
+        # print "# Holes", len(all_holes)
+        # im_display = plot_holes(im_rgb, all_holes)
+
+        # closest_parts = parts
+
+
+def process_plate_detector(data):
+    global im_display
+    global im_pos, im_depth, im_rgb, bounding_box, mask
+    global frame_time, frame_seq
+    global clf_mean, clf_w
+    global closest_parts
+    global pub_list
+
+    print "Trying to process plate"
+    if im_rgb is None:
+        return False
+    print "Processing plate"
+
+    try:
+        with image_lock:
+            im, mask = extract_foreground_poly(im_rgb, bounding_box)
+            # clf_mean, clf_w = train_clf(im, mask)
+            pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
+            all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
+
+            print "# Plates:", len(all_holes)
+            if len(all_centroids) > 0:
+                closest_parts, classes = get_closest_part(all_centroids, all_holes)
+                im_display = plot_holes(im_rgb, all_holes)
+                # im_display = (pred_mask > 0)*255
+
+            else:
+                for c in closest_parts:
+                    closest_parts[c] = None
+
+            ps = PredicateList()
+            ps.pheader.source = rospy.get_name()
+            ps.statements = []
+
+            # Send predicates for each plate
+            for i in [3,4,8]:
+                # Check if the plate is available
+                if closest_parts[c] is None:
+                    continue
+                # Setup/send predicate
+                plate_name = "plate_{}".format(i)
+                statement = PredicateStatement(predicate=plate_name,
+                                                    confidence=1,
+                                                    value=PredicateStatement.TRUE,
+                                                    num_params=1,
+                                                    params=[predicate_param, "", ""])
+                ps.statements += [statement]
+            pub_list.publish(ps)
+
+
+        return True
+    except:
+        return False
 
 
 if __name__ == '__main__':
 
-    parser = optparse.OptionParser()
-    parser.add_option("-c", "--camera", dest="camera",
-                      help="name of camera", default="camera")
-    parser.add_option("-n", "--namespace", dest="namespace",
-                      help="namespace for occupancy data", default="")    
-    (options, args) = parser.parse_args()
+    try:
+        parser = optparse.OptionParser()
+        parser.add_option("-c", "--camera", dest="camera",
+                          help="name of camera", default="camera")
+        parser.add_option("-n", "--namespace", dest="namespace",
+                          help="namespace for occupancy data", default="")    
+        (options, args) = parser.parse_args()
 
-    camera_name = options.camera
-    namespace = options.namespace
+        camera_name = options.camera
+        namespace = options.namespace
+    except:
+        camera_name = 'camera'
 
     # Setup ros/publishers
-    rospy.init_node('occupancy_module')
+    rospy.init_node('plate_detector_module')
     pub_list = rospy.Publisher('/predicator/input', PredicateList)
     pub_valid = rospy.Publisher('/predicator/input', ValidPredicates)
 
     # Setup subscribers
     cloud_uri = "/{}/depth_registered/points".format(camera_name)
     rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
-
-    # marker_uri = "ar_pose_marker"
-    # rospy.Subscriber(marker_uri, AlvarMarkers, markers_callback, queue_size=10)
+    rospy.Subscriber("8020/detect", Empty, process_plate_detector, queue_size=10)
 
     # Get occupancy params
-    occupancy_center = np.array(rospy.get_param("/{}/occupancy_center".format(namespace)))
-    occupancy_radius = np.array(rospy.get_param("/{}/occupancy_radius".format(namespace)))
+    # occupancy_center = np.array(rospy.get_param("/{}/occupancy_center".format(namespace)))
+    # occupancy_radius = np.array(rospy.get_param("/{}/occupancy_radius".format(namespace)))
 
     display = rospy.get_param('display', True)
+    # bounding_box = []
+    bounding_box = rospy.get_param('bounding_box_8020', [])
+
+    # Setup TF
+    tf_broadcast = tf.TransformBroadcaster()
 
     # Setup valid predicates
-    predicate_param = '{}/occupancy_sensor'.format(namespace)
+    predicate_param = 'plate_detector'
     pval = ValidPredicates()
-    pval.predicates = ['occupied']
+    pval.predicates = ['plate_3', 'plate_4', 'plate_8']
     pval.value_predicates = ['']
     pval.assignments = [predicate_param]
     pub_valid.publish(pval)
@@ -154,42 +197,54 @@ if __name__ == '__main__':
     rate = rospy.Rate(30)
     rate.sleep()
 
+    while im_rgb is None or im_pos is None:
+        rate.sleep()
+
+    # pick_bounding_box()
+    # Setup classifier
+    im, mask = extract_foreground_poly(im_rgb, bounding_box)
+    clf_mean, clf_w = train_clf(im, mask)
+    pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
+    all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
+
+    if len(all_centroids) > 0:
+        closest_parts, classes = get_closest_part(all_centroids, all_holes)
+    else:
+        for c in closest_parts:
+            closest_parts[c] = None
+
+    print "# Plates:", len(all_holes)
+    im_display = plot_holes(im_rgb, all_holes)
+
+
+    display = True
+    ret = process_plate_detector([])
+
     while not rospy.is_shutdown():
+        # print "Running1"
         while im_pos == None:
             rate.sleep()
 
-        # Tell predicator if the sensor is true/false
-        occupied_confidence = (occupied*1-.5)*2
-
-        # Publish occupancy predicates
-        ps = PredicateList()
-        ps.pheader.source = rospy.get_name()
-        ps.statements = []
-
-        if occupied_confidence == 1: # Publish a filled statement, meaning TRUE
-            ps.statements.append(PredicateStatement(predicate='occupied',
-                                                confidence=occupied_confidence,
-                                                value=PredicateStatement.TRUE,
-                                                num_params=1,
-                                                params=[predicate_param, "", ""]))
-        elif occupied_confidence == -1:
-            ps.statements.append(PredicateStatement(predicate='empty',
-                                                confidence=occupied_confidence,
-                                                value=PredicateStatement.TRUE,
-                                                num_params=1,
-                                                params=[predicate_param, "", ""]))
-        pub_list.publish(ps)
-
         # Show colored image to reflect if a space is occupied
-        if display:
-            with image_lock:
-                img = np.repeat((im_depth * ~mask)[:, :, None], 3, -1) / im_depth.max()
-            img_mask = np.zeros([480, 640, 3])
-            if occupied:
-                img_mask[:, :, 1] = mask
-            else:
-                img_mask[:, :, 2] = mask
-            cv2.imshow("img", img + img_mask)
+        
+        if display and im_display is not None:
+            print "Display"
+            cv2.imshow("img", im_display)
             cv2.waitKey(30)
+        # else:
+            # print "No display image"
+
+        # Send TFs for each plate at every timestep
+        for c in closest_parts:
+            plate_name = "plate_{}".format(c)
+            if closest_parts[c] is None:
+                x, y, z = [-1, -1, -1]
+            else:
+                x, y, z = closest_parts[c]
+
+            tf_broadcast.sendTransform([x, y, z],
+                                        [0,0,0,1],
+                                        rospy.Time.now(), plate_name, 
+                                        "camera_rgb_optical_frame")
 
         rate.sleep()

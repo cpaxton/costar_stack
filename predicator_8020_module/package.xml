@@ -2,7 +2,7 @@
 <package>
   <name>predicator_8020_module</name>
   <version>0.0.0</version>
-  <description>Detects whether an object is in a specified volume </description>
+  <description>Detects whether 8020 pieces are on a table </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
