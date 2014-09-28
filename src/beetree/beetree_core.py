@@ -566,10 +566,13 @@ class NodeRoot(Node):
     def get_node_name(self):
         return 'Root'
     def execute(self):
-        # print 'Executing Root: (' + self.name_ + ')'
+        # if self.num_children_ > 0:
+            # return self.children_[0].execute()
+        ### Solution to non attached children like variables... needs work
         if self.num_children_ > 0:
-            return self.children_[0].execute()
-        # print 'ROOT: Child returned status: ' + self.child_status_
+            for c in self.children_:
+                if c.attach == True:
+                    return c.execute()
 
 class NodeAction(Node):
     ''' Action Node
