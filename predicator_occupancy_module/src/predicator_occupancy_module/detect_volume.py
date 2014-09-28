@@ -183,7 +183,9 @@ if __name__ == '__main__':
         # Show colored image to reflect if a space is occupied
         if display:
             with image_lock:
-                img = np.repeat((im_depth * ~mask)[:, :, None], 3, -1) / im_depth.max()
+                max_depth = 2.
+                # max_depth = im_depth.max()
+                img = np.repeat((im_depth * ~mask)[:, :, None], 3, -1) / max_depth
             img_mask = np.zeros([480, 640, 3])
             if occupied:
                 img_mask[:, :, 1] = mask
