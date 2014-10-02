@@ -252,6 +252,10 @@ class NodeSelector(Node):
         return 'Selector'
     def execute(self):
 
+        if len(self.children_) == 0:
+            rospy.logwarn("sequence ["+self.name_+"] has no children, returning success.")
+            return self.set_status('SUCCESS')
+
         for child in self.children_:
             status = child.execute()
 
@@ -277,6 +281,10 @@ class NodeSequence(Node):
     def get_node_name(self):
         return 'Sequence'
     def execute(self):
+
+        if len(self.children_) == 0:
+            rospy.logwarn("sequence ["+self.name_+"] has no children, returning success.")
+            return self.set_status('SUCCESS')
 
         for child in self.children_:
             status = child.execute()
@@ -610,7 +618,7 @@ class NodeCondition(Node):
     Placeholder condition node
     '''
     def __init__(self,name,label,param_name=None,desired_value=None):
-        L = 'Condition\\n' + label
+        L = label
         L_alt = '{CONDITION | ' + label.lower()+'}'
         color = '#FAE364'
         # super(NodeCondition,self).__init__(name,L,color,'ellipse',alt_label=L_alt)
@@ -630,7 +638,7 @@ class NodeQuery(Node):
     Placeholder Query node
     '''
     def __init__(self,name,label,param_name=None,desired_value=None,attach=True):
-        L = 'Query\\n' + label
+        L = name.upper()+'\\n[\\"' + label.upper() + '\\"]'
         L_alt = '{QUERY | ' + label.lower()+'}'
         color = '#0FC7FA'
         att = attach
@@ -667,8 +675,8 @@ class NodeVariable(Node):
     ''' Variable Node
     Placeholder Variable node
     '''
-    def __init__(self,name,label,param_name=None,desired_value=None,attach=False):
-        L = 'Variable\\n' + label
+    def __init__(self,name,label,attach=False):
+        L = 'VARIABLE\\n[' + label + ']'
         L_alt = '{VARIABLE | ' + label.lower()+'}'
         color = '#BC83DE'
         att = attach
