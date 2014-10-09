@@ -681,8 +681,8 @@ class NodeVariable(Node):
         color = '#BC83DE'
         att = attach
         super(NodeVariable,self).__init__(name,L,color,alt_label=L_alt,attach=att)
-        self.desired_value_ = desired_value
-        self.param_name_ = param_name
+        # self.desired_value_ = desired_value
+        # self.param_name_ = param_name
     def get_node_type(self):
         return 'VARIABLE'
     def get_node_name(self):
