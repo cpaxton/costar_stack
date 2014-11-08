@@ -43,9 +43,13 @@ class Node(object):
         self.alt_label_ = alt_label
         self.alt_shape_ = 'record'
         self.attach = attach
+        self.collapsed = False
 
     def set_alt_view(self,v):
         self.alt_view = v
+
+    def set_collapsed(self,val):
+        self.collapsed = val
                 
     def set_flag(self,flag):
         """ Sets a flag for whether this node will be highlighted in the dot code
@@ -65,7 +69,7 @@ class Node(object):
 
         # if parent generate front end of dotcode string
         if self.parent_ == None:
-            dot = 'digraph behavior_tree { nodesep=.5 ranksep=.5 rankdir=LR splines=false; '
+            dot = 'digraph behavior_tree {bgcolor="#222222" nodesep=.5 ranksep=.5 rankdir=LR splines=false; '
         else:
             dot = ''
         # generate this node's dot code
@@ -76,30 +80,38 @@ class Node(object):
             shape = self.shape_
             label = self.label_
 
-        # rospy.logerr(shape)
-        # rospy.logerr(label)
+        # Change shape for collapsed nodes
+        if self.collapsed:
+            # shape = 'diamond'
+            color = '#34495E'
+            style = 'dashed'
+        else:
+            color = self.color_
+            style = 'bold'
+
 
         if self.flag_ == False:
-            if self.color_ == '':
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][label="'+label+'"]; '
+            if color == '':
+                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" fontcolor="#ffffff" color="#ffffff" label="'+label+'"]; '
             else:
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][style="filled" fillcolor="'+self.color_+'"][label="'+label+'"]; '
+                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" color="#ffffff" fillcolor="'+color+'"][label="'+label+'"]; '
         else:
-            if self.color_ == '':
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][style="bold" color="red"][label="'+label+'"]; '
+            if color == '':
+                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" color="red"][label="'+label+'"]; '
             else:
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][style="filled, bold" fillcolor="'+self.color_+'" color="red"][label="'+label+'"]; '   
+                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" fillcolor="'+color+'" color="red"][label="'+label+'"]; '   
         # recursively generate the node's child dot code
-        if self.num_children_ > 0:
-            for C in self.children_:
-                # call the current child's generate_dot function
-                dot += C.generate_dot(run)
-                # generate the dot for the connection between self and the current child
-                if C.attach:
-                    # dot += self.name_ + ':s->' + C.name_ + ':n; '
-                    dot += self.name_ + ':e->' + C.name_ + ':w; '
-                else:
-                    print "NOT ATTACHED"
+        if self.collapsed == False:
+            if self.num_children_ > 0:
+                for C in self.children_:
+                    # call the current child's generate_dot function
+                    dot += C.generate_dot(run)
+                    # generate the dot for the connection between self and the current child
+                    if C.attach:
+                        # dot += self.name_ + ':s->' + C.name_ + ':n; '
+                        dot += self.name_ + ':e->' + C.name_ + ':w [color="#ffffff"]; '
+                    else:
+                        print "NOT ATTACHED"
 
         # if parent generate tail end of dotcode string
         if self.parent_ == None:        
@@ -157,9 +169,14 @@ class Node(object):
             replacement_child.children_ = existing_children
             replacement_child.children_names_ = existing_children_names
             self.children_[existing_child_index] = replacement_child
+            self.children_names_.pop(existing_child_index)
+            self.children_names_.append(replacement_child.name_)
             return True
         else:
             return False
+
+    def replace_self(self,replacement_child):
+        self.parent_.replace_child(self,replacement_child)
 
     def add_sibling_after(self,child_to_add):
         """ Add a sibling after this node as a child of this nodes parent
@@ -192,10 +209,15 @@ class Node(object):
         @type child_to_remove: Node
         @param child_to_remove: reference to the child to remove
         """
-        index = self.children_.index(child_to_remove)
-        self.children_.pop(index)
-        self.children_names_.pop(index)
-        self.num_children_ -= 1    
+        if child_to_remove in self.children_:
+            index = self.children_.index(child_to_remove)
+            child = self.children_.pop(index)
+            child.remove_all_children()
+            self.children_names_.pop(index)
+            self.num_children_ -= 1    
+            return True
+        else:
+            return False
 
     def remove_all_children(self):
         """ Remove all children of this node
@@ -207,8 +229,7 @@ class Node(object):
     def remove_self(self):
         """ Remove this node from its parents list of children and all connections to the tree
         """
-        self.parent_.remove_child(self)
-        return True
+        return self.parent_.remove_child(self)
 
     def set_num_children(self,number):
         """ Set the number of children this node has
@@ -230,6 +251,9 @@ class Node(object):
     def get_status(self):
         return self.node_status_
 
+    def get_child_names(self):
+        return deepcopy(self.children_names_)
+
     def execute(self):
         """ Virtual function that each node runs when that node gets ticked
         """
@@ -245,7 +269,8 @@ class NodeSelector(Node):
     def __init__(self,name,label):
         L = '( ? )'# + label.upper()
         L_alt = '{SELECTOR | '+label.upper()+'}'
-        super(NodeSelector,self).__init__(name,label=L,alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeSelector,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
         return 'SELECTOR'
     def get_node_name(self):
@@ -275,7 +300,8 @@ class NodeSequence(Node):
     def __init__(self,name,label):
         L = '->'
         L_alt = '{SEQUENCE | '+label.upper()+'}'
-        super(NodeSequence,self).__init__(name,label=L,alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeSequence,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
         return 'SEQUENCE'
     def get_node_name(self):
@@ -303,7 +329,8 @@ class NodeIterator(Node):
     def __init__(self,name,label):
         L = '1...'
         L_alt = '{ITERATOR | '+label.upper()+'}'
-        super(NodeIterator,self).__init__(name,label=L,alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeIterator,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
         return 'SEQUENCE'
     def get_node_name(self):
@@ -327,7 +354,8 @@ class NodeParallelAll(Node):
     def __init__(self,name,label):
         L = '|A|'
         L_alt = '{PARALLEL ALL | '+label.upper()+'}'
-        super(NodeParallelAll,self).__init__(name,label=L,alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeParallelAll,self).__init__(name,L,color,alt_label=L_alt)
         self.num_success = None
     def get_node_type(self):
         return 'PARALLEL'
@@ -367,7 +395,8 @@ class NodeParallelRemove(Node):
     def __init__(self,name,label):
         L = '|R|'# + label.upper()
         L_alt = '{PARALLEL REMOVE | '+label.upper()+'}'
-        super(NodeParallelRemove,self).__init__(name,label=L,alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeParallelRemove,self).__init__(name,L,color,alt_label=L_alt)
         self.exec_list_ = None
         self.num_success = None
     def get_node_type(self):
@@ -409,7 +438,8 @@ class NodeParallelOne(Node):
     def __init__(self,name,label):
         L = '|1|'
         L_alt = '{PARALLEL ONE | '+label.upper()+'}'
-        super(NodeParallelOne,self).__init__(name,label=L,alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeParallelOne,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
         return 'PARALLEL'
     def get_node_name(self):
@@ -442,8 +472,9 @@ class NodeDecoratorRepeat(Node):
         else:
             L = '(runs)\\n['+str(runs)+']'
             L_alt = '{REPEAT '+str(runs)+'| '+label.lower()+'}'
+        color='#22A7F0'
         
-        super(NodeDecoratorRepeat,self).__init__(name,L,shape='pentagon',alt_label=L_alt)
+        super(NodeDecoratorRepeat,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
         self.runs_ = runs
         self.num_runs_ = 0
     def get_node_type(self):
@@ -482,7 +513,8 @@ class NodeDecoratorIgnoreFail(Node):
     def __init__(self,name,label):
         L = 'ignore\\nfailure'
         L_alt = '{IGNORE FAILURE | '+label.lower()+'}'
-        super(NodeDecoratorIgnoreFail,self).__init__(name,L,shape='pentagon',alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeDecoratorIgnoreFail,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
     def get_node_type(self):
         return 'DECORATOR_REPEAT'
     def get_node_name(self):
@@ -501,7 +533,8 @@ class NodeDecoratorWaitForSuccess(Node):
     def __init__(self,name,label,timeout):
         L = 'wait\\nsuccess'
         L_alt = '{WAIT SUCCESS | '+label.lower()+'}'
-        super(NodeDecoratorWaitForSuccess,self).__init__(name,L,shape='pentagon',alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeDecoratorWaitForSuccess,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
         self.timeout = timeout # seconds
         self.timer = None
         self.started = False
@@ -566,9 +599,10 @@ class NodeRoot(Node):
     the tree
     '''
     def __init__(self, name, label):
-        L = '(/)'
+        L = 'ROOT'
         L_alt = '{ROOT | '+name+'}'
-        super(NodeRoot,self).__init__(name,L,alt_label=L_alt)
+        color='#22A7F0'
+        super(NodeRoot,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
         return 'ROOT'
     def get_node_name(self):
@@ -589,7 +623,7 @@ class NodeAction(Node):
     def __init__(self,name,label):
         L = 'Action\\n' + label
         L_alt = '{ACTION|' + label.lower()+'}'
-        color='#92D665'
+        color='#26A65B'
         super(NodeAction,self).__init__(name,L,color,alt_label=L_alt)
         self.name_ = name
     def get_node_type(self):
@@ -604,7 +638,7 @@ class NodeService(Node):
     Placeholder service node
     '''
     def __init__(self,name,label):
-        color='#92D665'
+        color='#26A65B'
         super(NodeService,self).__init__(name,label,color)
     def get_node_type(self):
         return 'SERVICE'
@@ -620,7 +654,7 @@ class NodeCondition(Node):
     def __init__(self,name,label,param_name=None,desired_value=None):
         L = label
         L_alt = '{CONDITION | ' + label.lower()+'}'
-        color = '#FAE364'
+        color = '#DB0A5B'
         # super(NodeCondition,self).__init__(name,L,color,'ellipse',alt_label=L_alt)
         super(NodeCondition,self).__init__(name,L,color,alt_label=L_alt)
         self.desired_value_ = desired_value
@@ -640,7 +674,7 @@ class NodeQuery(Node):
     def __init__(self,name,label,param_name=None,desired_value=None,attach=True):
         L = name.upper()+'\\n[\\"' + label.upper() + '\\"]'
         L_alt = '{QUERY | ' + label.lower()+'}'
-        color = '#0FC7FA'
+        color = '#E87E04'
         att = attach
         super(NodeQuery,self).__init__(name,L,color,alt_label=L_alt,attach=att)
         self.desired_value_ = desired_value
