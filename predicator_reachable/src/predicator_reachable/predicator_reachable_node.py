@@ -217,6 +217,7 @@ class PredicatorReachability(object):
         msg = ValidPredicates()
         msg.pheader.source = rospy.get_name()
         msg.predicates = ["reachable", "inverse_reachable"]
+        msg.predicate_length = [2, 2]
         msg.assignments = []
 
         for id_ in self.ids:

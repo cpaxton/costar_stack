@@ -63,6 +63,8 @@ class Predicator(object):
         self._sources = sets.Set()
         self._assignments_by_source = {}
         self._predicates_by_source = {}
+        self._lengths = {}
+        self._provided_by = {}
 
         self._subscriber = rospy.Subscriber('predicator/input', PredicateList, self.callback)
         self._validSubscriber = rospy.Subscriber('predicator/valid_input', ValidPredicates, self.validCallback)
@@ -73,8 +75,9 @@ class Predicator(object):
         self._valuePredicatesService = rospy.Service('predicator/get_value_predicates', GetList, self.get_value_predicates)
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
         self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
-        self._predsBySourceService = rospy.Service('predicator/get_predicates_by_source', GetTypedList, self.get_predicates_by_source)
+        self._predsBySourceService = rospy.Service('predicator/get_predicate_names_by_source', GetTypedList, self.get_predicates_by_source)
         self._getSourcesService = rospy.Service('predicator/get_sources', GetList, self.get_sources)
+        self.getAllBySourceService = rospy.Service('predicator/get_all_predicates_by_source', GetAllPredicates, self.get_all_by_src)
 
         # adding in functionality from predicator_params module
         self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
@@ -177,16 +180,66 @@ class Predicator(object):
             self._all_value_predicates.add(item)
         for item in msg.assignments:
             self._all_assignments.add(item)
+
         if len(msg.pheader.source) == 0:
             rospy.logerr("empty source field in valid predicates list!")
+
+        for item in (msg.value_predicates + msg.predicates):
+            if not item in self._provided_by:
+                self._provided_by[item] = msg.pheader.source
+            '''
+            elif not self._provided_by[item] == msg.pheader.source:
+                rospy.logwarn("Another node is providing predicate '%s'; new node=%s, old node=%s"%(item,msg.pheader.source,self._provided_by[item]))
+                self._provided_by[item] = msg.pheader.source
+            '''
+
         self._sources.add(msg.pheader.source)
         self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates + msg.value_predicates]
         self._assignments_by_source[msg.pheader.source] = [item for item in msg.assignments]
+        for i in range(len(msg.predicate_length)):
+            self._lengths[msg.predicates[i]] = msg.predicate_length[i]
 
     def get_sources(self, req):
         msg = GetListResponse()
         msg.data = self._sources
         return msg
+
+    def get_all_by_src(self,req):
+        msg = GetAllPredicatesResponse()
+
+        for pid in self._predicates_by_source[req.id]:
+            if not pid in self._lengths:
+                rospy.logwarn("Could not find declared predicate lengths; returning current true predicates instead.")
+                msg.predicates = msg.predicates + self._latest[req.id]
+
+            else:
+                length = self._lengths[pid]
+                if length > 3:
+                    length = 3
+                predicates = [PredicateStatement()]
+                new_predicates = []
+                for i in range(length):
+                    for p in predicates:
+                        for arg in self._assignments_by_source[req.id]:
+                            p2 = copy.deepcopy(p)
+                            p2.params[i] = arg
+                            new_predicates.append(p2)
+                    predicates = new_predicates
+                    new_predicates = []
+                msg.predicates = msg.predicates + predicates
+
+
+        for pred in msg.predicates:
+            if get_key(pred.predicate, pred.params) in self._predicates:
+                msg.is_true.append(True)
+            else:
+                msg.is_true.append(False)
+
+        return msg
+        
+            
+    def get_all_by_assignment(self, req):
+        pass
 
     def aggregate(self):
         d = {}

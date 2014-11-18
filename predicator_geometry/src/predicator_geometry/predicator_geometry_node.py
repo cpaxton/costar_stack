@@ -263,6 +263,14 @@ class GeometryPredicator(object):
                 'near_xyz',
                 'higher_than',
                 'lower_than']
+        msg.predicate_length = [3, 3, 3,
+                3,
+                3,
+                3,
+                2,
+                2,
+                2,
+                2]
         msg.value_predicates = ['tf_distance']
         msg.assignments = [frame for frame in self._frames]
         msg.assignments.append(self._world_frame)

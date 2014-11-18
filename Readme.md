@@ -75,8 +75,25 @@ data: ['/predicator_fake_class_node', '/predicator_wam2_joint_states_node', '/re
 #### Getting predicates by source
 
 ```
-$ rosservice call predicator/get_predicates_by_source "id: '/predicator_wam2_joint_states_node'" 
+$ rosservice call predicator/get_predicate_names_by_source "id: '/predicator_wam2_joint_states_node'" 
 data: ['is_closed']
+```
+
+#### Getting all predicates by source
+
+This is an example from the peg demo.
+
+```
+$ rosservice call predicator/get_all_predicates_by_source "id: '/predicator_wam2_joint_states_node'" 
+predicates: 
+  - 
+    predicate: is_closed
+    value: 0.0
+    confidence: 0.0
+    num_params: 1
+    params: ['wam2', '', '']
+    param_classes: []
+is_true: [True]
 ```
 
 ## Modules
