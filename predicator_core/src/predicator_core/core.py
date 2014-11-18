@@ -79,6 +79,7 @@ class Predicator(object):
         self._assignmentsBySourceService = rospy.Service('predicator/get_assignment_names_by_source', GetTypedList, self.get_assignments_by_source)
         self._getSourcesService = rospy.Service('predicator/get_sources', GetList, self.get_sources)
         self._getAllBySourceService = rospy.Service('predicator/get_all_predicates_by_source', GetAllPredicates, self.get_all_by_src)
+        self._lengthService = rospy.Service('predicator/get_assignment_length', GetLength, self.get_predicate_length)
 
         # adding in functionality from predicator_params module
         self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
@@ -124,6 +125,12 @@ class Predicator(object):
         msg = GetListResponse()
         msg.data = self._all_predicates
         return msg
+
+    def get_predicate_length(self, req):
+        if req.predicate in self._lengths:
+            return self._lengths[req.predicate]
+        else:
+            return -1
 
     '''
     get_predicates_by_source()

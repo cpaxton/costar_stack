@@ -62,6 +62,7 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/get_predicate_names_by_source**: list the names of predicates from each source ROS node
 - **predicator/get_all_predicates_by_source**: return a list of all predicates that might be valid, and a truth assignment, for a given source (BY REQUEST FROM KEL)
 - **predicator/get_assignment_names_by_source**: list the assignments to the predicate produced by a given source
+- **predicator/get_assignment_length** returns the number of parameter assignments for a given predicate, if available. Returns -1 if no length has been reported.
 
 Common usage is to call **test_predicate** with a certain predicate to see if it exists, or **get_assigment** with a certain predicate to see what possible values there are for one of its arguments. To use **get_assignment** in this way, fill out a `predicator_msgs::PredicateStatement` object, but replace one argument with an asterisk (\*). Predicates will be returned for all possible values of this argument.
 
@@ -126,6 +127,13 @@ predicates:
 is_true: [True]
 ```
 Note that since Predicator doesn't use class information, not all predicates produced by this are guaranteed to be valid!
+
+#### Getting assignment length for a predicate
+
+```
+$ rosservice call /predicator/get_assignment_length "predicate: 'is_closed'" 
+length: 1
+```
 
 ## Modules
 
