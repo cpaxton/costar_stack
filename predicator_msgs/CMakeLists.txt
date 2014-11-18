@@ -65,6 +65,7 @@ add_service_files(
   GetAllPredicates.srv
   GetAssignmentUseInfo.srv
   GetPredicateUseInfo.srv
+  GetLength.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
