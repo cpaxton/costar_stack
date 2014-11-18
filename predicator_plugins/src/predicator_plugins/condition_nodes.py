@@ -9,22 +9,24 @@ from PyQt4.QtCore import *
 # Beetree and Instructor
 import beetree; from beetree import Node, NodeCondition
 from instructor_core import NodeGUI
-from instructor_core.instructor_qt import NamedField
+from instructor_core.instructor_qt import NamedField, ColorOptions
 # Thread for service calls
 from threading import Thread
 
 from predicator_msgs.srv import *
 
+colors = ColorOptions().colors
+
 # Node Wrappers -----------------------------------------------------------
 class NodeConditionTestPredicateGUI(NodeGUI):
     def __init__(self):
-        super(NodeConditionTestPredicateGUI,self).__init__()
+        super(NodeConditionTestPredicateGUI,self).__init__(color='pink')
         self.title.setText('PREDICATE CONDITION')
-        self.title.setStyleSheet('background-color:#FADA07;color:#ffffff')
-        self.predicate = NamedField('Predicate','')
-        self.param1 = NamedField('Parameter 1','')
-        self.param2 = NamedField('Parameter 2','')
-        self.param3 = NamedField('Parameter 3','')
+        self.title.setStyleSheet('background-color:'+colors['pink'].normal+';color:#ffffff')
+        self.predicate = NamedField('Predicate','','pink')
+        self.param1 = NamedField('Parameter 1','','pink')
+        self.param2 = NamedField('Parameter 2','','pink')
+        self.param3 = NamedField('Parameter 3','','pink')
         self.layout_.addWidget(self.predicate)
         self.layout_.addWidget(self.param1)
         self.layout_.addWidget(self.param2)
@@ -42,7 +44,7 @@ class NodeConditionTestPredicateGUI(NodeGUI):
 # Nodes -------------------------------------------------------------------
 class NodeConditionTestPredicate(NodeCondition):
     def __init__(self,name,label,predicate_name=None,param1=None,param2=None,param3=None):
-        super(NodeConditionTestPredicate,self).__init__(name,label)
+        super(NodeConditionTestPredicate,self).__init__(name,'IF: '+label)
         self.predicate_ = predicate_name
         self.param1_ = param1
         self.param2_ = param2

@@ -39,12 +39,12 @@
     <!-- Beetree Query Plugins -->
     <instructor plugin="predicator_plugins.NodeQueryClosestObjectGUI" type="QUERY"
       description="Retrieve identifier for the closest object"
-      name="Closest Object Query"/>
+      name="Closest Object"/>
 
     <!-- Beetree Condition Plugins -->
     <instructor plugin="predicator_plugins.NodeConditionTestPredicateGUI" type="CONDITION"
       description="Test to see if a given predicate exists and is true"
-      name="Test Predicate Condition"/>
+      name="Test Predicate"/>
 
   </export>
 </package>
