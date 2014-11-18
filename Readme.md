@@ -95,6 +95,7 @@ predicates:
     param_classes: []
 is_true: [True]
 ```
+Note that since Predicator doesn't use class information, not all predicates produced by this are guaranteed to be valid!
 
 ## Modules
 
