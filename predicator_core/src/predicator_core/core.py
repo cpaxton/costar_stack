@@ -76,8 +76,9 @@ class Predicator(object):
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
         self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
         self._predsBySourceService = rospy.Service('predicator/get_predicate_names_by_source', GetTypedList, self.get_predicates_by_source)
+        self._assignmentsBySourceService = rospy.Service('predicator/get_assignment_names_by_source', GetTypedList, self.get_assignments_by_source)
         self._getSourcesService = rospy.Service('predicator/get_sources', GetList, self.get_sources)
-        self.getAllBySourceService = rospy.Service('predicator/get_all_predicates_by_source', GetAllPredicates, self.get_all_by_src)
+        self._getAllBySourceService = rospy.Service('predicator/get_all_predicates_by_source', GetAllPredicates, self.get_all_by_src)
 
         # adding in functionality from predicator_params module
         self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
@@ -133,6 +134,13 @@ class Predicator(object):
         if req.id in self._predicates_by_source.keys():
             msg.data = self._predicates_by_source[req.id]
 
+        return msg
+
+    def get_assignments_by_source(self, req):
+        msg = GetTypedListResponse()
+        if req.id in self._assignments_by_source.keys():
+            msg.data = self._assignments_by_source[req.id]
+        
         return msg
 
     '''

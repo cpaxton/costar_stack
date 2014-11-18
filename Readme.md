@@ -61,10 +61,32 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/get_sources**: list the possible sources, the ROS nodes that Predicator has heard from
 - **predicator/get_predicate_names_by_source**: list the names of predicates from each source ROS node
 - **predicator/get_all_predicates_by_source**: return a list of all predicates that might be valid, and a truth assignment, for a given source (BY REQUEST FROM KEL)
+- **predicator/get_assignment_names_by_source**: list the assignments to the predicate produced by a given source
 
 Common usage is to call **test_predicate** with a certain predicate to see if it exists, or **get_assigment** with a certain predicate to see what possible values there are for one of its arguments. To use **get_assignment** in this way, fill out a `predicator_msgs::PredicateStatement` object, but replace one argument with an asterisk (\*). Predicates will be returned for all possible values of this argument.
 
 I provided a helper function in **get_possible_assignments** for one-parameter predicates, which returns all possible values as a string. This is used for classes (ex: getting all possible locations or objects).
+
+#### Getting all matches to a predicate
+
+```
+$ rosservice call predicator/get_assignment "statement:
+  predicate: 'is_closed'
+  value: 0.0
+  confidence: 0.0
+  num_params: 0
+  params: ['*', '', '']
+  param_classes: ['']" 
+found: True
+values: 
+  - 
+    predicate: is_closed
+    value: 0.0
+    confidence: 0.0
+    num_params: 0
+    params: ['wam2', '', '']
+    param_classes: []
+```
 
 #### Getting a list of sources
 
@@ -78,6 +100,13 @@ data: ['/predicator_fake_class_node', '/predicator_wam2_joint_states_node', '/re
 ```
 $ rosservice call predicator/get_predicate_names_by_source "id: '/predicator_wam2_joint_states_node'" 
 data: ['is_closed']
+```
+
+#### Getting assignments by source
+
+```
+$ rosservice call predicator/get_assignment_names_by_source "id: '/predicator_wam2_joint_states_node'" 
+data: ['wam2']
 ```
 
 #### Getting all predicates by source
