@@ -29,6 +29,7 @@ if __name__ == '__main__':
 
     msg = PredicateList()
     valid_msg = ValidPredicates()
+    valid_msg.pheader.source = rospy.get_name()
     msg.pheader.source = rospy.get_name()
     valid_msg.pheader.source = rospy.get_name()
 

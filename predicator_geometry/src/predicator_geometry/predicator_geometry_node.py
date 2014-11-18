@@ -254,6 +254,7 @@ class GeometryPredicator(object):
     '''
     def getValidPredicatesMessage(self):
         msg = ValidPredicates()
+        msg.pheader.source = rospy.get_name()
         msg.predicates = ['left_of', 'right_of', 'up_from',
                 'down_from',
                 'in_front_of',

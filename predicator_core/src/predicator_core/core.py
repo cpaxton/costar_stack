@@ -175,7 +175,7 @@ class Predicator(object):
             self._all_assignments.add(item)
         if len(msg.pheader.source) == 0:
             rospy.logerr("empty source field in valid predicates list!")
-        self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates]
+        self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates + msg.value_predicates]
         self._assignments_by_source[msg.pheader.source] = [item for item in msg.assignments]
 
     def aggregate(self):
