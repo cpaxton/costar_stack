@@ -58,10 +58,24 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/get_predicates**: list the set of all predicates currently considered valid
 - **predicator/get_value_predicates**: list values published by Predicator modules
 - **predicator/update_param**: manually set a predicator or remove a predicate; these are intended to be parameters that can be fixed and updated dynamically.
+- **predicator/get_sources**: list the possible sources, the ROS nodes that Predicator has heard from
+- **predicator/get_predicates_by_source**: list the names of predicates from each source ROS node
 
 Common usage is to call **test_predicate** with a certain predicate to see if it exists, or **get_assigment** with a certain predicate to see what possible values there are for one of its arguments. To use **get_assignment** in this way, fill out a `predicator_msgs::PredicateStatement` object, but replace one argument with an asterisk (\*). Predicates will be returned for all possible values of this argument.
 
 I provided a helper function in **get_possible_assignments** for one-parameter predicates, which returns all possible values as a string. This is used for classes (ex: getting all possible locations or objects).
+
+#####Getting a list of sources
+```
+$ rosservice call predicator/get_sources
+data: ['/predicator_fake_class_node', '/predicator_wam2_joint_states_node', '/release_collab_frame2_creator', '/predicator_robot_interaction_node', '/predicator_geometry_node', '/predicator_wam_joint_states_node', '/collab_frame2_creator', '/predicator_movement_node', '/drop_points_publisher']
+```
+
+#####Getting predicates by source
+```
+$ rosservice call predicator/get_predicates_by_source "id: '/predicator_wam2_joint_states_node'" 
+data: ['is_closed']
+```
 
 ## Modules
 

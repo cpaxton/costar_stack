@@ -60,6 +60,7 @@ class Predicator(object):
         self._all_predicates = sets.Set()
         self._all_value_predicates = sets.Set()
         self._all_assignments = sets.Set()
+        self._sources = sets.Set()
         self._assignments_by_source = {}
         self._predicates_by_source = {}
 
@@ -72,7 +73,8 @@ class Predicator(object):
         self._valuePredicatesService = rospy.Service('predicator/get_value_predicates', GetList, self.get_value_predicates)
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
         self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
-        self._predsBySourceService = rospy.Service('predicator/get_predicates_by_service', GetTypedList, self.get_predicates_by_source)
+        self._predsBySourceService = rospy.Service('predicator/get_predicates_by_source', GetTypedList, self.get_predicates_by_source)
+        self._getSourcesService = rospy.Service('predicator/get_sources', GetList, self.get_sources)
 
         # adding in functionality from predicator_params module
         self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
@@ -128,6 +130,8 @@ class Predicator(object):
         if req.id in self._predicates_by_source.keys():
             msg.data = self._predicates_by_source[req.id]
 
+        return msg
+
     '''
     get_assignments()
     get the possible list of assignments to a 1-param predicate (class predicate)
@@ -175,8 +179,14 @@ class Predicator(object):
             self._all_assignments.add(item)
         if len(msg.pheader.source) == 0:
             rospy.logerr("empty source field in valid predicates list!")
+        self._sources.add(msg.pheader.source)
         self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates + msg.value_predicates]
         self._assignments_by_source[msg.pheader.source] = [item for item in msg.assignments]
+
+    def get_sources(self, req):
+        msg = GetListResponse()
+        msg.data = self._sources
+        return msg
 
     def aggregate(self):
         d = {}
