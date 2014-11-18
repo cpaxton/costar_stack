@@ -23,6 +23,7 @@ def cb(msg):
         #print js[idx]
         #print threshold
         pub.publish(msg)
+        vpub.publish(vmsg)
 
 if __name__ == "__main__":
     rospy.init_node("predicator_joints_node")
@@ -34,6 +35,12 @@ if __name__ == "__main__":
     # read in some information
     config = rospy.get_param('~js_config')
     print config
+
+    vmsg = ValidPredicates()
+    vmsg.pheader.source = rospy.get_name()
+    vmsg.predicates = ['is_closed']
+    vmsg.assignments = [config['id']]
+    vmsg.predicate_length = [1]
 
     sub = rospy.Subscriber(config['topic'], JointState, cb)
     threshold = float(config['thresholds'])
