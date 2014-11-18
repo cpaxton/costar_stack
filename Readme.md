@@ -59,7 +59,8 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/get_value_predicates**: list values published by Predicator modules
 - **predicator/update_param**: manually set a predicator or remove a predicate; these are intended to be parameters that can be fixed and updated dynamically.
 - **predicator/get_sources**: list the possible sources, the ROS nodes that Predicator has heard from
-- **predicator/get_predicates_by_source**: list the names of predicates from each source ROS node
+- **predicator/get_predicate_names_by_source**: list the names of predicates from each source ROS node
+- **predicator/get_all_predicates_by_source**: return a list of all predicates that might be valid
 
 Common usage is to call **test_predicate** with a certain predicate to see if it exists, or **get_assigment** with a certain predicate to see what possible values there are for one of its arguments. To use **get_assignment** in this way, fill out a `predicator_msgs::PredicateStatement` object, but replace one argument with an asterisk (\*). Predicates will be returned for all possible values of this argument.
 
