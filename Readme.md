@@ -65,13 +65,15 @@ Common usage is to call **test_predicate** with a certain predicate to see if it
 
 I provided a helper function in **get_possible_assignments** for one-parameter predicates, which returns all possible values as a string. This is used for classes (ex: getting all possible locations or objects).
 
-#####Getting a list of sources
+#### Getting a list of sources
+
 ```
 $ rosservice call predicator/get_sources
 data: ['/predicator_fake_class_node', '/predicator_wam2_joint_states_node', '/release_collab_frame2_creator', '/predicator_robot_interaction_node', '/predicator_geometry_node', '/predicator_wam_joint_states_node', '/collab_frame2_creator', '/predicator_movement_node', '/drop_points_publisher']
 ```
 
-#####Getting predicates by source
+#### Getting predicates by source
+
 ```
 $ rosservice call predicator/get_predicates_by_source "id: '/predicator_wam2_joint_states_node'" 
 data: ['is_closed']
