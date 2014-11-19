@@ -13,7 +13,7 @@ class Node(object):
     dot file for visualization purposes.
     """
 
-    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None, attach=True):
+    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None, attach=True, view_mode='sequential'):
         """ Beetree Node Constructor
         @type name: String
         @param name: the name of the node
@@ -44,6 +44,7 @@ class Node(object):
         self.alt_shape_ = 'record'
         self.attach = attach
         self.collapsed = False
+        self.view_mode = view_mode
 
     def set_alt_view(self,v):
         self.alt_view = v
@@ -89,7 +90,6 @@ class Node(object):
             color = self.color_
             style = 'bold'
 
-
         if self.flag_ == False:
             if color == '':
                 dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" fontcolor="#ffffff" color="#ffffff" label="'+label+'"]; '
@@ -103,13 +103,19 @@ class Node(object):
         # recursively generate the node's child dot code
         if self.collapsed == False:
             if self.num_children_ > 0:
+                first = True
                 for C in self.children_:
-                    # call the current child's generate_dot function
                     dot += C.generate_dot(run)
-                    # generate the dot for the connection between self and the current child
                     if C.attach:
                         # dot += self.name_ + ':s->' + C.name_ + ':n; '
-                        dot += self.name_ + ':e->' + C.name_ + ':w [color="#ffffff"]; '
+                        if self.view_mode == 'sequential':
+                            dot += self.name_ + ':e->' + C.name_ + ':w [color="#ffffff"]; '
+                        elif self.view_mode == 'first':
+                            if first:
+                                dot += self.name_ + ':e->' + C.name_ + ':w [color="#ffffff"]; '
+                                first = False
+                            else:
+                                dot += self.name_ + ':e->' + C.name_ + ':w [style="dashed" color="#888888"]; '
                     else:
                         print "NOT ATTACHED"
 
@@ -267,10 +273,10 @@ class NodeSelector(Node):
     returns SUCCESS, if all fail, returns FAILURE.
     '''
     def __init__(self,name,label):
-        L = '( ? )'# + label.upper()
+        L = '?'# + label.upper()
         L_alt = '{SELECTOR | '+label.upper()+'}'
         color='#22A7F0'
-        super(NodeSelector,self).__init__(name,L,color,alt_label=L_alt)
+        super(NodeSelector,self).__init__(name,L,color,alt_label=L_alt,view_mode='first',shape='circle')
     def get_node_type(self):
         return 'SELECTOR'
     def get_node_name(self):
@@ -301,7 +307,7 @@ class NodeSequence(Node):
         L = '->'
         L_alt = '{SEQUENCE | '+label.upper()+'}'
         color='#22A7F0'
-        super(NodeSequence,self).__init__(name,L,color,alt_label=L_alt)
+        super(NodeSequence,self).__init__(name,L,color,alt_label=L_alt,shape='diamond')
     def get_node_type(self):
         return 'SEQUENCE'
     def get_node_name(self):
