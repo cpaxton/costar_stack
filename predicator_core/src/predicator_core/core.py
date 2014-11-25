@@ -65,6 +65,7 @@ class Predicator(object):
         self._predicates_by_source = {}
         self._lengths = {}
         self._provided_by = {}
+        self._predicates_by_assignment = {}
 
         self._subscriber = rospy.Subscriber('predicator/input', PredicateList, self.callback)
         self._validSubscriber = rospy.Subscriber('predicator/valid_input', ValidPredicates, self.validCallback)
@@ -79,6 +80,7 @@ class Predicator(object):
         self._assignmentsBySourceService = rospy.Service('predicator/get_assignment_names_by_source', GetTypedList, self.get_assignments_by_source)
         self._getSourcesService = rospy.Service('predicator/get_sources', GetList, self.get_sources)
         self._getAllBySourceService = rospy.Service('predicator/get_all_predicates_by_source', GetAllPredicates, self.get_all_by_src)
+        self._getPredicatesByAssignmentService = rospy.Service('predicator/get_predicate_names_by_assignment', GetTypedList, self.get_predicates_by_assignment)
         self._lengthService = rospy.Service('predicator/get_assignment_length', GetLength, self.get_predicate_length)
 
         # adding in functionality from predicator_params module
@@ -150,6 +152,13 @@ class Predicator(object):
         
         return msg
 
+    def get_predicates_by_assignment(self, req):
+        msg = GetTypedListResponse()
+        if req.id in self._predicates_by_assignment.keys():
+            msg.data = self._predicates_by_assignment[req.id]
+        
+        return msg
+
     '''
     get_assignments()
     get the possible list of assignments to a 1-param predicate (class predicate)
@@ -211,6 +220,8 @@ class Predicator(object):
         self._sources.add(msg.pheader.source)
         self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates + msg.value_predicates]
         self._assignments_by_source[msg.pheader.source] = [item for item in msg.assignments]
+        for item in msg.assignments:
+            self._predicates_by_assignment[item] = [item2 for item2 in msg.predicates + msg.value_predicates]
         for i in range(len(msg.predicate_length)):
             self._lengths[msg.predicates[i]] = msg.predicate_length[i]
 
