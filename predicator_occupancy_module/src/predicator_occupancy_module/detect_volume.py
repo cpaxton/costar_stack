@@ -146,6 +146,7 @@ if __name__ == '__main__':
     # Setup valid predicates
     predicate_param = '{}/occupancy_sensor'.format(namespace)
     pval = ValidPredicates()
+    pval.pheader.source = rospy.get_name()
     pval.predicates = ['occupied']
     pval.value_predicates = ['']
     pval.assignments = [predicate_param]

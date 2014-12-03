@@ -214,6 +214,7 @@ class MovementPredicator(object):
     '''
     def getValidMessage(self):
         msg = ValidPredicates()
+        msg.pheader.source = rospy.get_name()
         msg.predicates = ['approaching', 'departing', 'moving', 'rotating', 'moving_relative_to', 'rotating_relative_to']
         msg.value_predicates = ['translation_velocity', 'rotation_velocity', 
             'relative_translation_velocity',

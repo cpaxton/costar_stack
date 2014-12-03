@@ -60,6 +60,12 @@ class Predicator(object):
         self._all_predicates = sets.Set()
         self._all_value_predicates = sets.Set()
         self._all_assignments = sets.Set()
+        self._sources = sets.Set()
+        self._assignments_by_source = {}
+        self._predicates_by_source = {}
+        self._lengths = {}
+        self._provided_by = {}
+        self._predicates_by_assignment = {}
 
         self._subscriber = rospy.Subscriber('predicator/input', PredicateList, self.callback)
         self._validSubscriber = rospy.Subscriber('predicator/valid_input', ValidPredicates, self.validCallback)
@@ -70,6 +76,12 @@ class Predicator(object):
         self._valuePredicatesService = rospy.Service('predicator/get_value_predicates', GetList, self.get_value_predicates)
         self._predicatesService = rospy.Service('predicator/get_predicates', GetList, self.get_predicates)
         self._assignmentsService = rospy.Service('predicator/get_possible_assignment', GetTypedList, self.get_assignments)
+        self._predsBySourceService = rospy.Service('predicator/get_predicate_names_by_source', GetTypedList, self.get_predicates_by_source)
+        self._assignmentsBySourceService = rospy.Service('predicator/get_assignment_names_by_source', GetTypedList, self.get_assignments_by_source)
+        self._getSourcesService = rospy.Service('predicator/get_sources', GetList, self.get_sources)
+        self._getAllBySourceService = rospy.Service('predicator/get_all_predicates_by_source', GetAllPredicates, self.get_all_by_src)
+        self._getPredicatesByAssignmentService = rospy.Service('predicator/get_predicate_names_by_assignment', GetTypedList, self.get_predicates_by_assignment)
+        self._lengthService = rospy.Service('predicator/get_assignment_length', GetLength, self.get_predicate_length)
 
         # adding in functionality from predicator_params module
         self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
@@ -114,6 +126,37 @@ class Predicator(object):
     def get_predicates(self, req):
         msg = GetListResponse()
         msg.data = self._all_predicates
+        return msg
+
+    def get_predicate_length(self, req):
+        if req.predicate in self._lengths:
+            return self._lengths[req.predicate]
+        else:
+            return -1
+
+    '''
+    get_predicates_by_source()
+    get a list of all predicates published by a given source
+    '''
+    def get_predicates_by_source(self, req):
+        msg = GetTypedListResponse()
+        if req.id in self._predicates_by_source.keys():
+            msg.data = self._predicates_by_source[req.id]
+
+        return msg
+
+    def get_assignments_by_source(self, req):
+        msg = GetTypedListResponse()
+        if req.id in self._assignments_by_source.keys():
+            msg.data = self._assignments_by_source[req.id]
+        
+        return msg
+
+    def get_predicates_by_assignment(self, req):
+        msg = GetTypedListResponse()
+        if req.id in self._predicates_by_assignment.keys():
+            msg.data = self._predicates_by_assignment[req.id]
+        
         return msg
 
     '''
@@ -162,36 +205,104 @@ class Predicator(object):
         for item in msg.assignments:
             self._all_assignments.add(item)
 
+        if len(msg.pheader.source) == 0:
+            rospy.logerr("empty source field in valid predicates list!")
+
+        for item in (msg.value_predicates + msg.predicates):
+            if not item in self._provided_by:
+                self._provided_by[item] = msg.pheader.source
+            '''
+            elif not self._provided_by[item] == msg.pheader.source:
+                rospy.logwarn("Another node is providing predicate '%s'; new node=%s, old node=%s"%(item,msg.pheader.source,self._provided_by[item]))
+                self._provided_by[item] = msg.pheader.source
+            '''
+
+        self._sources.add(msg.pheader.source)
+        self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates + msg.value_predicates]
+        self._assignments_by_source[msg.pheader.source] = [item for item in msg.assignments]
+        for item in msg.assignments:
+            self._predicates_by_assignment[item] = [item2 for item2 in msg.predicates + msg.value_predicates]
+        for i in range(len(msg.predicate_length)):
+            self._lengths[msg.predicates[i]] = msg.predicate_length[i]
+
+    def get_sources(self, req):
+        msg = GetListResponse()
+        msg.data = self._sources
+        return msg
+
+    def get_all_by_src(self,req):
+        msg = GetAllPredicatesResponse()
+
+        for pid in self._predicates_by_source[req.id]:
+            if not pid in self._lengths:
+                rospy.logwarn("Could not find declared predicate lengths; returning current true predicates instead.")
+                msg.predicates = msg.predicates + self._latest[req.id]
+
+            else:
+                length = self._lengths[pid]
+                if length > 3:
+                    length = 3
+                predicates = [PredicateStatement()]
+                new_predicates = []
+                for i in range(length):
+                    for p in predicates:
+                        for arg in self._assignments_by_source[req.id]:
+                            p2 = copy.deepcopy(p)
+                            p2.params[i] = arg
+                            new_predicates.append(p2)
+                    predicates = new_predicates
+                    new_predicates = []
+                msg.predicates = msg.predicates + predicates
+
+
+        for pred in msg.predicates:
+            if get_key(pred.predicate, pred.params) in self._predicates:
+                msg.is_true.append(True)
+            else:
+                msg.is_true.append(False)
+
+        return msg
+        
+            
+    def get_all_by_assignment(self, req):
+        pass
+
     def aggregate(self):
         d = {}
         for source, lst in self._latest.items():
             for predicate in lst:
-                key = get_key(predicate.predicate, predicate.params)
-                d[key] = []
 
-                for j in range(predicate.num_params):
-                    new_params = copy.deepcopy(predicate.params)
-                    #free_vars = ['','','']
+                if not source in self._predicates_by_source or not predicate.predicate in self._predicates_by_source[source]:
+                    rospy.logerr("Predicate %s not defined for source %s!"%(predicate.predicate,source))
+                    continue
+                else:
 
-                    new_params[j] = '*'
-                    #free_vars[j] = predicate.params[j]
+                    key = get_key(predicate.predicate, predicate.params)
+                    d[key] = []
 
-                    new_key = get_key(predicate.predicate, new_params)
+                    for j in range(predicate.num_params):
+                        new_params = copy.deepcopy(predicate.params)
+                        #free_vars = ['','','']
 
-                    if not new_key in d:
-                        d[new_key] = []
-                    d[new_key].append(copy.deepcopy(predicate.params))
+                        new_params[j] = '*'
+                        #free_vars[j] = predicate.params[j]
 
-                if(predicate.num_params > 1):
-                    '''
-                    NOTE: I changed this to let asterisks (*) mark free variables.
-                    '''
-                    tmp = ['', '', '']
-                    tmp[1:predicate.num_params] = ['*'] * predicate.num_params
-                    pred_key = get_key(predicate.predicate, ['','',''])
-                    if not pred_key in d:
-                        d[pred_key] = []
-                    d[pred_key].append(copy.deepcopy(predicate.params))
+                        new_key = get_key(predicate.predicate, new_params)
+
+                        if not new_key in d:
+                            d[new_key] = []
+                        d[new_key].append(copy.deepcopy(predicate.params))
+
+                    if(predicate.num_params > 1):
+                        '''
+                        NOTE: I changed this to let asterisks (*) mark free variables.
+                        '''
+                        tmp = ['', '', '']
+                        tmp[1:predicate.num_params] = ['*'] * predicate.num_params
+                        pred_key = get_key(predicate.predicate, ['','',''])
+                        if not pred_key in d:
+                            d[pred_key] = []
+                        d[pred_key].append(copy.deepcopy(predicate.params))
                 
         self._predicates = d
 
