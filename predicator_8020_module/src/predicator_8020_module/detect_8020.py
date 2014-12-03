@@ -12,7 +12,6 @@ import tf
 
 import cv2
 from pyKinectTools.utils.pointcloud_conversions import *
-# from pyKinectTools.utils.transformations import *
 
 from sensor_msgs.msg import PointCloud2
 from predicator_msgs.msg import *
@@ -44,7 +43,7 @@ def draw_box(img, box):
 
 
 def pointcloud_callback(data):
-    rospy.logwarn('got image')
+    # rospy.logwarn('got image')
     """
     data : ros msg data
     """
@@ -108,46 +107,56 @@ def process_plate_detector(data):
         return False
     print "Processing plate"
 
-    try:
-        with image_lock:
-            im, mask = extract_foreground_poly(im_rgb, bounding_box)
-            # clf_mean, clf_w = train_clf(im, mask)
-            pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
-            all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
+    with image_lock:
+        im, mask = extract_foreground_poly(im_rgb, bounding_box)
+        # clf_mean, clf_w = train_clf(im, mask)
+        pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
+        all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
 
-            print "# Plates:", len(all_holes)
-            if len(all_centroids) > 0:
-                closest_parts, classes = get_closest_part(all_centroids, all_holes)
-                im_display = plot_holes(im_rgb, all_holes)
-                # im_display = (pred_mask > 0)*255
+        print "# Plates:", len(all_holes)
+        if len(all_centroids) > 0:
+            closest_parts, classes = get_closest_part(all_centroids, all_holes)
+            im_display = plot_holes(im_rgb, all_holes)
+            # im_display = (pred_mask > 0)*255
 
+        else:
+            for c in closest_parts:
+                closest_parts[c] = None
+
+        ps = PredicateList()
+        ps.pheader.source = rospy.get_name()
+        ps.statements = []
+
+        # Send predicates for each plate
+        for c in [3,4,8]:
+            # Check if the plate is available
+            if closest_parts[c] is None:
+                continue
+            # Setup/send predicate
+            plate_name = "plate_{}".format(c)
+            statement = PredicateStatement(predicate=plate_name,
+                                                confidence=1,
+                                                value=PredicateStatement.TRUE,
+                                                num_params=0,
+                                                params=["", "", ""])
+            ps.statements += [statement]
+        pub_list.publish(ps)
+
+        # Send TFs for each plate at every timestep
+        for c in closest_parts:
+            plate_name = "plate_{}".format(c)
+            if closest_parts[c] is None:
+                x, y, z = [-1, -1, -1]
             else:
-                for c in closest_parts:
-                    closest_parts[c] = None
+                x, y, z = closest_parts[c]
 
-            ps = PredicateList()
-            ps.pheader.source = rospy.get_name()
-            ps.statements = []
-
-            # Send predicates for each plate
-            for i in [3,4,8]:
-                # Check if the plate is available
-                if closest_parts[c] is None:
-                    continue
-                # Setup/send predicate
-                plate_name = "plate_{}".format(i)
-                statement = PredicateStatement(predicate=plate_name,
-                                                    confidence=1,
-                                                    value=PredicateStatement.TRUE,
-                                                    num_params=1,
-                                                    params=[predicate_param, "", ""])
-                ps.statements += [statement]
-            pub_list.publish(ps)
+            tf_broadcast.sendTransform([x, y, z],
+                                        [0,0,0,1],
+                                        rospy.Time.now(), plate_name, 
+                                        "camera_2_rgb_optical_frame")
 
 
-        return True
-    except:
-        return False
+    return True
 
 
 if __name__ == '__main__':
@@ -155,7 +164,7 @@ if __name__ == '__main__':
     try:
         parser = optparse.OptionParser()
         parser.add_option("-c", "--camera", dest="camera",
-                          help="name of camera", default="camera")
+                          help="name of camera", default="camera_2")
         parser.add_option("-n", "--namespace", dest="namespace",
                           help="namespace for occupancy data", default="")    
         (options, args) = parser.parse_args()
@@ -168,7 +177,7 @@ if __name__ == '__main__':
     # Setup ros/publishers
     rospy.init_node('plate_detector_module')
     pub_list = rospy.Publisher('/predicator/input', PredicateList)
-    pub_valid = rospy.Publisher('/predicator/input', ValidPredicates)
+    pub_valid = rospy.Publisher('/predicator/valid_input', ValidPredicates)
 
     # Setup subscribers
     cloud_uri = "/{}/depth_registered/points".format(camera_name)
@@ -192,6 +201,10 @@ if __name__ == '__main__':
     pval.value_predicates = ['']
     pval.assignments = [predicate_param]
     pub_valid.publish(pval)
+
+    rospy.set_param('/instructor_landmark/plate_3','plate_3')
+    rospy.set_param('/instructor_landmark/plate_4','plate_4')
+    rospy.set_param('/instructor_landmark/plate_8','plate_8')
 
     rate = rospy.Rate(30)
     rate.sleep()
@@ -228,14 +241,14 @@ if __name__ == '__main__':
     # ret = process_plate_detector([])
 
     while not rospy.is_shutdown():
-        print "Running1"
+        # print "Running1"
         while im_pos == None:
             rate.sleep()
 
-        ret = process_plate_detector([])
+        # ret = process_plate_detector([])
         # Show colored image to reflect if a space is occupied
         if display and im_display is not None:
-            print "Display"
+            # print "Display"
             cv2.imshow("img", im_display)
             cv2.waitKey(30)
         # else:
@@ -252,6 +265,6 @@ if __name__ == '__main__':
             tf_broadcast.sendTransform([x, y, z],
                                         [0,0,0,1],
                                         rospy.Time.now(), plate_name, 
-                                        "camera_rgb_optical_frame")
+                                        "camera_2_rgb_optical_frame")
 
         rate.sleep()

@@ -16,15 +16,6 @@ from skimage.draw import circle
 from skimage.color import rgb2lab, rgb2hsv
 
 import cv2
-# im_rgb = cv2.imread('im_rgb.png')[:,::-1,:]
-# clf_mean = np.array([ 252.73526962,  219.94595932,  184.92429377])
-# clf_w = np.array([[ 0.06464867,  1.25804289,  2.26565874]])
-
-# clf_mean = np.array([ 209.64491036,  196.30528422,  187.13337336])
-# clf_w = np.array([[-0.73305488, -1.08286744, -1.31658768]])*-1
-
-
-
 
 bounding_box = []
 def mouse_event(event, x, y, flags=None, params=None):
@@ -63,9 +54,10 @@ def pick_bounding_box(im_rgb):
 def extract_foreground_poly(im_rgb, bounding_box):
     # Get polygon for region of interest. Compute mask
     if 1:
-        # im = rgb2lab(im_rgb[:,:,[2,1,0]])[:,:,1:2]
+        im = rgb2lab(im_rgb[:,:,[2,1,0]])[:,:,:1]
         # im = rgb2hsv(im_rgb)[:,:,:1]
-        im = rgb2hsv(im_rgb[:,:,[2,1,0]])[:,:,:1]
+        #im = rgb2hsv(im_rgb)[:,:,:1]
+        #im = rgb2hsv(im_rgb[:,:,[2,1,0]])[:,:,:1]
         # im[im[:,:,0]!=0] -= [50,0,0]
     else:
         im = im_rgb

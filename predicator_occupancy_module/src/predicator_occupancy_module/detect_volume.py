@@ -78,7 +78,7 @@ def markers_callback(data):
 
 
 def pointcloud_callback(data):
-    rospy.logwarn('got image')
+    # rospy.logwarn('got image')
     """
     data : ros msg data
     """

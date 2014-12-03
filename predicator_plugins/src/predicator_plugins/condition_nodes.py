@@ -42,7 +42,8 @@ class NodeConditionTestPredicateGUI(NodeGUI):
 # Nodes -------------------------------------------------------------------
 class NodeConditionTestPredicate(NodeCondition):
     def __init__(self,name,label,predicate_name=None,param1=None,param2=None,param3=None):
-        super(NodeConditionTestPredicate,self).__init__(name,label)
+        L = name.upper()+'\\n[\\"'+label.upper()+'\\"]'#+'\\n['+self.type+']'
+        super(NodeConditionTestPredicate,self).__init__(name,L)
         self.predicate_ = predicate_name
         self.param1_ = param1
         self.param2_ = param2
