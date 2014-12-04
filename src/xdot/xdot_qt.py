@@ -66,7 +66,9 @@ class Pen:
     def highlighted(self):
         pen = self.copy()
         pen.color = (1, 0, 0, 1)
+        # pen.color = (246/255.0, 36/255.0, 89/255.0, 1)
         pen.fillcolor = (1, .8, .8, 1)
+        # pen.fillcolor = (.2, .2, .2, 1)
         return pen
 
 class Shape:
@@ -1464,7 +1466,7 @@ class DotWidget(QWidget):
     def set_filter(self, filter):
         self.filter = filter
 
-    def set_dotcode(self, dotcode, filename='<stdin>',center=True):
+    def set_dotcode(self, dotcode, filename='<stdin>',center=False):
         if isinstance(dotcode, unicode):
             dotcode = dotcode.encode('utf8')
         p = subprocess.Popen(
@@ -1700,8 +1702,10 @@ class DotWidget(QWidget):
             url = self.get_url(x, y)
             if url is not None:
                 self.emit(SIGNAL("clicked"), unicode(url.url), event)
+                self.emit(SIGNAL("clicked_location"), [x,y], event)
             else:
                 self.emit(SIGNAL("clicked"), 'none', event)
+                self.emit(SIGNAL("clicked_location"), [x,y], event)
                 jump = self.get_jump(x, y)
                 if jump is not None:
                     self.animate_to(jump.x, jump.y)
