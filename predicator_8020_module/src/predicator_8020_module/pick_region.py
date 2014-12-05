@@ -15,7 +15,6 @@ A volume is sent to the ROS parameter server (param="volume")
 
 import optparse
 import rospy
-# from predicator_8020_module.utils_8020 import pick_bounding_box
 from predicator_8020_module.utils_8020 import *
 from pyKinectTools.utils.pointcloud_conversions import *
 
@@ -120,7 +119,8 @@ if __name__ == '__main__':
 
     parser = optparse.OptionParser()
     parser.add_option("-c", "--camera", dest="camera",
-                      help="name of camera", default="camera")
+                      help="name of camera", default="camera_2")
+    #                  help="name of camera", default="camera")
     (options, args) = parser.parse_args()
 
     camera_name = options.camera
@@ -153,16 +153,19 @@ if __name__ == '__main__':
     im_display[im_display>255] = 255
     im_display = im_display.astype(np.uint8)
 
-    cv2.imshow("im", im_display)
-    cv2.waitKey(30)
+    im, mask = extract_foreground_poly(im_rgb, bounding_box)
 
+    #from IPython import embed
+    #embed()
+
+    #pts = pick_foreground(im)
     pts = pick_foreground(im_display)
 
-    im, mask = extract_foreground_poly(im_rgb, bounding_box)
     bg = im[pts[0][0], pts[0][1]]
     fg = im[pts[1][0], pts[1][1]]
     clf_mean = np.array([(bg+fg)/2])
     clf_w = np.array([1])
+    print "Mean", clf_mean, bg, fg
 
     rospy.set_param("bounding_box_clf_mean", clf_mean.tolist())
     rospy.set_param("bounding_box_clf_w", clf_w.tolist())
