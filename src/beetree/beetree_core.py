@@ -14,7 +14,7 @@ class Node(object):
     dot file for visualization purposes.
     """
 
-    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None, attach=True, view_mode='sequential',subtree_label='Subtree: Collapsed Nodes'):
+    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None, attach=True, view_mode='sequential',subtree_label='Subtree: Collapsed Nodes',size=None):
         """ Beetree Node Constructor
         @type name: String
         @param name: the name of the node
@@ -47,6 +47,7 @@ class Node(object):
         self.collapsed = False
         self.view_mode = view_mode
         self.subtree_label = subtree_label
+        self.size = size
 
     def set_alt_view(self,v):
         self.alt_view = v
@@ -83,26 +84,35 @@ class Node(object):
             shape = self.shape_
             label = self.label_
 
+        if self.size != None:
+            sz = str(self.size)
+        else:
+            sz = str(18)
+
         # Change shape for collapsed nodes
         if self.collapsed:
             # shape = 'diamond'
             color = '#34495E'
             style = 'dashed'
-            dot = dot + self.name_ + ' [shape=box][URL="' +self.name_+'"][fontsize=13 fontname="times 13 bold" style="filled, '+style+'" fontcolor="#bbbbbb" color="#bbbbbb" fillcolor="'+color+'"][label="'+self.alt_label_+'"];'
+            if self.flag_ == False:
+                dot = dot + self.name_ + ' [shape=box][URL="' +self.name_+'"][fontsize=13 fontname="times 13 bold" style="filled, '+style+'" fontcolor="#bbbbbb" color="#bbbbbb" fillcolor="'+color+'"][label="'+self.alt_label_+'"];'
+            else:
+                dot = dot + self.name_ + ' [shape=box][URL="' +self.name_+'"][fontsize=13 fontname="times 13 bold" style="filled, '+style+'" fontcolor="#bbbbbb" color="red" fillcolor="'+color+'"][label="'+self.alt_label_+'"];'
+
         else:
             color = self.color_
             style = 'bold'
 
             if self.flag_ == False:
                 if color == '':
-                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" fontcolor="#ffffff" color="#ffffff" label="'+label+'"]; '
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize='+sz+' fontname="times '+sz+' bold" style="'+style+'" fontcolor="#ffffff" color="#ffffff" label="'+label+'"]; '
                 else:
-                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" color="#ffffff" fillcolor="'+color+'"][label="'+label+'"]; '
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize='+sz+' fontname="times '+sz+' bold" style="filled, '+style+'" fontcolor="#ffffff" color="#ffffff" fillcolor="'+color+'"][label="'+label+'"]; '
             else:
                 if color == '':
-                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" color="red"][label="'+label+'"]; '
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize='+sz+' fontname="times '+sz+' bold" style="'+style+'" color="red"][label="'+label+'"]; '
                 else:
-                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" fillcolor="'+color+'" color="red"][label="'+label+'"]; '   
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize='+sz+' fontname="times '+sz+' bold" style="filled, '+style+'" fontcolor="#ffffff" fillcolor="'+color+'" color="red"][label="'+label+'"]; '   
 
         # recursively generate the node's child dot code
         if self.collapsed == False:
@@ -505,7 +515,7 @@ class NodeDecoratorRepeat(Node):
             L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         
-        super(NodeDecoratorRepeat,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
+        super(NodeDecoratorRepeat,self).__init__(name,L,color,shape='invhouse',alt_label=L_alt,size=12)
         self.runs_ = runs
         self.num_runs_ = 0
     def get_node_type(self):
@@ -548,7 +558,7 @@ class NodeDecoratorIgnoreFail(Node):
         else:
             L_alt = name.upper()+' Subtree'
         color='#22A7F0'
-        super(NodeDecoratorIgnoreFail,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
+        super(NodeDecoratorIgnoreFail,self).__init__(name,L,color,shape='invhouse',alt_label=L_alt,size=12)
     def get_node_type(self):
         return 'DECORATOR_REPEAT'
     def get_node_name(self):
@@ -571,7 +581,7 @@ class NodeDecoratorWaitForSuccess(Node):
         else:
             L_alt = name.upper()+' Subtree'
         color='#22A7F0'
-        super(NodeDecoratorWaitForSuccess,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
+        super(NodeDecoratorWaitForSuccess,self).__init__(name,L,color,shape='invhouse',alt_label=L_alt,size=12)
         self.timeout = timeout # seconds
         self.timer = None
         self.started = False
