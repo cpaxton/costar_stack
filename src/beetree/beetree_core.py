@@ -5,6 +5,7 @@ import rospy
 from std_msgs.msg import *
 from collections import OrderedDict
 from copy import deepcopy
+import random
 
 class Node(object):
     """ Beetree Node
@@ -13,7 +14,7 @@ class Node(object):
     dot file for visualization purposes.
     """
 
-    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None, attach=True, view_mode='sequential'):
+    def __init__(self, name, label, color='', shape='box', flag=False, alt_label=None, attach=True, view_mode='sequential',subtree_label='Subtree: Collapsed Nodes'):
         """ Beetree Node Constructor
         @type name: String
         @param name: the name of the node
@@ -45,6 +46,7 @@ class Node(object):
         self.attach = attach
         self.collapsed = False
         self.view_mode = view_mode
+        self.subtree_label = subtree_label
 
     def set_alt_view(self,v):
         self.alt_view = v
@@ -86,20 +88,22 @@ class Node(object):
             # shape = 'diamond'
             color = '#34495E'
             style = 'dashed'
+            dot = dot + self.name_ + ' [shape=box][URL="' +self.name_+'"][fontsize=13 fontname="times 13 bold" style="filled, '+style+'" fontcolor="#bbbbbb" color="#bbbbbb" fillcolor="'+color+'"][label="'+self.alt_label_+'"];'
         else:
             color = self.color_
             style = 'bold'
 
-        if self.flag_ == False:
-            if color == '':
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" fontcolor="#ffffff" color="#ffffff" label="'+label+'"]; '
+            if self.flag_ == False:
+                if color == '':
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" fontcolor="#ffffff" color="#ffffff" label="'+label+'"]; '
+                else:
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" color="#ffffff" fillcolor="'+color+'"][label="'+label+'"]; '
             else:
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" color="#ffffff" fillcolor="'+color+'"][label="'+label+'"]; '
-        else:
-            if color == '':
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" color="red"][label="'+label+'"]; '
-            else:
-                dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" fillcolor="'+color+'" color="red"][label="'+label+'"]; '   
+                if color == '':
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="'+style+'" color="red"][label="'+label+'"]; '
+                else:
+                    dot = dot + self.name_ + ' [shape='+shape+'][URL="' +self.name_+'"][fontsize=18 fontname="times 18 bold" style="filled, '+style+'" fontcolor="#ffffff" fillcolor="'+color+'" color="red"][label="'+label+'"]; '   
+
         # recursively generate the node's child dot code
         if self.collapsed == False:
             if self.num_children_ > 0:
@@ -265,16 +269,20 @@ class Node(object):
         """
         pass
 
-### CORE LOGICAL NODES ----------------------------------------------------------------------------------------
-
+### CORE LOGICAL NODES ###
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 class NodeSelector(Node):
     ''' Selector Node
     Runs children in order until one succeeds then 
     returns SUCCESS, if all fail, returns FAILURE.
     '''
     def __init__(self,name,label):
-        L = '?'# + label.upper()
-        L_alt = '{SELECTOR | '+label.upper()+'}'
+        L = '?'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeSelector,self).__init__(name,L,color,alt_label=L_alt,view_mode='first',shape='circle')
     def get_node_type(self):
@@ -305,7 +313,10 @@ class NodeSequence(Node):
     """
     def __init__(self,name,label):
         L = '->'
-        L_alt = '{SEQUENCE | '+label.upper()+'}'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeSequence,self).__init__(name,L,color,alt_label=L_alt,shape='diamond')
     def get_node_type(self):
@@ -334,7 +345,10 @@ class NodeIterator(Node):
     """
     def __init__(self,name,label):
         L = '1...'
-        L_alt = '{ITERATOR | '+label.upper()+'}'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeIterator,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
@@ -359,7 +373,10 @@ class NodeParallelAll(Node):
     '''
     def __init__(self,name,label):
         L = '|A|'
-        L_alt = '{PARALLEL ALL | '+label.upper()+'}'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeParallelAll,self).__init__(name,L,color,alt_label=L_alt)
         self.num_success = None
@@ -399,8 +416,11 @@ class NodeParallelRemove(Node):
     RUNNING. As nodes succeed, they are prevented from being ticked again
     '''
     def __init__(self,name,label):
-        L = '|R|'# + label.upper()
-        L_alt = '{PARALLEL REMOVE | '+label.upper()+'}'
+        L = '|R|'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeParallelRemove,self).__init__(name,L,color,alt_label=L_alt)
         self.exec_list_ = None
@@ -443,7 +463,10 @@ class NodeParallelOne(Node):
     '''
     def __init__(self,name,label):
         L = '|1|'
-        L_alt = '{PARALLEL ONE | '+label.upper()+'}'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeParallelOne,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
@@ -473,11 +496,13 @@ class NodeDecoratorRepeat(Node):
     '''
     def __init__(self,name,label,runs=1):
         if runs == -1:
-            L = '(runs)\\n['+'INF'+']'
-            L_alt = '{REPEAT FOREVER | '+label.lower()+'}'
+            L = 'REPEAT\\nFOREVER'
         else:
-            L = '(runs)\\n['+str(runs)+']'
-            L_alt = '{REPEAT '+str(runs)+'| '+label.lower()+'}'
+            L = 'REPEAT ['+str(runs)+']'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         
         super(NodeDecoratorRepeat,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
@@ -517,8 +542,11 @@ class NodeDecoratorIgnoreFail(Node):
     Returns success regardless of outcome of child
     '''
     def __init__(self,name,label):
-        L = 'ignore\\nfailure'
-        L_alt = '{IGNORE FAILURE | '+label.lower()+'}'
+        L = 'IGNORE\\nFAILURE'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeDecoratorIgnoreFail,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
     def get_node_type(self):
@@ -537,8 +565,11 @@ class NodeDecoratorWaitForSuccess(Node):
     Returns running while waiting for child node to be true
     '''
     def __init__(self,name,label,timeout):
-        L = 'wait\\nsuccess'
-        L_alt = '{WAIT SUCCESS | '+label.lower()+'}'
+        L = 'WAIT\\nSUCCESS'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeDecoratorWaitForSuccess,self).__init__(name,L,color,shape='pentagon',alt_label=L_alt)
         self.timeout = timeout # seconds
@@ -606,7 +637,7 @@ class NodeRoot(Node):
     '''
     def __init__(self, name, label):
         L = 'ROOT'
-        L_alt = '{ROOT | '+name+'}'
+        L_alt = "I am ROOT"
         color='#22A7F0'
         super(NodeRoot,self).__init__(name,L,color,alt_label=L_alt)
     def get_node_type(self):
