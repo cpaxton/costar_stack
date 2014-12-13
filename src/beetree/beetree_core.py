@@ -49,6 +49,9 @@ class Node(object):
         self.subtree_label = subtree_label
         self.size = size
 
+    def set_color(self,c):
+        self.color_ = c
+
     def set_alt_view(self,v):
         self.alt_view = v
 
@@ -87,7 +90,7 @@ class Node(object):
         if self.size != None:
             sz = str(self.size)
         else:
-            sz = str(18)
+            sz = str(16)
 
         # Change shape for collapsed nodes
         if self.collapsed:
@@ -536,6 +539,7 @@ class NodeDecoratorRepeat(Node):
                 self.children_[0].reset()
                 return self.set_status('RUNNING')
         else:
+            ### FIX ME ###
             if self.num_runs_ < self.runs_:
                 self.child_status_ = self.children_[0].execute()
                 if self.child_status_ == 'SUCCESS':
