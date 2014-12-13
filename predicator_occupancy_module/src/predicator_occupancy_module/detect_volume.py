@@ -128,7 +128,8 @@ if __name__ == '__main__':
     # Setup ros/publishers
     rospy.init_node('occupancy_module')
     pub_list = rospy.Publisher('/predicator/input', PredicateList)
-    pub_valid = rospy.Publisher('/predicator/input', ValidPredicates)
+    pub_valid = rospy.Publisher('/predicator/valid_input', ValidPredicates)
+    rospy.sleep(.5)
 
     # Setup subscribers
     cloud_uri = "/{}/depth_registered/points".format(camera_name)
@@ -144,12 +145,11 @@ if __name__ == '__main__':
     display = rospy.get_param('display', True)
 
     # Setup valid predicates
-    predicate_param = '{}/occupancy_sensor'.format(namespace)
+    # predicate_param = '{}/occupancy_sensor'.format(namespace)
     pval = ValidPredicates()
     pval.pheader.source = rospy.get_name()
     pval.predicates = ['occupied']
-    pval.value_predicates = ['']
-    pval.assignments = [predicate_param]
+    pval.assignments = ['occupancy']
     pub_valid.publish(pval)
 
     rate = rospy.Rate(30)
@@ -169,16 +169,17 @@ if __name__ == '__main__':
 
         if occupied_confidence == 1: # Publish a filled statement, meaning TRUE
             ps.statements.append(PredicateStatement(predicate='occupied',
-                                                confidence=occupied_confidence,
+                                                confidence=1,
                                                 value=PredicateStatement.TRUE,
                                                 num_params=1,
-                                                params=[predicate_param, "", ""]))
-        elif occupied_confidence == -1:
-            ps.statements.append(PredicateStatement(predicate='empty',
-                                                confidence=occupied_confidence,
-                                                value=PredicateStatement.TRUE,
-                                                num_params=1,
-                                                params=[predicate_param, "", ""]))
+                                                params=['occupancy', "", ""]))
+            rospy.logwarn('OCCUPIED')
+        # elif occupied_confidence == -1:
+        #     ps.statements.append(PredicateStatement(predicate='empty',
+        #                                         confidence=occupied_confidence,
+        #                                         value=PredicateStatement.TRUE,
+        #                                         num_params=1,
+        #                                         params=['occupancy', "", ""]))
         pub_list.publish(ps)
 
         # Show colored image to reflect if a space is occupied
