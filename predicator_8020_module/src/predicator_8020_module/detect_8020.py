@@ -65,7 +65,7 @@ def pointcloud_callback(data):
 
         im_rgb = np.dstack([x['r'], x['g'], x['b']])
         im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
-        # print 3
+        # rospy.logwarn(3)
         # if markers is None:
             # return
         # if abs(markers.header.seq - data.header.seq) < 3:
@@ -77,7 +77,7 @@ def pointcloud_callback(data):
                                               # occupancy_center, occupancy_radius, px_thresh, output_mask=True)
         # occupied, mask = bbox_occupancy_check(im_pos.reshape([-1, 3]),
                                               # bounding_box, pct_filled, output_mask=True)
-        # print "Occupied:", occupied
+        # rospy.logwarn("Occupied:", occupied)
 
         # mask = mask.reshape([480, 640])
 
@@ -88,7 +88,7 @@ def pointcloud_callback(data):
 
         # parts, classes = get_closest_part(all_centroids, all_holes)
 
-        # print "# Holes", len(all_holes)
+        # rospy.logwarn("# Holes", len(all_holes))
         # im_display = plot_holes(im_rgb, all_holes)
 
         # closest_parts = parts
@@ -102,10 +102,10 @@ def process_plate_detector(data):
     global closest_parts
     global pub_list
 
-    print "Trying to process plate"
+    rospy.logwarn("Trying to process plate")
     if im_rgb is None:
         return False
-    print "Processing plate"
+    rospy.logwarn("Processing plate")
 
     with image_lock:
         im, mask = extract_foreground_poly(im_rgb, bounding_box)
@@ -113,7 +113,7 @@ def process_plate_detector(data):
         pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
         all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
 
-        print "# Plates:", len(all_holes)
+        rospy.logwarn("# Plates:", len(all_holes))
         if len(all_centroids) > 0:
             closest_parts, classes = get_closest_part(all_centroids, all_holes)
             im_display = plot_holes(im_rgb, all_holes)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     clf_mean = np.array(rospy.get_param("bounding_box_clf_mean"), None)
     clf_w = np.array(rospy.get_param("bounding_box_clf_w"), None)
     if clf_mean is None or clf_w is None:
-        print "Can't load user paramaters"
+        rospy.logwarn("Can't load user paramaters")
 
     # pick_bounding_box()
     # Setup classifier
@@ -233,7 +233,7 @@ if __name__ == '__main__':
     #     for c in closest_parts:
     #         closest_parts[c] = None
 
-    # print "# Plates:", len(all_holes)
+    # rospy.logwarn("# Plates:", len(all_holes))
     # im_display = plot_holes(im_rgb, all_holes)
 
 
@@ -241,18 +241,18 @@ if __name__ == '__main__':
     # ret = process_plate_detector([])
 
     while not rospy.is_shutdown():
-        # print "Running1"
+        # rospy.logwarn("Running1")
         while im_pos == None:
             rate.sleep()
 
         # ret = process_plate_detector([])
         # Show colored image to reflect if a space is occupied
         if display and im_display is not None:
-            # print "Display"
+            # rospy.logwarn("Display")
             cv2.imshow("img", im_display)
             cv2.waitKey(30)
         # else:
-            # print "No display image"
+            # rospy.logwarn("No display image")
 
         # Send TFs for each plate at every timestep
         for c in closest_parts:
