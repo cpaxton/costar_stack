@@ -132,6 +132,7 @@ if __name__ == '__main__':
     # Wait until we have a pointcloud
     rate = rospy.Rate(1)
     while im_rgb is None or im_pos is None:
+        print "Waiting for image..."
         rate.sleep()
 
     # Have user add volume
