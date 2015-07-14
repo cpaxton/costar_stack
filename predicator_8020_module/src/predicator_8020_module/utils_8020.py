@@ -8,6 +8,7 @@ from skimage.morphology import binary_opening, binary_erosion
 import skimage.morphology as mo
 from skimage.draw import polygon
 
+from sklearn.utils import check_array
 from sklearn.cluster import KMeans
 from sklearn.svm import LinearSVC
 

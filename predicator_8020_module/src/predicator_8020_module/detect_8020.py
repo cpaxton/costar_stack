@@ -113,7 +113,9 @@ def process_plate_detector(data):
         pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
         all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
 
-        rospy.logwarn("# Plates:", len(all_holes))
+        print all_centroids
+
+        rospy.logwarn("# Plates: %d"%len(all_holes))
         if len(all_centroids) > 0:
             closest_parts, classes = get_closest_part(all_centroids, all_holes)
             im_display = plot_holes(im_rgb, all_holes)
@@ -146,14 +148,14 @@ def process_plate_detector(data):
         for c in closest_parts:
             plate_name = "plate_{}".format(c)
             if closest_parts[c] is None:
-                x, y, z = [-1, -1, -1]
+                    x, y, z = [-1, -1, -1]
             else:
                 x, y, z = closest_parts[c]
 
-            tf_broadcast.sendTransform([x, y, z],
-                                        [0,0,0,1],
-                                        rospy.Time.now(), plate_name, 
-                                        "camera_2_rgb_optical_frame")
+                tf_broadcast.sendTransform([x, y, z],
+                                            [0,0,0,1],
+                                            rospy.Time.now(), plate_name, 
+                                            ("%s_rgb_optical_frame")%camera_name)
 
 
     return True
@@ -162,109 +164,117 @@ def process_plate_detector(data):
 if __name__ == '__main__':
 
     try:
-        parser = optparse.OptionParser()
-        parser.add_option("-c", "--camera", dest="camera",
-                          help="name of camera", default="camera_2")
-        parser.add_option("-n", "--namespace", dest="namespace",
-                          help="namespace for occupancy data", default="")    
-        (options, args) = parser.parse_args()
+        try:
+            parser = optparse.OptionParser()
+            parser.add_option("-c", "--camera", dest="camera",
+                              help="name of camera", default="camera")
+            parser.add_option("-n", "--namespace", dest="namespace",
+                              help="namespace for occupancy data", default="")    
+            (options, args) = parser.parse_args()
 
-        camera_name = options.camera
-        namespace = options.namespace
-    except:
-        camera_name = 'camera'
+            camera_name = options.camera
+            namespace = options.namespace
+        except:
+            camera_name = 'camera'
 
-    # Setup ros/publishers
-    rospy.init_node('plate_detector_module')
-    pub_list = rospy.Publisher('/predicator/input', PredicateList)
-    pub_valid = rospy.Publisher('/predicator/valid_input', ValidPredicates)
+        # Setup ros/publishers
+        rospy.init_node('plate_detector_module')
+        pub_list = rospy.Publisher('/predicator/input', PredicateList)
+        pub_valid = rospy.Publisher('/predicator/valid_input', ValidPredicates)
 
-    # Setup subscribers
-    cloud_uri = "/{}/depth_registered/points".format(camera_name)
-    rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
-    rospy.Subscriber("plates/detect", Empty, process_plate_detector, queue_size=10)
+        # Setup subscribers
+        cloud_uri = "/{}/depth_registered/points".format(camera_name)
+        rospy.Subscriber(cloud_uri, PointCloud2, pointcloud_callback, queue_size=10)
+        rospy.Subscriber("plates/detect", Empty, process_plate_detector, queue_size=10)
 
-    # Get occupancy params
-    # occupancy_center = np.array(rospy.get_param("/{}/occupancy_center".format(namespace)))
-    # occupancy_radius = np.array(rospy.get_param("/{}/occupancy_radius".format(namespace)))
+        rospy.logwarn('Looking for cloud on "%s"',cloud_uri);
 
-    display = rospy.get_param('display', True)
+        # Get occupancy params
+        # occupancy_center = np.array(rospy.get_param("/{}/occupancy_center".format(namespace)))
+        # occupancy_radius = np.array(rospy.get_param("/{}/occupancy_radius".format(namespace)))
+
+        display = rospy.get_param('display', True)
 
 
-    # Setup TF
-    tf_broadcast = tf.TransformBroadcaster()
+        # Setup TF
+        tf_broadcast = tf.TransformBroadcaster()
 
-    # Setup valid predicates
-    predicate_param = 'plate_detector'
-    pval = ValidPredicates()
-    pval.predicates = ['plate_3', 'plate_4', 'plate_8']
-    pval.value_predicates = ['']
-    pval.assignments = [predicate_param]
-    pub_valid.publish(pval)
+        # Setup valid predicates
+        predicate_param = 'plate_detector'
+        pval = ValidPredicates()
+        pval.predicates = ['plate_3', 'plate_4', 'plate_8']
+        pval.value_predicates = ['']
+        pval.assignments = [predicate_param]
+        pub_valid.publish(pval)
 
-    rospy.set_param('/instructor_landmark/plate_3','plate_3')
-    rospy.set_param('/instructor_landmark/plate_4','plate_4')
-    rospy.set_param('/instructor_landmark/plate_8','plate_8')
+        rospy.set_param('/instructor_landmark/plate_3','plate_3')
+        rospy.set_param('/instructor_landmark/plate_4','plate_4')
+        rospy.set_param('/instructor_landmark/plate_8','plate_8')
 
-    rate = rospy.Rate(30)
-    rate.sleep()
-
-    while im_rgb is None or im_pos is None:
+        rate = rospy.Rate(30)
         rate.sleep()
 
-    # Get user defined params
-    bounding_box = rospy.get_param('bounding_box_8020', [])
-    clf_mean = np.array(rospy.get_param("bounding_box_clf_mean"), None)
-    clf_w = np.array(rospy.get_param("bounding_box_clf_w"), None)
-    if clf_mean is None or clf_w is None:
-        rospy.logwarn("Can't load user paramaters")
-
-    # pick_bounding_box()
-    # Setup classifier
-    # im, mask = extract_foreground_poly(im_rgb, bounding_box)
-    # clf_mean, clf_w = train_clf(im, mask)
-
-    # pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
-    # all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
-
-    # if len(all_centroids) > 0:
-    #     closest_parts, classes = get_closest_part(all_centroids, all_holes)
-    # else:
-    #     for c in closest_parts:
-    #         closest_parts[c] = None
-
-    # rospy.logwarn("# Plates:", len(all_holes))
-    # im_display = plot_holes(im_rgb, all_holes)
-
-
-    display = True
-    # ret = process_plate_detector([])
-
-    while not rospy.is_shutdown():
-        # rospy.logwarn("Running1")
-        while im_pos == None:
+        while im_rgb is None or im_pos is None:
             rate.sleep()
 
-        # ret = process_plate_detector([])
-        # Show colored image to reflect if a space is occupied
-        if display and im_display is not None:
-            # rospy.logwarn("Display")
-            cv2.imshow("img", im_display)
-            cv2.waitKey(30)
+        # Get user defined params
+        bounding_box = rospy.get_param('bounding_box_8020', [])
+        clf_mean = np.array(rospy.get_param("bounding_box_clf_mean"), None)
+        clf_w = np.array(rospy.get_param("bounding_box_clf_w"), None)
+        if clf_mean is None or clf_w is None:
+            rospy.logwarn("Can't load user paramaters")
+
+        print "Bounding box = %s"%(str(bounding_box))
+
+        # pick_bounding_box()
+        # Setup classifier
+        # im, mask = extract_foreground_poly(im_rgb, bounding_box)
+        # clf_mean, clf_w = train_clf(im, mask)
+
+        # pred_mask, objects, props = get_foreground(im, clf_mean, clf_w)
+        # all_centroids, all_holes = extract_holes(im, pred_mask, objects, props, im_pos, im_rgb)
+
+        # if len(all_centroids) > 0:
+        #     closest_parts, classes = get_closest_part(all_centroids, all_holes)
         # else:
-            # rospy.logwarn("No display image")
+        #     for c in closest_parts:
+        #         closest_parts[c] = None
 
-        # Send TFs for each plate at every timestep
-        for c in closest_parts:
-            plate_name = "plate_{}".format(c)
-            if closest_parts[c] is None:
-                x, y, z = [-1, -1, -1]
-            else:
-                x, y, z = closest_parts[c]
+        # rospy.logwarn("# Plates:", len(all_holes))
+        # im_display = plot_holes(im_rgb, all_holes)
 
-            tf_broadcast.sendTransform([x, y, z],
-                                        [0,0,0,1],
-                                        rospy.Time.now(), plate_name, 
-                                        "camera_2_rgb_optical_frame")
 
-        rate.sleep()
+        display = True
+        # ret = process_plate_detector([])
+
+        while not rospy.is_shutdown():
+            # rospy.logwarn("Running1")
+            while im_pos == None:
+                rate.sleep()
+
+            # ret = process_plate_detector([])
+            # Show colored image to reflect if a space is occupied
+            if display and im_display is not None:
+                # rospy.logwarn("Display")
+                cv2.imshow("img", im_display)
+                cv2.waitKey(30)
+            # else:
+                # rospy.logwarn("No display image")
+
+            # Send TFs for each plate at every timestep
+            for c in closest_parts:
+                plate_name = "plate_{}".format(c)
+                if closest_parts[c] is None:
+                    x, y, z = [-1, -1, -1]
+                else:
+                    x, y, z = closest_parts[c]
+
+                tf_broadcast.sendTransform([x, y, z],
+                                            [0,0,0,1],
+                                            rospy.Time.now(), plate_name, 
+                                            ("%s_rgb_optical_frame")%camera_name)
+
+            rate.sleep()
+
+    except rospy.ROSInterruptException, e:
+        pass
