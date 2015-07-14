@@ -20,7 +20,7 @@ from copy import deepcopy
 # Volume
 bounding_box = np.zeros([2, 3], np.float)
 occupied = False
-pct_filled = 0.1
+pct_filled = 0.5
 occupancy_center = None
 occupancy_radius = None
 
