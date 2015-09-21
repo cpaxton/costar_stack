@@ -452,6 +452,7 @@ void spPooler::build_SP_FPFH(const std::vector< boost::shared_ptr<Pooler_L0> > &
 //    std::cerr << count << " " << sp_num << std::endl;
 }
 
+#if 0
 void spPooler::build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &sift_pooler_set, Hier_Pooler &cshot_producer, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec, bool max_pool_flag)
 {
 /*
@@ -546,6 +547,7 @@ void spPooler::build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &
     delete sift_ext;
 */
 }
+#endif
 
 pcl::PointCloud<PointT>::Ptr spPooler::refineScene(const pcl::PointCloud<PointT>::Ptr scene)
 {

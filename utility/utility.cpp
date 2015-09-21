@@ -894,7 +894,7 @@ pcl::PointCloud<PointLT>::Ptr SPCloud(const pcl::PointCloud<PointT>::Ptr cloud, 
     pcl::PointCloud<PointLT>::Ptr labels = super.getLabeledCloud();
     super.getSupervoxelAdjacency(graph);
     
-    size_t seg_num = super.getMaxLabel() + 1;
+    size_t seg_num;// = super.getMaxLabel() + 1;
     segs.clear();
     segs.resize(seg_num);
     seg_to_cloud.clear();
@@ -937,7 +937,7 @@ pcl::PointCloud<PointT>::Ptr SPCloud(const pcl::PointCloud<PointT>::Ptr cloud, s
     pcl::PointCloud<PointLT>::Ptr labels = super.getLabeledCloud();
     super.getSupervoxelAdjacency(graph);
     
-    size_t seg_num = super.getMaxLabel() + 1;
+    size_t seg_num;// = super.getMaxLabel() + 1;
     segs_idx.clear();
     segs_idx.resize(seg_num);
     

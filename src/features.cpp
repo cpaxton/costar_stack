@@ -753,9 +753,9 @@ cv::Mat getColorDiff(const pcl::PointCloud<PointT>::Ptr cloud)
         diff.at<float>(i, 0) = max_dist;
     }
     return diff;
-}
+} 
 
-
+/*
 std::vector<cv::KeyPoint> extSIFTKeys(const cv::Mat &cur_gray, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec)
 {
     cv::Mat cur_response = cv::Mat::ones(cur_gray.size(), CV_32FC1)*-1;
@@ -789,5 +789,5 @@ std::vector<cv::KeyPoint> extSIFTKeys(const cv::Mat &cur_gray, const std::vector
 
     return final_keys;
 }
-
+*/
 
