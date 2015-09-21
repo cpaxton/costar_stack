@@ -1,0 +1,347 @@
+#include <opencv2/core/core.hpp>
+
+#include "../include/features.h"
+#include "../include/BBDataParser.h"
+#include "../include/UWDataParser.h"
+#include "../include/JHUDataParser.h"
+
+int main(int argc, char** argv)
+{
+    std::string in_path("/home/chi/JHUIT/scene/");
+    std::string out_path("tmp/");
+    
+    pcl::console::parse_argument(argc, argv, "--p", in_path);
+    pcl::console::parse_argument(argc, argv, "--o", out_path);
+    boost::filesystem::create_directories(out_path);
+    
+    std::string model_path("/home/chi/JHUIT/ht10/");
+    std::string mesh_path("/home/chi/devel_mode/ObjRecRANSAC/data/mesh/");
+    std::string shot_path("JHU_kmeans_dict/");
+    std::string sift_path("JHU_sift_dict09/");
+    std::string fpfh_path("JHU_fpfh_dict/");
+    
+/***************************************************************************************************************/
+    float radius = 0.02;
+    float down_ss = 0.005;
+    float ratio = 0.1;
+    int box_num = 5;
+    float sigma = 0.9;
+    float CC = 0.01;
+    pcl::console::parse_argument(argc, argv, "--nn", box_num);
+    pcl::console::parse_argument(argc, argv, "--rd", radius);
+    pcl::console::parse_argument(argc, argv, "--rt", ratio);
+    pcl::console::parse_argument(argc, argv, "--ss", down_ss);
+    pcl::console::parse_argument(argc, argv, "--sigma", sigma);
+    pcl::console::parse_argument(argc, argv, "--C", CC);
+    std::cerr << "Ratio: " << ratio << std::endl;
+    std::cerr << "Downsample: " << down_ss << std::endl;
+    
+    bool recompute_svm = false;
+    if( pcl::console::find_switch(argc, argv, "-svm") == true )
+        recompute_svm = true;
+    
+    bool view_flag = false;
+    if( pcl::console::find_switch(argc, argv, "-v") == true )
+        view_flag = true;
+    
+/***************************************************************************************************************/
+    int fea_dim = -1;
+    Hier_Pooler hie_producer(radius);
+    hie_producer.LoadDict_L0(shot_path, "200", "200");
+    hie_producer.setRatio(ratio);
+/***************************************************************************************************************/
+    std::vector< boost::shared_ptr<Pooler_L0> > sift_pooler_set(1+1);
+    for( size_t i = 1 ; i < sift_pooler_set.size() ; i++ )
+    {
+        boost::shared_ptr<Pooler_L0> cur_pooler(new Pooler_L0(-1));
+        sift_pooler_set[i] = cur_pooler;
+    }
+    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sift_L0_100.cvmat"); 
+/***************************************************************************************************************/
+    std::vector< boost::shared_ptr<Pooler_L0> > fpfh_pooler_set(1+1);
+    for( size_t i = 1 ; i < fpfh_pooler_set.size() ; i++ )
+    {
+        boost::shared_ptr<Pooler_L0> cur_pooler(new Pooler_L0(-1));
+        fpfh_pooler_set[i] = cur_pooler;
+    }
+    fpfh_pooler_set[1]->LoadSeedsPool(fpfh_path+"dict_fpfh_L0_100.cvmat");
+/***************************************************************************************************************/
+    std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set(5+1);
+    for( size_t i = 1 ; i < lab_pooler_set.size() ; i++ )
+    {
+        boost::shared_ptr<Pooler_L0> cur_pooler(new Pooler_L0);
+        cur_pooler->setHSIPoolingParams(i);
+        lab_pooler_set[i] = cur_pooler;
+    }
+/***************************************************************************************************************/
+    
+    for( int i = 0 ; i <= 9  ; i++ )
+    {
+        continue;
+        std::stringstream ss;
+        ss << i+1;
+        
+        if( exists_test(out_path + "train_"+ss.str()+"_L0.smat") == true )
+            continue;
+        
+        ObjectSet train_objects, test_objects;
+        readJHUInstWithImg(model_path, train_objects, test_objects, i, i, true);
+        std::cerr << "Loading Completed... " << std::endl;
+        
+        int train_num = train_objects[0].size();
+        std::cerr << "Train " << i << " --- " << train_num << std::endl;
+        
+        if( train_num > 0 )
+        {
+            std::vector< sparseVec> final_train;
+            #pragma omp parallel for schedule(dynamic, 1)
+            for( int j = 0 ; j < train_num ; j++ )
+            {
+                pcl::PointCloud<PointT>::Ptr mycloud = train_objects[0][j].cloud;
+            	cv::Mat map2d = train_objects[0][j].map2d;
+                cv::Mat img = train_objects[0][j].img;
+                
+                pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+                full_cloud->resize(map2d.rows*map2d.cols);
+                for(int r = 0, this_idx = 0 ; r < map2d.rows ; r++ ){
+                    for(int c = 0 ; c < map2d.cols ; c++, this_idx++ )
+                    {
+                        int idx2 = map2d.at<int>(r, c);
+                        if( idx2 >= 0 )
+                        {
+                            full_cloud->at(this_idx).x = mycloud->at(idx2).x;
+                            full_cloud->at(this_idx).y = mycloud->at(idx2).y;
+                            full_cloud->at(this_idx).z = mycloud->at(idx2).z;
+                            full_cloud->at(this_idx).rgba = mycloud->at(idx2).rgba;
+                        }
+                        else
+                        {
+                            uint32_t rgba = img.at<uchar>(r, c*3+0) | img.at<uchar>(r, c*3+1) << 8 | img.at<uchar>(r, c*3+2) << 16;
+                            full_cloud->at(this_idx).x = std::numeric_limits<float>::quiet_NaN();
+                            full_cloud->at(this_idx).y = std::numeric_limits<float>::quiet_NaN();
+                            full_cloud->at(this_idx).z = std::numeric_limits<float>::quiet_NaN();
+                            full_cloud->at(this_idx).rgba = rgba;
+                        }
+                    }
+                }
+                full_cloud->height = map2d.rows;
+                full_cloud->width = map2d.cols;
+                full_cloud->is_dense = false;
+                
+                spPooler triple_pooler;
+                triple_pooler.init(full_cloud, hie_producer, radius, down_ss);
+                triple_pooler.build_SP_LAB(lab_pooler_set, false);
+                triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
+                triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sigma, false);
+                
+                std::vector<cv::Mat> sp_fea_L2 = triple_pooler.sampleSPFea(2, box_num);
+                std::vector<cv::Mat> sp_fea_L3 = triple_pooler.sampleSPFea(3, box_num);
+                std::vector<cv::Mat> sp_fea_L4 = triple_pooler.sampleSPFea(4, box_num);
+                
+                std::vector<cv::Mat> sp_fea;
+                sp_fea.insert(sp_fea.end(), sp_fea_L2.begin(), sp_fea_L2.end());
+                sp_fea.insert(sp_fea.end(), sp_fea_L3.begin(), sp_fea_L3.end());
+                sp_fea.insert(sp_fea.end(), sp_fea_L4.begin(), sp_fea_L4.end());
+                for( std::vector<cv::Mat>::iterator it = sp_fea.begin(); it < sp_fea.end() ; it++ )
+                {
+                    if( fea_dim > 0 && it->cols != fea_dim )
+                    {
+                        std::cerr << "Error: fea_dim > 0 && cur_final.cols != fea_dim   " << fea_dim << " " << it->cols << std::endl;
+                        exit(0);
+                    }
+                    else if( fea_dim < 0 )
+                    {
+                        #pragma omp critical
+                        {
+                            fea_dim = it->cols;
+                            std::cerr << "Fea Dim: " << fea_dim << std::endl;
+                        }
+                    }	
+                    std::vector< sparseVec> this_sparse;
+                    sparseCvMat(*it, this_sparse);
+                    #pragma omp critical
+                    {
+                        final_train.push_back(this_sparse[0]);
+                    }
+                }
+                
+            }
+            
+            saveCvMatSparse(out_path + "train_"+ss.str()+"_L0.smat", final_train, fea_dim);
+            final_train.clear();
+        }
+        else
+        {
+            std::cerr << "JHU Model Data Reading Failed!" << std::endl;
+            exit(0);
+        }
+        train_objects.clear();
+    }
+    
+    model* cur_model;
+    if( exists_test(out_path+"svm_model.model") == false || recompute_svm == true )
+        cur_model = TrainLinearSVM(out_path, 1, 10, CC, true);
+    else
+        cur_model = load_model((out_path+"svm_model.model").c_str());
+//    return 1;
+/***************************************************************************************************************/
+    setObjID(model_name_map);
+    std::vector<ModelT> model_set;
+    std::vector<std::string> model_names = readMesh(mesh_path, model_set);
+    int model_num = model_names.size();
+/***************************************************************************************************************/
+    
+    pcl::visualization::PCLVisualizer::Ptr viewer;
+    if( view_flag )
+    {
+        viewer = pcl::visualization::PCLVisualizer::Ptr (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        viewer->initCameraParameters();
+        viewer->addCoordinateSystem(0.1);
+        viewer->setCameraPosition(0, 0, 0.1, 0, 0, 1, 0, -1, 0);
+        viewer->setSize(1280, 960);
+    }
+
+    std::vector< std::string > prefix_set(3);
+    prefix_set[0] = "office";
+    prefix_set[1] = "labpod";
+    prefix_set[2] = "barrett";
+    
+    for( int tt = 0 ; tt <= 2 ; tt++ )
+    {
+        std::vector<int> obj_count(model_num+1, 0);
+        std::vector< std::vector<PR_ELEM> > avg_model_pr(3);
+        for( size_t k = 0 ; k < avg_model_pr.size() ; k++ )
+        {
+            avg_model_pr[k].resize(model_num+1);
+            for( int i = 0 ; i < model_num+1 ; i++ )
+            {
+                avg_model_pr[k][i].precision = 0;
+                avg_model_pr[k][i].recall = 0;
+                avg_model_pr[k][i].f_score = 0;
+                avg_model_pr[k][i].valid = true;
+            }
+        }
+        
+        std::vector< std::vector<sparseVec> > final_test(model_num+1);
+        std::vector<std::string> scene_names;
+        
+        for( int i = 0 ; i < 10 ; i++ )
+        {
+            std::stringstream ss;
+            ss << i;
+            scene_names.push_back(std::string (prefix_set[tt] +"_"+ ss.str()));
+        }
+
+        for( std::vector<std::string>::iterator scene_it = scene_names.begin() ; scene_it < scene_names.end() ; scene_it++ )
+        {
+            std::string cur_path(in_path + *scene_it + "/");
+            std::string gt_path(in_path + *scene_it + "/poses/");
+
+//            #pragma omp parallel for schedule(dynamic, 1)
+            for( int i = 0 ; i <= 0 ; i++ )
+            {
+                std::stringstream ss;
+                ss << i;
+
+                std::string filename(cur_path + *scene_it + "_" + ss.str() + ".pcd");
+                std::cerr << filename << std::endl;
+
+                if( exists_test(filename) == false )//|| exists_test(filename_n) == false )
+                {
+                    pcl::console::print_warn("Failed to Read: %s\n", filename.c_str());
+                    continue;
+                }
+                pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+                pcl::io::loadPCDFile(filename, *full_cloud);
+                std::vector<poseT> cur_gt = readGT(gt_path, ss.str());
+                if(cur_gt.empty() == true )
+                    continue;
+                
+                pcl::PointCloud<PointLT>::Ptr all_gt_cloud = genSeg_all(full_cloud, model_set, cur_gt, model_name_map);
+                pcl::PointCloud<PointLT>::iterator it_gt = all_gt_cloud->begin();
+                for( pcl::PointCloud<PointT>::iterator it = full_cloud->begin() ; it < full_cloud->end(); it++, it_gt++ )
+                {
+                    if(it_gt->label == 0 )
+                    {
+                        it->x = std::numeric_limits<float>::quiet_NaN();
+                        it->y = std::numeric_limits<float>::quiet_NaN();
+                        it->z = std::numeric_limits<float>::quiet_NaN();
+                    }
+                }
+                
+                spPooler triple_pooler;
+                triple_pooler.init(full_cloud, hie_producer, radius, down_ss);
+                std::cerr << "Initialization Done!" << std::endl;
+                triple_pooler.build_SP_LAB(lab_pooler_set, false);
+//                std::cerr << "LAB Done!" << std::endl;
+                triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
+//                std::cerr << "FPFH Done!" << std::endl;
+                triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sigma, false);
+                std::cerr << "Feature Done!" << std::endl;
+                
+                pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
+                
+                std::vector< std::vector<PR_ELEM> > cur_model_pr(3);
+                for( int ll = 2 ; ll <= 4 ; ll++ )
+                {
+                    triple_pooler.InputSemantics(cur_model, ll, false);
+                    label_cloud = triple_pooler.getSemanticLabels();
+    
+                    cur_model_pr[ll-2] = semanticPR(all_gt_cloud, label_cloud, model_num);
+//                    pcl::PointCloud<PointLT>::Ptr dense_labels = densifyLabels(label_cloud, full_cloud);
+//                    visualizeLabels(triple_pooler, viewer, color_label);
+                }
+//                pcl::PointCloud<PointLT>::Ptr dense_labels = densifyLabels(label_cloud, full_cloud);
+//                visualizeLabels(all_gt_cloud, viewer, color_label);
+                
+                for( int j = 1 ; j < model_num + 1 ; j++ )
+                {
+                    if( cur_model_pr[0][j].valid )
+                    {
+//                        std::cerr << "Model " << j << std::endl;
+//                        std::cerr << std::setprecision(4) << cur_model_pr[0][j].precision << "\t" << cur_model_pr[1][j].precision << "\t" << cur_model_pr[2][j].precision << "\t" << std::endl;
+//                        std::cerr << std::setprecision(4) << cur_model_pr[0][j].recall << "\t" << cur_model_pr[1][j].recall << "\t" << cur_model_pr[2][j].recall << "\t" << std::endl;
+                    
+                        avg_model_pr[0][j].recall += cur_model_pr[0][j].recall;
+                        avg_model_pr[1][j].recall += cur_model_pr[1][j].recall;
+                        avg_model_pr[2][j].recall += cur_model_pr[2][j].recall;
+                        
+                        avg_model_pr[0][j].precision += cur_model_pr[0][j].precision;
+                        avg_model_pr[1][j].precision += cur_model_pr[1][j].precision;
+                        avg_model_pr[2][j].precision += cur_model_pr[2][j].precision;
+                        
+                        avg_model_pr[0][j].f_score += 2*(cur_model_pr[0][j].precision*cur_model_pr[0][j].recall)/(cur_model_pr[0][j].precision+cur_model_pr[0][j].recall);
+                        avg_model_pr[1][j].f_score += 2*(cur_model_pr[1][j].precision*cur_model_pr[1][j].recall)/(cur_model_pr[1][j].precision+cur_model_pr[1][j].recall);
+                        avg_model_pr[2][j].f_score += 2*(cur_model_pr[2][j].precision*cur_model_pr[2][j].recall)/(cur_model_pr[2][j].precision+cur_model_pr[2][j].recall);
+                        
+                        obj_count[j]++;
+                    }
+                }
+                if( view_flag )
+                {
+                    viewer->removeAllPointClouds();
+                    viewer->addPointCloud(full_cloud, "full");
+                    visualizeLabels(label_cloud, viewer, color_label);
+                }
+            }
+        }
+        
+        std::ofstream fp;
+        fp.open((out_path + prefix_set[tt] + "_pr.txt").c_str());
+
+        for( int j = 1 ; j < model_num + 1 ; j++ )
+        {
+            std::cerr << obj_count[j] << std::endl;
+            std::cerr << std::setprecision(4) << avg_model_pr[0][j].precision / obj_count[j] << "\t" << avg_model_pr[1][j].precision / obj_count[j] << "\t" << avg_model_pr[2][j].precision / obj_count[j] << "\t" << std::endl;
+            std::cerr << std::setprecision(4) << avg_model_pr[0][j].recall / obj_count[j] << "\t" << avg_model_pr[1][j].recall / obj_count[j] << "\t" << avg_model_pr[2][j].recall / obj_count[j] << "\t" << std::endl;
+            
+            fp << obj_count[j] << std::endl;
+            fp << std::setprecision(4) << avg_model_pr[0][j].precision / obj_count[j] << "\t" << avg_model_pr[1][j].precision / obj_count[j] << "\t" << avg_model_pr[2][j].precision / obj_count[j] << "\t" << std::endl;
+            fp << std::setprecision(4) << avg_model_pr[0][j].recall / obj_count[j] << "\t" << avg_model_pr[1][j].recall / obj_count[j] << "\t" << avg_model_pr[2][j].recall / obj_count[j] << "\t" << std::endl;
+        }
+        fp.close();
+    }
+    
+    free_and_destroy_model(&cur_model);
+    return 1;
+} 
