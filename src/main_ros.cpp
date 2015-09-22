@@ -11,6 +11,8 @@
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
 
+bool view_flag = false;
+pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
 std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set(5+1);
 std::vector<model*> binary_models(3);
@@ -86,63 +88,72 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
     return scene_f;
 }
 
-  void callback(const sensor_msgs::PointCloud2 &pc) {
+void callback(const sensor_msgs::PointCloud2 &pc) {
 
-    pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
-    pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-    pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
+	pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+	pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+	pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
 
-    //fromROSMsg(pc,*full_cloud); // convert to PCL format
-    pcl::PCLPointCloud2 pcl_pc;
-    pcl_conversions::toPCL(pc, pcl_pc);
+	//fromROSMsg(pc,*full_cloud); // convert to PCL format
+	pcl::PCLPointCloud2 pcl_pc;
+	pcl_conversions::toPCL(pc, pcl_pc);
 
-    pcl::fromPCLPointCloud2(pcl_pc, *full_cloud);
+	pcl::fromPCLPointCloud2(pcl_pc, *full_cloud);
 
-    // remove NaNs
-    std::vector<int> idx_ff;
-  
-    pcl::removeNaNFromPointCloud(*full_cloud, *cloud, idx_ff);
+	// remove NaNs
+	std::vector<int> idx_ff;
 
-    pcl::PassThrough<PointT> pass;
-    pass.setInputCloud (cloud);
-    pass.setFilterFieldName ("z");
-    pass.setFilterLimits (0.1, zmax);
-    //pass.setFilterLimitsNegative (true);
-    pcl::PointCloud<PointT>::Ptr scene(new pcl::PointCloud<PointT>());
-    pass.filter (*scene);
+	pcl::removeNaNFromPointCloud(*full_cloud, *cloud, idx_ff);
 
-    pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene);
+	pcl::PassThrough<PointT> pass;
+	pass.setInputCloud (cloud);
+	pass.setFilterFieldName ("z");
+	pass.setFilterLimits (0.1, zmax);
+	//pass.setFilterLimitsNegative (true);
+	pcl::PointCloud<PointT>::Ptr scene(new pcl::PointCloud<PointT>());
+	pass.filter (*scene);
 
-    //computeNormals(cloud, cloud_normal, radius);
-    //pcl::PointCloud<PointT>::Ptr label_cloud = recog.recognize(cloud, cloud_normal);
+	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene);
 
-        spPooler triple_pooler;
-        triple_pooler.lightInit(scene, hie_producer, radius, down_ss);
-        std::cerr << "LAB Pooling!" << std::endl;
-        triple_pooler.build_SP_LAB(lab_pooler_set, false);
-        
-        pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
-        for( int ll = 0 ; ll <= 2 ; ll++ )
-        {
-            std::cerr << "L" << ll <<" Inference!" << std::endl;
-            bool reset_flag = ll == 0 ? true : false;
-            if( ll >= 1 )
-                triple_pooler.extractForeground(false);
-            triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
-        }
-        foreground_cloud = triple_pooler.getSemanticLabels();
+	//computeNormals(cloud, cloud_normal, radius);
+	//pcl::PointCloud<PointT>::Ptr label_cloud = recog.recognize(cloud, cloud_normal);
 
-     sensor_msgs::PointCloud2 output_msg;
-    toROSMsg(*foreground_cloud,output_msg);
-    output_msg.header.frame_id = pc.header.frame_id;
-    pc_pub.publish(output_msg);
+	spPooler triple_pooler;
+	triple_pooler.lightInit(scene, hie_producer, radius, down_ss);
+	std::cerr << "LAB Pooling!" << std::endl;
+	triple_pooler.build_SP_LAB(lab_pooler_set, false);
 
-   /*if( viewer )
-    {
-        viewer->removeAllPointClouds();
-        viewer->addPointCloud(label_cloud, "labels");
-        viewer->spin();
-    }*/
+	pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
+	for( int ll = 0 ; ll <= 2 ; ll++ )
+	{
+		std::cerr << "L" << ll <<" Inference!" << std::endl;
+		bool reset_flag = ll == 0 ? true : false;
+		if( ll >= 1 ) {
+			triple_pooler.extractForeground(false);
+		}
+		triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
+	}
+	foreground_cloud = triple_pooler.getSemanticLabels();
+	
+	pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
+	for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
+	{
+		if( foreground_cloud->at(l).label > 0 )
+			final_cloud->push_back(foreground_cloud->at(l));
+	}
+
+	sensor_msgs::PointCloud2 output_msg;
+	toROSMsg(*final_cloud,output_msg);
+	output_msg.header.frame_id = pc.header.frame_id;
+	pc_pub.publish(output_msg);
+
+	if( viewer )
+	  {
+	  viewer->removeAllPointClouds();
+	  //viewer->addPointCloud(final_cloud, "labels");
+	  visualizeLabels(foreground_cloud, viewer, color_label);
+	  viewer->spin();
+    }
   }
 
 
@@ -150,7 +161,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
 int main(int argc, char** argv)
 {
     //std::string in_path("/home/chi/Downloads/");
-    std::string scene_name("UR5_1");
+    //std::string scene_name("UR5_1");
 
     ros::init(argc,argv,"sp_segmenter_node");    
     ros::NodeHandle nh;
@@ -158,9 +169,9 @@ int main(int argc, char** argv)
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
 
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
-    pcl::console::parse_argument(argc, argv, "--i", scene_name);
+    //pcl::console::parse_argument(argc, argv, "--i", scene_name);
     
-    in_path = in_path + scene_name + "/";
+    //in_path = in_path + scene_name + "/";
     
     //std::string out_cloud_path("../../data_pool/IROS_demo/UR5_1/");
     //pcl::console::parse_argument(argc, argv, "--o", out_cloud_path);
@@ -180,7 +191,6 @@ int main(int argc, char** argv)
     std::cerr << "Ratio: " << ratio << std::endl;
     std::cerr << "Downsample: " << down_ss << std::endl;
     
-    bool view_flag = false;
     if( pcl::console::find_switch(argc, argv, "-v") == true )
         view_flag = true;
     
@@ -235,7 +245,6 @@ int main(int argc, char** argv)
     
 /***************************************************************************************************************/
     
-    pcl::visualization::PCLVisualizer::Ptr viewer;
     if( view_flag )
     {
         viewer = pcl::visualization::PCLVisualizer::Ptr (new pcl::visualization::PCLVisualizer ("3D Viewer"));
