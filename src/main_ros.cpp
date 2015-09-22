@@ -149,7 +149,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
 
 int main(int argc, char** argv)
 {
-    std::string in_path("/home/chi/Downloads/");
+    //std::string in_path("/home/chi/Downloads/");
     std::string scene_name("UR5_1");
 
     ros::init(argc,argv,"sp_segmenter_node");    
@@ -162,11 +162,11 @@ int main(int argc, char** argv)
     
     in_path = in_path + scene_name + "/";
     
-    std::string out_cloud_path("../../data_pool/IROS_demo/UR5_1/");
-    pcl::console::parse_argument(argc, argv, "--o", out_cloud_path);
+    //std::string out_cloud_path("../../data_pool/IROS_demo/UR5_1/");
+    //pcl::console::parse_argument(argc, argv, "--o", out_cloud_path);
     //boost::filesystem::create_directories(out_cloud_path);
     
-    std::string svm_path("UR5_svm/");
+    std::string svm_path("data/UR5_svm/");
     std::string shot_path("UW_shot_dict/");
 //    std::string sift_path("UW_new_sift_dict/");
 //    std::string fpfh_path("UW_fpfh_dict/");
