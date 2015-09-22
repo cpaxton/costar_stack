@@ -9,7 +9,7 @@ project(sp_segmenter)
 find_package(PCL REQUIRED) 
 find_package(OpenCV REQUIRED) 
 find_package(OpenMP REQUIRED)
-find_package(Boost COMPONENTS Chrono)
+#find_package(Boost COMPONENTS Chrono)
 
 IF(OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -57,13 +57,16 @@ target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(spSVM src/main_sp_svm.cpp) 
-target_link_libraries(spSVM Utility DataParser PoolLib ${Boost_LIBRARIES} 
+target_link_libraries(spSVM Utility DataParser PoolLib #${Boost_LIBRARIES} 
               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
-target_link_libraries(SimpleSegmenter Utility DataParser PoolLib ${Boost_LIBRARIES} 
+target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRARIES} 
               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
+add_executable(SPSegmenterNode src/main_ros.cpp) 
+target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
+              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 #add_executable(sift_test src/main_sift_test.cpp) 
 #target_link_libraries(sift_test Utility DataParser PoolLib ${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
