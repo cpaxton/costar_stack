@@ -157,7 +157,7 @@ int main(int argc, char** argv)
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
 
-    pcl::console::parse_argument(argc, argv, "--p", in_path);
+    //pcl::console::parse_argument(argc, argv, "--p", in_path);
     pcl::console::parse_argument(argc, argv, "--i", scene_name);
     
     in_path = in_path + scene_name + "/";
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
     //boost::filesystem::create_directories(out_cloud_path);
     
     std::string svm_path("data/UR5_svm/");
-    std::string shot_path("UW_shot_dict/");
+    std::string shot_path("data/UW_shot_dict/");
 //    std::string sift_path("UW_new_sift_dict/");
 //    std::string fpfh_path("UW_fpfh_dict/");
 /***************************************************************************************************************/
