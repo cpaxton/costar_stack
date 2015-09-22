@@ -33,6 +33,8 @@ catkin_package(
   DEPENDS PCL OpenCV OpenMP 
 )
 
+find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
+
 include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} )
 link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
