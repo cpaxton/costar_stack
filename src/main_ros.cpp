@@ -364,9 +364,10 @@ int main(int argc, char** argv)
     
     std::string mesh_path = "data/mesh/";
     std::string cur_name = "drill";
-    int model_id = 0;
+    int model_id = 1;
     objrec->AddModel(mesh_path + cur_name, cur_name);
     model_name[model_id] = cur_name;
+    model_name_map[cur_name] = model_id;
     ModelT mesh_buf = LoadMesh(mesh_path + cur_name + ".obj", cur_name);
     
     mesh_set.push_back(mesh_buf);
