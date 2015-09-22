@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 SET(CMAKE_BUILD_TYPE "Release")
 
 add_definitions(-g -std=c++0x -pthread)
-find_package(catkin REQUIRED COMPONENTS sensor_msgs pcl_conversions)# greedy_objrec_ransac)
+find_package(catkin REQUIRED COMPONENTS sensor_msgs pcl_conversions geometry_msgs)# greedy_objrec_ransac)
 
 project(sp_segmenter)
 
@@ -36,7 +36,7 @@ message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES 
-  CATKIN_DEPENDS sensor_msgs #greedy_objrec_ransac
+  CATKIN_DEPENDS sensor_msgs geometry_msgs #greedy_objrec_ransac
   DEPENDS PCL OpenCV OpenMP 
 )
 

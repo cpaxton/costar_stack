@@ -8,6 +8,8 @@
 // ros stuff
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseArray.h>
 
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
@@ -37,6 +39,7 @@ std::string POINTS_IN("/camera_2/depth_registered/points");
 std::string POINTS_OUT("points_out");
 
 ros::Publisher pc_pub;
+ros::Publisher pose_pub;
 ros::Subscriber pc_sub;
 
 std::map<std::string, int> model_name_map;
@@ -231,7 +234,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	//pcl::PointCloud<PointT>::Ptr label_cloud = recog.recognize(cloud, cloud_normal);
 
 	spPooler triple_pooler;
-	triple_pooler.lightInit(scene, hie_producer, radius, down_ss);
+	triple_pooler.lightInit(scene_f, hie_producer, radius, down_ss);
 	std::cerr << "LAB Pooling!" << std::endl;
 	triple_pooler.build_SP_LAB(lab_pooler_set, false);
 
@@ -246,15 +249,14 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 		}
 		triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
 
+	}
 
-		foreground_cloud = triple_pooler.getSemanticLabels();
-		if( viewer )
-		{
-			//viewer->addPointCloud(final_cloud, "labels");
-			visualizeLabels(foreground_cloud, viewer, color_label);
-			viewer->spin();
-		}
-
+	foreground_cloud = triple_pooler.getSemanticLabels();
+	if( viewer )
+	{
+		//viewer->addPointCloud(final_cloud, "labels");
+		visualizeLabels(foreground_cloud, viewer, color_label);
+		viewer->spin();
 	}
 
 	pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
@@ -272,6 +274,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	/* POSE */
 	if (compute_pose) {
 
+		geometry_msgs::PoseArray msg;
 		for (int i = 0; i < 1; ++i) { // was 99
 			std::vector<poseT> all_poses1;
 
@@ -284,7 +287,20 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			pcl::copyPointCloud(*scene_f, *scene_xyz);
 
 			std::vector<poseT> all_poses =  RefinePoses(scene_xyz, mesh_set, all_poses1);
-			std::cout << "Poses: " << all_poses.size() << std::endl;
+			std::cout << "# Poses found: " << all_poses.size() << std::endl;
+
+			for (poseT &p: all_poses) {
+				geometry_msgs::Pose pmsg;
+				pmsg.position.x = p.shift.x();
+				pmsg.position.y = p.shift.y();
+				pmsg.position.z = p.shift.z();
+				pmsg.orientation.x = p.rotation.x();
+				pmsg.orientation.y = p.rotation.y();
+				pmsg.orientation.z = p.rotation.z();
+				pmsg.orientation.w = p.rotation.w();
+
+				msg.poses.push_back(pmsg);
+			}
 		}
 	}
 
@@ -301,6 +317,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
+    //pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
 
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
     //pcl::console::parse_argument(argc, argv, "--i", scene_name);

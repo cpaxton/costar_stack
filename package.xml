@@ -42,6 +42,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>pcl_conversions</build_depend>
   <build_depend>resource_retriever</build_depend>
@@ -50,6 +51,7 @@
   <build_depend>greedy_objrec_ransac</build_depend>
 
   <run_depend>sensor_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
   <run_depend>pcl_ros</run_depend>
   <run_depend>pcl_conversions</run_depend>
   <run_depend>resource_retriever</run_depend>
