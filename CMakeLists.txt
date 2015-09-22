@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 SET(CMAKE_BUILD_TYPE "Release")
 
-project(nri_object_detector)
+add_definitions(-g -std=c++0x -pthread)
+find_package(catkin REQUIRED COMPONENTS sensor_msgs pcl_conversions resource_retriever pluginlib nodelet)
+
+project(sp_segmenter)
 
 find_package(PCL REQUIRED) 
 find_package(OpenCV REQUIRED) 
@@ -23,13 +26,20 @@ else()
 endif()
 message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES 
+  CATKIN_DEPENDS sensor_msgs 
+  DEPENDS PCL OpenCV OpenMP 
+)
+
 include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} )
 link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
 
 #library
 add_library(Utility utility/typedef.h utility/utility.h utility/utility.cpp utility/mcqd.h utility/mcqd.cpp) 
-target_link_libraries(Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(liblinear utility/liblinear/linear.h utility/liblinear/tron.h 
             utility/liblinear/linear.cpp utility/liblinear/predict.cpp utility/liblinear/tron.cpp 
@@ -37,14 +47,14 @@ add_library(liblinear utility/liblinear/linear.h utility/liblinear/tron.h
             utility/liblinear/ddot.cpp utility/liblinear/dnrm2.cpp utility/liblinear/dscal.cpp)
 
 add_library(PoolLib include/features.h src/features.cpp src/HierFea.cpp src/Int_Imager.cpp src/Pooler_L0.cpp src/sp.cpp)
-target_link_libraries(PoolLib Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(PoolLib Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(DataParser include/UWDataParser.h include/BBDataParser.h include/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
-target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 
-add_executable(spTraining src/main_sp_training.cpp) 
-target_link_libraries(spTraining Utility DataParser PoolLib ${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+#add_executable(spTraining src/main_sp_training.cpp) 
+#target_link_libraries(spTraining Utility DataParser PoolLib ${Boost_LIBRARIES} 
+#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(spSVM src/main_sp_svm.cpp) 
 target_link_libraries(spSVM Utility DataParser PoolLib ${Boost_LIBRARIES} 
