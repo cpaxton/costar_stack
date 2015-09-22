@@ -37,6 +37,7 @@ std::vector<ModelT> mesh_set;
 
 std::string POINTS_IN("/camera_2/depth_registered/points");
 std::string POINTS_OUT("points_out");
+std::string POSES_OUT("poses_out");
 
 ros::Publisher pc_pub;
 ros::Publisher pose_pub;
@@ -275,6 +276,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	if (compute_pose) {
 
 		geometry_msgs::PoseArray msg;
+		msg.header.frame_id = pc.header.frame_id;
 		for (int i = 0; i < 1; ++i) { // was 99
 			std::vector<poseT> all_poses1;
 
@@ -291,6 +293,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
 			for (poseT &p: all_poses) {
 				geometry_msgs::Pose pmsg;
+				std::cout <<"pose = ("<<p.shift.x()<<","<<p.shift.y()<<","<<p.shift.z()<<")"<<std::endl;
 				pmsg.position.x = p.shift.x();
 				pmsg.position.y = p.shift.y();
 				pmsg.position.z = p.shift.z();
@@ -301,7 +304,24 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
 				msg.poses.push_back(pmsg);
 			}
+
+			std::cout<<"done objrec ransac"<<std::endl;
+			if( viewer )
+			{
+				std::cout<<"VISUALIZING"<<std::endl;
+				viewer->removeAllPointClouds();
+				viewer->addPointCloud(scene_f, "whole_scene");
+				objrec->visualize_m(viewer, all_poses, model_name_map, color_label);
+				viewer->spin();
+				objrec->clearMesh(viewer, all_poses);
+				viewer->removeAllPointClouds();
+			}
+
+
 		}
+
+		pose_pub.publish(msg);
+
 	}
 
 }
@@ -317,7 +337,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
-    //pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
+    pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
 
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
     //pcl::console::parse_argument(argc, argv, "--i", scene_name);
