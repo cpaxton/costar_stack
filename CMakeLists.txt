@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 SET(CMAKE_BUILD_TYPE "Release")
 
 add_definitions(-g -std=c++0x -pthread)
-find_package(catkin REQUIRED COMPONENTS sensor_msgs pcl_conversions resource_retriever pluginlib nodelet)
+find_package(catkin REQUIRED COMPONENTS sensor_msgs pcl_conversions)# greedy_objrec_ransac)
 
 project(sp_segmenter)
 
@@ -29,14 +29,14 @@ message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES 
-  CATKIN_DEPENDS sensor_msgs 
+  CATKIN_DEPENDS sensor_msgs #greedy_objrec_ransac
   DEPENDS PCL OpenCV OpenMP 
 )
 
 find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
 
-include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} )
-link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS})
+include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} ${catkin_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
 
 #library
@@ -60,15 +60,22 @@ target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${
 
 add_executable(spSVM src/main_sp_svm.cpp) 
 target_link_libraries(spSVM Utility DataParser PoolLib #${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY} )
 
 add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
 target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY} )
 
 add_executable(SPSegmenterNode src/main_ros.cpp) 
 target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY} )
+
+add_library(Utility utility/typedef.h utility/utility.h utility/utility.cpp utility/mcqd.h utility/mcqd.cpp src/seg.h src/seg.cpp) 
+target_link_libraries(Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+
+add_executable(foreRun src/greedyObjRansac.h src/greedyObjRansac.cpp src/main_foreground.cpp)
+target_link_libraries(foreRun Utility ObjRecRANSAC BasicToolsL1 BasicTools VtkBasics vtkIO vtkCommon vtkRendering Utility ${OpenCV_LIBS} ${PCL_LIBRARIES} rt)
+
 #add_executable(sift_test src/main_sift_test.cpp) 
 #target_link_libraries(sift_test Utility DataParser PoolLib ${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
