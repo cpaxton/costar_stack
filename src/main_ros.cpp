@@ -123,6 +123,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	std::cerr << "LAB Pooling!" << std::endl;
 	triple_pooler.build_SP_LAB(lab_pooler_set, false);
 
+			viewer->removeAllPointClouds();
 	pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
 	for( int ll = 0 ; ll <= 2 ; ll++ )
 	{
@@ -132,8 +133,17 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			triple_pooler.extractForeground(false);
 		}
 		triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
+
+
+		foreground_cloud = triple_pooler.getSemanticLabels();
+		if( viewer )
+		{
+			//viewer->addPointCloud(final_cloud, "labels");
+			visualizeLabels(foreground_cloud, viewer, color_label);
+			viewer->spin();
+		}
+
 	}
-	foreground_cloud = triple_pooler.getSemanticLabels();
 	
 	pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
 	for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
@@ -146,14 +156,6 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	toROSMsg(*final_cloud,output_msg);
 	output_msg.header.frame_id = pc.header.frame_id;
 	pc_pub.publish(output_msg);
-
-	if( viewer )
-	  {
-	  viewer->removeAllPointClouds();
-	  //viewer->addPointCloud(final_cloud, "labels");
-	  visualizeLabels(foreground_cloud, viewer, color_label);
-	  viewer->spin();
-    }
   }
 
 
@@ -280,10 +282,10 @@ void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visua
         view_cloud->push_back(pt);
     }
     
-    viewer->addPointCloud(view_cloud, "label_cloud");
-//    viewer->spinOnce(1);
-    viewer->spin();
     viewer->removePointCloud("label_cloud");
+    viewer->addPointCloud(view_cloud, "label_cloud");
+//viewer->spinOnce(1);
+    viewer->spin();
 }
 
 pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud)
