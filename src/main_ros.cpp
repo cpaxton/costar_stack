@@ -12,7 +12,6 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // chi objrec ransac utils
-#include <greedy/utility.h>
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
 bool view_flag = false;
@@ -92,121 +91,6 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
     return scene_f;
 }
 
-/*********************************************************************************/
-/*********************************************************************************/
-void showPoses(const std::vector<ModelT> &model_set, const std::vector<poseT> &poses, pcl::visualization::PCLVisualizer::Ptr viewer, bool adjust = true)
-{
-  std::vector<pcl::PointCloud<myPointXYZ>::Ptr> rec;
-  for( std::vector<ModelT>::const_iterator it = model_set.begin() ; it < model_set.end() ; it++ )
-  {
-    pcl::PointCloud<myPointXYZ>::Ptr cur_cloud(new pcl::PointCloud<myPointXYZ>()); 
-    pcl::fromPCLPointCloud2(it->model_mesh->cloud, *cur_cloud);
-    rec.push_back(cur_cloud);
-  }
-
-  int count = 0;
-  Eigen::Quaternionf calibrate_rot(Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f (1, 0, 0)));
-  for(std::vector<poseT>::const_iterator it = poses.begin() ; it < poses.end() ; it++, count++ )
-  {
-    for( int i = 0 ; i < model_set.size() ; i++ )
-    {
-      if(model_set[i].model_label == it->model_name )
-      {
-        pcl::PointCloud<myPointXYZ>::Ptr cur_cloud(new pcl::PointCloud<myPointXYZ>()); 
-        //pcl::transformPointCloud(*rec[i], *cur_cloud, Eigen::Vector3f (0, 0, 0), calibrate_rot);
-        if( adjust )
-          pcl::transformPointCloud(*rec[i], *cur_cloud, it->shift, it->rotation*calibrate_rot);
-        else
-          pcl::transformPointCloud(*rec[i], *cur_cloud, it->shift, it->rotation);
-
-        std::stringstream ss;
-        ss << count;
-
-        viewer->addPolygonMesh<myPointXYZ>(cur_cloud, model_set[i].model_mesh->polygons, it->model_name+"_"+ss.str());
-        if( it->model_name == "link" )
-          viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.55, 0.05, it->model_name+"_"+ss.str());
-        else if( it->model_name == "node" )
-          viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.05, 0.55, 1.0, it->model_name+"_"+ss.str());
-        break;
-      }
-    }
-
-  }
-}
-
-bool matchCloud(const ModelT &model, const ModelT &cloud, float ratio, float T)
-{
-  if( model.model_label != cloud.model_label || sqrDistPt(model.model_center->at(0), cloud.model_center->at(0)) >= 0.1*0.1 )
-    return false;
-
-  pcl::search::KdTree<myPointXYZ> tree;
-  tree.setInputCloud(model.model_cloud);
-
-  float sqrT = T*T;
-  int count = 0;  
-  for( pcl::PointCloud<myPointXYZ>::const_iterator it = cloud.model_cloud->begin() ; it < cloud.model_cloud->end() ; it++ )
-  {               
-    std::vector<int> indices (1);
-    std::vector<float> sqr_distances (1);
-    int nres = tree.nearestKSearch(*it, 1, indices, sqr_distances);
-    if ( nres >= 1 && sqr_distances[0] <= sqrT )
-      count++;
-  }
-  //std::cerr << "COUNT: " << (count+0.0) / cloud.model_cloud->size() << std::endl;
-  if( (count+0.0) / cloud.model_cloud->size() > ratio )
-    return true;
-  else
-    return false;
-}
-
-int overlapPose(const std::vector<ModelT> &model_set, const std::vector<poseT> &est_poses, const std::vector<poseT> &gt_poses)
-{
-  std::vector<ModelT> est_insts, gt_insts;
-  for( std::vector<poseT>::const_iterator it = est_poses.begin() ; it < est_poses.end() ; it++ ){
-    for( int i = 0 ; i < model_set.size() ; i++ ){
-      if( model_set[i].model_label == it->model_name )
-      {
-        ModelT new_data;
-        new_data.model_label = it->model_name;
-        new_data.model_cloud = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>()); 
-        new_data.model_center = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>());
-        pcl::transformPointCloud(*model_set[i].model_cloud, *new_data.model_cloud, it->shift, it->rotation);
-        pcl::transformPointCloud(*model_set[i].model_center, *new_data.model_center, it->shift, it->rotation);
-        est_insts.push_back(new_data);
-        break;
-      }
-    }
-  }
-  Eigen::Quaternionf calibrate_rot(Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f (1, 0, 0)));
-  for( std::vector<poseT>::const_iterator it = gt_poses.begin() ; it < gt_poses.end() ; it++ ){
-    for( int i = 0 ; i < model_set.size() ; i++ ){
-      if( model_set[i].model_label == it->model_name )
-      {
-        ModelT new_data;
-        new_data.model_label = it->model_name;
-        new_data.model_cloud = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>()); 
-        new_data.model_center = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>());
-        pcl::transformPointCloud(*model_set[i].model_cloud, *new_data.model_cloud, it->shift, it->rotation*calibrate_rot);
-        pcl::transformPointCloud(*model_set[i].model_center, *new_data.model_center, it->shift, it->rotation*calibrate_rot);
-        gt_insts.push_back(new_data);
-        break;
-      }
-    }
-  }
-  //std::cerr << est_insts.size() << " " << gt_insts.size() << std::endl;
-  int true_count = 0;
-  for( std::vector<ModelT>::iterator est_it = est_insts.begin(); est_it < est_insts.end() ; est_it++ ){
-    for( std::vector<ModelT>::iterator gt_it = gt_insts.begin(); gt_it < gt_insts.end() ; gt_it++ ){
-      if( matchCloud(*gt_it, *est_it, 0.7, 0.01) == true )
-      {
-        true_count++;
-        break;
-      }
-    }
-  }
-
-  return true_count;
-}
 /*********************************************************************************/
 /*********************************************************************************/
 

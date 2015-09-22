@@ -5,7 +5,7 @@
  * Created on March 30, 2015, 4:56 PM
  */
 
-#include "index.h"
+#include "../include/index.h"
 
 #include <BasicTools/Vtk/VtkTransform.h>
 #include <BasicTools/ComputationalGeometry/Algorithms/RANSACPlaneDetector.h>
