@@ -47,8 +47,8 @@ link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} ${catkin_LIBRARY_DIR
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
 
 #library
-add_library(Utility utility/typedef.h utility/utility.h utility/utility.cpp utility/mcqd.h utility/mcqd.cpp src/seg.h src/seg.cpp) 
-target_link_libraries(Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
+add_library(Utility utility/typedef.h utility/utility.h utility/utility.cpp utility/mcqd.h utility/mcqd.cpp src/seg.h src/seg.cpp src/greedyObjRansac.h src/greedyObjRansac.cpp) 
+target_link_libraries(Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
 add_library(liblinear utility/liblinear/linear.h utility/liblinear/tron.h 
             utility/liblinear/linear.cpp utility/liblinear/predict.cpp utility/liblinear/tron.cpp 
