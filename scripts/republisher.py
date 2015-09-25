@@ -25,8 +25,9 @@ if __name__ == '__main__':
     try:
         rate = rospy.Rate(10)    
         while not rospy.is_shutdown():
-            (trans, rot) = pm.toTF(last_pose)
-            br.sendTransform(trans, rot, rospy.Time.now(), 'drill', 'world')
+            if not last_pose is None:
+                (trans, rot) = pm.toTF(last_pose)
+                br.sendTransform(trans, rot, rospy.Time.now(), 'drill', 'world')
             rate.sleep()
     except rospy.ROSInterruptException, e:
         pass
