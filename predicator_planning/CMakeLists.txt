@@ -4,6 +4,9 @@ project(predicator_planning)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
+find_package(cmake_modules REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_msgs
@@ -15,7 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf_conversions
   urdf
-  urdfdom
   xacro
 )
 
