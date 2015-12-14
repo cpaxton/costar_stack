@@ -1,0 +1,3 @@
+# SP Segmenter
+
+The file "main_ros.cpp" is what you run if you want to use this as a ROS node.
