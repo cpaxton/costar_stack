@@ -35,7 +35,7 @@ boost::shared_ptr<greedyObjRansac> objrec(new greedyObjRansac(pairWidth, voxelSi
 std::vector<std::string> model_name(OBJECT_MAX, "");
 std::vector<ModelT> mesh_set;
 
-std::string POINTS_IN("/camera_2/depth_registered/points");
+std::string POINTS_IN("/camera/depth_registered/points");
 std::string POINTS_OUT("points_out");
 std::string POSES_OUT("poses_out");
 
@@ -239,7 +239,10 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	std::cerr << "LAB Pooling!" << std::endl;
 	triple_pooler.build_SP_LAB(lab_pooler_set, false);
 
-	viewer->removeAllPointClouds();
+  if(viewer)
+  {
+	  viewer->removeAllPointClouds();
+  }
 	pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
 	for( int ll = 0 ; ll <= 2 ; ll++ )
 	{
@@ -463,10 +466,13 @@ void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visua
         view_cloud->push_back(pt);
     }
     
-    viewer->removePointCloud("label_cloud");
-    viewer->addPointCloud(view_cloud, "label_cloud");
-//viewer->spinOnce(1);
-    viewer->spin();
+    if(viewer)
+    {
+      viewer->removePointCloud("label_cloud");
+      viewer->addPointCloud(view_cloud, "label_cloud");
+      //viewer->spinOnce(1);
+      viewer->spin();
+    }
 }
 
 pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud)

@@ -14,8 +14,9 @@ from geometry_msgs.msg import PoseArray
 last_pose = None
 
 def callback(msg):
-    if len(last_pose) > 0:
-        last_pose = msg[0]
+    if len(msg.poses) > 0:
+        global last_pose
+        last_pose = msg.poses[0]
         
 if __name__ == '__main__':
     rospy.init_node('posearray_tf_republisher')
@@ -26,9 +27,9 @@ if __name__ == '__main__':
     try:
         rate = rospy.Rate(10)    
         while not rospy.is_shutdown():
-            if not last_pose is None:
-                (trans, rot) = pm.toTF(last_pose)
+            if not (last_pose is None):
+                (trans, rot) = pm.toTf(pm.fromMsg(last_pose))
                 br.sendTransform(trans, rot, rospy.Time.now(), 'drill', 'world')
             rate.sleep()
     except rospy.ROSInterruptException, e:
-        pass
+        print e
