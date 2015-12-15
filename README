@@ -1,3 +1,24 @@
 # SP Segmenter
 
 The file "main_ros.cpp" is what you run if you want to use this as a ROS node.
+
+## Prerequisites
+
+We need:
+  - Sequence of object partial views in the correct lighting conditions
+  - Mesh of the object (for ObjRecRANSAC)
+  
+## Training Model
+
+
+
+## Executing
+
+How to run the code (with the default SVM):
+
+```
+rosrun sp_segmenter sp_segmenter_node -p
+rosrun sp_segmenter republisher.py
+```
+
+You need to run this from the root of the directory right now.
