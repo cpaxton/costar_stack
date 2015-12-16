@@ -1,6 +1,22 @@
 #include <opencv2/core/core.hpp>
-
 #include "../include/sp.h"
+
+/**************
+ * This is an example program for extracting features from point cloud and 
+ * training SVM.
+ * The point cloud data should be in organized format. It is also the default format
+ * you get from openni2_launch.
+ * For object training data, you should get rid of the background data by setting their 
+ * (x,y,z) to (inf, inf, inf) while keeping their rgba values in the organized format.
+ * This is used for computing complete sift feature.
+ * When you specify a data path, the program will read all .pcd files as training data.
+ * Since background data is the whole scene and object data is just a segment, please tune the 
+ * sampling supervoxel numbers according to different sources.
+ * 
+ * Chi Li
+ * 12/16/2015
+**************/
+
 
 class feaExtractor{
 public:
@@ -37,7 +53,6 @@ private:
 //*
 int main(int argc, char** argv)
 {
-    omp_set_num_threads(7);
     std::string root_path("/home/chi/JHUIT/new_ht10/");
     std::vector<std::string> obj_names;
     obj_names.push_back("drill");    //adding object classes by push back
@@ -49,6 +64,7 @@ int main(int argc, char** argv)
     std::string out_svm_path("svm_pool/");
     boost::filesystem::create_directories(out_svm_path);
     
+    // paths for dictionaries
     std::string shot_path("UW_shot_dict/");
     std::string sift_path("UW_sift_dict/");
     std::string fpfh_path("UW_fpfh_dict/");
@@ -58,6 +74,7 @@ int main(int argc, char** argv)
     int obj_sample_num = 10;
     int bg_sample_num = 100;
     int cur_order_max = -1;
+    
     // extracting features for object classes
     for( size_t i = 0 ; i < obj_names.size() ; i++ )
     {
@@ -98,7 +115,7 @@ int main(int argc, char** argv)
         bg_fea[ll].clear();
     }
     
-    
+    cur_order_max = 3;
     // Reading features to train svm
     float CC = 0.001;
     std::vector< std::pair<int, int> > piece_inds;
