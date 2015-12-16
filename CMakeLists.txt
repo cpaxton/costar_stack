@@ -65,9 +65,13 @@ target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${
 #target_link_libraries(spTraining Utility DataParser PoolLib ${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(spSVM src/main_sp_svm.cpp) 
-target_link_libraries(spSVM Utility DataParser PoolLib #${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
+#add_executable(spSVM src/main_sp_svm.cpp) 
+#target_link_libraries(spSVM Utility DataParser PoolLib #${Boost_LIBRARIES} 
+#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
+
+add_executable(spCompact src/main_sp_compact.cpp) 
+target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES} 
+              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
 target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRARIES} 
