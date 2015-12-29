@@ -1,5 +1,5 @@
 #include <opencv2/core/core.hpp>
-#include "../include/sp.h"
+#include "../include/features.h"
 
 /**************
  * This is an example program for extracting features from point cloud and 

@@ -24,8 +24,16 @@ SVM learning is done in ```main_sp_svm.cpp.```
 How to run the code (with the default SVM):
 
 ```
-rosrun sp_segmenter sp_segmenter_node -p
+rosrun sp_segmenter SPSegmenterNode -p
 rosrun sp_segmenter republisher.py
 ```
 
 You need to run this from the root of the directory right now.
+
+By default, the segmenter node listens to the ```/camera/depth_registered/points``` topic and publishes its output on the ```points_out``` topic. You can remap these on the command line to deal with different sources.
+
+Adding the ```-v``` flag will visualize segmenter results:
+
+```
+rosrun sp_segmenter SPSegmenterNode -p -v
+```

@@ -1,14 +1,27 @@
 cmake_minimum_required(VERSION 2.8.3)
 SET(CMAKE_BUILD_TYPE "Release")
+find_package(catkin COMPONENTS sensor_msgs pcl_conversions geometry_msgs QUIET)# greedy_objrec_ransac)
 
-add_definitions(-g -std=c++0x -pthread)
-find_package(catkin REQUIRED COMPONENTS sensor_msgs pcl_conversions geometry_msgs)# greedy_objrec_ransac)
+project(sp_segmenter C CXX)
 
-project(sp_segmenter)
+
+
+# Enable C++11
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support, or our tests failed to detect it correctly. Please use a different C++ compiler or report this problem to the developers.")
+endif()
+
 
 find_package(PCL REQUIRED) 
 find_package(OpenCV REQUIRED) 
-find_package(OpenMP REQUIRED)
+find_package(OpenMP )
 #find_package(Boost COMPONENTS Chrono)
 find_package(VTK)
 
@@ -21,6 +34,7 @@ ENDIF(NOT VTK_FOUND)
 IF(OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  add_definitions(-DUSE_OPENMP)
   message (STATUS "Found OpenMP")
 ENDIF(OPENMP_FOUND)
 
@@ -33,12 +47,14 @@ else()
 endif()
 message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES 
-  CATKIN_DEPENDS sensor_msgs geometry_msgs #greedy_objrec_ransac
-  DEPENDS PCL OpenCV OpenMP 
-)
+if(catkin_FOUND)
+    catkin_package(
+      INCLUDE_DIRS include
+      LIBRARIES 
+      CATKIN_DEPENDS sensor_msgs geometry_msgs #greedy_objrec_ransac
+      DEPENDS PCL OpenCV OpenMP 
+    )
+endif()
 
 find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
 
@@ -69,17 +85,19 @@ target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${
 #target_link_libraries(spSVM Utility DataParser PoolLib #${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 
-add_executable(spCompact src/main_sp_compact.cpp) 
-target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(spCompact src/main_sp_compact.cpp)
+# target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES}
+#               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
 target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRARIES} 
               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
 
-add_executable(SPSegmenterNode src/main_ros.cpp) 
-target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
+if(CATKIN_FOUND)
+    add_executable(SPSegmenterNode src/main_ros.cpp) 
+    target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
+                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
+endif(CATKIN_FOUND)
 
 add_executable(foreRun src/greedyObjRansac.h src/greedyObjRansac.cpp src/main_foreground.cpp)
 target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
