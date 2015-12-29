@@ -47,12 +47,14 @@ else()
 endif()
 message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES 
-  CATKIN_DEPENDS sensor_msgs geometry_msgs #greedy_objrec_ransac
-  DEPENDS PCL OpenCV OpenMP 
-)
+if(catkin_FOUND)
+    catkin_package(
+      INCLUDE_DIRS include
+      LIBRARIES 
+      CATKIN_DEPENDS sensor_msgs geometry_msgs #greedy_objrec_ransac
+      DEPENDS PCL OpenCV OpenMP 
+    )
+endif()
 
 find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
 
@@ -92,9 +94,11 @@ add_executable(SimpleSegmenter src/main_simple_seg.cpp)
 target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRARIES} 
               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
 
-add_executable(SPSegmenterNode src/main_ros.cpp) 
-target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
+if(CATKIN_FOUND)
+    add_executable(SPSegmenterNode src/main_ros.cpp) 
+    target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
+                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
+endif(CATKIN_FOUND)
 
 add_executable(foreRun src/greedyObjRansac.h src/greedyObjRansac.cpp src/main_foreground.cpp)
 target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
