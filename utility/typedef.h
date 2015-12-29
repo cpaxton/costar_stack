@@ -51,7 +51,9 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
 
+#ifdef USE_OPENMP
 #include <omp.h>
+#endif // USE_OPENMP
 
 #define EPS 0.0000000001
 #define PI 3.14159265358979
