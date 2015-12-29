@@ -13,7 +13,7 @@
 
 /**************************** UW Data Parser ************************************/
 // Load one instance at a time
-void PreProcess_UW(std::string in_path, std::string out_path, pcl::visualization::PCLVisualizer::Ptr viewer);    //convert to binary, filter point cloud, compute normals, save in binary
+void PreProcess_UW(std::string in_path, std::string out_path);//, pcl::visualization::PCLVisualizer::Ptr viewer);    //convert to binary, filter point cloud, compute normals, save in binary
 
 void batch_PreProcess_UW(std::string in_path, std::string out_path, int c1 = -1, int c2 = -1);   //batching preprocess functions
 

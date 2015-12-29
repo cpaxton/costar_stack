@@ -4,9 +4,10 @@
  *
  * Created on July 25, 2014, 2:36 PM
  */
+#pragma once
 
 #include "../include/index.h"
-//#include "../omp/ompcore.h"
+#include "../omp/ompcore.h"
 
 struct Hypo{
     cv::Rect box;
@@ -78,7 +79,7 @@ void getSHOTCode_ss(const MulInfoT &data, const cv::Mat dict, cv::flann::Index &
 
 cv::Mat getColorDiff(const pcl::PointCloud<PointT>::Ptr cloud);
 
-//std::vector<cv::KeyPoint> extSIFTKeys(const cv::Mat &cur_gray, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec);
+std::vector<cv::KeyPoint> extSIFTKeys(const cv::Mat &cur_gray, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec);
 
 class Pooler_L0{
 public:
@@ -132,56 +133,6 @@ cv::Mat multiFPFHPool(const std::vector< boost::shared_ptr<Pooler_L0> > &pooler_
 
 std::vector<cv::Mat> multiPool_raw(const std::vector< boost::shared_ptr<Pooler_L0> > &pooler_set, const MulInfoT &inst, const std::vector<cv::Mat> &local_fea);
 
-class Hier_Pooler{
-public:
-    Hier_Pooler(float rad = 0.03);
-    ~Hier_Pooler();
-    
-    std::vector<cv::Mat> getHierFea(MulInfoT &data, int layer);
-    // For the usage of Dictionary Learning, SubSampling features
-    std::vector<cv::Mat> getRawFea(MulInfoT &data, int layer, size_t max_num);
-    
-    void setRatio(float rr_) {ratio=rr_;}
-    std::vector<int> LoadDict_L0(std::string path, std::string colorK, std::string depthK, std::string jointK="");
-    std::vector<int> LoadDict_L1(std::string dict_path, std::vector<std::string> dictK);
-    std::vector<int> LoadDict_L2(std::string dict_path, std::vector<std::string> dictK);
-    
-    std::vector<int> sampleRaw_L0(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::PointCloud<NormalT>::Ptr cloud_normal,
-                    cv::Mat &depth_fea, cv::Mat &color_fea, int max_num, float rad = 0.03);
-    std::vector<cv::Mat> EncodeLayer_L0(const cv::Mat &depth_fea, const cv::Mat &color_fea);
-    
-private:
-    void computeRaw_L0(MulInfoT &data, cv::Mat &depth_fea, cv::Mat &color_fea, float rad = 0.03);
-    
-    
-    std::vector<cv::Mat> PoolLayer_L1(const MulInfoT &data, const std::vector<cv::Mat> code_L0, std::vector<size_t> idxs, bool max_pool=true);
-    std::vector<cv::Mat> EncodeLayer_L1(const std::vector<cv::Mat> rawfea_L1);
-    
-    std::vector<cv::Mat> PoolLayer_L2(const MulInfoT &data, const std::vector<cv::Mat> code_L1, std::vector<size_t> idxs, bool max_pool=true);
-    std::vector<cv::Mat> EncodeLayer_L2(const std::vector<cv::Mat> rawfea_L2);
-    
-    cv::Mat dict_color_L0, dict_depth_L0, dict_joint_L0;
-    cv::flann::Index tree_color_L0, tree_depth_L0, tree_joint_L0;
-    
-    cv::Mat dict_colorInLAB_L1, dict_colorInXYZ_L1, dict_depthInLAB_L1, dict_depthInXYZ_L1;
-    cv::flann::Index tree_colorInLAB_L1, tree_colorInXYZ_L1, tree_depthInLAB_L1, tree_depthInXYZ_L1;
-    
-    cv::Mat dict_colorInLAB_L2, dict_colorInXYZ_L2, dict_depthInLAB_L2, dict_depthInXYZ_L2;
-    cv::flann::Index tree_colorInLAB_L2, tree_colorInXYZ_L2, tree_depthInLAB_L2, tree_depthInXYZ_L2;
-    
-    //0: color-lab
-    //1: depth-lab
-    //2: color-xyz
-    //3: depth-xyz
-    bool pool_flag[4];          
-    int pool_type_num;          //4
-    float pool_radius_L0;       // 0.03
-    float pool_radius_L1[2];    // 0.05, 0.05
-    float pool_radius_L2[2];    // 0.05, 0.05
-    
-    float ratio;                //0.15
-};
-
 class IntImager{
 public:
     IntImager(float ap=0.5);
@@ -225,103 +176,5 @@ private:
     cv::Mat int_map2d, int_uv;
     pcl::PointCloud<PointT>::Ptr cur_down_cloud;
     
-};
-
-class spExt{
-public:
-    spExt(float ss_=0.005);
-    ~spExt();
-    
-    void LoadPointCloud(const pcl::PointCloud<PointT>::Ptr cloud);
-    pcl::PointCloud<PointT>::Ptr getCloud();
-    pcl::PointCloud<PointLT>::Ptr getLabels();
-    IDXSET getSegsToCloud();
-    
-    IDXSET getSPIdx(int level);
-    std::vector<pcl::PointCloud<PointT>::Ptr> getSPCloud(int level);
-//    void updateLevel(int level, const IDXSET &in_idx);
-    void setSPFlags(const std::vector<int> &sp_flags_, bool constrained_flag);
-    void clear();
-    
-    void setSS(float ss_){down_ss = ss_;}
-    void setParams(float voxel_resol, float seed_resol, float color_w, float spatial_w, float normal_w);
-private:
-    pcl::PointCloud<PointT>::Ptr down_cloud;
-    pcl::PointCloud<PointLT>::Ptr label_cloud;
-    
-    std::vector<pcl::PointCloud<PointT>::Ptr> low_segs;
-    std::vector<int> sp_flags;
-    IDXSET segs_to_cloud;
-    std::vector<IDXSET> sp_level_idx;
-    
-    std::multimap<uint32_t, uint32_t> graph;
-    
-    int low_seg_num;
-    float down_ss;
-    
-    float voxel_resol;
-    float seed_resol;
-    float color_w;
-    float spatial_w;
-    float normal_w;
-    
-    void buildOneSPLevel(int level);
-};
-
-class spPooler{
-public:
-    spPooler();
-    ~spPooler();
-    
-    void build_SP_LAB(const std::vector< boost::shared_ptr<Pooler_L0> > &lab_pooler_set, bool max_pool_flag = false);
-    void build_SP_FPFH(const std::vector< boost::shared_ptr<Pooler_L0> > &fpfh_pooler_set, float radius, bool max_pool_flag = false);
-    //void build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &sift_pooler_set, Hier_Pooler &cshot_producer,  const std::vector<cv::SiftFeatureDetector*> &sift_det_vec, bool max_pool_flag = false);
-    
-//    pcl::PointCloud<PointT>::Ptr semanticSegment(const std::vector<model*> &model_set, int level);
-    std::vector<cv::Mat> gethardNegtive(const model *model_set, int level, bool max_pool = false);
-    void InputSemantics(const model *model_set, int level, bool reset = false, bool max_pool = false);
-    pcl::PointCloud<PointLT>::Ptr getSemanticLabels();
-    std::vector<cv::Mat> sampleSPFea(const int level, int sample_num = -1, bool max_pool_flag = false, bool normalized = true);
-//    std::vector<cv::Mat> sampleSPRawFea(const int level, int sample_num = -1, bool max_pool_flag = false);
-    
-    void init(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler &cshot_producer, float radius, float ss_ = 0.005);
-    void lightInit(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler& cshot_producer, float radius, float down_ss = 0.005);
-    void reset();
-    
-    void extractForeground(bool constrained_flag);
-    
-private:
-    
-    pcl::PointCloud<PointT>::Ptr refineScene(const pcl::PointCloud<PointT>::Ptr scene);
-//    std::vector<cv::Mat> combineRawALL(const IDXSET &idx_set, bool max_pool = false);
-    std::vector<cv::Mat> combineRaw(const std::vector< std::vector<cv::Mat> > &raw_set, const IDXSET &idx_set, bool max_pool = false, bool normalized = true);
-//    std::vector<cv::Mat> getSPRawFea(const IDXSET &idx_set, bool max_pool);
-            
-    std::vector<cv::Mat> getSPFea(const IDXSET &idx_set, bool max_pool = false, bool normalized = true);
-    
-    MulInfoT data;
-    spExt ext_sp;
-    
-    std::vector< std::vector<cv::Mat> > raw_sp_lab;
-    std::vector< std::vector<cv::Mat> > raw_sp_fpfh;
-    std::vector< std::vector<cv::Mat> > raw_sp_sift;
-    
-    std::vector<cv::Mat> raw_color_fea;
-    std::vector<cv::Mat> raw_depth_fea;
-    
-    std::vector<MulInfoT> raw_data_seg;
-    IDXSET segs_to_cloud;
-    
-//    cv::Mat depth_local;
-//    cv::Mat color_local;
-//    pcl::PointCloud<PointT>::Ptr down_cloud;
-    pcl::PointCloud<PointT>::Ptr full_cloud;
-    std::vector<int> segs_label;
-    std::vector<float> segs_max_score;
-    std::vector< std::vector<float> > class_responses;
-    
-    bool max_pool_flag;
-    
-    size_t sp_num;
 };
 

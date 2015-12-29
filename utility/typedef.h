@@ -24,7 +24,7 @@
 #include <pcl/correspondence.h>
 #include <pcl/features/board.h>
 #include <pcl/keypoints/uniform_sampling.h>
-#include <pcl/visualization/pcl_visualizer.h>
+//#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
 #include <pcl/console/parse.h>
 #include <pcl/common/norms.h>
@@ -49,6 +49,7 @@
 #include <pcl/segmentation/supervoxel_clustering.h>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/core/eigen.hpp>
 
 #include <omp.h>

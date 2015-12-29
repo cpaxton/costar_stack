@@ -55,9 +55,8 @@ cv::Mat getFullImage(const pcl::PointCloud<PointT>::Ptr full_cloud);
 
 std::vector< std::vector<int> > connectedNodes(bool adj[][MAX_SEGMENT], int num);
 
-void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl::CorrespondencesPtr corrs, 
-	const pcl::PointCloud<PointT>::Ptr surface1, const pcl::PointCloud<PointT>::Ptr surface2, pcl::visualization::PCLVisualizer::Ptr &viewer);
-
+//void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl::CorrespondencesPtr corrs, 
+//	const pcl::PointCloud<PointT>::Ptr surface1, const pcl::PointCloud<PointT>::Ptr surface2, pcl::visualization::PCLVisualizer::Ptr &viewer);
 
 // From my previous stuff
 void RGBToHSI(int rgb[], float hsi[]);
@@ -121,7 +120,7 @@ bool checkTrans(const Eigen::Matrix4f &tran);
 pcl::PointCloud<PointT>::Ptr createPartialView(const pcl::PointCloud<PointT>::Ptr cloud, float sampleR = 0.01);
 
 void genViews(const pcl::PointCloud<PointT>::Ptr full_cloud, const poseVec &rot_set, 
-        CloudSet &partial_set, poseVec &partial_ground_tran, pcl::visualization::PCLVisualizer::Ptr viewer, float s1=0.001, float s2=0.003);
+        CloudSet &partial_set, poseVec &partial_ground_tran, float s1=0.001, float s2=0.003);
 
 void writePoseTxT(std::string filename, const Eigen::Matrix4f &mat);
 
@@ -149,7 +148,7 @@ cv::Mat readCvMatSparse(std::string filename);
 
 void getNonNormalPCDFiles(std::string path, std::vector<std::string> &files);
 
-cv::Mat sparseToMat(const std::vector<feature_node> &fea, int dim);
+//cv::Mat sparseToMat(const std::vector<feature_node> &fea, int dim);
 
 pcl::PointCloud<PointT>::Ptr NormalizeXY(const pcl::PointCloud<PointT>::Ptr cloud);
 

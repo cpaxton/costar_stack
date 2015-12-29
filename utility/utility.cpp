@@ -716,79 +716,6 @@ std::vector< std::vector<int> > connectedNodes(bool adj[][MAX_SEGMENT], int num)
     return cluster_id;
 }
 
-void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl::CorrespondencesPtr corrs, 
-		const pcl::PointCloud<PointT>::Ptr surface1, const pcl::PointCloud<PointT>::Ptr surface2, pcl::visualization::PCLVisualizer::Ptr &viewer)
-{
-	pcl::PointCloud<myPointXYZ>::Ptr key_pt1 (new pcl::PointCloud<myPointXYZ>());
-	pcl::PointCloud<myPointXYZ>::Ptr key_pt2 (new pcl::PointCloud<myPointXYZ>());
-
-	for( pcl::Correspondences::iterator it = corrs->begin() ; it < corrs->end(); it++ )
-	{
-		key_pt1->push_back(key1[(*it).index_query].xyz);
-		key_pt2->push_back(key2[(*it).index_match].xyz);
-		
-	}
-
-	pcl::PointCloud<PointT>::Ptr off_surface2(new pcl::PointCloud<PointT>());
-	pcl::PointCloud<myPointXYZ>::Ptr off_key_pt2(new pcl::PointCloud<myPointXYZ>());
-	pcl::transformPointCloud (*surface2, *off_surface2, Eigen::Vector3f (-1,0,0), Eigen::Quaternionf (1, 0, 0, 0));
-	pcl::transformPointCloud (*key_pt2, *off_key_pt2, Eigen::Vector3f (-1,0,0), Eigen::Quaternionf (1, 0, 0, 0));
-
-	viewer->addPointCloud (off_surface2, "off_surface2");
-	viewer->addPointCloud (surface1, "surface1");
-	viewer->addPointCloud (key_pt1, "key_pt1");
-	viewer->addPointCloud (off_key_pt2, "off_key_pt2");
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "key_pt1");
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "key_pt1");
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "off_key_pt2");
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "off_key_pt2");
-	//*
-	for (int j = 0; j < key_pt1->size (); j++)
-	{
-		std::stringstream ss_line;
-		ss_line << "corr_line" << j;
-
-		myPointXYZ scene_point = key_pt1->at(j);
-		myPointXYZ model_point = off_key_pt2->at(j);
-
-		//std::cerr<<corrs->at(j).index_query<<std::endl;
-		//std::cerr<<scene_point.x<<" "<<scene_point.y<<" "<<scene_point.z<<std::endl;
-
-		viewer->addLine<myPointXYZ, myPointXYZ> (model_point, scene_point, 0, 255, 0, ss_line.str ());
-	}
-	//*
-	for(int i = 0 ; i < key1.size(); i++ )
-	{
-            if( key1[i].shift_vec.empty() == false)
-            {
-                for( int j = 0 ; j < key1[i].shift_vec.size() ; j++ )
-                {
-                    std::stringstream ss_line;
-                    ss_line << "proj_line" << i <<" " <<j;
-
-                    pcl::PointXYZ temp1, temp2;
-                    temp1.x = key1[i].xyz.x + key1[i].shift_vec[j].x;
-                    temp1.y = key1[i].xyz.y + key1[i].shift_vec[j].y;
-                    temp1.z = key1[i].xyz.z + key1[i].shift_vec[j].z;
-
-                    temp2 = key1[i].xyz; 
-
-                    //std::cerr<<key1[i].shift_vec[j].x<<" "<<key1[i].shift_vec[j].y<<" "<<key1[i].shift_vec[j].z<<std::endl;
-                    viewer->addLine<myPointXYZ, myPointXYZ> (temp1, temp2, 1.0, 1.0, 0.0, ss_line.str ());
-                    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 3, ss_line.str ());
-                    //viewer->spin();
-                }
-            }
-	}
-	//*/
-	viewer->spin();
-	viewer->removePointCloud("off_surface2");
-        viewer->removePointCloud("surface1");
-        viewer->removePointCloud("key_pt1");
-        viewer->removePointCloud("off_key_pt2");
-	viewer->removeAllShapes();
-}
-
 void find_files(const boost::filesystem::path &root, const std::string& ext, std::vector<std::string>& ret)
 {  
     if (!boost::filesystem::exists(root)) 
@@ -894,14 +821,7 @@ pcl::PointCloud<PointLT>::Ptr SPCloud(const pcl::PointCloud<PointT>::Ptr cloud, 
     pcl::PointCloud<PointLT>::Ptr labels = super.getLabeledCloud();
     super.getSupervoxelAdjacency(graph);
     
-    size_t max_label = 0;
-    for(size_t i = 0 ; i < labels->size() ; i++ )
-    {
-        if( labels->at(i).label > max_label )
-            max_label = labels->at(i).label;
-    }    
-    size_t seg_num = max_label + 1;// = super.getMaxLabel() + 1;
-
+    size_t seg_num = super.getMaxLabel() + 1;
     segs.clear();
     segs.resize(seg_num);
     seg_to_cloud.clear();
@@ -943,15 +863,8 @@ pcl::PointCloud<PointT>::Ptr SPCloud(const pcl::PointCloud<PointT>::Ptr cloud, s
     
     pcl::PointCloud<PointLT>::Ptr labels = super.getLabeledCloud();
     super.getSupervoxelAdjacency(graph);
-
-    size_t max_label = 0;
-    for(size_t i = 0 ; i < labels->size() ; i++ )
-    {
-        if( labels->at(i).label > max_label )
-            max_label = labels->at(i).label;
-    }    
-
-    size_t seg_num = max_label + 1;// = super.getMaxLabel() + 1;
+    
+    size_t seg_num = super.getMaxLabel() + 1;
     segs_idx.clear();
     segs_idx.resize(seg_num);
     
@@ -970,154 +883,6 @@ pcl::PointCloud<PointT>::Ptr SPCloud(const pcl::PointCloud<PointT>::Ptr cloud, s
     
     return seg_center;
 }
-
-
-/*
-#ifdef OPENCV_SIFT
-void ComputeSIFT(const Cloud_Image &frame, std::vector<keyT> &key_vec, std::vector<keyDescrT> &key_descr, bool show_keys)
-{
-    cv::SiftFeatureDetector *sift_det = new cv::SiftFeatureDetector(
-            0, // nFeatures
-            4, // nOctaveLayers
-            0.04, // contrastThreshold 
-            10, //edgeThreshold
-            1.6 //sigma
-            );
-    
-    cv::SiftDescriptorExtractor * sift_ext = new cv::SiftDescriptorExtractor();
-    // Compute keypoints and descriptor from the source image in advance
-    std::vector<cv::KeyPoint> keypoints;
-    cv::Mat descriptors;
-    
-    sift_det->detect(frame.gray, keypoints);
-    sift_ext->compute(frame.gray, keypoints, descriptors);
-    printf("%d sift keypoints are found.\n", (int)keypoints.size());
-    
-    if( show_keys )
-    {
-        cv::Mat out_image;
-        cv::drawKeypoints(frame.gray, keypoints, out_image);
-        cv::imshow("keypoints", out_image);
-        cv::waitKey();
-    }
-    for(int i = 0 ; i < keypoints.size() ; i++ )
-    {
-        int r = keypoints[i].pt.y;
-        int c = keypoints[i].pt.x;
-        int idx = frame.map2D3D.at<int>(r, c);
-        if ( idx < 0 )
-            continue;
-        
-        keyDescrT temp_descr;
-        temp_descr.feaDescr = cv::Mat::zeros(1, descriptors.cols, CV_32FC1);
-        descriptors.row(i).copyTo(temp_descr.feaDescr);
-        cv::normalize(temp_descr.feaDescr,temp_descr.feaDescr, 1.0);
-        temp_descr.fea_type = 0;
-        temp_descr.idx = key_vec.size();
-        
-        key_descr.push_back(temp_descr);
-        
-        keyT temp;
-        temp.xyz = frame.surface->at(idx);
-        if( frame.normals->empty() == false )
-            temp.normal = frame.normals->at(idx);
-        key_vec.push_back(temp);
-    }
-}
-#else
-void ComputeSIFT(const Cloud_Image &frame, std::vector<keyT> &key_vec, std::vector<keyDescrT> &key_descr, bool show_keys)
-{
-    //Extract Sift Keypoints and descriptors
-    //This part is ugly but uses best sift implementation
-    cv::imwrite("tmp.pgm",frame.gray);
-#ifdef _WIN32
-    system("siftWin32 <tmp.pgm >tmp.key");
-#else
-    system("./sift <tmp.pgm >tmp.key");
-#endif
-
-    FILE *fp = fopen("tmp.key","r");
-    if (!fp)
-    {
-        std::cerr<<"Cannot open file tmp.key"<<std::endl;
-        exit(0);
-    }
-
-    int key_rows, key_cols;
-    fscanf(fp,"%d %d", &key_rows, &key_cols);
-    if(key_cols != 128)
-    {
-        std::cerr<<"Invalid Keypoint Descriptors"<<std::endl;
-        exit(0);
-    }
-    
-    std::vector<cv::KeyPoint> show_key_vec;
-    float y, x, octave, angle;
-    int r, c, idx;
-    for( int i=0; i < key_rows ; i++ ) 
-    {
-        if (fscanf(fp, "%f %f %f %f", &y, &x, &octave, &angle) != 4)
-        {
-            std::cerr<<"Invalid keypoint file format."<<std::endl;
-            exit(0);
-        }
-        r = y;
-        c = x;
-        idx = frame.map2D3D.at<int>(r, c);
-
-        keyDescrT temp_descr;
-        temp_descr.feaDescr = cv::Mat::zeros(1, key_cols, CV_32FC1);
-        float *ptr = (float *)temp_descr.feaDescr.data;
-        for (int j = 0; j < key_cols; j++, ptr++) 
-        {
-            int sift_val;
-            if ( fscanf(fp, "%d", &sift_val) != 1 || sift_val < 0 || sift_val > 255)
-            {
-                std::cerr<<"Invalid keypoint value "<<sift_val<<std::endl;
-                exit(0);
-            }
-            *ptr = sift_val; 
-        }
-
-        if( idx < 0 )
-            continue;
-        
-        // push feature descriptor
-        temp_descr.fea_type = 0;	//sift
-        temp_descr.idx = key_vec.size();
-        cv::normalize(temp_descr.feaDescr,temp_descr.feaDescr, 1.0);
-        key_descr.push_back(temp_descr);
-        
-        // push feature points
-        if( show_keys )
-        {
-            cv::KeyPoint show_key;
-            show_key.pt.x = x;
-            show_key.pt.y = y;
-            show_key.angle = angle;
-            show_key.octave = octave;
-            show_key_vec.push_back(show_key);
-        }
-        
-        keyT temp;
-        temp.xyz = frame.surface->at(idx);
-        if( frame.normals->empty() == false )
-            temp.normal = frame.normals->at(idx);
-        key_vec.push_back(temp);
-        
-    }       
-    fclose(fp);
-
-    if( show_keys )
-    {
-        cv::Mat out_image;
-        cv::drawKeypoints(frame.gray, show_key_vec, out_image);
-        cv::imshow("keypoints", out_image);
-        cv::waitKey();
-    }
-}
-#endif
-*/
 
 pcl::PointIndices::Ptr ConnectedComponent3D(const pcl::PointCloud<PointT>::Ptr cloud, float radius, int min_segment)
 {
@@ -1388,7 +1153,7 @@ pcl::PointCloud<PointT>::Ptr createPartialView(const pcl::PointCloud<PointT>::Pt
 }
 
 void genViews(const pcl::PointCloud<PointT>::Ptr full_cloud, const poseVec &rot_set, 
-        CloudSet &partial_set, poseVec &partial_ground_tran, pcl::visualization::PCLVisualizer::Ptr viewer, float s1, float s2)
+        CloudSet &partial_set, poseVec &partial_ground_tran, float s1, float s2)
 {
     float model_resol = 0;;
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
@@ -1407,14 +1172,14 @@ void genViews(const pcl::PointCloud<PointT>::Ptr full_cloud, const poseVec &rot_
         model_resol = computeCloudResolution(cloud);
     }
     std::cerr << "Model Resolution: " << model_resol << std::endl;
-    if( viewer != NULL )
-    {
-        viewer->removePointCloud("model");
-        viewer->addPointCloud(cloud, "model");
-        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 1.0, "model");
-        viewer->spin();
-        viewer->removePointCloud("model");
-    }
+//    if( viewer != NULL )
+//    {
+//        viewer->removePointCloud("model");
+//        viewer->addPointCloud(cloud, "model");
+//        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 1.0, "model");
+//        viewer->spin();
+//        viewer->removePointCloud("model");
+//    }
     //shift the centroid of the cloud to origin
     pcl::PointCloud<myPointXYZ>::Ptr center(new pcl::PointCloud<myPointXYZ>());
     ComputeCentroid(cloud, center);
@@ -1450,19 +1215,13 @@ void genViews(const pcl::PointCloud<PointT>::Ptr full_cloud, const poseVec &rot_
         partial_ground_tran[i](1, 3) = toOrigin1(1, 3);
         partial_ground_tran[i](2, 3) = toOrigin1(2, 3);
         
-        //pcl::PointCloud<PointT>::Ptr partial_ground(new pcl::PointCloud<PointT>());
-        //pcl::transformPointCloud(*tran_cloud, *partial_ground, toOrigin1);
-        //partial_ground_set.push_back(partial_ground);
-        
-        //if( partial_set.size() % 50 == 0)
-        //    std::cerr<<partial_set.size()<<" ";
-        if( viewer != NULL )
-        {
-            viewer->removePointCloud("partial_cloud");
-            viewer->addPointCloud(partial_cloud, "partial_cloud");
-            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 1.0, "partial_cloud");
-            viewer->spin();
-        }
+//        if( viewer != NULL )
+//        {
+//            viewer->removePointCloud("partial_cloud");
+//            viewer->addPointCloud(partial_cloud, "partial_cloud");
+//            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 1.0, "partial_cloud");
+//            viewer->spin();
+//        }
     }
     std::cerr<<partial_set.size()<<std::endl;
     
@@ -1654,14 +1413,14 @@ cv::Mat readCvMatSparse(std::string filename)
     return data;
 }
 
-cv::Mat sparseToMat(const std::vector<feature_node> &fea, int dim)
-{
-    cv::Mat dense_fea = cv::Mat::zeros(1, dim, CV_32FC1);
-    float *ptr = (float *)dense_fea.data;
-    for( std::vector<feature_node>::const_iterator it = fea.begin(); it < fea.end() ; it++ )
-        *(ptr+(*it).index-1) = (*it).value;
-    return dense_fea;
-}
+//cv::Mat sparseToMat(const std::vector<feature_node> &fea, int dim)
+//{
+//    cv::Mat dense_fea = cv::Mat::zeros(1, dim, CV_32FC1);
+//    float *ptr = (float *)dense_fea.data;
+//    for( std::vector<feature_node>::const_iterator it = fea.begin(); it < fea.end() ; it++ )
+//        *(ptr+(*it).index-1) = (*it).value;
+//    return dense_fea;
+//}
 
 void mergeProbs(const std::vector<problem> &problem_set, problem &final_prob)
 {
@@ -1911,11 +1670,10 @@ cv::Mat KNNEncoder(cv::Mat data, cv::flann::Index &tree, int len, int K) //for L
         for( int i = 0 ; i < K ; i++ )
         {
             //dist[i] = (2.0 - dist[i])/2.0;
-            //dist[i] = 10.0 / (dist[i]+0.01);
             dist[i] = exp(beta*dist[i]);
             //if( index[i] >= len || index[i] < 0)
             //    std::cerr <<"*****" << index[i] << std::endl;
-
+            
             *(ptr + index[i]) = dist[i];
             norm += dist[i];
         }
@@ -2201,12 +1959,6 @@ int writeCSV(std::string filename, std::string label, const std::vector<poseT> &
         {
             fp << it->shift(0) << " " << it->shift(1) << " " << it->shift(2) << " "
                << it->rotation.x() << " " << it->rotation.y() << " " << it->rotation.z() << " " << it->rotation.w() << std::endl;
-            /*
-            fp << it->tran(0, 0) << " " << it->tran(0, 1) << " " << it->tran(0, 2) << " " << it->tran(0, 3) << " "
-               << it->tran(1, 0) << " " << it->tran(1, 1) << " " << it->tran(1, 2) << " " << it->tran(1, 3) << " "
-               << it->tran(2, 0) << " " << it->tran(2, 1) << " " << it->tran(2, 2) << " " << it->tran(2, 3) << " "
-               << it->tran(3, 0) << " " << it->tran(3, 1) << " " << it->tran(3, 2) << " " << it->tran(3, 3) << std::endl;
-            */
         }
     }
     fp.close();
@@ -2229,6 +1981,228 @@ void ReadCloudNormal(const std::string path, std::vector<std::string> &pcd_files
         }
     }
 }
+
+
+
+/*
+#ifdef OPENCV_SIFT
+void ComputeSIFT(const Cloud_Image &frame, std::vector<keyT> &key_vec, std::vector<keyDescrT> &key_descr, bool show_keys)
+{
+    cv::SiftFeatureDetector *sift_det = new cv::SiftFeatureDetector(
+            0, // nFeatures
+            4, // nOctaveLayers
+            0.04, // contrastThreshold 
+            10, //edgeThreshold
+            1.6 //sigma
+            );
+    
+    cv::SiftDescriptorExtractor * sift_ext = new cv::SiftDescriptorExtractor();
+    // Compute keypoints and descriptor from the source image in advance
+    std::vector<cv::KeyPoint> keypoints;
+    cv::Mat descriptors;
+    
+    sift_det->detect(frame.gray, keypoints);
+    sift_ext->compute(frame.gray, keypoints, descriptors);
+    printf("%d sift keypoints are found.\n", (int)keypoints.size());
+    
+    if( show_keys )
+    {
+        cv::Mat out_image;
+        cv::drawKeypoints(frame.gray, keypoints, out_image);
+        cv::imshow("keypoints", out_image);
+        cv::waitKey();
+    }
+    for(int i = 0 ; i < keypoints.size() ; i++ )
+    {
+        int r = keypoints[i].pt.y;
+        int c = keypoints[i].pt.x;
+        int idx = frame.map2D3D.at<int>(r, c);
+        if ( idx < 0 )
+            continue;
+        
+        keyDescrT temp_descr;
+        temp_descr.feaDescr = cv::Mat::zeros(1, descriptors.cols, CV_32FC1);
+        descriptors.row(i).copyTo(temp_descr.feaDescr);
+        cv::normalize(temp_descr.feaDescr,temp_descr.feaDescr, 1.0);
+        temp_descr.fea_type = 0;
+        temp_descr.idx = key_vec.size();
+        
+        key_descr.push_back(temp_descr);
+        
+        keyT temp;
+        temp.xyz = frame.surface->at(idx);
+        if( frame.normals->empty() == false )
+            temp.normal = frame.normals->at(idx);
+        key_vec.push_back(temp);
+    }
+}
+#else
+void ComputeSIFT(const Cloud_Image &frame, std::vector<keyT> &key_vec, std::vector<keyDescrT> &key_descr, bool show_keys)
+{
+    //Extract Sift Keypoints and descriptors
+    //This part is ugly but uses best sift implementation
+    cv::imwrite("tmp.pgm",frame.gray);
+#ifdef _WIN32
+    system("siftWin32 <tmp.pgm >tmp.key");
+#else
+    system("./sift <tmp.pgm >tmp.key");
+#endif
+
+    FILE *fp = fopen("tmp.key","r");
+    if (!fp)
+    {
+        std::cerr<<"Cannot open file tmp.key"<<std::endl;
+        exit(0);
+    }
+
+    int key_rows, key_cols;
+    fscanf(fp,"%d %d", &key_rows, &key_cols);
+    if(key_cols != 128)
+    {
+        std::cerr<<"Invalid Keypoint Descriptors"<<std::endl;
+        exit(0);
+    }
+    
+    std::vector<cv::KeyPoint> show_key_vec;
+    float y, x, octave, angle;
+    int r, c, idx;
+    for( int i=0; i < key_rows ; i++ ) 
+    {
+        if (fscanf(fp, "%f %f %f %f", &y, &x, &octave, &angle) != 4)
+        {
+            std::cerr<<"Invalid keypoint file format."<<std::endl;
+            exit(0);
+        }
+        r = y;
+        c = x;
+        idx = frame.map2D3D.at<int>(r, c);
+
+        keyDescrT temp_descr;
+        temp_descr.feaDescr = cv::Mat::zeros(1, key_cols, CV_32FC1);
+        float *ptr = (float *)temp_descr.feaDescr.data;
+        for (int j = 0; j < key_cols; j++, ptr++) 
+        {
+            int sift_val;
+            if ( fscanf(fp, "%d", &sift_val) != 1 || sift_val < 0 || sift_val > 255)
+            {
+                std::cerr<<"Invalid keypoint value "<<sift_val<<std::endl;
+                exit(0);
+            }
+            *ptr = sift_val; 
+        }
+
+        if( idx < 0 )
+            continue;
+        
+        // push feature descriptor
+        temp_descr.fea_type = 0;	//sift
+        temp_descr.idx = key_vec.size();
+        cv::normalize(temp_descr.feaDescr,temp_descr.feaDescr, 1.0);
+        key_descr.push_back(temp_descr);
+        
+        // push feature points
+        if( show_keys )
+        {
+            cv::KeyPoint show_key;
+            show_key.pt.x = x;
+            show_key.pt.y = y;
+            show_key.angle = angle;
+            show_key.octave = octave;
+            show_key_vec.push_back(show_key);
+        }
+        
+        keyT temp;
+        temp.xyz = frame.surface->at(idx);
+        if( frame.normals->empty() == false )
+            temp.normal = frame.normals->at(idx);
+        key_vec.push_back(temp);
+        
+    }       
+    fclose(fp);
+
+    if( show_keys )
+    {
+        cv::Mat out_image;
+        cv::drawKeypoints(frame.gray, show_key_vec, out_image);
+        cv::imshow("keypoints", out_image);
+        cv::waitKey();
+    }
+}
+#endif
+*/
+
+//void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl::CorrespondencesPtr corrs, 
+//		const pcl::PointCloud<PointT>::Ptr surface1, const pcl::PointCloud<PointT>::Ptr surface2, pcl::visualization::PCLVisualizer::Ptr &viewer)
+//{
+//	pcl::PointCloud<myPointXYZ>::Ptr key_pt1 (new pcl::PointCloud<myPointXYZ>());
+//	pcl::PointCloud<myPointXYZ>::Ptr key_pt2 (new pcl::PointCloud<myPointXYZ>());
+//
+//	for( pcl::Correspondences::iterator it = corrs->begin() ; it < corrs->end(); it++ )
+//	{
+//		key_pt1->push_back(key1[(*it).index_query].xyz);
+//		key_pt2->push_back(key2[(*it).index_match].xyz);
+//		
+//	}
+//
+//	pcl::PointCloud<PointT>::Ptr off_surface2(new pcl::PointCloud<PointT>());
+//	pcl::PointCloud<myPointXYZ>::Ptr off_key_pt2(new pcl::PointCloud<myPointXYZ>());
+//	pcl::transformPointCloud (*surface2, *off_surface2, Eigen::Vector3f (-1,0,0), Eigen::Quaternionf (1, 0, 0, 0));
+//	pcl::transformPointCloud (*key_pt2, *off_key_pt2, Eigen::Vector3f (-1,0,0), Eigen::Quaternionf (1, 0, 0, 0));
+//
+//	viewer->addPointCloud (off_surface2, "off_surface2");
+//	viewer->addPointCloud (surface1, "surface1");
+//	viewer->addPointCloud (key_pt1, "key_pt1");
+//	viewer->addPointCloud (off_key_pt2, "off_key_pt2");
+//	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "key_pt1");
+//	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "key_pt1");
+//	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "off_key_pt2");
+//	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "off_key_pt2");
+//	//*
+//	for (int j = 0; j < key_pt1->size (); j++)
+//	{
+//		std::stringstream ss_line;
+//		ss_line << "corr_line" << j;
+//
+//		myPointXYZ scene_point = key_pt1->at(j);
+//		myPointXYZ model_point = off_key_pt2->at(j);
+//
+//		//std::cerr<<corrs->at(j).index_query<<std::endl;
+//		//std::cerr<<scene_point.x<<" "<<scene_point.y<<" "<<scene_point.z<<std::endl;
+//
+//		viewer->addLine<myPointXYZ, myPointXYZ> (model_point, scene_point, 0, 255, 0, ss_line.str ());
+//	}
+//	//*
+//	for(int i = 0 ; i < key1.size(); i++ )
+//	{
+//            if( key1[i].shift_vec.empty() == false)
+//            {
+//                for( int j = 0 ; j < key1[i].shift_vec.size() ; j++ )
+//                {
+//                    std::stringstream ss_line;
+//                    ss_line << "proj_line" << i <<" " <<j;
+//
+//                    pcl::PointXYZ temp1, temp2;
+//                    temp1.x = key1[i].xyz.x + key1[i].shift_vec[j].x;
+//                    temp1.y = key1[i].xyz.y + key1[i].shift_vec[j].y;
+//                    temp1.z = key1[i].xyz.z + key1[i].shift_vec[j].z;
+//
+//                    temp2 = key1[i].xyz; 
+//
+//                    //std::cerr<<key1[i].shift_vec[j].x<<" "<<key1[i].shift_vec[j].y<<" "<<key1[i].shift_vec[j].z<<std::endl;
+//                    viewer->addLine<myPointXYZ, myPointXYZ> (temp1, temp2, 1.0, 1.0, 0.0, ss_line.str ());
+//                    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 3, ss_line.str ());
+//                    //viewer->spin();
+//                }
+//            }
+//	}
+//	//*/
+//	viewer->spin();
+//	viewer->removePointCloud("off_surface2");
+//        viewer->removePointCloud("surface1");
+//        viewer->removePointCloud("key_pt1");
+//        viewer->removePointCloud("off_key_pt2");
+//	viewer->removeAllShapes();
+//}
 
 /*
     int num = cloud->size();

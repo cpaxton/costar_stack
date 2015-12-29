@@ -3,7 +3,7 @@
 
 struct protoT{
     sparseVec elems;
-    size_t count;
+//    size_t count;
 };
 
 void HierKmeans(const std::vector<protoT> &proto_set, cv::Mat &centers, int K);
@@ -41,7 +41,7 @@ public:
     void AddData(cv::Mat data);
     void LoadProtos(std::vector<protoT> &proto_set_){proto_set = proto_set_;fea_len = proto_set[0].elems[proto_set[0].elems.size()-1].index;}
     std::vector<float> W_Cluster(cv::Mat &centers, int K, std::vector< std::vector<protoT> > &protoByCluster);
-    void setThreadNum(int thread_num_){ omp_set_num_threads(thread_num_);thread_num = thread_num_;}
+//    void setThreadNum(int thread_num_){ omp_set_num_threads(thread_num_);thread_num = thread_num_;}
 
     std::vector<protoT> proto_set;
 private:
@@ -61,4 +61,39 @@ private:
     int thread_num;		//omp_get_num_threads()
     size_t total_count;		//0
     bool weight_flag;		//flagging the weighted kmeans
+};
+
+
+class hier_sparseK {
+public:
+    hier_sparseK();
+    ~hier_sparseK();
+
+    void AddData(cv::Mat data);
+    cv::Mat Hier_Cluster(int K);
+    size_t getDataNum(){return total_count;}
+    void Reset();
+    void Clear();
+//    
+private:
+	
+    std::vector<float> M_step(std::vector< sparseVec > &tmp_centers, std::vector< std::vector<int> > &tmpSetIdx, int cluster_id, int K);
+    void E_step(std::vector< sparseVec > &tmp_centers, std::vector< std::vector<int> > &tmpSetIdx, int K);
+
+    void Initialize(int cluster_id, int K, std::vector<sparseVec> &tmp_centers);
+
+    float distFunc2(const sparseVec &vec1, const sparseVec &vec2);
+
+    sparseVec convertToSparse(cv::Mat data);
+    cv::Mat convertTDense(sparseVec &data);
+    
+    int fea_len;                                    //-1
+    std::vector< std::vector<int> > cSetIdx;
+    std::vector< sparseVec > centers;
+    
+    size_t total_count;		//0
+    int thread_num;
+    
+    std::vector<sparseVec> proto_set;
+    
 };
