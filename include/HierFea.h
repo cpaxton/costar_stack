@@ -39,10 +39,11 @@ private:
     cv::Mat dict_color_L0, dict_depth_L0, dict_joint_L0;
     cv::flann::Index tree_color_L0, tree_depth_L0, tree_joint_L0;
     
-//    cv::Mat dict_colorInLAB_L1, dict_colorInXYZ_L1, dict_depthInLAB_L1, dict_depthInXYZ_L1;
-//    cv::flann::Index tree_colorInLAB_L1, tree_colorInXYZ_L1, tree_depthInLAB_L1, tree_depthInXYZ_L1;
-//    cv::Mat dict_colorInLAB_L2, dict_colorInXYZ_L2, dict_depthInLAB_L2, dict_depthInXYZ_L2;
-//    cv::flann::Index tree_colorInLAB_L2, tree_colorInXYZ_L2, tree_depthInLAB_L2, tree_depthInXYZ_L2;
+    /* uncommented these from Chi's commit */
+    cv::Mat dict_colorInLAB_L1, dict_colorInXYZ_L1, dict_depthInLAB_L1, dict_depthInXYZ_L1;
+    cv::flann::Index tree_colorInLAB_L1, tree_colorInXYZ_L1, tree_depthInLAB_L1, tree_depthInXYZ_L1;
+    cv::Mat dict_colorInLAB_L2, dict_colorInXYZ_L2, dict_depthInLAB_L2, dict_depthInXYZ_L2;
+    cv::flann::Index tree_colorInLAB_L2, tree_colorInXYZ_L2, tree_depthInLAB_L2, tree_depthInXYZ_L2;
     
     //0: color-lab
     //1: depth-lab

@@ -9,6 +9,14 @@ To run this code you need:
   - Mesh of the object (for ObjRecRANSAC)
   - Feature Dictionary (default is provided in ```data/UW_shot_dict```)
   
+You need OpenCV 2.4.1 nonfree for some of the features. On Ubuntu 14.04 you can install with:
+
+```
+sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
+sudo apt-get update 
+sudo apt-get install libopencv-nonfree-dev
+```
+
 ## Training Model
 
 Feature extraction fraining is implemented in ``main_sp_training.cpp```.

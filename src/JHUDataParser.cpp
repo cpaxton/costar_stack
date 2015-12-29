@@ -1,5 +1,7 @@
 #include "../include/JHUDataParser.h"
 
+#include <pcl/visualization/pcl_visualizer.h>
+
 int readSeqID_JHU(std::string name)
 {
     int id = -1;

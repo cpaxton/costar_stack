@@ -1,5 +1,6 @@
 #include <opencv2/core/core.hpp>
 
+#include "../include/HierFea.h"
 #include "../include/features.h"
 
 Hier_Pooler::Hier_Pooler(float rad)
