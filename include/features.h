@@ -7,6 +7,7 @@
 #pragma once
 
 #include "../include/index.h"
+//#include "../omp/ompcore.h"
 
 struct Hypo{
     cv::Rect box;

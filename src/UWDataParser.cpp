@@ -1,5 +1,7 @@
 #include "../include/UWDataParser.h"
 
+#include <pcl/visualization/pcl_visualizer.h>
+
 void PreProcess_UW(std::string in_path, std::string out_path, pcl::visualization::PCLVisualizer::Ptr viewer)
 {
     int min_num = 100;

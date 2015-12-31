@@ -7,6 +7,7 @@
 
 #include "seg.h"
 
+#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/features/normal_3d.h>
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
