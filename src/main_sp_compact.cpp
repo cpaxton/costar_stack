@@ -1,5 +1,13 @@
 #include <opencv2/core/core.hpp>
 #include "../include/features.h"
+#include "../include/HierFea.h"
+#include "../include/sp.h"
+
+#include <pcl/common/common_headers.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/console/parse.h>
 
 /**************
  * This is an example program for extracting features from point cloud and 

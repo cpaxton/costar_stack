@@ -21,8 +21,8 @@ public:
     
     void setRatio(float rr_) {ratio=rr_;}
     std::vector<int> LoadDict_L0(std::string path, std::string colorK, std::string depthK, std::string jointK="");
-//    std::vector<int> LoadDict_L1(std::string dict_path, std::vector<std::string> dictK);
-//    std::vector<int> LoadDict_L2(std::string dict_path, std::vector<std::string> dictK);
+    std::vector<int> LoadDict_L1(std::string dict_path, std::vector<std::string> dictK);
+    std::vector<int> LoadDict_L2(std::string dict_path, std::vector<std::string> dictK);
     
     std::vector<int> sampleRaw_L0(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::PointCloud<NormalT>::Ptr cloud_normal,
                     cv::Mat &depth_fea, cv::Mat &color_fea, int max_num, float rad = 0.03);
@@ -31,10 +31,10 @@ public:
 private:
     void computeRaw_L0(MulInfoT &data, cv::Mat &depth_fea, cv::Mat &color_fea, float rad = 0.03);
     
-//    std::vector<cv::Mat> PoolLayer_L1(const MulInfoT &data, const std::vector<cv::Mat> code_L0, std::vector<size_t> idxs, bool max_pool=true);
-//    std::vector<cv::Mat> EncodeLayer_L1(const std::vector<cv::Mat> rawfea_L1);    
-//    std::vector<cv::Mat> PoolLayer_L2(const MulInfoT &data, const std::vector<cv::Mat> code_L1, std::vector<size_t> idxs, bool max_pool=true);
-//    std::vector<cv::Mat> EncodeLayer_L2(const std::vector<cv::Mat> rawfea_L2);
+    std::vector<cv::Mat> PoolLayer_L1(const MulInfoT &data, const std::vector<cv::Mat> code_L0, std::vector<size_t> idxs, bool max_pool=true);
+    std::vector<cv::Mat> EncodeLayer_L1(const std::vector<cv::Mat> rawfea_L1);    
+    std::vector<cv::Mat> PoolLayer_L2(const MulInfoT &data, const std::vector<cv::Mat> code_L1, std::vector<size_t> idxs, bool max_pool=true);
+    std::vector<cv::Mat> EncodeLayer_L2(const std::vector<cv::Mat> rawfea_L2);
     
     cv::Mat dict_color_L0, dict_depth_L0, dict_joint_L0;
     cv::flann::Index tree_color_L0, tree_depth_L0, tree_joint_L0;
@@ -49,14 +49,16 @@ private:
     //1: depth-lab
     //2: color-xyz
     //3: depth-xyz
-//    bool pool_flag[4];          
-//    int pool_type_num;          //4
+    bool pool_flag[4];          
+    int pool_type_num;          //4
     float pool_radius_L0;       // 0.03
-//    float pool_radius_L1[2];    // 0.05, 0.05
-//    float pool_radius_L2[2];    // 0.05, 0.05
+    float pool_radius_L1[2];    // 0.05, 0.05
+    float pool_radius_L2[2];    // 0.05, 0.05
     
     float ratio;                //0.15
 };
+
+typedef extCSHOT Hier_Pooler;
 
 struct PoolingPair{
     std::vector<cv::Mat> pool_feas;

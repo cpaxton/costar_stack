@@ -3,7 +3,7 @@
 #include "../include/HierFea.h"
 #include "../include/features.h"
 
-Hier_Pooler::Hier_Pooler(float rad)
+extCSHOT::extCSHOT(float rad)
 {
     pool_flag[0] = true;
     pool_flag[1] = true;
@@ -16,9 +16,9 @@ Hier_Pooler::Hier_Pooler(float rad)
     ratio = 0;  //ratio = 0.05;
 }
 
-Hier_Pooler::~Hier_Pooler(){}
+extCSHOT::~extCSHOT(){}
 
-std::vector<int> Hier_Pooler::LoadDict_L0(std::string dict_path, std::string colorK, std::string depthK, std::string jointK)
+std::vector<int> extCSHOT::LoadDict_L0(std::string dict_path, std::string colorK, std::string depthK, std::string jointK)
 {
     int tmp;
     std::cerr << "Loading Dictionary L0-0: " << dict_path + "dict_color_L0_"+colorK+".cvmat" << std::endl;
@@ -45,7 +45,7 @@ std::vector<int> Hier_Pooler::LoadDict_L0(std::string dict_path, std::string col
     return fea_dim;
 }
 
-std::vector<int> Hier_Pooler::LoadDict_L1(std::string dict_path, std::vector<std::string> dictK)
+std::vector<int> extCSHOT::LoadDict_L1(std::string dict_path, std::vector<std::string> dictK)
 {
     int tmp;
     std::cerr << "Loading Dictionary L1-0: " << dict_path + "dict_colorInLAB_L1_"+dictK[0]+".cvmat" << std::endl;
@@ -68,7 +68,7 @@ std::vector<int> Hier_Pooler::LoadDict_L1(std::string dict_path, std::vector<std
     return fea_dim;
 }
 
-std::vector<int> Hier_Pooler::LoadDict_L2(std::string dict_path, std::vector<std::string> dictK)
+std::vector<int> extCSHOT::LoadDict_L2(std::string dict_path, std::vector<std::string> dictK)
 {
     int tmp;
     std::cerr << "Loading Dictionary L2-0: " << dict_path + "dict_colorInLAB_L2_"+dictK[0]+".cvmat" << std::endl;
@@ -90,7 +90,7 @@ std::vector<int> Hier_Pooler::LoadDict_L2(std::string dict_path, std::vector<std
     return fea_dim;
 }
 
-void Hier_Pooler::computeRaw_L0(MulInfoT &data, cv::Mat& depth_fea, cv::Mat& color_fea, float rad)
+void extCSHOT::computeRaw_L0(MulInfoT &data, cv::Mat& depth_fea, cv::Mat& color_fea, float rad)
 {
     cv::Mat high_fea = cshot_cloud_ss(data.cloud, data.cloud_normals, data.down_lrf, data.down_cloud, rad, -1);
     
@@ -109,7 +109,7 @@ void Hier_Pooler::computeRaw_L0(MulInfoT &data, cv::Mat& depth_fea, cv::Mat& col
     
 }
 
-std::vector<int> Hier_Pooler::sampleRaw_L0(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::PointCloud<NormalT>::Ptr cloud_normal,
+std::vector<int> extCSHOT::sampleRaw_L0(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::PointCloud<NormalT>::Ptr cloud_normal,
                     cv::Mat &depth_fea, cv::Mat &color_fea, int max_num, float rad)
 {
     std::vector<int> idxs;
@@ -130,7 +130,7 @@ std::vector<int> Hier_Pooler::sampleRaw_L0(const pcl::PointCloud<PointT>::Ptr cl
     return idxs;
 }
 
-std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L0(const cv::Mat &depth_fea, const cv::Mat &color_fea)
+std::vector<cv::Mat> extCSHOT::EncodeLayer_L0(const cv::Mat &depth_fea, const cv::Mat &color_fea)
 {
     int depth_len = dict_depth_L0.rows;
     int color_len = dict_color_L0.rows;
@@ -154,7 +154,7 @@ std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L0(const cv::Mat &depth_fea, const
     return fea_codes;
 }
 
-std::vector<cv::Mat> Hier_Pooler::PoolLayer_L1(const MulInfoT &data, const std::vector<cv::Mat> code_L0, std::vector<size_t> idxs, bool max_pool)
+std::vector<cv::Mat> extCSHOT::PoolLayer_L1(const MulInfoT &data, const std::vector<cv::Mat> code_L0, std::vector<size_t> idxs, bool max_pool)
 {
     int num;
     bool subsampling = false;
@@ -249,7 +249,7 @@ std::vector<cv::Mat> Hier_Pooler::PoolLayer_L1(const MulInfoT &data, const std::
     return raw_fea_L1;
 }
 
-std::vector<cv::Mat> Hier_Pooler::PoolLayer_L2(const MulInfoT &data, const std::vector<cv::Mat> code_L1, std::vector<size_t> idxs, bool max_pool)
+std::vector<cv::Mat> extCSHOT::PoolLayer_L2(const MulInfoT &data, const std::vector<cv::Mat> code_L1, std::vector<size_t> idxs, bool max_pool)
 {
     int num;
     bool subsampling = false;
@@ -344,7 +344,7 @@ std::vector<cv::Mat> Hier_Pooler::PoolLayer_L2(const MulInfoT &data, const std::
     return raw_fea_L2;
 }
 
-std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L1(const std::vector<cv::Mat> rawfea_L1)
+std::vector<cv::Mat> extCSHOT::EncodeLayer_L1(const std::vector<cv::Mat> rawfea_L1)
 {
     std::vector<cv::Mat> fea_L1(pool_type_num);
     for( int j = 0 ; j < pool_type_num ; j++ )
@@ -387,7 +387,7 @@ std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L1(const std::vector<cv::Mat> rawf
     return fea_L1;
 }
 
-std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L2(const std::vector<cv::Mat> rawfea_L2)
+std::vector<cv::Mat> extCSHOT::EncodeLayer_L2(const std::vector<cv::Mat> rawfea_L2)
 {
     std::vector<cv::Mat> fea_L2(pool_type_num);
     for( int j = 0 ; j < pool_type_num ; j++ )
@@ -430,7 +430,7 @@ std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L2(const std::vector<cv::Mat> rawf
     return fea_L2;
 }
 
-std::vector<cv::Mat> Hier_Pooler::getHierFea( MulInfoT &data, int layer)
+std::vector<cv::Mat> extCSHOT::getHierFea( MulInfoT &data, int layer)
 {
     std::vector<cv::Mat> final_fea;
     if( layer < 0 )
@@ -500,7 +500,7 @@ std::vector<cv::Mat> Hier_Pooler::getHierFea( MulInfoT &data, int layer)
     return final_fea;
 }
 
-std::vector<cv::Mat> Hier_Pooler::getRawFea( MulInfoT &data, int layer, size_t max_num)
+std::vector<cv::Mat> extCSHOT::getRawFea( MulInfoT &data, int layer, size_t max_num)
 {
     std::vector<cv::Mat> raw_fea;
     cv::Mat depth_fea, color_fea;

@@ -2,7 +2,15 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "../include/features.h"
+#include "../include/HierFea.h"
+#include "../include/sp.h"
 #include "../include/JHUDataParser.h"
+
+#include <pcl/common/common_headers.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/console/parse.h>
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 
