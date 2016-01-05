@@ -1,0 +1,31 @@
+# SP Segmenter
+
+The file "main_ros.cpp" is what you run if you want to use this as a ROS node.
+
+## Prerequisites
+
+To run this code you need:
+  - Sequence of object partial views in the correct lighting conditions
+  - Mesh of the object (for ObjRecRANSAC)
+  - Feature Dictionary (default is provided in ```data/UW_shot_dict```)
+  
+## Training Model
+
+Feature extraction fraining is implemented in ``main_sp_training.cpp```.
+
+This training code will extract LAB, FPFH, and SIFT features. You can choose which of these to use for SVM learning.
+
+These features are all saved to a sparse matrix for the provided data set. When doing SVM training, you choose the features.
+
+SVM learning is done in ```main_sp_svm.cpp.```
+
+## Executing
+
+How to run the code (with the default SVM):
+
+```
+rosrun sp_segmenter sp_segmenter_node -p
+rosrun sp_segmenter republisher.py
+```
+
+You need to run this from the root of the directory right now.
