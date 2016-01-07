@@ -35,9 +35,7 @@ boost::shared_ptr<greedyObjRansac> objrec(new greedyObjRansac(pairWidth, voxelSi
 std::vector<std::string> model_name(OBJECT_MAX, "");
 std::vector<ModelT> mesh_set;
 
-std::string POINTS_IN("/camera/depth_registered/points");
-std::string POINTS_OUT("points_out");
-std::string POSES_OUT("poses_out");
+std::string POINTS_IN, POINTS_OUT, POSES_OUT;
 
 ros::Publisher pc_pub;
 ros::Publisher pose_pub;
@@ -337,7 +335,12 @@ int main(int argc, char** argv)
     //std::string scene_name("UR5_1");
 
     ros::init(argc,argv,"sp_segmenter_node");    
-    ros::NodeHandle nh;
+    ros::NodeHandle nh("~");
+    //getting subscriber/publisher parameters
+    nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
+    nh.param("POINTS_OUT", POINTS_OUT,std::string("points_out"));
+    nh.param("POSES_OUT", POSES_OUT,std::string("poses_out"));
+
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
     pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
@@ -351,8 +354,10 @@ int main(int argc, char** argv)
     //pcl::console::parse_argument(argc, argv, "--o", out_cloud_path);
     //boost::filesystem::create_directories(out_cloud_path);
     
-    std::string svm_path("data/UR5_svm/");
-    std::string shot_path("data/UW_shot_dict/");
+    std::string svm_path,shot_path;
+    //get path parameter for svm and shot
+    nh.param("svm_path", svm_path,std::string("data/UR5_svm/"));
+    nh.param("shot_path", shot_path,std::string("data/UW_shot_dict/"));
 //    std::string sift_path("UW_new_sift_dict/");
 //    std::string fpfh_path("UW_fpfh_dict/");
 /***************************************************************************************************************/
@@ -365,8 +370,11 @@ int main(int argc, char** argv)
     std::cerr << "Ratio: " << ratio << std::endl;
     std::cerr << "Downsample: " << down_ss << std::endl;
     
-    std::string mesh_path = "data/mesh/";
-    std::string cur_name = "drill";
+    std::string mesh_path,cur_name;
+    //get parameter for mesh path and curname
+    nh.param("mesh_path", mesh_path,std::string("data/mesh/"));
+    nh.param("cur_name", cur_name,std::string("drill"));
+    
     int model_id = 1;
     objrec->AddModel(mesh_path + cur_name, cur_name);
     model_name[model_id] = cur_name;

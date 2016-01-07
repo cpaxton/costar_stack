@@ -37,3 +37,25 @@ Adding the ```-v``` flag will visualize segmenter results:
 ```
 rosrun sp_segmenter SPSegmenterNode -p -v
 ```
+
+## Execute using roslaunch
+
+You can also run the code with roslaunch without the need to go to the root of the directory.
+
+'''
+roslaunch sp_segmenter SPSegmenter.launch
+'''
+
+By default, the segmenter node will search for "drill" object and returns both point cloud of the objects and its poses.
+It is possible to pass some arguments to set the object type, input point cloud topic, and the segmenter outputs.
+Args list:
+object		:	the object file name without extension. Default: "drill"
+pcl_in		:	Input point cloud topic name. Default: "/camera/depth_registered/points"
+pcl_out		:	Output point cloud topic name. Default: "/SPSegmenterNode/points_out"
+poses_out	:	Output poses topic name. Default: "/SPSegmenterNode/POSES_OUT"
+
+Example:
+'''
+roslaunch sp_segmenter SPSegmenter.launch object:=mallet_ball_pein pcl_in:=/kinect_head/qhd/pointss
+'''
+

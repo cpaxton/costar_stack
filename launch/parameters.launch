@@ -1,0 +1,6 @@
+<launch>
+  <!-- SPSegmenterNode Data Paths-->
+  <param name="svm_path"  type="str" value="$(find sp_segmenter)/data/UR5_svm/"/>
+  <param name="shot_path"  type="str" value="$(find sp_segmenter)/data/UW_shot_dict/"/>
+  <param name="mesh_path"  type="str" value="$(find sp_segmenter)/data/mesh/"/>
+</launch>
