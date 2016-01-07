@@ -93,11 +93,11 @@ add_executable(SimpleSegmenter src/main_simple_seg.cpp)
 target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRARIES} 
               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
 
-if(CATKIN_FOUND)
+#if(CATKIN_FOUND)
     add_executable(SPSegmenterNode src/main_ros.cpp) 
     target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
-endif(CATKIN_FOUND)
+#endif(CATKIN_FOUND)
 
 add_executable(foreRun src/greedyObjRansac.h src/greedyObjRansac.cpp src/main_foreground.cpp)
 target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
