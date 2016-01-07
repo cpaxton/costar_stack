@@ -40,22 +40,22 @@ rosrun sp_segmenter SPSegmenterNode -p -v
 
 ## Execute using roslaunch
 
-You can also run the code with roslaunch without the need to go to the root of the directory.
+How to run using roslaunch:
 
-'''
+```
 roslaunch sp_segmenter SPSegmenter.launch
-'''
+```
 
-By default, the segmenter node will search for "drill" object and returns both point cloud of the objects and its poses.
+By default, this roslaunch is exactly the same as ```rosrun sp_segmenter SPSegmenterNode -p``` except that it can be run without the need to be on the root of sp_segmenter directory.
 It is possible to pass some arguments to set the object type, input point cloud topic, and the segmenter outputs.
 Args list:
-object		:	the object file name without extension. Default: "drill"
-pcl_in		:	Input point cloud topic name. Default: "/camera/depth_registered/points"
-pcl_out		:	Output point cloud topic name. Default: "/SPSegmenterNode/points_out"
-poses_out	:	Output poses topic name. Default: "/SPSegmenterNode/POSES_OUT"
+object		:	the object file name without extension. Default: ```drill```
+pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
+pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
+poses_out	:	Output poses topic name. Default: ```/SPSegmenterNode/POSES_OUT```
 
 Example:
-'''
-roslaunch sp_segmenter SPSegmenter.launch object:=mallet_ball_pein pcl_in:=/kinect_head/qhd/pointss
-'''
+```
+roslaunch sp_segmenter SPSegmenter.launch object:=mallet_ball_pein pcl_in:=/kinect_head/qhd/points
+```
 
