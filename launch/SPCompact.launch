@@ -1,0 +1,21 @@
+<launch>
+  <!-- Objects file Name without extension. Support several file by giving `,`, such as object:=object1,object2,...,objectn-->
+  <arg name="object"          default="drill" />
+  <arg name="bg_names"        default="UR5_2" />
+  <arg name="training_folder" default="$(find sp_segmenter)/data/training/" />
+
+  <!-- spCompactNode output path args -->
+  <arg name="out_fea_path"    default="fea_pool/" />
+  <arg name="out_svm_path"    default="svm_pool/"/>
+
+  <node pkg="sp_segmenter" type="spCompact" name="spCompactNode">  
+	  <!-- spCompactNode arg pass -->
+    <param name="root_path"   type="str" value="$(arg training_folder)/" />
+	  <param name="obj_names"   type="str" value="$(arg object)" />
+    <param name="bg_names"    type="str" value="$(arg bg_names)" />
+  </node>
+
+  <group ns="spCompactNode">
+    <include file="$(find sp_segmenter)/launch/parameters.launch" />
+  </group>
+</launch>

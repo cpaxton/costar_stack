@@ -1,6 +1,9 @@
 #include <opencv2/core/core.hpp>
 #include "../include/features.h"
 
+// ros header for roslaunch capability
+#include <ros/ros.h>
+
 /**************
  * This is an example program for extracting features from point cloud and 
  * training SVM.
@@ -49,25 +52,60 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
 };
 
+std::vector<std::string> stringVectorArgsReader (ros::NodeHandle nh, const std::string param_name, const std::string default_value)
+{
+// The function will read string arguments passed from nodehandle, separate it for every ',' character, and return it to vector<string> variable
+	std::string tmp;
+	std::vector<std::string> result;
+
+	nh.param(param_name,tmp,default_value);
+
+	char splitOperator(',');
+	std::size_t found = tmp.find(splitOperator);
+	std::size_t pos = 0;
+
+	while (found!=std::string::npos)
+	{
+		std::string buffer;
+		buffer.assign(tmp, pos, found - pos);
+		result.push_back(buffer);
+		pos = found + 1;
+		found = tmp.find(splitOperator,pos);
+	}
+
+	std::string buffer;
+	buffer.assign(tmp, pos, tmp.length() - pos);
+	result.push_back(buffer);
+	return result;
+}
 
 //*
 int main(int argc, char** argv)
 {
-    std::string root_path("/home/chi/JHUIT/new_ht10/");
-    std::vector<std::string> obj_names;
-    obj_names.push_back("drill");    //adding object classes by push back
-    std::vector<std::string> bg_names;
-    bg_names.push_back("UR5_2");    //adding background classes by push back
+    ros::init(argc,argv,"sp_compact_node");
+    ros::NodeHandle nh("~");
     
-    std::string out_fea_path("fea_pool/");
+    std::string root_path;
+    nh.param("root_path", root_path, std::string("data/training/"));
+    
+    // adding object classes by reading from nodeHandle args
+    std::vector<std::string> obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
+    
+    // adding background classes by reading from nodeHandle args
+    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5_2"));
+    
+    std::string out_fea_path, out_svm_path;
+    nh.param("out_fea_path",out_fea_path,std::string("fea_pool/"));
+    nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
+    
     boost::filesystem::create_directories(out_fea_path);
-    std::string out_svm_path("svm_pool/");
     boost::filesystem::create_directories(out_svm_path);
     
     // paths for dictionaries
-    std::string shot_path("UW_shot_dict/");
-    std::string sift_path("UW_sift_dict/");
-    std::string fpfh_path("UW_fpfh_dict/");
+    std::string shot_path, sift_path, fpfh_path;
+    nh.param("shot_path",shot_path,std::string("data/UW_shot_dict/"));
+    nh.param("sift_path",sift_path,std::string("data/UW_sift_dict/"));
+    nh.param("fpfh_path",fpfh_path,std::string("data/UW_fpfh_dict/"));
     
     feaExtractor object_ext(shot_path, sift_path, fpfh_path);
     feaExtractor background_ext(shot_path, sift_path, fpfh_path);
