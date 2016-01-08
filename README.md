@@ -30,7 +30,7 @@ By default, this will read all pcd files in the sp_segmenter root directory/data
 Separate every object/background name with `,` 
 Args list:
 object		:	Object folder name without extension. Supports multiple object by inserting `,` between object folder name. Default: ```drill```
-bg_names	:	Background folder name without extension. Default: ```UR5_2```
+bg_names	:	Background folder name without extension. Supports multiple object by inserting `,` between background folder name. Default: ```UR5_2```
 training_folder	:	Training folder directory where the object and background folder can be found. Default: ```$(find sp_segmenter)/data/training/```
 out_fea_path	:	Output fea folder. Default: ```fea_pool```
 out_svm_path	:	Output svm folder. Default: ```svm_pool```
