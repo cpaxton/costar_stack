@@ -19,21 +19,21 @@ These features are all saved to a sparse matrix for the provided data set. When 
 
 SVM learning is done in ```main_sp_svm.cpp.```
 
-## Training using roslaunch (to be tested)
+## Training using roslaunch
 How to train using roslaunch:
 
 ```
 roslaunch sp_segmenter SPCompact.launch object:=object1,object2,object3 bg_names:=background1,background2,background3
 ```
 
-By default, this will read all pcd files in the sp_segmenter root directory/data/training/(object OR background) for every object and background that being passed to roslaunch.
+By default, this will read all pcd files in the $(find sp_segmenter)/data/training/(object OR background folder) for every object and background that being passed to roslaunch.
 Separate every object/background name with `,` 
 Args list:
 object		:	Object folder name without extension. Supports multiple object by inserting `,` between object folder name. Default: ```drill```
 bg_names	:	Background folder name without extension. Supports multiple object by inserting `,` between background folder name. Default: ```UR5_2```
 training_folder	:	Training folder directory where the object and background folder can be found. Default: ```$(find sp_segmenter)/data/training/```
-out_fea_path	:	Output fea folder. Default: ```fea_pool```
-out_svm_path	:	Output svm folder. Default: ```svm_pool```
+out_fea_path	:	Output fea folder. Default: ```$(arg training_folder)/fea_pool/```
+out_svm_path	:	Output svm folder. Default: ```$(arg training_folder)/svm_pool/```
 
 
 ## Executing

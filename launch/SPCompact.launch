@@ -1,18 +1,20 @@
 <launch>
   <!-- Objects file Name without extension. Support several file by giving `,`, such as object:=object1,object2,...,objectn-->
-  <arg name="object"          default="drill" />
-  <arg name="bg_names"        default="UR5_2" />
-  <arg name="training_folder" default="$(find sp_segmenter)/data/training/" />
+  <arg name="object"              default="drill" />
+  <arg name="bg_names"            default="UR5_2" />
+  <arg name="training_folder"     default="$(find sp_segmenter)/data/training/" />
 
   <!-- spCompactNode output path args -->
-  <arg name="out_fea_path"    default="fea_pool/" />
-  <arg name="out_svm_path"    default="svm_pool/"/>
+  <arg name="out_fea_path"        default="$(arg training_folder)/fea_pool/" />
+  <arg name="out_svm_path"        default="$(arg training_folder)/svm_pool/"/>
 
   <node pkg="sp_segmenter" type="spCompact" name="spCompactNode">  
-	  <!-- spCompactNode arg pass -->
-    <param name="root_path"   type="str" value="$(arg training_folder)/" />
-	  <param name="obj_names"   type="str" value="$(arg object)" />
-    <param name="bg_names"    type="str" value="$(arg bg_names)" />
+  <!-- spCompactNode arg pass -->
+    <param name="root_path"       type="str" value="$(arg training_folder)/" />
+    <param name="obj_names"       type="str" value="$(arg object)" />
+    <param name="bg_names"        type="str" value="$(arg bg_names)" />
+    <param name="out_fea_path"    type="str" value="$(arg out_fea_path)" />
+    <param name="out_svm_path"    type="str" value="$(arg out_svm_path)" />
   </node>
 
   <group ns="spCompactNode">

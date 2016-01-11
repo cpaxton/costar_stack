@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     std::string out_fea_path, out_svm_path;
     nh.param("out_fea_path",out_fea_path,std::string("fea_pool/"));
     nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
-    
+
     boost::filesystem::create_directories(out_fea_path);
     boost::filesystem::create_directories(out_svm_path);
     
@@ -120,8 +120,8 @@ int main(int argc, char** argv)
         ss << i+1;
         
         std::vector< std::vector<sparseVec> > final_fea;
+        std::cerr << "Processing: " << root_path+obj_names[i]+"/" << endl;
         int train_dim = object_ext.computeFeature(root_path+obj_names[i]+"/", final_fea, obj_sample_num);
-        
         cur_order_max = (int)final_fea.size();
         
         for( int ll = 0 ; ll < cur_order_max ; ll++ )
@@ -140,7 +140,10 @@ int main(int argc, char** argv)
     std::vector< std::vector<sparseVec> > bg_fea;
     int bg_dim = -1;
     for( size_t i = 0 ; i < bg_names.size() ; i++ )
+    {
+        std::cerr << "Processing: " << root_path+bg_names[i]+"/" << endl;
         bg_dim = background_ext.computeFeature(root_path+bg_names[i]+"/", bg_fea, bg_sample_num);
+    }
     
     for( size_t ll = 0 ; ll < bg_fea.size() ; ll++ )
     {
@@ -161,7 +164,6 @@ int main(int argc, char** argv)
     {
         std::stringstream mm;
         mm << ll;
-        
         std::vector<problem> train_prob_set;
         // looping over all classes including background classes
         for( size_t i = 0 ; i <= obj_names.size()  ; i++ )
@@ -201,7 +203,9 @@ int main(int argc, char** argv)
         free(train_prob.x);
     }
     
-    return 1;
+    std::cerr<<std::endl<<"Training complete"<<std::endl;
+    ros::shutdown();
+    return 0;
 } 
 //*/
 
