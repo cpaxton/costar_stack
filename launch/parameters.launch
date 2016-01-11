@@ -4,6 +4,5 @@
   <param name="sift_path"  type="str" value="$(find sp_segmenter)/data/UW_sift_dict/"/>
   <param name="fpfh_path"  type="str" value="$(find sp_segmenter)/data/UW_fpfh_dict/"/>
 
-  <param name="svm_path"   type="str" value="$(find sp_segmenter)/data/UR5_svm/"/>
   <param name="mesh_path"  type="str" value="$(find sp_segmenter)/data/mesh/"/>
 </launch>

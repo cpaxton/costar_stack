@@ -70,6 +70,7 @@ object		:	the object file name without extension. Default: ```drill```
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
 pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
 poses_out	:	Output poses topic name. Default: ```/SPSegmenterNode/POSES_OUT```
+svm_path	:	Svm folder directory to be loaded. Default: ```$(find sp_segmenter)/data/UR5_drill_svm/```
 
 Example:
 

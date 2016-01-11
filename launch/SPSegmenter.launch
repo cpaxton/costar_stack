@@ -6,15 +6,17 @@
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
   <arg name="pcl_out"        default="points_out"/>
   <arg name="poses_out"      default="poses_out"/>
+  <arg name="svm_path"       default="$(find sp_segmenter)/data/UR5_drill_svm/"/>
 
   <node pkg="sp_segmenter" type="SPSegmenterNode" name="SPSegmenterNode" args="-p">  
 	  <!-- SPSegmenterNode Node arg pass -->
 	  <param name="cur_name"   type="str" value="$(arg object)" />
 
     <!-- SPSegmenterNode subscriber/publisher args pass -->
-	  <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
+    <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
     <param name="POINTS_OUT" type="str" value="$(arg pcl_out)"/>
     <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
+    <param name="svm_path"   type="str" value="$(arg svm_path)"/>
   </node>
 
   <group ns="SPSegmenterNode">
