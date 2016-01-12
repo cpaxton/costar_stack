@@ -63,14 +63,16 @@ How to run using roslaunch:
 roslaunch sp_segmenter SPSegmenter.launch
 ```
 
-By default, this roslaunch is exactly the same as ```rosrun sp_segmenter SPSegmenterNode -p``` except that it can be run without the need to be on the root of sp_segmenter directory.
+By default, this roslaunch is exactly the same as ```rosrun sp_segmenter SPSegmenterNode -p``` except that it can be run without the need to be on the root of sp_segmenter directory. The data folder in default is located in ```"$(find sp_segmenter)/data/"```, and can be modified by changing parameters.launch.
+
 It is possible to pass some arguments to set the object type, input point cloud topic, and the segmenter outputs.
 Args list:
 object		:	the object file name without extension. Default: ```drill```
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
 pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
 poses_out	:	Output poses topic name. Default: ```/SPSegmenterNode/POSES_OUT```
-svm_path	:	Svm folder directory to be loaded. Default: ```$(find sp_segmenter)/data/UR5_drill_svm/```
+data_path	:	Location of data folder. Default: ```$(find sp_segmenter)/data```
+svm_path	:	SVM folder directory in data folder to be loaded. Default: ```UR5_drill_svm```
 
 Example:
 
