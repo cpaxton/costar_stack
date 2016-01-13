@@ -1,0 +1,14 @@
+<launch>
+  <!-- Objects file Name and save directory-->
+  <arg name="object"              default="cloud_cluster_" />
+  <arg name="save_directory"      default="$(find object_on_table_segmenter)/result" />
+  <arg name="pcl_in"              default="/camera/depth_registered/points" />
+
+  <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter_Node">  
+  <!-- object_on_table_segmenter_Node arg pass -->
+    <param name="save_directory"  type="str" value="$(arg save_directory)/" />
+    <param name="object"          type="str" value="$(arg object)" />
+    <param name="POINTS_IN"       type="str" value="$(arg pcl_in)" />
+  </node>
+
+</launch>
