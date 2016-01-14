@@ -30,7 +30,7 @@
 // #include <cv_bridge/cv_bridge.h>
 
 bool dist_viewer, distance_limit_enable[3];
-float limitX[2],limitY[2],limitZ[2];
+double limitX[2],limitY[2],limitZ[2];
 std::string POINTS_IN;
 std::string save_directory, object_name;
 int cloud_save_index;
@@ -197,12 +197,12 @@ int main (int argc, char** argv)
   nh.param("limit_X",distance_limit_enable[0],false);
   nh.param("limit_Y",distance_limit_enable[1],false);
   nh.param("limit_Z",distance_limit_enable[2],true);
-  nh.param("xMin",limitX[0],0.0f);
-  nh.param("yMin",limitY[0],0.0f);
-  nh.param("zMin",limitZ[0],0.0f);
-  nh.param("xMax",limitX[1],0.0f);
-  nh.param("yMax",limitY[1],0.0f);
-  nh.param("zMax",limitZ[1],1.5f);
+  nh.param("xMin",limitX[0],0.0d);
+  nh.param("yMin",limitY[0],0.0d);
+  nh.param("zMin",limitZ[0],0.0d);
+  nh.param("xMax",limitX[1],0.0d);
+  nh.param("yMax",limitY[1],0.0d);
+  nh.param("zMax",limitZ[1],1.5d);
 
   pc_sub = nh.subscribe(POINTS_IN,1,callback);
   std::cerr << "Press 'q' key to exit \n";
