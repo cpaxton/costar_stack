@@ -54,7 +54,7 @@ int getch()
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input)
 {
-  std::cerr << "Cloud points before distance filtering: " << cloud_input->points.size() << std::endl;
+  //std::cerr << "Cloud points before distance filtering: " << cloud_input->points.size() << std::endl;
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
   pcl::PassThrough<pcl::PointXYZRGBA> pass;
@@ -81,7 +81,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pc
 	pass.setFilterLimits (limitZ[0], limitZ[1]);
 	pass.filter (*cloud_filtered);
   }
-  std::cerr << "Cloud after distance filtering: " << cloud_filtered->points.size() << std::endl;
+  //std::cerr << "Cloud after distance filtering: " << cloud_filtered->points.size() << std::endl;
   return cloud_filtered;
 }
 
@@ -154,19 +154,22 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
   // save detected cluster data
   for (size_t i = 0; i < euclidean_label_indices.size (); i++)
   {
-    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
-    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
-	pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices);
-	*object_cloud_indices = euclidean_label_indices[i];
-	extract.setInputCloud(cloud_filtered);
-	extract.setIndices(object_cloud_indices);
-	extract.setKeepOrganized(true);
-	extract.filter(*cloud_cluster);
-    std::stringstream ss;
-    ss << save_directory << object_name << cloud_save_index << ".pcd";
-    writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud_cluster, false); //*
-    std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd" << std::endl;
-    cloud_save_index++;
+  	if (euclidean_label_indices[i].indices.size () > 1000)
+    {
+	    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
+		pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices);
+		*object_cloud_indices = euclidean_label_indices[i];
+		extract.setInputCloud(cloud_filtered);
+		extract.setIndices(object_cloud_indices);
+		extract.setKeepOrganized(true);
+		extract.filter(*cloud_cluster);
+	    std::stringstream ss;
+	    ss << save_directory << object_name << cloud_save_index << ".pcd";
+	    writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud_cluster, false); //*
+	    std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd" << std::endl;
+	    cloud_save_index++;
+	}
   }
 
   std::cerr << "Segmentation done \n. Wait for new data \n";
