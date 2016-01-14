@@ -107,7 +107,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
   pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
   pcl::IntegralImageNormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setNormalEstimationMethod (ne.AVERAGE_3D_GRADIENT);
-  ne.setMaxDepthChangeFactor(0.02f);
+  ne.setMaxDepthChangeFactor(0.03f);
   ne.setNormalSmoothingSize(10.0f);
   ne.setInputCloud(cloud_filtered);
   ne.compute(*normals);
@@ -120,15 +120,16 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
   std::vector<pcl::PointIndices> label_indices;
   std::vector<pcl::PointIndices> boundary_indices;
 
-  mps.setMinInliers (15000);
-  mps.setAngularThreshold (0.017453 * 2.0); // 2 degrees
-  mps.setDistanceThreshold (0.02); // 2cm
+  mps.setMinInliers (10000);
+  mps.setAngularThreshold (0.017453 * 3.0); // 2 degrees
+  mps.setDistanceThreshold (0.03); // 2cm
   mps.setInputNormals (normals);
   mps.setInputCloud (cloud_filtered);
   std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
   mps.segmentAndRefine (regions, model_coefficients, inlier_indices, labels, label_indices, boundary_indices);
 
   // Remove detected planes (table) and segment the object
+  int planar_region_number = 0;
   std::vector<bool> plane_labels;
   plane_labels.resize (label_indices.size (), false);
   for (size_t i = 0; i < label_indices.size (); i++)
@@ -136,8 +137,10 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
     if (label_indices[i].indices.size () > 10000)
     {
       plane_labels[i] = true;
+      planar_region_number ++;
     }
   }
+  std::cerr << "Detected planar region: " << planar_region_number << std::endl;
 
   pcl::EuclideanClusterComparator<pcl::PointXYZRGBA, pcl::Normal, pcl::Label>::Ptr euclidean_cluster_comparator_(new pcl::EuclideanClusterComparator<pcl::PointXYZRGBA, pcl::Normal, pcl::Label> ());
   euclidean_cluster_comparator_->setInputCloud (cloud_filtered);
