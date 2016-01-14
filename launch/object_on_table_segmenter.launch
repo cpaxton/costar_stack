@@ -3,12 +3,29 @@
   <arg name="object"              default="cloud_cluster_" />
   <arg name="save_directory"      default="$(find object_on_table_segmenter)/result" />
   <arg name="pcl_in"              default="/camera/depth_registered/points" />
+  
+  <!-- PCL distance filtered viewer-->
+  <arg name="viewer"              default="false" />
 
   <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter_Node">  
   <!-- object_on_table_segmenter_Node arg pass -->
-    <param name="save_directory"  type="str" value="$(arg save_directory)/" />
-    <param name="object"          type="str" value="$(arg object)" />
-    <param name="POINTS_IN"       type="str" value="$(arg pcl_in)" />
+    <param name="save_directory"  type="str"  value="$(arg save_directory)/" />
+    <param name="object"          type="str"  value="$(arg object)" />
+    <param name="POINTS_IN"       type="str"  value="$(arg pcl_in)" />
+
+    <param name="dist_viewer"     type="bool" value="$(arg viewer)" />
+
+    <param name="limit_X"         type="bool" default="false" />
+    <param name="limit_Y"         type="bool" default="false" />
+    <param name="limit_Z"         type="bool" default="true" />
+
+    <param name="xMin"       type="double" default="0" />
+    <param name="yMin"       type="double" default="0" />
+    <param name="zMin"       type="double" default="0" />
+    <param name="xMax"       type="double" default="0" />
+    <param name="yMax"       type="double" default="0" />
+    <param name="zMax"       type="double" default="1.5" />
+    
   </node>
 
 </launch>

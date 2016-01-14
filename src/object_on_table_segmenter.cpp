@@ -5,19 +5,15 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/passthrough.h>
 
-// for pcl segmentation
-// based on http://www.pointclouds.org/documentation/tutorials/cluster_extraction.php
-#include <pcl/ModelCoefficients.h>
-#include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/kdtree/kdtree.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_clusters.h>
+
+// for pcl segmentation
+#include <pcl/features/integral_image_normal.h>
+#include <pcl/segmentation/organized_multi_plane_segmentation.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/segmentation/organized_connected_component_segmentation.h>
+#include <pcl/segmentation/euclidean_cluster_comparator.h>
 
 // ros stuff
 #include <ros/ros.h>
@@ -33,6 +29,8 @@
 // #include <opencv2/highgui/highgui.hpp>
 // #include <cv_bridge/cv_bridge.h>
 
+bool dist_viewer, distance_limit_enable[3];
+float limitX[2],limitY[2],limitZ[2];
 std::string POINTS_IN;
 std::string save_directory, object_name;
 int cloud_save_index;
@@ -60,93 +58,110 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pc
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
   pcl::PassThrough<pcl::PointXYZRGBA> pass;
-  pass.setInputCloud (cloud_input);
-
-  pass.setFilterFieldName ("x");
-  pass.setFilterLimits (0.2, 0.5);
-  //pass.setFilterLimitsNegative (true);
-  pass.filter (*cloud_filtered);
+  *cloud_filtered = *cloud_input;
 
   pass.setInputCloud (cloud_filtered);
-  pass.setFilterFieldName ("z");
-  pass.setFilterLimits (0.5, 1.25);
-  //pass.setFilterLimitsNegative (true);
-  pass.filter (*cloud_filtered);
-
+  pass.setKeepOrganized(true);
+  
+  if (distance_limit_enable[0])
+  {
+	pass.setFilterFieldName ("x");
+	pass.setFilterLimits (limitX[0], limitX[1]);
+	pass.filter (*cloud_filtered);
+  }
+  if (distance_limit_enable[1])
+  {
+	pass.setFilterFieldName ("y");
+	pass.setFilterLimits (limitY[0], limitY[1]);
+	pass.filter (*cloud_filtered);
+  }
+  if (distance_limit_enable[2])
+  {
+	pass.setFilterFieldName ("z");
+	pass.setFilterLimits (limitZ[0], limitZ[1]);
+	pass.filter (*cloud_filtered);
+  }
   std::cerr << "Cloud after distance filtering: " << cloud_filtered->points.size() << std::endl;
   return cloud_filtered;
 }
 
 void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_cloud)
 {
-  std::cerr << "Segmentation process begin \n";
+  std::cerr << "\nSegmentation process begin \n";
   // Remove point outside certain distance
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>),cloud_f (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
   cloud_filtered = cloud_filter_distance(input_cloud);
-  //writer.write<pcl::PointXYZRGBA> (save_directory+"distance_filtered.pcd", *cloud_filtered, false);
-
-  // Create the segmentation object for the planar model and set all the parameters
-  pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
-  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZRGBA> ());
-  seg.setOptimizeCoefficients (true);
-  seg.setModelType (pcl::SACMODEL_PLANE);
-  seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setMaxIterations (100);
-  seg.setDistanceThreshold (0.02);
-
-  int i=0, nr_points = (int) cloud_filtered->points.size ();
-  while (cloud_filtered->points.size () > 0.3 * nr_points)
+  if (dist_viewer)
   {
-    // Segment the largest planar component from the remaining cloud
-    seg.setInputCloud (cloud_filtered);
-    seg.segment (*inliers, *coefficients);
-    if (inliers->indices.size () == 0)
-    {
-      std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
-      break;
-    }
-
-    // Extract the planar inliers from the input cloud
-    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
-    extract.setInputCloud (cloud_filtered);
-    extract.setIndices (inliers);
-    extract.setNegative (false);
-
-    // Get the points associated with the planar surface
-    extract.filter (*cloud_plane);
-    std::cerr << "PointCloud representing the planar component: " << cloud_plane->points.size () << " data points." << std::endl;
-
-    // Remove the planar inliers, extract the rest
-    extract.setNegative (true);
-    extract.filter (*cloud_f);
-    *cloud_filtered = *cloud_f;
+  	std::cerr << "See distance filtered cloud. Press q to quit viewer. \n";
+  	pcl::visualization::CloudViewer viewer ("Distance Filtered Cloud Viewer");
+	viewer.showCloud (cloud_filtered);
+	while (!viewer.wasStopped ())
+	{
+	}
+	dist_viewer = false;
+	writer.write<pcl::PointXYZRGBA> (save_directory+"distance_filtered.pcd", *cloud_filtered, false);
   }
 
-  // Creating the KdTree object for the search method of the extraction
-  pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
-  tree->setInputCloud (cloud_filtered);
+  // Get Normal Cloud
+  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::IntegralImageNormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
+  ne.setNormalEstimationMethod (ne.AVERAGE_3D_GRADIENT);
+  ne.setMaxDepthChangeFactor(0.02f);
+  ne.setNormalSmoothingSize(10.0f);
+  ne.setInputCloud(cloud_filtered);
+  ne.compute(*normals);
 
-  std::vector<pcl::PointIndices> cluster_indices;
-  pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
-  ec.setClusterTolerance (0.03); // 5cm
-  ec.setMinClusterSize (3000);
-  ec.setMaxClusterSize (25000);
-  ec.setSearchMethod (tree);
-  ec.setInputCloud (cloud_filtered);
-  ec.extract (cluster_indices);
+  // Segment planes
+  pcl::OrganizedMultiPlaneSegmentation< pcl::PointXYZRGBA, pcl::Normal, pcl::Label > mps;
+  std::vector<pcl::ModelCoefficients> model_coefficients;
+  std::vector<pcl::PointIndices> inlier_indices;  
+  pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
+  std::vector<pcl::PointIndices> label_indices;
+  std::vector<pcl::PointIndices> boundary_indices;
 
-  for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  mps.setMinInliers (15000);
+  mps.setAngularThreshold (0.017453 * 2.0); // 2 degrees
+  mps.setDistanceThreshold (0.02); // 2cm
+  mps.setInputNormals (normals);
+  mps.setInputCloud (cloud_filtered);
+  std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
+  mps.segmentAndRefine (regions, model_coefficients, inlier_indices, labels, label_indices, boundary_indices);
+
+  // Remove detected planes (table) and segment the object
+  std::vector<bool> plane_labels;
+  plane_labels.resize (label_indices.size (), false);
+  for (size_t i = 0; i < label_indices.size (); i++)
+  {
+    if (label_indices[i].indices.size () > 10000)
+    {
+      plane_labels[i] = true;
+    }
+  }
+
+  pcl::EuclideanClusterComparator<pcl::PointXYZRGBA, pcl::Normal, pcl::Label>::Ptr euclidean_cluster_comparator_(new pcl::EuclideanClusterComparator<pcl::PointXYZRGBA, pcl::Normal, pcl::Label> ());
+  euclidean_cluster_comparator_->setInputCloud (cloud_filtered);
+  euclidean_cluster_comparator_->setLabels (labels);
+  euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
+  euclidean_cluster_comparator_->setDistanceThreshold (0.03f, false);
+
+  pcl::PointCloud<pcl::Label> euclidean_labels;
+  std::vector<pcl::PointIndices> euclidean_label_indices;
+  pcl::OrganizedConnectedComponentSegmentation<pcl::PointXYZRGBA,pcl::Label> euclidean_segmentation (euclidean_cluster_comparator_);
+  euclidean_segmentation.setInputCloud (cloud_filtered);
+  euclidean_segmentation.segment (euclidean_labels, euclidean_label_indices);
+
+  // save detected cluster data
+  for (size_t i = 0; i < euclidean_label_indices.size (); i++)
   {
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
-    for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
-      cloud_cluster->points.push_back (cloud_filtered->points[*pit]); //*
-    cloud_cluster->width = cloud_cluster->points.size ();
-    cloud_cluster->height = 1;
-    cloud_cluster->is_dense = true;
-
-    std::cerr << "PointCloud representing the Cluster: " << cloud_cluster->points.size () << " data points." << std::endl;
+    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
+	pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices);
+	*object_cloud_indices = euclidean_label_indices[i];
+	extract.setInputCloud(cloud_filtered);
+	extract.setIndices(object_cloud_indices);
+	extract.setKeepOrganized(true);
+	extract.filter(*cloud_cluster);
     std::stringstream ss;
     ss << save_directory << object_name << cloud_save_index << ".pcd";
     writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud_cluster, false); //*
@@ -169,11 +184,25 @@ int main (int argc, char** argv)
 {
   ros::init(argc,argv,"object_on_table_segmenter_Node");    
   ros::NodeHandle nh("~");
-  //getting subscriber/publisher parameters
+  //getting subscriber parameters
   nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
+
+  //getting save parameters
   nh.param("save_directory",save_directory,std::string("./result"));
   nh.param("object",object_name,std::string("cloud_cluster_"));
-  cloud_save_index = 0;
+  nh.param("pcl_viewer",dist_viewer,false);
+  nh.param("save_index",cloud_save_index,0);
+
+  //getting other parameters
+  nh.param("limit_X",distance_limit_enable[0],false);
+  nh.param("limit_Y",distance_limit_enable[1],false);
+  nh.param("limit_Z",distance_limit_enable[2],true);
+  nh.param("xMin",limitX[0],0.0f);
+  nh.param("yMin",limitY[0],0.0f);
+  nh.param("zMin",limitZ[0],0.0f);
+  nh.param("xMax",limitX[1],0.0f);
+  nh.param("yMax",limitY[1],0.0f);
+  nh.param("zMax",limitZ[1],1.5f);
 
   pc_sub = nh.subscribe(POINTS_IN,1,callback);
   std::cerr << "Press 'q' key to exit \n";
