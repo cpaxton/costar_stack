@@ -275,6 +275,17 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   }
 }
 
+void callbackCaptureEnvironment(const sensor_msgs::PointCloud2 &pc)
+{
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  // convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA
+  pcl::fromROSMsg(pc, *cloud);
+  std::stringstream ss;
+  ss << save_directory << "environment" << ++cloud_save_index << ".pcd";
+  writer.write<pcl::PointXYZRGBA> (ss.str(), *cloud, true);
+  std::cerr << "Saved " << ss.str() << std::endl;
+}
+
 int main (int argc, char** argv)
 {
   ros::init(argc,argv,"object_on_table_segmenter_Node");    
@@ -293,6 +304,7 @@ int main (int argc, char** argv)
   nh.param("update_table",update_table,false);
   nh.param("load_directory",load_directory,std::string("./data"));
 
+
   //getting other parameters
   nh.param("limit_X",distance_limit_enable[0],false);
   nh.param("limit_Y",distance_limit_enable[1],false);
@@ -304,36 +316,52 @@ int main (int argc, char** argv)
   nh.param("yMax",limitY[1],0.0d);
   nh.param("zMax",limitZ[1],1.5d);
 
-  if (load_table)
-  {
-    pcl::PCDReader reader;
-    reader.read (load_directory+"/table.pcd", *tableHull);
-    haveTable = true;
-  }
-  else
-    haveTable = false;
+  bool justCaptureEnvironment;
+  nh.param("environment_only",justCaptureEnvironment,false);
 
-  pc_sub = nh.subscribe(POINTS_IN,1,callback);
-  if (!haveTable)
-    std::cerr << "Remove all object on table and press 's' key" << std::endl;
-  else
-  {
-    std::cerr << "Press 'q' key to exit \n";
-    std::cerr << "Press 's' key to do object on table segmentation \n";
-  }
-
-  ros::Rate r(10); // 10 hz
-  int key = 0;
-
-  while (ros::ok())
-  {
-    key = getch();
-    if ((key == 's') || (key == 'S'))
+  if (justCaptureEnvironment)
+  { 
+    pc_sub = nh.subscribe(POINTS_IN,1,callbackCaptureEnvironment);
+    ros::Rate r(1);
+    while (ros::ok()){
+      r.sleep();
       ros::spinOnce();
-    else if ((key == 'q') || (key == 'Q'))
-      break;
-    r.sleep();
+    }
   }
+  else
+  {
+    if (load_table)
+    {
+      pcl::PCDReader reader;
+      reader.read (load_directory+"/table.pcd", *tableHull);
+      haveTable = true;
+    }
+    else
+      haveTable = false;
+
+    pc_sub = nh.subscribe(POINTS_IN,1,callback);
+    if (!haveTable)
+      std::cerr << "Remove all object on table and press 's' key" << std::endl;
+    else
+    {
+      std::cerr << "Press 'q' key to exit \n";
+      std::cerr << "Press 's' key to do object on table segmentation \n";
+    }
+
+    ros::Rate r(10); // 10 hz
+    int key = 0;
+
+    while (ros::ok())
+    {
+      key = getch();
+      if ((key == 's') || (key == 'S'))
+        ros::spinOnce();
+      else if ((key == 'q') || (key == 'Q'))
+        break;
+      r.sleep();
+    }
+  }
+  
   ros::shutdown();
   return (0);
 }

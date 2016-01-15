@@ -21,6 +21,9 @@
 
     <param name="pcl_viewer"      type="bool" value="$(arg viewer)" />
 
+    <param name="environment_only" type="bool" value="false" />
+
+
     <param name="load_table"      type="bool" value="$(arg load_table)" />
     <param name="update_table"    type="bool" value="$(arg update_table)" />
     <param name="load_directory"  type="str"  value="$(arg load_directory)" />
