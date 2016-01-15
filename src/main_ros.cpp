@@ -30,6 +30,7 @@ float radius = 0.02;
 float down_ss = 0.003;
 double pairWidth = 0.05;
 double voxelSize = 0.003; 
+bool bestPoseOnly;
     
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
@@ -284,7 +285,10 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			pcl::PointCloud<myPointXYZ>::Ptr foreground(new pcl::PointCloud<myPointXYZ>());
 			pcl::copyPointCloud(*foreground_cloud, *foreground);
 
-			objrec->StandardBest(foreground, all_poses1);
+            if (bestPoseOnly)
+                objrec->StandardBest(foreground, all_poses1);
+            else
+			    objrec->StandardRecognize(foreground, all_poses1);
 
 			pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
 			pcl::copyPointCloud(*scene_f, *scene_xyz);
@@ -365,6 +369,12 @@ int main(int argc, char** argv)
     nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
     nh.param("POINTS_OUT", POINTS_OUT,std::string("points_out"));
     nh.param("POSES_OUT", POSES_OUT,std::string("poses_out"));
+    //get only best poses (1 pose output) or multiple poses
+    nh.param("bestPoseOnly", bestPoseOnly, true);
+    if (bestPoseOnly)
+        std::cerr << "Node will only output the best detected poses \n";
+    else
+        std::cerr << "Node will output all detected poses \n";
 
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
