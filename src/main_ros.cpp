@@ -358,7 +358,7 @@ int main(int argc, char** argv)
     
     std::string svm_path,shot_path;
     //get path parameter for svm and shot
-    nh.param("svm_path", svm_path,std::string("data/UR5_svm/"));
+    nh.param("svm_path", svm_path,std::string("data/UR5_drill_svm/"));
     nh.param("shot_path", shot_path,std::string("data/UW_shot_dict/"));
 //    std::string sift_path("UW_new_sift_dict/");
 //    std::string fpfh_path("UW_fpfh_dict/");
