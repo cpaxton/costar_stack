@@ -87,13 +87,15 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pc
 
 void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull)
 {
+
+  std::cerr << "\nSegment object above table \n";
   // Prism object.
   pcl::ExtractPolygonalPrismData<pcl::PointXYZRGBA> prism;
   prism.setInputCloud(cloud_input);
   prism.setInputPlanarHull(convexHull);
 
-  // from 1.5 cm above table to 50 cm above table
-  prism.setHeightLimits(0.015f, 0.5f);
+  // from 1 cm above table to 50 cm above table
+  prism.setHeightLimits(0.01f, 0.5f);
   pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices);
 
   prism.segment(*objectIndices);
@@ -102,8 +104,8 @@ void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input,
   pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
   extract.setInputCloud(cloud_input);
   extract.setIndices(objectIndices);
-  extract.filter(*objects);
   extract.setKeepOrganized(true);
+  extract.filter(*objects);
   *cloud_input = *objects;
 }
 
@@ -146,7 +148,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 
 void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_cloud)
 {
-  std::cerr << "\nSegmentation process begin \n";
+  std::cerr << "Object Segmentation process begin \n";
   // Remove point outside certain distance
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
   cloud_filtered = cloud_filter_distance(input_cloud);
@@ -161,7 +163,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
   	dist_viewer = false;
   	writer.write<pcl::PointXYZRGBA> (save_directory+"distance_filtered.pcd", *cloud_filtered, true);
   }
-/*
+
   // Get Normal Cloud
   pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
   pcl::IntegralImageNormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
@@ -188,23 +190,23 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
   mps.segmentAndRefine (regions, model_coefficients, inlier_indices, labels, label_indices, boundary_indices);
 
   // Remove detected planes (table) and segment the object
-  int planar_region_number = 0;
+  // int planar_region_number = 0;
   std::vector<bool> plane_labels;
   plane_labels.resize (label_indices.size (), false);
-  for (size_t i = 0; i < label_indices.size (); i++)
-  {
-    if (label_indices[i].indices.size () > 10000)
-    {
-      plane_labels[i] = true;
-      planar_region_number ++;
-    }
-  }
-  std::cerr << "Detected planar region: " << planar_region_number << std::endl;
-*/
+  // for (size_t i = 0; i < label_indices.size (); i++)
+  // {
+  //   if (label_indices[i].indices.size () > 10000)
+  //   {
+  //     plane_labels[i] = true;
+  //     planar_region_number ++;
+  //   }
+  // }
+  // std::cerr << "Detected planar region: " << planar_region_number << std::endl;
+
   pcl::EuclideanClusterComparator<pcl::PointXYZRGBA, pcl::Normal, pcl::Label>::Ptr euclidean_cluster_comparator_(new pcl::EuclideanClusterComparator<pcl::PointXYZRGBA, pcl::Normal, pcl::Label> ());
   euclidean_cluster_comparator_->setInputCloud (cloud_filtered);
-  // euclidean_cluster_comparator_->setLabels (labels);
-  // euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
+  euclidean_cluster_comparator_->setLabels (labels);
+  euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
   euclidean_cluster_comparator_->setDistanceThreshold (0.03f, false);
 
   pcl::PointCloud<pcl::Label> euclidean_labels;
@@ -261,11 +263,10 @@ void callback(const sensor_msgs::PointCloud2 &pc)
       while (!viewer.wasStopped ())
         {
         }
-      dist_viewer = false;
     }
     tableHull = getTableConvexHull(cloud_filtered);
     if (update_table)
-      writer.write<pcl::PointXYZRGBA> (load_directory+"/table.pcd", *cloud_filtered, true);
+      writer.write<pcl::PointXYZRGBA> (load_directory+"/table.pcd", *tableHull, true);
     haveTable = true;
 
     std::cerr << "Add new object to the table \n";

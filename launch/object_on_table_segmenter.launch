@@ -29,10 +29,10 @@
     <param name="limit_Y"         type="bool" value="false" />
     <param name="limit_Z"         type="bool" value="true" />
 
-    <param name="xMin"       type="double" value="-0.25" />
+    <param name="xMin"       type="double" value="-0.4" />
     <param name="yMin"       type="double" value="0" />
     <param name="zMin"       type="double" value="0" />
-    <param name="xMax"       type="double" value="0.25" />
+    <param name="xMax"       type="double" value="0.4" />
     <param name="yMax"       type="double" value="0" />
     <param name="zMax"       type="double" value="0.75" />
     
