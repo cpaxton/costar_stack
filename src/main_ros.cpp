@@ -28,10 +28,10 @@ std::vector<model*> binary_models(3);
 float zmax = 1.2;
 float radius = 0.02;
 float down_ss = 0.003;
-double pairWidth = 0.1;
+double pairWidth = 0.05;
 double voxelSize = 0.003; 
     
-boost::shared_ptr<greedyObjRansac> objrec(new greedyObjRansac(pairWidth, voxelSize));
+boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
 std::vector<ModelT> mesh_set;
 
@@ -343,8 +343,10 @@ int main(int argc, char** argv)
 
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
+    nh.param("pairWidth", pairWidth, 0.05d);
     pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
 
+    objrec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
     //pcl::console::parse_argument(argc, argv, "--i", scene_name);
     
