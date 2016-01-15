@@ -327,7 +327,32 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
 }
 
+std::vector<std::string> stringVectorArgsReader (ros::NodeHandle nh, const std::string param_name, const std::string default_value)
+{
+// The function will read string arguments passed from nodehandle, separate it for every ',' character, and return it to vector<string> variable
+	std::string tmp;
+	std::vector<std::string> result;
 
+	nh.param(param_name,tmp,default_value);
+
+	char splitOperator(',');
+	std::size_t found = tmp.find(splitOperator);
+	std::size_t pos = 0;
+
+	while (found!=std::string::npos)
+	{
+		std::string buffer;
+		buffer.assign(tmp, pos, found - pos);
+		result.push_back(buffer);
+		pos = found + 1;
+		found = tmp.find(splitOperator,pos);
+	}
+
+	std::string buffer;
+	buffer.assign(tmp, pos, tmp.length() - pos);
+	result.push_back(buffer);
+	return result;
+}
 
 int main(int argc, char** argv)
 {
@@ -372,19 +397,22 @@ int main(int argc, char** argv)
     std::cerr << "Ratio: " << ratio << std::endl;
     std::cerr << "Downsample: " << down_ss << std::endl;
     
-    std::string mesh_path,cur_name;
+    std::string mesh_path;
     //get parameter for mesh path and curname
     nh.param("mesh_path", mesh_path,std::string("data/mesh/"));
-    nh.param("cur_name", cur_name,std::string("drill"));
+    std::vector<std::string> cur_name = stringVectorArgsReader(nh, "cur_name", std::string("drill"));
     
-    int model_id = 1;
-    objrec->AddModel(mesh_path + cur_name, cur_name);
-    model_name[model_id] = cur_name;
-    model_name_map[cur_name] = model_id;
-    ModelT mesh_buf = LoadMesh(mesh_path + cur_name + ".obj", cur_name);
-    
-    mesh_set.push_back(mesh_buf);
-
+    for (int model_id = 0; model_id < cur_name.size(); model_id++)
+    {
+    	// add all models. model_id starts in model_name start from 1.
+    	std::string temp_cur = cur_name.at(model_id);
+    	objrec->AddModel(mesh_path + temp_cur, temp_cur);
+        model_name[model_id+1] = temp_cur;
+        model_name_map[temp_cur] = model_id+1;
+        ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
+        
+        mesh_set.push_back(mesh_buf);
+    }
     if( pcl::console::find_switch(argc, argv, "-v") == true )
         view_flag = true;
     if( pcl::console::find_switch(argc, argv, "-p") == true )

@@ -5,6 +5,7 @@
   <arg name="svm_path"       default="UR5_drill_svm" />
   <arg name="params"         default="" />
   <arg name="pairWidth"      default="0.05" />
+  <arg name="NodeName"       default="$(anon SPSegmenterNode)" />
 
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />

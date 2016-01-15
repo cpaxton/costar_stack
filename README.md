@@ -67,7 +67,7 @@ By default, this roslaunch is exactly the same as ```rosrun sp_segmenter SPSegme
 
 It is possible to pass some arguments to set the object type, input point cloud topic, and the segmenter outputs.
 Args list:
-object		:	the object file name without extension. Default: ```drill```
+object		:	the object file name without extension. Support multiple object by adding ```,``` between object name. Default: ```drill```
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
 pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
 poses_out	:	Output poses topic name. Default: ```/SPSegmenterNode/POSES_OUT```
