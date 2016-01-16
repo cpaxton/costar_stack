@@ -59,6 +59,9 @@
   <run_depend>nodelet</run_depend>
   <run_depend>greedy_objrec_ransac</run_depend>
 
+  <!-- needed for SPSegmenterServer -->
+  <build_depend>message_generation</build_depend>
+  <run_depend>message_runtime</run_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- You can specify that this package is a metapackage here: -->

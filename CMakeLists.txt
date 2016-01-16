@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 SET(CMAKE_BUILD_TYPE "Release")
-find_package(catkin COMPONENTS sensor_msgs pcl_conversions geometry_msgs QUIET)# greedy_objrec_ransac)
+find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf QUIET)# greedy_objrec_ransac)
 
 project(sp_segmenter C CXX)
 
@@ -47,14 +47,25 @@ else()
 endif()
 message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
+add_service_files(
+  FILES
+  SPSegmenterServer.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 if(catkin_FOUND)
     catkin_package(
       INCLUDE_DIRS include
       LIBRARIES 
-      CATKIN_DEPENDS sensor_msgs geometry_msgs #greedy_objrec_ransac
+      CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
       DEPENDS PCL OpenCV OpenMP 
     )
 endif()
+
 
 find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
 
@@ -102,6 +113,9 @@ target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRAR
 add_executable(foreRun src/greedyObjRansac.h src/greedyObjRansac.cpp src/main_foreground.cpp)
 target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
 
+add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
+target_link_libraries(SPSegmenterServer Utility DataParser PoolLib #${Boost_LIBRARIES} 
+                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 #add_executable(sift_test src/main_sift_test.cpp) 
 #target_link_libraries(sift_test Utility DataParser PoolLib ${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
