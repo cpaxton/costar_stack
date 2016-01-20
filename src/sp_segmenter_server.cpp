@@ -27,6 +27,7 @@
 //for TF
 bool hasTF; 
 geometry_msgs::PoseArray sp_segmenter_poses;
+sensor_msgs::PointCloud2 inputCloud;
 
 bool compute_pose = false;
 bool view_flag = false;
@@ -34,13 +35,13 @@ pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
 std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set(5+1);
 std::vector<model*> binary_models(3);
-float zmax = 1.2;
+float zmax = 0.9;
 float radius = 0.02;
 float down_ss = 0.003;
 double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
-sensor_msgs::PointCloud2 inputCloud;
+double minConfidence;
     
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
@@ -70,6 +71,55 @@ uchar color_label[11][3] =
 void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
 pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud);
 
+pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scene, float T = 0.02)
+{
+    pcl::PointCloud<PointT>::Ptr downsampledPointCloud (new pcl::PointCloud<PointT>);
+    pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
+    sor.setInputCloud (scene);
+    sor.setLeafSize (0.01f, 0.01f, 0.01f);
+    sor.filter (*downsampledPointCloud); 
+
+    pcl::ModelCoefficients::Ptr plane_coef(new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+    // Create the segmentation object
+    pcl::SACSegmentation<PointT> seg;
+    seg.setOptimizeCoefficients(true);
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setDistanceThreshold(T);
+
+    seg.setInputCloud(downsampledPointCloud);
+    seg.segment(*inliers, *plane_coef);
+    
+    pcl::ProjectInliers<PointT> proj;
+    proj.setModelType (pcl::SACMODEL_PLANE);
+    proj.setInputCloud (scene);
+    proj.setModelCoefficients (plane_coef);
+
+    pcl::PointCloud<PointT>::Ptr scene_projected(new pcl::PointCloud<PointT>());
+    proj.filter (*scene_projected);
+
+    pcl::PointCloud<PointT>::iterator it_ori = scene->begin();
+    pcl::PointCloud<PointT>::iterator it_proj = scene_projected->begin();
+    
+    pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
+    for( int base = 0 ; it_ori < scene->end(), it_proj < scene_projected->end() ; it_ori++, it_proj++, base++ )
+    {
+        float diffx = it_ori->x-it_proj->x;
+        float diffy = it_ori->y-it_proj->y;
+        float diffz = it_ori->z-it_proj->z;
+
+        if( diffx * it_ori->x + diffy * it_ori->y + diffz * it_ori->z >= 0 )
+            continue;
+        //distance from the point to the plane
+        float dist = sqrt(diffx*diffx + diffy*diffy + diffz*diffz);
+        
+        if ( dist >= T+0.005 )//fabs((*it_ori).x) <= 0.1 && fabs((*it_ori).y) <= 0.1 )
+            scene_f->push_back(*it_ori);
+    }
+    
+    return scene_f;
+}
 
 /*********************************************************************************/
 std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, const std::vector<ModelT> &mesh_set, const std::vector<poseT> &all_poses)
@@ -170,25 +220,12 @@ std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, con
 }
 /*********************************************************************************/
 
-void spSegmentercallback(const sensor_msgs::PointCloud2 &pc) {
-
-	pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
-	pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-	pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
-
-	//fromROSMsg(pc,*full_cloud); // convert to PCL format
-	pcl::PCLPointCloud2 pcl_pc;
-	pcl_conversions::toPCL(pc, pcl_pc);
-
-	pcl::fromPCLPointCloud2(pcl_pc, *full_cloud);
-
-	// remove NaNs
-	std::vector<int> idx_ff;
-
-	pcl::removeNaNFromPointCloud(*full_cloud, *cloud, idx_ff);
-
+std::vector<poseT> spSegmenterCallback(
+	const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> final_cloud)
+{
+	// By default pcl::PassThrough will remove NaNs point unless setKeepOrganized is true
 	pcl::PassThrough<PointT> pass;
-	pass.setInputCloud (cloud);
+	pass.setInputCloud (full_cloud);
 	pass.setFilterFieldName ("z");
 	pass.setFilterLimits (0.1, zmax);
 	//pass.setFilterLimitsNegative (true);
@@ -197,6 +234,7 @@ void spSegmentercallback(const sensor_msgs::PointCloud2 &pc) {
 
 	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene);
 
+	// pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
 	//computeNormals(cloud, cloud_normal, radius);
 	//pcl::PointCloud<PointT>::Ptr label_cloud = recog.recognize(cloud, cloud_normal);
 
@@ -229,23 +267,16 @@ void spSegmentercallback(const sensor_msgs::PointCloud2 &pc) {
 		viewer->spin();
 	}
 
-	pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
+	
 	for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
 	{
 		if( foreground_cloud->at(l).label > 0 )
-			final_cloud->push_back(foreground_cloud->at(l));
+			final_cloud.push_back(foreground_cloud->at(l));
 	}
 
-	sensor_msgs::PointCloud2 output_msg;
-	toROSMsg(*final_cloud,output_msg);
-	output_msg.header.frame_id = pc.header.frame_id;
-	pc_pub.publish(output_msg);
-
+	std::vector<poseT> all_poses;
 	/* POSE */
 	if (compute_pose) {
-
-		geometry_msgs::PoseArray msg;
-		msg.header.frame_id = pc.header.frame_id;
 		for (int i = 0; i < 1; ++i) { // was 99
 			std::vector<poseT> all_poses1;
 
@@ -255,29 +286,13 @@ void spSegmentercallback(const sensor_msgs::PointCloud2 &pc) {
             if (bestPoseOnly)
                 objrec->StandardBest(foreground, all_poses1);
             else
-			    objrec->StandardRecognize(foreground, all_poses1);
+			    objrec->StandardRecognize(foreground, all_poses1,minConfidence);
 
 			pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
 			pcl::copyPointCloud(*scene_f, *scene_xyz);
 
-			std::vector<poseT> all_poses =  RefinePoses(scene_xyz, mesh_set, all_poses1);
+			all_poses =  RefinePoses(scene_xyz, mesh_set, all_poses1);
 			std::cout << "# Poses found: " << all_poses.size() << std::endl;
-            
-
-			for (poseT &p: all_poses) {
-				geometry_msgs::Pose pmsg;
-				std::cout <<"pose = ("<<p.shift.x()<<","<<p.shift.y()<<","<<p.shift.z()<<")"<<std::endl;
-				pmsg.position.x = p.shift.x();
-				pmsg.position.y = p.shift.y();
-				pmsg.position.z = p.shift.z();
-				pmsg.orientation.x = p.rotation.x();
-				pmsg.orientation.y = p.rotation.y();
-				pmsg.orientation.z = p.rotation.z();
-				pmsg.orientation.w = p.rotation.w();
-
-				msg.poses.push_back(pmsg);
-			}
-            sp_segmenter_poses = msg;
 
 			std::cout<<"done objrec ransac"<<std::endl;
 			if( viewer )
@@ -291,8 +306,9 @@ void spSegmentercallback(const sensor_msgs::PointCloud2 &pc) {
 				viewer->removeAllPointClouds();
 			}
 		}
-		// pose_pub.publish(msg);
+
 	}
+	return all_poses;
 
 }
 
@@ -333,7 +349,39 @@ void updateCloudData (const sensor_msgs::PointCloud2 &pc)
 bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     // Service call will run SPSegmenter
-    spSegmentercallback(inputCloud);
+    pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+    pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
+
+	fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+
+	// get all poses from spSegmenterCallback
+    std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
+
+    //publishing the segmented point cloud
+	sensor_msgs::PointCloud2 output_msg;
+	toROSMsg(*final_cloud,output_msg);
+	output_msg.header.frame_id = inputCloud.header.frame_id;
+	pc_pub.publish(output_msg);
+
+	//converting all_poses to geometry_msgs::Pose and update the sp_segmenter_poses
+
+	geometry_msgs::PoseArray msg;
+	msg.header.frame_id = inputCloud.header.frame_id;
+	for (poseT &p: all_poses) {
+		geometry_msgs::Pose pmsg;
+		std::cout <<"pose = ("<<p.shift.x()<<","<<p.shift.y()<<","<<p.shift.z()<<")"<<std::endl;
+		pmsg.position.x = p.shift.x();
+		pmsg.position.y = p.shift.y();
+		pmsg.position.z = p.shift.z();
+		pmsg.orientation.x = p.rotation.x();
+		pmsg.orientation.y = p.rotation.y();
+		pmsg.orientation.z = p.rotation.z();
+		pmsg.orientation.w = p.rotation.w();
+
+		msg.poses.push_back(pmsg);
+	}
+    sp_segmenter_poses = msg;
+
     hasTF = true;
     return true;
 }
@@ -359,6 +407,8 @@ int main(int argc, char** argv)
     nh.param("POSES_OUT", POSES_OUT,std::string("poses_out"));
     //get only best poses (1 pose output) or multiple poses
     nh.param("bestPoseOnly", bestPoseOnly, true);
+    nh.param("minConfidence", minConfidence, 0);
+
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
