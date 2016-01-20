@@ -164,9 +164,11 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
     for ( list< boost::shared_ptr<PointSetShape> >::iterator it = detectedObjects.begin() ; it != detectedObjects.end() ; ++it )
     {
         boost::shared_ptr<PointSetShape> shape = (*it);
-        if ( shape->getUserData() )
+        if ( shape->getUserData() ){
             printf("\t%s, confidence: %lf\n", shape->getUserData()->getLabel(), shape->getConfidence());
-        
+	    std::cerr << shape->getUserData()->getLabel()<< "confidence: " << shape->getConfidence() << std::endl;
+        }
+
         double **mat4x4 = mat_alloc(4, 4);
         shape->getHomogeneousRigidTransform(mat4x4);
         

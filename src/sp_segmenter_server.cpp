@@ -34,7 +34,7 @@ pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
 std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set(5+1);
 std::vector<model*> binary_models(3);
-float zmax = 1.2;
+float zmax = 0.9;
 float radius = 0.02;
 float down_ss = 0.003;
 double pairWidth = 0.05;
@@ -216,22 +216,22 @@ std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, con
 void spSegmentercallback(const sensor_msgs::PointCloud2 &pc) {
 
 	pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
-	pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+	// pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
 	pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
 
-	//fromROSMsg(pc,*full_cloud); // convert to PCL format
-	pcl::PCLPointCloud2 pcl_pc;
-	pcl_conversions::toPCL(pc, pcl_pc);
+	fromROSMsg(pc,*full_cloud); // convert to PCL format
+	// pcl::PCLPointCloud2 pcl_pc;
+	// pcl_conversions::toPCL(pc, pcl_pc);
 
-	pcl::fromPCLPointCloud2(pcl_pc, *full_cloud);
+	// pcl::fromPCLPointCloud2(pcl_pc, *full_cloud);
 
 	// remove NaNs
-	std::vector<int> idx_ff;
+	// std::vector<int> idx_ff;
 
-	pcl::removeNaNFromPointCloud(*full_cloud, *cloud, idx_ff);
+	// pcl::removeNaNFromPointCloud(*full_cloud, *cloud, idx_ff);
 
 	pcl::PassThrough<PointT> pass;
-	pass.setInputCloud (cloud);
+	pass.setInputCloud (full_cloud);
 	pass.setFilterFieldName ("z");
 	pass.setFilterLimits (0.1, zmax);
 	//pass.setFilterLimitsNegative (true);
