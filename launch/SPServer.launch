@@ -6,7 +6,7 @@
   <arg name="params"         default="" />
   <arg name="pairWidth"      default="0.05" />
   <arg name="NodeName"       default="SPServer" />
-  <arg name="bestPoseOnly"   default="true" />
+  <arg name="bestPoseOnly"   default="false" />
   <arg name="minConfidence"  default="0" />
 
   <!-- SPSegmenterNode subscriber/publisher args -->

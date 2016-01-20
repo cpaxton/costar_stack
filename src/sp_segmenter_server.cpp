@@ -35,7 +35,7 @@ pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
 std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set(5+1);
 std::vector<model*> binary_models(3);
-float zmax = 1.2;
+float zmax = 0.9;
 float radius = 0.02;
 float down_ss = 0.003;
 double pairWidth = 0.05;
