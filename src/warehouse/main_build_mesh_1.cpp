@@ -293,7 +293,8 @@ pcl::CorrespondencesPtr matchSIFT(const cv::Mat &descr1, const cv::Mat &descr2)
     pcl::CorrespondencesPtr corrs (new pcl::Correspondences());
     
     cv::flann::Index sift_tree;
-    cv::flann::LinearIndexParams params(descr1, params);
+    cv::flann::LinearIndexParams params;
+    sift_tree.build(descr1, params);
 
     for( int i = 0 ; i < descr2.rows ; i++ )
     {

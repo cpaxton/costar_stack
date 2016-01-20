@@ -1056,8 +1056,9 @@ int main(int argc, char** argv)
     int num = clouds.size();
     std::vector<cv::Mat> fea_pool(num);
     cv::Mat dict = gen3DNormCube(8);
-    cv::flann::Index dict_tree(dict, indexParams);
+    cv::flann::Index dict_tree;
     cv::flann::LinearIndexParams indexParams;
+    dict_tree.build(dict, cv::noArray(), indexParams);
     
     int len = dict.rows;
     int dictK = len *0.15;
