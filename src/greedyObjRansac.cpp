@@ -151,7 +151,7 @@ void greedyObjRansac::StandardBest(const pcl::PointCloud<myPointXYZ>::Ptr scene_
     }
 }
 
-void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses, double confidenceThreshold)
+void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses, double minConfidence)
 {
     vtkSmartPointer<vtkPolyData> vtk_scene = PolyDataFromPointCloud(scene_xyz);
     vtkPoints* scene = vtk_scene->GetPoints();
@@ -169,7 +169,7 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
             std::cerr << shape->getUserData()->getLabel() << " confindence: " << shape->getConfidence() << std::endl;
         }
 
-        if (shape->getConfidence() > confidenceThreshold){
+        if (shape->getConfidence() < minConfidence){
             printf("Skipping shape, confidence too low\n");
             std::cerr << "Skipping shape, confidence too low\n";
             continue;
