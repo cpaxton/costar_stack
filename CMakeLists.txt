@@ -64,7 +64,7 @@ if(catkin_FOUND)
       CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
       DEPENDS PCL OpenCV OpenMP 
     )
-else()
+endif()
     
 include_directories(include utility)
 
