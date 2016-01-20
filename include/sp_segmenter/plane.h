@@ -1,8 +1,15 @@
 #ifndef SP_SEGMENTER_PLANE
 #define SP_SEGMENTER_PLANE
 
-pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scene, float T = 0.02)
+pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scene, double aboveTable=0.025, float T = 0.02)
 {
+    //Downsample the point cloud for faster plane segmentation
+    pcl::PointCloud<PointT>::Ptr downsampledPointCloud (new pcl::PointCloud<PointT>);
+    pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
+    sor.setInputCloud (scene);
+    sor.setLeafSize (0.01f, 0.01f, 0.01f);
+    sor.filter (*downsampledPointCloud); 
+
     pcl::ModelCoefficients::Ptr plane_coef(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
     // Create the segmentation object
@@ -12,7 +19,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
     seg.setMethodType(pcl::SAC_RANSAC);
     seg.setDistanceThreshold(T);
 
-    seg.setInputCloud(scene);
+    seg.setInputCloud(downsampledPointCloud);
     seg.segment(*inliers, *plane_coef);
     
     pcl::ProjectInliers<PointT> proj;
@@ -38,7 +45,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
         //distance from the point to the plane
         float dist = sqrt(diffx*diffx + diffy*diffy + diffz*diffz);
         
-        if ( dist >= T+0.005 )//fabs((*it_ori).x) <= 0.1 && fabs((*it_ori).y) <= 0.1 )
+        if ( dist >= aboveTable )//fabs((*it_ori).x) <= 0.1 && fabs((*it_ori).y) <= 0.1 )
             scene_f->push_back(*it_ori);
     }
     

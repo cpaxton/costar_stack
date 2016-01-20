@@ -4,6 +4,7 @@
 #include "sp_segmenter/features.h"
 #include "sp_segmenter/JHUDataParser.h"
 #include "sp_segmenter/greedyObjRansac.h"
+#include "sp_segmenter/plane.h"
 
 // ros stuff
 #include <ros/ros.h>
@@ -26,7 +27,7 @@
 
 //for TF
 bool hasTF; 
-geometry_msgs::PoseArray sp_segmenter_poses;
+std::vector<poseT> sp_segmenter_poses;
 sensor_msgs::PointCloud2 inputCloud;
 
 bool compute_pose = false;
@@ -71,56 +72,6 @@ uchar color_label[11][3] =
 
 void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
 pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud);
-
-pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scene, float T = 0.02)
-{
-    pcl::PointCloud<PointT>::Ptr downsampledPointCloud (new pcl::PointCloud<PointT>);
-    pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
-    sor.setInputCloud (scene);
-    sor.setLeafSize (0.01f, 0.01f, 0.01f);
-    sor.filter (*downsampledPointCloud); 
-
-    pcl::ModelCoefficients::Ptr plane_coef(new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-    // Create the segmentation object
-    pcl::SACSegmentation<PointT> seg;
-    seg.setOptimizeCoefficients(true);
-    seg.setModelType(pcl::SACMODEL_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setDistanceThreshold(T);
-
-    seg.setInputCloud(downsampledPointCloud);
-    seg.segment(*inliers, *plane_coef);
-    
-    pcl::ProjectInliers<PointT> proj;
-    proj.setModelType (pcl::SACMODEL_PLANE);
-    proj.setInputCloud (scene);
-    proj.setModelCoefficients (plane_coef);
-
-    pcl::PointCloud<PointT>::Ptr scene_projected(new pcl::PointCloud<PointT>());
-    proj.filter (*scene_projected);
-
-    pcl::PointCloud<PointT>::iterator it_ori = scene->begin();
-    pcl::PointCloud<PointT>::iterator it_proj = scene_projected->begin();
-    
-    pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
-    for( int base = 0 ; it_ori < scene->end(), it_proj < scene_projected->end() ; it_ori++, it_proj++, base++ )
-    {
-        float diffx = it_ori->x-it_proj->x;
-        float diffy = it_ori->y-it_proj->y;
-        float diffz = it_ori->z-it_proj->z;
-
-        if( diffx * it_ori->x + diffy * it_ori->y + diffz * it_ori->z >= 0 )
-            continue;
-        //distance from the point to the plane
-        float dist = sqrt(diffx*diffx + diffy*diffy + diffz*diffz);
-        
-        if ( dist >= aboveTable )//fabs((*it_ori).x) <= 0.1 && fabs((*it_ori).y) <= 0.1 )
-            scene_f->push_back(*it_ori);
-    }
-    
-    return scene_f;
-}
 
 /*********************************************************************************/
 std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, const std::vector<ModelT> &mesh_set, const std::vector<poseT> &all_poses)
@@ -233,7 +184,7 @@ std::vector<poseT> spSegmenterCallback(
 	pcl::PointCloud<PointT>::Ptr scene(new pcl::PointCloud<PointT>());
 	pass.filter (*scene);
 
-	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene);
+	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene,aboveTable);
 
 	// pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
 	//computeNormals(cloud, cloud_normal, radius);
@@ -366,22 +317,22 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
 
 	//converting all_poses to geometry_msgs::Pose and update the sp_segmenter_poses
 
-	geometry_msgs::PoseArray msg;
-	msg.header.frame_id = inputCloud.header.frame_id;
-	for (poseT &p: all_poses) {
-		geometry_msgs::Pose pmsg;
-		std::cout <<"pose = ("<<p.shift.x()<<","<<p.shift.y()<<","<<p.shift.z()<<")"<<std::endl;
-		pmsg.position.x = p.shift.x();
-		pmsg.position.y = p.shift.y();
-		pmsg.position.z = p.shift.z();
-		pmsg.orientation.x = p.rotation.x();
-		pmsg.orientation.y = p.rotation.y();
-		pmsg.orientation.z = p.rotation.z();
-		pmsg.orientation.w = p.rotation.w();
+	// geometry_msgs::PoseArray msg;
+	// msg.header.frame_id = inputCloud.header.frame_id;
+	// for (poseT &p: all_poses) {
+	// 	geometry_msgs::Pose pmsg;
+	// 	std::cout <<"pose = ("<<p.shift.x()<<","<<p.shift.y()<<","<<p.shift.z()<<")"<<std::endl;
+	// 	pmsg.position.x = p.shift.x();
+	// 	pmsg.position.y = p.shift.y();
+	// 	pmsg.position.z = p.shift.z();
+	// 	pmsg.orientation.x = p.rotation.x();
+	// 	pmsg.orientation.y = p.rotation.y();
+	// 	pmsg.orientation.z = p.rotation.z();
+	// 	pmsg.orientation.w = p.rotation.w();
 
-		msg.poses.push_back(pmsg);
-	}
-    sp_segmenter_poses = msg;
+	// 	msg.poses.push_back(pmsg);
+	// }
+    sp_segmenter_poses = all_poses;
 
     hasTF = true;
     return true;
@@ -409,7 +360,7 @@ int main(int argc, char** argv)
     //get only best poses (1 pose output) or multiple poses
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0d);
-    nh.param("aboveTable", aboveTable, 0.005d);
+    nh.param("aboveTable", aboveTable, 0.01d);
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
@@ -534,21 +485,21 @@ int main(int argc, char** argv)
         if (hasTF)
         {
             // broadcast all transform
-            std::string parent = sp_segmenter_poses.header.frame_id;
-            for (size_t i = 0; i < sp_segmenter_poses.poses.size(); i++)
+            std::string parent = inputCloud.header.frame_id;
+            int index = 0;
+            for (poseT &p: sp_segmenter_poses)
             {
-                geometry_msgs::Pose pose_i = sp_segmenter_poses.poses[i];
                 tf::Transform transform;
-                transform.setOrigin(tf::Vector3(pose_i.position.x,pose_i.position.y,pose_i.position.z));
+                transform.setOrigin(tf::Vector3( p.shift.x(), p.shift.y(), p.shift.z() ));
                 transform.setRotation(tf::Quaternion(
-                    pose_i.orientation.x,pose_i.orientation.y,pose_i.orientation.z,pose_i.orientation.w));
+                    p.rotation.x(),p.rotation.y(),p.rotation.z(),p.rotation.w()));
                 std::stringstream child;
                 // Does not have tracking yet, can not keep the label on object.
-                child << "Object no " << i;
+                child << "Obj::" << p.model_name << "::" << ++index;
 
                 br.sendTransform(
                     tf::StampedTransform(
-                        transform,ros::Time::now(),sp_segmenter_poses.header.frame_id, child.str())
+                        transform,ros::Time::now(),parent, child.str())
                     );
             }
         }

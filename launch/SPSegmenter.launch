@@ -7,6 +7,9 @@
   <arg name="pairWidth"      default="0.05" />
   <arg name="NodeName"       default="SPSegmenter" />
   <arg name="bestPoseOnly"   default="false" />
+  <arg name="minConfidence"  default="0.2" />
+  <arg name="aboveTable"     default="0.01" />
+
 
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
@@ -17,6 +20,8 @@
     <!-- SPSegmenterNode Node arg pass -->
     <param name="cur_name"   type="str" value="$(arg object)" />
     <param name="bestPoseOnly" type="bool" value="$(arg bestPoseOnly)" />
+    <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
+    <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
 
     <!-- SPSegmenterNode subscriber/publisher args pass -->
     <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>

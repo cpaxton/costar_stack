@@ -68,7 +68,8 @@ By default, this roslaunch is exactly the same as ```rosrun sp_segmenter SPSegme
 It is possible to pass some arguments to set the object type, input point cloud topic, and the segmenter outputs.
 Args list:
 object		:	the object file name without extension. Support multiple object by adding ```,``` between object name. Default: ```drill```
-minConfidence	:	Minimum confidence for object ransac to be considered for pose publishing. Default: ```0```
+minConfidence	:	Minimum confidence for object ransac to be considered for pose publishing. Default: ```0.2```
+aboveTable  :   Minimum distance from table for object segmentation in meters. Default: ```0.01```
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
 pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
 poses_out	:	Output poses topic name. Default: ```/SPSegmenterNode/POSES_OUT```
@@ -83,4 +84,18 @@ roslaunch sp_segmenter SPSegmenter.launch object:=mallet_ball_pein pcl_in:=/kine
 
 ## SPServer
 Runs exactly the same as SPSegmenter, but the sp_segmentation will only run when the service call has made.
-It constantly publishes TF frames
+
+Execute with:
+
+```
+roslaunch sp_segmenter SPServer.launch
+```
+
+It supports the same args as SPSegmenter launch. After one service call, it will constantly publishes TF frames.
+The object TF naming convension generated from SPServer is: ```Obj::<the name of object>::<objectIndex>```.
+
+Example (to update the TF frames):
+
+```
+rosservice call /SPServer/SPSegmenter
+```

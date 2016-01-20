@@ -31,9 +31,11 @@ std::vector<model*> binary_models(3);
 float zmax = 1.2;
 float radius = 0.02;
 float down_ss = 0.003;
+double aboveTable;
 double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
+double minConfidence;
     
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
@@ -188,7 +190,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	pcl::PointCloud<PointT>::Ptr scene(new pcl::PointCloud<PointT>());
 	pass.filter (*scene);
 
-	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene);
+	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene, aboveTable);
 
 	//computeNormals(cloud, cloud_normal, radius);
 	//pcl::PointCloud<PointT>::Ptr label_cloud = recog.recognize(cloud, cloud_normal);
@@ -331,6 +333,9 @@ int main(int argc, char** argv)
     nh.param("POSES_OUT", POSES_OUT,std::string("poses_out"));
     //get only best poses (1 pose output) or multiple poses
     nh.param("bestPoseOnly", bestPoseOnly, true);
+    nh.param("minConfidence", minConfidence, 0.0d);
+    nh.param("aboveTable", aboveTable, 0.01d);
+
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
     else
