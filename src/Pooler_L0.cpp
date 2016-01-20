@@ -280,8 +280,8 @@ int Pooler_L0::LoadSeedsPool(std::string pool_seed_file)
     //std::cerr << cv::norm(pool_seeds.row(i)) << std::endl;  
     
     cv::flann::LinearIndexParams indexParams;
-    // cv::flann::KDTreeIndexParams indexParams(pool_seeds, indexParams);
-    pool_tree = cv::flann::Index(pool_seeds, indexParams);
+    // cv::flann::KDTreeIndexParams indexParams;
+    pool_tree.build(pool_seeds, indexParams);
 
     pool_len = pool_seeds.rows;
 
@@ -309,7 +309,7 @@ cv::Mat Pooler_L0::PoolHybridDomain(const cv::Mat &mixed_domain, const cv::Mat &
 {
     cv::flann::LinearIndexParams indexParams;
     //cv::flann::KDTreeIndexParams indexParams;
-    cv::flann::Index mixed_tree(mixed_domain, indexParams);
+    mixed_tree.build(mixed_domain, indexParams);
     
     std::vector<cv::Mat> fea_vec(hybrid_len);
     for( int i = 0 ; i < hybrid_len ; i++ )
