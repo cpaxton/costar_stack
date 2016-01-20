@@ -151,7 +151,7 @@ void greedyObjRansac::StandardBest(const pcl::PointCloud<myPointXYZ>::Ptr scene_
     }
 }
 
-void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses)
+void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses, double confidenceThreshold)
 {
     vtkSmartPointer<vtkPolyData> vtk_scene = PolyDataFromPointCloud(scene_xyz);
     vtkPoints* scene = vtk_scene->GetPoints();
@@ -164,9 +164,16 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
     for ( list< boost::shared_ptr<PointSetShape> >::iterator it = detectedObjects.begin() ; it != detectedObjects.end() ; ++it )
     {
         boost::shared_ptr<PointSetShape> shape = (*it);
-        if ( shape->getUserData() )
+        if ( shape->getUserData() ){
             printf("\t%s, confidence: %lf\n", shape->getUserData()->getLabel(), shape->getConfidence());
-        
+            std::cerr << shape->getUserData()->getLabel() << " confindence: " << shape->getConfidence() << std::endl;
+        }
+
+        if (shape->getConfidence() > confidenceThreshold){
+            printf("Skipping shape, confidence too low\n");
+            std::cerr << "Skipping shape, confidence too low\n";
+            continue;
+        }
         double **mat4x4 = mat_alloc(4, 4);
         shape->getHomogeneousRigidTransform(mat4x4);
         

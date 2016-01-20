@@ -26,7 +26,7 @@ public:
     void clearMesh(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses);
     
     void GreedyRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses);
-    void StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses);
+    void StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses, double confidenceThreshold = 0);
     void StandardBest(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses);
     
     void genHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::list<AcceptedHypothesis> &acc_hypotheses);
