@@ -59,15 +59,14 @@ if(catkin_FOUND)
     )
 
     catkin_package(
-      INCLUDE_DIRS include
+      INCLUDE_DIRS include utility
       LIBRARIES 
       CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
       DEPENDS PCL OpenCV OpenMP 
     )
 else()
-    include_directories(include utility)
-endif()
-
+    
+include_directories(include utility)
 
 find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
 
