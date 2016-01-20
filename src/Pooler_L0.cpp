@@ -309,6 +309,7 @@ cv::Mat Pooler_L0::PoolHybridDomain(const cv::Mat &mixed_domain, const cv::Mat &
 {
     cv::flann::LinearIndexParams indexParams;
     //cv::flann::KDTreeIndexParams indexParams;
+    cv::flann::Index mixed_tree;
     mixed_tree.build(mixed_domain, indexParams);
     
     std::vector<cv::Mat> fea_vec(hybrid_len);
