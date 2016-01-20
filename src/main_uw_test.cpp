@@ -1,8 +1,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "../include/features.h"
-#include "../include/UWDataParser.h"
+#include "sp_segmenter/features.h"
+#include "sp_segmenter/UWDataParser.h"
 
 std::vector<cv::Mat> SIFTPooling(const MulInfoT &data, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec, cv::SiftDescriptorExtractor * sift_ext, 
                     Hier_Pooler &hie_producer, const std::vector< boost::shared_ptr<Pooler_L0> > &pooler_set, const cv::Mat &atlas, int MODEL_MAX = 100)

@@ -1,6 +1,6 @@
 #include <opencv2/core/core.hpp>
 
-#include "../include/features.h"
+#include "sp_segmenter/features.h"
 
 Hier_Pooler::Hier_Pooler(float rad)
 {
@@ -32,7 +32,7 @@ std::vector<int> Hier_Pooler::LoadDict_L0(std::string dict_path, std::string col
     
         //cv::flann::LinearIndexParams indexParams;
         cv::flann::KDTreeIndexParams indexParams;
-        tree_joint_L0.build(dict_joint_L0, indexParams);
+        tree_joint_L0.build(dict_joint_L0, cv::noArray(), indexParams);
 
 //        LoadSeedsHigh(dict_path + "dict_joint_L0_"+jointK+".cvmat", tree_joint_L0, dict_joint_L0, tmp, ratio);
         std::cerr << "Loading Dictionary L0-2: " << dict_path + "dict_joint_L0_"+jointK+".cvmat" << std::endl;

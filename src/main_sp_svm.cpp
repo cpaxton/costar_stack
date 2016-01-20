@@ -1,4 +1,4 @@
-#include "../include/features.h"
+#include "sp_segmenter/features.h"
 
 model* TrainMultiSVM(std::string fea_path, int l1, int l2, float CC, bool tacc_flag);
 //model* TrainBinarySVM(std::string fea_path, int l1, int l2, float CC, bool tacc_flag);

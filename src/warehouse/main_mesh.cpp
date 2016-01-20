@@ -1,4 +1,4 @@
-#include "../include/utility.h"
+#include "sp_segmenter/utility/utility.h"
 #include <boost/graph/undirected_graph.hpp>
 #include <boost/graph/bron_kerbosch_all_cliques.hpp>
 

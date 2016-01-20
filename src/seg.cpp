@@ -1,4 +1,4 @@
-#include "seg.h"
+#include "sp_segmenter/seg.h"
 
 void setObjID(std::map<std::string, int> &model_name_map)
 {

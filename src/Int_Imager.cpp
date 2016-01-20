@@ -1,4 +1,4 @@
-#include "../include/features.h"
+#include "sp_segmenter/features.h"
 
 IntImager::IntImager(float ap)
 {

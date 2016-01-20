@@ -1,4 +1,4 @@
-#include "../include/utility.h"
+#include "sp_segmenter/utility/utility.h"
 #include <flann/io/hdf5.h>
 
 std::string path("/media/DATA1/BigBIRD/processed");

@@ -1,8 +1,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "../include/features.h"
-#include "../include/JHUDataParser.h"
+#include "sp_segmenter/features.h"
+#include "sp_segmenter/JHUDataParser.h"
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 

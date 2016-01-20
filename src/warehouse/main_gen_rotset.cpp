@@ -1,4 +1,4 @@
-#include "../include/utility.h"
+#include "sp_segmenter/utility/utility.h"
 
 //*
 int main(int argc, char** argv)

@@ -47,23 +47,25 @@ else()
 endif()
 message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
-add_service_files(
-  FILES
-  SPSegmenterServer.srv
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
-
 if(catkin_FOUND)
+    add_service_files(
+      FILES
+      SPSegmenterServer.srv
+    )
+
+    generate_messages(
+      DEPENDENCIES
+      std_msgs
+    )
+
     catkin_package(
       INCLUDE_DIRS include
       LIBRARIES 
       CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
       DEPENDS PCL OpenCV OpenMP 
     )
+else()
+    include_directories(include utility)
 endif()
 
 
@@ -74,7 +76,7 @@ link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} ${catkin_LIBRARY_DIR
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
 
 #library
-add_library(Utility utility/typedef.h utility/utility.h utility/utility.cpp utility/mcqd.h utility/mcqd.cpp src/seg.h src/seg.cpp src/greedyObjRansac.h src/greedyObjRansac.cpp) 
+add_library(Utility include/sp_segmenter/utility/typedef.h include/sp_segmenter/utility/utility.h utility/utility.cpp include/sp_segmenter/utility/mcqd.h utility/mcqd.cpp include/sp_segmenter/seg.h src/seg.cpp include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
 target_link_libraries(Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
 add_library(liblinear utility/liblinear/linear.h utility/liblinear/tron.h 
@@ -82,10 +84,10 @@ add_library(liblinear utility/liblinear/linear.h utility/liblinear/tron.h
             utility/liblinear/blas.h utility/liblinear/blasp.h utility/liblinear/daxpy.cpp 
             utility/liblinear/ddot.cpp utility/liblinear/dnrm2.cpp utility/liblinear/dscal.cpp)
 
-add_library(PoolLib include/features.h src/features.cpp src/HierFea.cpp src/Int_Imager.cpp src/Pooler_L0.cpp src/sp.cpp)
+add_library(PoolLib include/sp_segmenter/features.h src/features.cpp src/HierFea.cpp src/Int_Imager.cpp src/Pooler_L0.cpp src/sp.cpp)
 target_link_libraries(PoolLib Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
-add_library(DataParser include/UWDataParser.h include/BBDataParser.h include/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
+add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
 #add_executable(spTraining src/main_sp_training.cpp) 
@@ -110,7 +112,7 @@ target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRAR
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 #endif(CATKIN_FOUND)
 
-add_executable(foreRun src/greedyObjRansac.h src/greedyObjRansac.cpp src/main_foreground.cpp)
+add_executable(foreRun include/sp_segmenter/greedyObjRansac.h src/main_foreground.cpp)
 target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
 
 add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
@@ -132,7 +134,7 @@ target_link_libraries(SPSegmenterServer Utility DataParser PoolLib #${Boost_LIBR
 #target_link_libraries(semantics Utility DataParser PoolLib ${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
-#add_executable(DictLearning src/main_dict.cpp include/WKmeans.h src/WKmeans.cpp ) 
+#add_executable(DictLearning src/main_dict.cpp include/sp_segmenter/WKmeans.h src/WKmeans.cpp ) 
 #target_link_libraries(DictLearning DataParser Utility PoolLib ${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 

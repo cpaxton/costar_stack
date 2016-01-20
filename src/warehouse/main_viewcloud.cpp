@@ -1,4 +1,4 @@
-#include "../include/utility.h"
+#include "sp_segmenter/utility/utility.h"
 
 pcl::visualization::PCLVisualizer::Ptr viewer;//(new pcl::visualization::PCLVisualizer ());
     

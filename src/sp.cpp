@@ -1,7 +1,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "../include/features.h"
+#include "sp_segmenter/features.h"
 
 /************************************************************************************************************************************/
 

@@ -9,7 +9,7 @@
 #define	UWDATAPARSER_H
 
 #pragma once
-#include "../include/index.h"
+#include "sp_segmenter/utility/utility.h"
 
 /**************************** UW Data Parser ************************************/
 // Load one instance at a time

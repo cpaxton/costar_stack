@@ -1,4 +1,4 @@
-#include "../include/JHUDataParser.h"
+#include "sp_segmenter/JHUDataParser.h"
 
 int readSeqID_JHU(std::string name)
 {

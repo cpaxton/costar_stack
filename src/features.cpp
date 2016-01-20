@@ -1,4 +1,4 @@
-#include "../include/features.h"
+#include "sp_segmenter/features.h"
 
 void setObjID(std::map<std::string, int> &model_name_map)
 {
@@ -690,7 +690,7 @@ void LoadSeedsNormal(std::string normal_seed_file, cv::flann::Index &fea_tree, c
     
     cv::flann::LinearIndexParams indexParams;
     //cv::flann::KDTreeIndexParams indexParams;
-    fea_tree.build(fea_seeds, indexParams);
+    fea_tree.build(fea_seeds,cv::noArray(), indexParams);
 
     int len = fea_seeds.rows;
 
@@ -707,7 +707,7 @@ void LoadSeedsHigh(std::string high_seed_file, cv::flann::Index &fea_tree, cv::M
     
     //cv::flann::LinearIndexParams indexParams;
     cv::flann::KDTreeIndexParams indexParams;
-    fea_tree.build(fea_seeds, indexParams);
+    fea_tree.build(fea_seeds, cv::noArray(), indexParams);
 
     int len = fea_seeds.rows;
     

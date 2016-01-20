@@ -1,4 +1,4 @@
-#include "../include/BBDataParser.h"
+#include "sp_segmenter/BBDataParser.h"
 
 void readBBTrainALL(std::string path, std::string sub_path, CloudSet &clouds, NormalSet &normals, int c1, int c2)
 {

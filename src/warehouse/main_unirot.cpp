@@ -1,4 +1,4 @@
-#include "../include/utility.h"
+#include "sp_segmenter/utility/utility.h"
 
 std::string path("/media/DATA1/BigBIRD/processed");
 std::string model("3m_high_tack_spray_adhesive");

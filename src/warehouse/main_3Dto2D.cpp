@@ -1,6 +1,6 @@
-#include "../include/utility.h"
-#include "../include/BBDataParser.h"
-#include "../include/UWDataParser.h"
+#include "sp_segmenter/utility/utility.h"
+#include "sp_segmenter/BBDataParser.h"
+#include "sp_segmenter/UWDataParser.h"
 #include <flann/io/hdf5.h>
 
 std::string path("/home/chi/BigBIRD/processed");

@@ -1,5 +1,5 @@
 #include <opencv2/core/core.hpp>
-#include "../include/features.h"
+#include "sp_segmenter/features.h"
 
 // ros header for roslaunch capability
 #include <ros/ros.h>

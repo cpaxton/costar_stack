@@ -1,5 +1,5 @@
-#include "../include/utility.h"
-#include "../include/features.h"
+#include "sp_segmenter/utility/utility.h"
+#include "sp_segmenter/features.h"
 
 int color[1000][3] = {0};
 float hs_cell_scale = 0.125;

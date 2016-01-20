@@ -5,10 +5,10 @@
  * Created on March 30, 2015, 4:56 PM
  */
 
-#include "../include/index.h"
+#include "sp_segmenter/utility/utility.h"
 
-#include <BasicTools/Vtk/VtkTransform.h>
-#include <BasicTools/ComputationalGeometry/Algorithms/RANSACPlaneDetector.h>
+//#include <BasicTools/Vtk/VtkTransform.h>
+//#include <BasicTools/ComputationalGeometry/Algorithms/RANSACPlaneDetector.h>
 #include <ObjRecRANSAC/ObjRecRANSAC.h>
 #include <VtkBasics/VtkWindow.h>
 #include <VtkBasics/VtkPolyData.h>

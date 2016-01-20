@@ -1,4 +1,4 @@
-#include "../include/features.h"
+#include "sp_segmenter/features.h"
 
 Pooler_L0::Pooler_L0(int hsi_len)
 {
@@ -281,7 +281,7 @@ int Pooler_L0::LoadSeedsPool(std::string pool_seed_file)
     
     cv::flann::LinearIndexParams indexParams;
     //cv::flann::KDTreeIndexParams indexParams;
-    pool_tree.build(pool_seeds, indexParams);
+    pool_tree.build(pool_seeds, cv::noArray(), indexParams);
 
     pool_len = pool_seeds.rows;
 
@@ -310,7 +310,7 @@ cv::Mat Pooler_L0::PoolHybridDomain(const cv::Mat &mixed_domain, const cv::Mat &
     cv::flann::LinearIndexParams indexParams;
     //cv::flann::KDTreeIndexParams indexParams;
     cv::flann::Index mixed_tree;
-    mixed_tree.build(mixed_domain, indexParams);
+    mixed_tree.build(mixed_domain, cv::noArray(), indexParams);
     
     std::vector<cv::Mat> fea_vec(hybrid_len);
     for( int i = 0 ; i < hybrid_len ; i++ )

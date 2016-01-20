@@ -5,7 +5,7 @@
  * Created on July 25, 2014, 2:36 PM
  */
 
-#include "../include/index.h"
+#include "sp_segmenter/utility/utility.h"
 //#include "../omp/ompcore.h"
 
 struct Hypo{

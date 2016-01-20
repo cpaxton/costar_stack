@@ -1,10 +1,10 @@
 #include <opencv2/core/core.hpp>
 
-#include "../include/features.h"
-#include "../include/WKmeans.h"
-#include "../include/BBDataParser.h"
-#include "../include/UWDataParser.h"
-#include "../include/JHUDataParser.h"
+#include "sp_segmenter/features.h"
+#include "sp_segmenter/WKmeans.h"
+#include "sp_segmenter/BBDataParser.h"
+#include "sp_segmenter/UWDataParser.h"
+#include "sp_segmenter/JHUDataParser.h"
 
 struct CLUSTER_R
 {
@@ -1058,7 +1058,7 @@ int main(int argc, char** argv)
     cv::Mat dict = gen3DNormCube(8);
     cv::flann::Index dict_tree;
     cv::flann::LinearIndexParams indexParams;
-    dict_tree.build(dict, indexParams);
+    dict_tree.build(dict, cv::noArray(), indexParams);
     
     int len = dict.rows;
     int dictK = len *0.15;

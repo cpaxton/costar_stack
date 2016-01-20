@@ -1,9 +1,9 @@
 #include <opencv2/core/core.hpp>
 
-#include "../include/features.h"
-#include "../include/BBDataParser.h"
-#include "../include/UWDataParser.h"
-#include "../include/JHUDataParser.h"
+#include "sp_segmenter/features.h"
+#include "sp_segmenter/BBDataParser.h"
+#include "sp_segmenter/UWDataParser.h"
+#include "sp_segmenter/JHUDataParser.h"
 
 #define MAX_LAYER 7
 

@@ -1,9 +1,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "../include/features.h"
-#include "../include/JHUDataParser.h"
-#include "greedyObjRansac.h"
+#include "sp_segmenter/features.h"
+#include "sp_segmenter/JHUDataParser.h"
+#include "sp_segmenter/greedyObjRansac.h"
 
 // ros stuff
 #include <ros/ros.h>
@@ -60,49 +60,6 @@ uchar color_label[11][3] =
 void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
 pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud);
 
-pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scene, float T = 0.02)
-{
-    pcl::ModelCoefficients::Ptr plane_coef(new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-    // Create the segmentation object
-    pcl::SACSegmentation<PointT> seg;
-    seg.setOptimizeCoefficients(true);
-    seg.setModelType(pcl::SACMODEL_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setDistanceThreshold(T);
-
-    seg.setInputCloud(scene);
-    seg.segment(*inliers, *plane_coef);
-    
-    pcl::ProjectInliers<PointT> proj;
-    proj.setModelType (pcl::SACMODEL_PLANE);
-    proj.setInputCloud (scene);
-    proj.setModelCoefficients (plane_coef);
-
-    pcl::PointCloud<PointT>::Ptr scene_projected(new pcl::PointCloud<PointT>());
-    proj.filter (*scene_projected);
-
-    pcl::PointCloud<PointT>::iterator it_ori = scene->begin();
-    pcl::PointCloud<PointT>::iterator it_proj = scene_projected->begin();
-    
-    pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
-    for( int base = 0 ; it_ori < scene->end(), it_proj < scene_projected->end() ; it_ori++, it_proj++, base++ )
-    {
-        float diffx = it_ori->x-it_proj->x;
-        float diffy = it_ori->y-it_proj->y;
-        float diffz = it_ori->z-it_proj->z;
-
-        if( diffx * it_ori->x + diffy * it_ori->y + diffz * it_ori->z >= 0 )
-            continue;
-        //distance from the point to the plane
-        float dist = sqrt(diffx*diffx + diffy*diffy + diffz*diffz);
-        
-        if ( dist >= T+0.005 )//fabs((*it_ori).x) <= 0.1 && fabs((*it_ori).y) <= 0.1 )
-            scene_f->push_back(*it_ori);
-    }
-    
-    return scene_f;
-}
 
 /*********************************************************************************/
 std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, const std::vector<ModelT> &mesh_set, const std::vector<poseT> &all_poses)

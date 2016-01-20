@@ -1,4 +1,4 @@
-#include "greedyObjRansac.h"
+#include "sp_segmenter/greedyObjRansac.h"
 
 //greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_) : objrec(pairWidth_, voxelSize_, 1.0)
 greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_) : objrec(pairWidth_, voxelSize_, 0.5)

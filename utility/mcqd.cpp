@@ -1,4 +1,4 @@
-#include "mcqd.h"
+#include "sp_segmenter/utility/mcqd.h"
 
 Maxclique::Maxclique (const bool* const* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), Q(sz), QMAX(sz) {
   assert(conn!=0 && sz>0);

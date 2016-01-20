@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../include/index.h"
+#include "sp_segmenter/utility/utility.h"
 
 void batch_PreProcess_JHU(std::string in_path, std::string out_path, int c1 = -1, int c2 = -1);   //batching preprocess functions
 

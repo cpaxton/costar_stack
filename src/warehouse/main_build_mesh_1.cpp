@@ -1,8 +1,8 @@
-#include "../include/utility.h"
-#include "../include/features.h"
-#include "../include/BBDataParser.h"
-#include "../include/UWDataParser.h"
-#include "../include/JHUDataParser.h"
+#include "sp_segmenter/utility/utility.h"
+#include "sp_segmenter/features.h"
+#include "sp_segmenter/BBDataParser.h"
+#include "sp_segmenter/UWDataParser.h"
+#include "sp_segmenter/JHUDataParser.h"
 #include <pcl/ros/conversions.h>
 #include <pcl/surface/gp3.h>
 #include <pcl/io/ply_io.h>
@@ -294,7 +294,7 @@ pcl::CorrespondencesPtr matchSIFT(const cv::Mat &descr1, const cv::Mat &descr2)
     
     cv::flann::Index sift_tree;
     cv::flann::LinearIndexParams params;
-    sift_tree.build(descr1, params);
+    sift_tree.build(descr1, cv::noArray(), params);
 
     for( int i = 0 ; i < descr2.rows ; i++ )
     {

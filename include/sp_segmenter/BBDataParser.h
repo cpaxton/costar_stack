@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../include/index.h"
+#include "sp_segmenter/utility/utility.h"
 
 void BBShiftClouds(std::string in_path, std::string out_path);
 

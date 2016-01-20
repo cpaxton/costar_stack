@@ -1,4 +1,4 @@
-#include "../include/utility.h"
+#include "sp_segmenter/utility/utility.h"
 #include <pcl/surface/bilateral_upsampling.h>
 
 void get2DImg(const pcl::PointCloud<PointT>::Ptr cloud, cv::Mat &rgb, cv::Mat &depth, float ss)

@@ -5,7 +5,7 @@
  * Created on March 30, 2015, 4:56 PM
  */
 
-#include "seg.h"
+#include "sp_segmenter/seg.h"
 
 #include <pcl/features/normal_3d.h>
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>

@@ -1,4 +1,4 @@
-#include "utility.h"
+#include "sp_segmenter/utility/utility.h"
 
 double get_wall_time(){
     struct timeval time;

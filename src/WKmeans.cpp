@@ -1,4 +1,4 @@
-#include "../include/WKmeans.h"
+#include "sp_segmenter/WKmeans.h"
 
 WKmeans::WKmeans()
 {
@@ -49,7 +49,7 @@ float WKmeans::M_step(cv::Mat centers)
     cv::flann::LinearIndexParams indexParams;
     
     cv::flann::Index center_tree;
-    center_tree.build(centers, indexParams);
+    center_tree.build(centers, cv::noArray(), indexParams);
     
     std::vector< std::vector<std::vector<int> > > index_set(thread_num);
     std::vector< float > dist_set(thread_num, 0);
