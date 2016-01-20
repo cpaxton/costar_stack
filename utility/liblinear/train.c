@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include "linear.h"
+#include <omp.h>
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 #define INF HUGE_VAL
 
@@ -49,6 +50,8 @@ void exit_with_help()
 	"-B bias : if bias >= 0, instance x becomes [x; bias]; if < 0, no bias term added (default -1)\n"
 	"-wi weight: weights adjust the parameter C of different classes (see README for details)\n"
 	"-v n: n-fold cross validation mode\n"
+	"-C : find parameter C (only for -s 0 and 2)\n"
+	"-n nr_thread : parallel version with [nr_thread] threads (default 1; only for -s 0, 2, 11)\n"
 	"-q : quiet mode (no outputs)\n"
 	);
 	exit(1);
@@ -84,12 +87,17 @@ static char* readline(FILE *input)
 void parse_command_line(int argc, char **argv, char *input_file_name, char *model_file_name);
 void read_problem(const char *filename);
 void do_cross_validation();
+void do_find_parameter_C();
 
 struct feature_node *x_space;
 struct parameter param;
 struct problem prob;
 struct model* model_;
 int flag_cross_validation;
+int flag_find_C;
+int flag_omp;
+int flag_C_specified;
+int flag_solver_specified;
 int nr_fold;
 double bias;
 
@@ -109,7 +117,11 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if(flag_cross_validation)
+	if (flag_find_C)
+	{
+		do_find_parameter_C();
+	}
+	else if(flag_cross_validation)
 	{
 		do_cross_validation();
 	}
@@ -130,6 +142,19 @@ int main(int argc, char **argv)
 	free(line);
 
 	return 0;
+}
+
+void do_find_parameter_C()
+{
+	double start_C, best_C, best_rate;
+	double max_C = 1024;
+	if (flag_C_specified)
+		start_C = param.C;
+	else
+		start_C = -1.0;
+	printf("Doing parameter search with %d-fold cross validation.\n", nr_fold);
+	find_parameter_C(&prob, &param, nr_fold, start_C, max_C, &best_C, &best_rate);
+	printf("Best C = %g  CV accuracy = %g%%\n", best_C, 100.0*best_rate);
 }
 
 void do_cross_validation()
@@ -183,10 +208,16 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 	param.C = 1;
 	param.eps = INF; // see setting below
 	param.p = 0.1;
+	param.nr_thread = 1;
 	param.nr_weight = 0;
 	param.weight_label = NULL;
 	param.weight = NULL;
+	param.init_sol = NULL;
 	flag_cross_validation = 0;
+	flag_C_specified = 0;
+	flag_solver_specified = 0;
+	flag_find_C = 0;
+	flag_omp = 0;
 	bias = -1;
 
 	// parse options
@@ -199,10 +230,12 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 		{
 			case 's':
 				param.solver_type = atoi(argv[i]);
+				flag_solver_specified = 1;
 				break;
 
 			case 'c':
 				param.C = atof(argv[i]);
+				flag_C_specified = 1;
 				break;
 
 			case 'p':
@@ -215,6 +248,11 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 
 			case 'B':
 				bias = atof(argv[i]);
+				break;
+
+			case 'n':
+				flag_omp = 1;
+				param.nr_thread = atoi(argv[i]);
 				break;
 
 			case 'w':
@@ -237,6 +275,11 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 
 			case 'q':
 				print_func = &print_null;
+				i--;
+				break;
+
+			case 'C':
+				flag_find_C = 1;
 				i--;
 				break;
 
@@ -266,6 +309,57 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 			++p;
 		sprintf(model_file_name,"%s.model",p);
 	}
+
+	// default solver for parameter selection is L2R_L2LOSS_SVC
+	if(flag_find_C)
+	{
+		if(!flag_cross_validation)
+			nr_fold = 5;
+		if(!flag_solver_specified)
+		{
+			fprintf(stderr, "Solver not specified. Using -s 2\n");
+			param.solver_type = L2R_L2LOSS_SVC;
+		}
+		else if(param.solver_type != L2R_LR && param.solver_type != L2R_L2LOSS_SVC)
+		{
+			fprintf(stderr, "Warm-start parameter search only available for -s 0 and -s 2\n");
+			exit_with_help();
+		}
+	}
+
+	//default solver for parallel execution is L2R_L2LOSS_SVC
+	if(flag_omp)
+	{
+		if(!flag_solver_specified)
+		{
+			fprintf(stderr, "Solver not specified. Using -s 2\n");
+			param.solver_type = L2R_L2LOSS_SVC;
+		}
+		else if(param.solver_type != L2R_LR && param.solver_type != L2R_L2LOSS_SVC && param.solver_type != L2R_L2LOSS_SVR)
+		{
+			fprintf(stderr, "Parallel LIBLINEAR is only available for -s 0, 2, 11 now\n");
+			exit_with_help();
+		}
+#ifndef CV_OMP
+		printf("Total threads used: %d\n", param.nr_thread);
+#endif
+	}
+#ifdef CV_OMP
+	if(flag_cross_validation)
+	{
+		int cvthreads = nr_fold;
+		int maxthreads = omp_get_num_procs();
+		if(flag_omp)
+		{
+			omp_set_nested(1);
+			maxthreads = omp_get_num_procs()/param.nr_thread;
+		}
+		if(cvthreads > maxthreads)
+			cvthreads = maxthreads;
+		omp_set_num_threads(cvthreads);
+		printf("Total threads used: %d\n", cvthreads*param.nr_thread);
+	}
+#endif
 
 	if(param.eps == INF)
 	{
@@ -300,7 +394,7 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 void read_problem(const char *filename)
 {
 	int max_index, inst_max_index, i;
-	long int elements, j;
+	size_t elements, j;
 	FILE *fp = fopen(filename,"r");
 	char *endptr;
 	char *idx, *val, *label;

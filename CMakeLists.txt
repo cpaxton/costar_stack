@@ -76,15 +76,15 @@ add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS})
 
 #library
 add_library(Utility include/sp_segmenter/utility/typedef.h include/sp_segmenter/utility/utility.h utility/utility.cpp include/sp_segmenter/utility/mcqd.h utility/mcqd.cpp include/sp_segmenter/seg.h src/seg.cpp include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
-target_link_libraries(Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
+target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
-add_library(liblinear utility/liblinear/linear.h utility/liblinear/tron.h 
-            utility/liblinear/linear.cpp utility/liblinear/predict.cpp utility/liblinear/tron.cpp 
-            utility/liblinear/blas.h utility/liblinear/blasp.h utility/liblinear/daxpy.cpp 
-            utility/liblinear/ddot.cpp utility/liblinear/dnrm2.cpp utility/liblinear/dscal.cpp)
+add_library(linear utility/liblinear/linear.h utility/liblinear/tron.h 
+            utility/liblinear/linear.cpp utility/liblinear/predict.c utility/liblinear/tron.cpp 
+            utility/liblinear/blas/blas.h utility/liblinear/blas/blasp.h utility/liblinear/blas/daxpy.c 
+            utility/liblinear/blas/ddot.c utility/liblinear/blas/dnrm2.c utility/liblinear/blas/dscal.c)
 
 add_library(PoolLib include/sp_segmenter/features.h src/features.cpp src/HierFea.cpp src/Int_Imager.cpp src/Pooler_L0.cpp src/sp.cpp)
-target_link_libraries(PoolLib Utility liblinear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
+target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
 add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )

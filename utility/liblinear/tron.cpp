@@ -12,18 +12,18 @@ template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
 template <class T> static inline T max(T x,T y) { return (x>y)?x:y; }
 #endif
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern double dnrm2_(int *, double *, int *);
 extern double ddot_(int *, double *, int *, double *, int *);
 extern int daxpy_(int *, double *, double *, int *, double *, int *);
 extern int dscal_(int *, double *, double *, int *);
 
-//#ifdef __cplusplus
-//}
-//#endif
+#ifdef __cplusplus
+}
+#endif
 
 static void default_print(const char *buf)
 {
@@ -41,10 +41,11 @@ void TRON::info(const char *fmt,...)
 	(*tron_print_string)(buf);
 }
 
-TRON::TRON(const function *fun_obj, double eps, int max_iter)
+TRON::TRON(const function *fun_obj, double eps, double eps_cg, int max_iter)
 {
 	this->fun_obj=const_cast<function *>(fun_obj);
 	this->eps=eps;
+	this->eps_cg=eps_cg;
 	this->max_iter=max_iter;
 	tron_print_string = default_print;
 }
@@ -68,23 +69,28 @@ void TRON::tron(double *w)
 	int search = 1, iter = 1, inc = 1;
 	double *s = new double[n];
 	double *r = new double[n];
-	double *w_new = new double[n];
 	double *g = new double[n];
 
+	// calculate gradient norm at w=0 for stopping condition.
+	double *w0 = new double[n];
 	for (i=0; i<n; i++)
-		w[i] = 0;
+		w0[i] = 0;
+	fun_obj->fun(w0);
+	fun_obj->grad(w0, g);
+	double gnorm0 = dnrm2_(&n, g, &inc);
+	delete [] w0;
 
-        f = fun_obj->fun(w);
+	f = fun_obj->fun(w);
 	fun_obj->grad(w, g);
 	delta = dnrm2_(&n, g, &inc);
-	double gnorm1 = delta;
-	double gnorm = gnorm1;
+	double gnorm = delta;
 
-	if (gnorm <= eps*gnorm1)
+	if (gnorm <= eps*gnorm0)
 		search = 0;
 
 	iter = 1;
 
+	double *w_new = new double[n];
 	while (iter <= max_iter && search)
 	{
 		cg_iter = trcg(delta, g, s, r);
@@ -94,10 +100,10 @@ void TRON::tron(double *w)
 
 		gs = ddot_(&n, g, &inc, s, &inc);
 		prered = -0.5*(gs-ddot_(&n, s, &inc, r, &inc));
-                fnew = fun_obj->fun(w_new);
+		fnew = fun_obj->fun(w_new);
 
 		// Compute the actual reduction.
-	        actred = f - fnew;
+		actred = f - fnew;
 
 		// On the first iteration, adjust the initial step bound.
 		snorm = dnrm2_(&n, s, &inc);
@@ -127,10 +133,10 @@ void TRON::tron(double *w)
 			iter++;
 			memcpy(w, w_new, sizeof(double)*n);
 			f = fnew;
-		        fun_obj->grad(w, g);
+			fun_obj->grad(w, g);
 
 			gnorm = dnrm2_(&n, g, &inc);
-			if (gnorm <= eps*gnorm1)
+			if (gnorm <= eps*gnorm0)
 				break;
 		}
 		if (f < -1.0e+32)
@@ -172,7 +178,7 @@ int TRON::trcg(double delta, double *g, double *s, double *r)
 		r[i] = -g[i];
 		d[i] = r[i];
 	}
-	cgtol = 0.1*dnrm2_(&n, g, &inc);
+	cgtol = eps_cg*dnrm2_(&n, g, &inc);
 
 	int cg_iter = 0;
 	rTr = ddot_(&n, r, &inc, r, &inc);
