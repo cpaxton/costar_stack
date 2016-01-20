@@ -1527,7 +1527,7 @@ void FormFeaSparseMat(std::vector<SparseDataOneClass> &data_set, problem &prob, 
     prob.bias = -1.0;
     //prob.bias = 1.0;
     //prob.y = new double[prob.l];
-    prob.y = new float[prob.l];
+    prob.y = new double[prob.l];
     prob.x = new feature_node *[prob.l];
 
     feature_node bias_term;
@@ -1694,7 +1694,7 @@ void mergeProbs(const std::vector<problem> &problem_set, problem &final_prob)
     final_prob.n = fea_dim;	//include bias term
     final_prob.bias = bias;
     
-    final_prob.y = new float[final_prob.l];
+    final_prob.y = new double[final_prob.l];
     final_prob.x = new feature_node *[final_prob.l];
     int base = 0;
     for( std::vector<problem>::const_iterator it = problem_set.begin() ; it < problem_set.end() ; it++ )
