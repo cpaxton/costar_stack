@@ -279,8 +279,9 @@ int Pooler_L0::LoadSeedsPool(std::string pool_seed_file)
     //    cv::normalize(pool_seeds.row(i), pool_seeds.row(i), 1.0, 0.0, cv::NORM_L2);
     //std::cerr << cv::norm(pool_seeds.row(i)) << std::endl;  
     
-    cv::flann::LinearIndexParams indexParams(pool_seeds, indexParams);
-    //cv::flann::KDTreeIndexParams indexParams(pool_seeds, indexParams);
+    cv::flann::LinearIndexParams indexParams;
+    // cv::flann::KDTreeIndexParams indexParams(pool_seeds, indexParams);
+    pool_tree = cv::flann::Index(pool_seeds, indexParams);
 
     pool_len = pool_seeds.rows;
 

@@ -3,6 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "sp_segmenter/features.h"
 #include "sp_segmenter/JHUDataParser.h"
+#include "sp_segmenter/plane.h"
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 

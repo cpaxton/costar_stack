@@ -4,6 +4,8 @@
 #include "sp_segmenter/features.h"
 #include "sp_segmenter/JHUDataParser.h"
 #include "sp_segmenter/greedyObjRansac.h"
+#include "sp_segmenter/plane.h"
+
 
 // ros stuff
 #include <ros/ros.h>
@@ -16,6 +18,7 @@
 
 // chi objrec ransac utils
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
+
 
 #define OBJECT_MAX 100
 

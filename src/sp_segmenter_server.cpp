@@ -407,7 +407,7 @@ int main(int argc, char** argv)
     nh.param("POSES_OUT", POSES_OUT,std::string("poses_out"));
     //get only best poses (1 pose output) or multiple poses
     nh.param("bestPoseOnly", bestPoseOnly, true);
-    nh.param("minConfidence", minConfidence, 0);
+    nh.param("minConfidence", minConfidence, 0.0d);
 
 
     if (bestPoseOnly)
