@@ -48,8 +48,7 @@ float WKmeans::M_step(cv::Mat centers)
     int K = centers.rows;
     cv::flann::LinearIndexParams indexParams;
     
-    cv::flann::Index center_tree;
-    center_tree.build(centers, cv::noArray(), indexParams);
+    cv::flann::Index center_tree(centers, indexParams);
     
     std::vector< std::vector<std::vector<int> > > index_set(thread_num);
     std::vector< float > dist_set(thread_num, 0);

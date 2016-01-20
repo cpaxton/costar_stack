@@ -96,8 +96,7 @@ void ext_pooling(cv::Mat pool_fea, cv::Mat &center, cv::Mat &range, int K)
 {
     int num = pool_fea.rows;
     //cv::flann::KDTreeIndexParams indexParams;
-    //cv::flann::Index fea_tree;
-    //fea_tree.build(pool_fea, cv::noArray(), indexParams);
+    //cv::flann::Index fea_tree(pool_fea, indexParams);
     
     cv::Mat labels;
     cv::kmeans(pool_fea, K, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 1000, 1e-6), 5, cv::KMEANS_PP_CENTERS, center);
@@ -190,8 +189,7 @@ void refineCenters(cv::Mat center, cv::Mat range, cv::Mat &new_center, cv::Mat &
 {
     int num = center.rows;
     cv::flann::LinearIndexParams indexParams;
-    cv::flann::Index fea_tree;
-    fea_tree.build(center, cv::noArray(), indexParams);
+    cv::flann::Index fea_tree(center, indexParams);
     
     std::vector< std::pair<int, int> > inds(num);
     std::vector< std::vector<int> > neigh_vec(num);
@@ -248,8 +246,7 @@ void refineCenterFixed(cv::Mat center, cv::Mat &new_center, float radius)
     
     int num = center.rows;
     cv::flann::LinearIndexParams indexParams;
-    cv::flann::Index fea_tree;
-    fea_tree.build(center, cv::noArray(), indexParams);
+    cv::flann::Index fea_tree(center, indexParams);
     
     std::vector< std::pair<int, int> > inds(num);
     std::vector< std::vector<int> > neigh_vec(num);

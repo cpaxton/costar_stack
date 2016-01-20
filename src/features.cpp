@@ -688,9 +688,8 @@ void LoadSeedsNormal(std::string normal_seed_file, cv::flann::Index &fea_tree, c
     for( int i = 0 ; i < fea_seeds.rows ; i++ )
         cv::normalize(fea_seeds.row(i), fea_seeds.row(i), 1.0, 0.0, cv::NORM_L2);
     
-    cv::flann::LinearIndexParams indexParams;
-    //cv::flann::KDTreeIndexParams indexParams;
-    fea_tree.build(fea_seeds,cv::noArray(), indexParams);
+    cv::flann::LinearIndexParams indexParams(fea_seeds, indexParams);
+    //cv::flann::KDTreeIndexParams indexParams(fea_seeds, indexParams);
 
     int len = fea_seeds.rows;
 
@@ -707,7 +706,7 @@ void LoadSeedsHigh(std::string high_seed_file, cv::flann::Index &fea_tree, cv::M
     
     //cv::flann::LinearIndexParams indexParams;
     cv::flann::KDTreeIndexParams indexParams;
-    fea_tree.build(fea_seeds, cv::noArray(), indexParams);
+    fea_tree.build(fea_seeds, indexParams);
 
     int len = fea_seeds.rows;
     
