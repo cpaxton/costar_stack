@@ -38,6 +38,7 @@ std::vector<model*> binary_models(3);
 float zmax = 0.9;
 float radius = 0.02;
 float down_ss = 0.003;
+double aboveTable;
 double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
@@ -114,7 +115,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
         //distance from the point to the plane
         float dist = sqrt(diffx*diffx + diffy*diffy + diffz*diffz);
         
-        if ( dist >= T+0.005 )//fabs((*it_ori).x) <= 0.1 && fabs((*it_ori).y) <= 0.1 )
+        if ( dist >= aboveTable )//fabs((*it_ori).x) <= 0.1 && fabs((*it_ori).y) <= 0.1 )
             scene_f->push_back(*it_ori);
     }
     
@@ -221,7 +222,7 @@ std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, con
 /*********************************************************************************/
 
 std::vector<poseT> spSegmenterCallback(
-	const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> final_cloud)
+	const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> & final_cloud)
 {
 	// By default pcl::PassThrough will remove NaNs point unless setKeepOrganized is true
 	pcl::PassThrough<PointT> pass;
@@ -408,7 +409,7 @@ int main(int argc, char** argv)
     //get only best poses (1 pose output) or multiple poses
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0d);
-
+    nh.param("aboveTable", aboveTable, 0.005d);
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
