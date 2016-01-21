@@ -1,0 +1,1 @@
+# moveit_collision_environment
