@@ -250,7 +250,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
             if (bestPoseOnly)
                 objrec->StandardBest(foreground, all_poses1);
             else
-			    objrec->StandardRecognize(foreground, all_poses1);
+			    objrec->StandardRecognize(foreground, all_poses1,minConfidence);
 
 			pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
 			pcl::copyPointCloud(*scene_f, *scene_xyz);

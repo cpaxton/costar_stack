@@ -166,14 +166,14 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
         boost::shared_ptr<PointSetShape> shape = (*it);
         if ( shape->getUserData() ){
             printf("\t%s, confidence: %lf\n", shape->getUserData()->getLabel(), shape->getConfidence());
-            std::cerr << shape->getUserData()->getLabel() << " confindence: " << shape->getConfidence() << std::endl;
         }
 
         if (shape->getConfidence() < minConfidence){
             printf("Skipping shape, confidence too low\n");
-            std::cerr << "Skipping shape, confidence too low\n";
+            std::cerr << "Skipping shape: " << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() <<" is too low\n";
             continue;
         }
+	else std::cerr << shape->getUserData()->getLabel() << " confindence: " << shape->getConfidence() << std::endl;
         double **mat4x4 = mat_alloc(4, 4);
         shape->getHomogeneousRigidTransform(mat4x4);
         
