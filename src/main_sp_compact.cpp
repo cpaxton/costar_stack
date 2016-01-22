@@ -52,41 +52,15 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
 };
 
-int main(int argc, char** argv)
+void extractFea(std::string root_path, std::string out_fea_path,
+	std::vector<std::string> obj_names, std::vector<std::string>  bg_names,
+	feaExtractor object_ext, feaExtractor background_ext)
 {
-    ros::init(argc,argv,"sp_compact_node");
-    ros::NodeHandle nh("~");
-    
-    std::string root_path;
-    nh.param("root_path", root_path, std::string("data/training/"));
-    
-    // adding object classes by reading from nodeHandle args
-    std::vector<std::string> obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
-    
-    // adding background classes by reading from nodeHandle args
-    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5_2"));
-    
-    std::string out_fea_path, out_svm_path;
-    nh.param("out_fea_path",out_fea_path,std::string("fea_pool/"));
-    nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
-
-    boost::filesystem::create_directories(out_fea_path);
-    boost::filesystem::create_directories(out_svm_path);
-    
-    // paths for dictionaries
-    std::string shot_path, sift_path, fpfh_path;
-    nh.param("shot_path",shot_path,std::string("data/UW_shot_dict/"));
-    nh.param("sift_path",sift_path,std::string("data/UW_sift_dict/"));
-    nh.param("fpfh_path",fpfh_path,std::string("data/UW_fpfh_dict/"));
-    
-    feaExtractor object_ext(shot_path, sift_path, fpfh_path);
-    feaExtractor background_ext(shot_path, sift_path, fpfh_path);
     int obj_sample_num = 10;
     int bg_sample_num = 100;
     int cur_order_max = -1;
-    
-    // extracting features for object classes
-    for( size_t i = 0 ; i < obj_names.size() ; i++ )
+
+	for( size_t i = 0 ; i < obj_names.size() ; i++ )
     {
         std::stringstream ss;
         ss << i+1;
@@ -127,8 +101,47 @@ int main(int argc, char** argv)
         saveCvMatSparse(out_fea_path + "train_0_L" + mm.str() + ".smat", bg_fea[ll], bg_dim);
         bg_fea[ll].clear();
     }
+    std::cerr << "Background Feature Extraction Done!" << std::endl;
+}
+//*std::vector
+int main(int argc, char** argv)
+{
+    ros::init(argc,argv,"sp_compact_node");
+    ros::NodeHandle nh("~");
     
-    cur_order_max = 3;
+    std::string root_path;
+    nh.param("root_path", root_path, std::string("data/training/"));
+    
+    // adding object classes by reading from nodeHandle args
+    std::vector<std::string> obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
+    
+    // adding background classes by reading from nodeHandle args
+    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5_2"));
+    
+    std::string out_fea_path, out_svm_path;
+    nh.param("out_fea_path",out_fea_path,std::string("fea_pool/"));
+    nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
+
+    boost::filesystem::create_directories(out_fea_path);
+    boost::filesystem::create_directories(out_svm_path);
+    
+    // paths for dictionaries
+    std::string shot_path, sift_path, fpfh_path;
+    nh.param("shot_path",shot_path,std::string("data/UW_shot_dict/"));
+    nh.param("sift_path",sift_path,std::string("data/UW_sift_dict/"));
+    nh.param("fpfh_path",fpfh_path,std::string("data/UW_fpfh_dict/"));
+
+    bool skip_fea;
+    nh.param("skip_fea",skip_fea,false);
+    
+    
+    feaExtractor object_ext(shot_path, sift_path, fpfh_path);
+    feaExtractor background_ext(shot_path, sift_path, fpfh_path);
+    
+    // extracting features for object classes
+    if (!skip_fea) extractFea(root_path,out_fea_path,obj_names,bg_names,object_ext,background_ext);
+
+    int cur_order_max = 3;
     // Reading features to train svm
     float CC = 0.001;
     std::vector< std::pair<int, int> > piece_inds;
@@ -274,6 +287,7 @@ int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<s
     for( int j = 0 ; j < train_num ; j++ )
     {
         pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
+		std::cerr << "Processing (" << j << "/" << train_num <<")\n";
         
         // disable sift and fpfh pooling for now
         spPooler triple_pooler;
