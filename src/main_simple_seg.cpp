@@ -4,6 +4,7 @@
 #include "sp_segmenter/features.h"
 #include "sp_segmenter/JHUDataParser.h"
 #include "sp_segmenter/plane.h"
+#include "sp_segmenter/common.h"
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 
@@ -206,55 +207,3 @@ int main(int argc, char** argv)
     
     return 1;
 } 
-
-void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3])
-{
-    pcl::PointCloud<PointT>::Ptr view_cloud(new pcl::PointCloud<PointT>());
-    for( pcl::PointCloud<PointLT>::const_iterator it = label_cloud->begin() ; it < label_cloud->end() ; it++ )
-    {
-        if( pcl_isfinite(it->z) == false )
-            continue;
-        
-        PointT pt;
-        pt.x = it->x;
-        pt.y = it->y;
-        pt.z = it->z;
-        pt.rgba = colors[it->label][0] << 16 | colors[it->label][1] << 8 | colors[it->label][2];
-        view_cloud->push_back(pt);
-    }
-    
-    viewer->addPointCloud(view_cloud, "label_cloud");
-//    viewer->spinOnce(1);
-    viewer->spin();
-    viewer->removePointCloud("label_cloud");
-}
-
-pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud)
-{
-    pcl::search::KdTree<PointLT> tree;
-    tree.setInputCloud(label_cloud);
-    
-    pcl::PointCloud<PointLT>::Ptr dense_cloud(new pcl::PointCloud<PointLT>());
-    
-    float T = 0.01;
-    float sqrT = T*T;
-    for( pcl::PointCloud<PointT>::const_iterator it = ori_cloud->begin() ; it < ori_cloud->end() ; it++ )
-    {
-        if( pcl_isfinite(it->z) == false )
-            continue;
-        PointLT tmp;
-        tmp.x = it->x;
-        tmp.y = it->y;
-        tmp.z = it->z;
-       
-        std::vector<int> ind (1);
-	std::vector<float> sqr_dist (1);
-        int nres = tree.nearestKSearch(tmp, 1, ind, sqr_dist);
-        if ( nres >= 1 && sqr_dist[0] <= sqrT )
-        {
-            tmp.label = label_cloud->at(ind[0]).label;
-            dense_cloud->push_back(tmp);
-        }   
-    }
-    return dense_cloud;
-}
