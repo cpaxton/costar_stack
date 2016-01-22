@@ -8,6 +8,10 @@
   <arg name="out_fea_path"        default="$(arg training_folder)/fea_pool/" />
   <arg name="out_svm_path"        default="$(arg training_folder)/svm_pool/"/>
 
+
+  <!-- for debugging purpose, use current fea from out_fea_path and do svm -->
+  <arg name="skip_fea"            default="false"/>
+
   <node pkg="sp_segmenter" type="spCompact" name="spCompactNode">  
   <!-- spCompactNode arg pass -->
     <param name="root_path"       type="str" value="$(arg training_folder)/" />
@@ -15,6 +19,7 @@
     <param name="bg_names"        type="str" value="$(arg bg_names)" />
     <param name="out_fea_path"    type="str" value="$(arg out_fea_path)" />
     <param name="out_svm_path"    type="str" value="$(arg out_svm_path)" />
+    <param name="skip_fea"    	 type="bool" value="$(arg skip_fea)" />
   </node>
 
   <group ns="spCompactNode">
