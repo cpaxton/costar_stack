@@ -1,0 +1,26 @@
+<launch>
+  <!-- main collision environment parameter -->
+  <arg name="mesh_source"         default="$(find moveit_collision_environment)/data/mesh" />
+  <arg name="charToFind"          default="::" />
+  <arg name="objectNameIdx"       default="2" />
+
+
+  <!-- Unused parameter for current implementation -->
+  <arg name="breakChar"           default=" " />
+  <arg name="loopInterval"        default="3" />
+
+  <!-- Enable for debugging purpose -->
+  <arg name="debug"               default="false" />
+
+  <node pkg="moveit_collision_environment" type="moveit_collision_environment" name="obj_collision_env">  
+  <!-- moveit_collision_environment arg pass -->
+    <param name="mesh_source"     type="str" value="$(arg mesh_source   )" />
+    <param name="charToFind"      type="str" value="$(arg charToFind    )" />
+    <param name="breakChar"       type="str" value="$(arg breakChar     )" />
+    <param name="objectNameIdx"   type="int" value="$(arg objectNameIdx )" />
+    <param name="loopInterval"	  type="int" value="$(arg loopInterval  )" />
+
+    <param name="debug"          type="bool" value="$(arg debug)" />
+  </node>
+
+</launch>

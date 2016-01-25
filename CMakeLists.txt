@@ -101,7 +101,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+# INCLUDE_DIRS include
 #  LIBRARIES moveit_collision_environment
 #  CATKIN_DEPENDS geometry_msgs moveit_core tf
 #  DEPENDS system_lib
@@ -116,12 +116,14 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  include
 )
 
 ## Declare a C++ library
-# add_library(moveit_collision_environment
-#   src/${PROJECT_NAME}/moveit_collision_environment.cpp
-# )
+# add_library(collision_env
+#  src/collision_env.cpp
+#  include/collision_env.h
+#)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -129,7 +131,7 @@ include_directories(
 # add_dependencies(moveit_collision_environment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(moveit_collision_environment src/main_collision_env.cpp)
+add_executable(moveit_collision_environment src/main_collision_env.cpp src/collision_env.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
