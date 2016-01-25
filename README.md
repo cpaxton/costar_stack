@@ -18,4 +18,3 @@ objectNameIdx       :   The position of the object name after charToFind separat
 Example:
 If the TF name format = Obj::objName::index , charToFind = "::", the objectNameIdx = 2
 If the TF name format = objName-index, charToFind = "-", the objectNameIndex = 1.
-s
