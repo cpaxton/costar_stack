@@ -1,5 +1,5 @@
 # moveit_collision_environment
-This is rosnode package that publishes collision object based to be added to MoveIt planning scene. <br>
+This is rosnode package that publishes collision object topic that can be added to MoveIt planning scene. <br>
 The node will get the object name based on the TF frame id (ie the TF name should have some special format). <br>
 The default format for the TF frame id for this rosnode is: Obj::`name of the object`::`index`. <br>
 Sample TF name: Obj::link_uniform::1 <br>
