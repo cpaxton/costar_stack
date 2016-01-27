@@ -1,0 +1,9 @@
+node_uniform:
+  x: 90.0
+  y: 90.0
+  z: 90.0
+
+link_uniform:
+  x: 180.0
+  y: 180.0
+  z: 90.0

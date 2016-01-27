@@ -29,6 +29,9 @@
     <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
     <param name="pairWidth"  type="double" value="$(arg pairWidth)"/>
     <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
+
+    <!-- objectDatabase -->
+    <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
   </node>
 
   <group ns="$(arg NodeName)">

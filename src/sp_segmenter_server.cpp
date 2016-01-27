@@ -23,12 +23,18 @@
 // chi objrec ransac utils
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
+// contains function to normalize the orientation of symmetric object
+#include "sp_segmenter/symmetricOrientationRealignment.h"
+
 #define OBJECT_MAX 100
 
 //for TF
 bool hasTF; 
 std::vector<poseT> sp_segmenter_poses;
 sensor_msgs::PointCloud2 inputCloud;
+
+// for orientation normalization
+std::map<std::string, objectSymmetry> objectDict;
 
 bool compute_pose = false;
 bool view_flag = false;
@@ -68,7 +74,7 @@ uchar color_label[11][3] =
   {255, 0, 128},
   {0, 128, 255},
   {128, 0, 255},
-};   
+};
 
 void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
 pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud);
@@ -195,10 +201,11 @@ std::vector<poseT> spSegmenterCallback(
 	std::cerr << "LAB Pooling!" << std::endl;
 	triple_pooler.build_SP_LAB(lab_pooler_set, false);
 
-  if(viewer)
-  {
-	  viewer->removeAllPointClouds();
-  }
+    if(viewer)
+    {
+      viewer->removeAllPointClouds();
+    }
+    
 	pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
 	for( int ll = 0 ; ll <= 2 ; ll++ )
 	{
@@ -260,6 +267,8 @@ std::vector<poseT> spSegmenterCallback(
 		}
 
 	}
+    // normalize symmetric object Orientation
+    normalizeAllModelOrientation (all_poses, objectDict);
 	return all_poses;
 
 }
@@ -316,7 +325,6 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
 	pc_pub.publish(output_msg);
 
 	//converting all_poses to geometry_msgs::Pose and update the sp_segmenter_poses
-
 	// geometry_msgs::PoseArray msg;
 	// msg.header.frame_id = inputCloud.header.frame_id;
 	// for (poseT &p: all_poses) {
@@ -359,8 +367,8 @@ int main(int argc, char** argv)
     nh.param("POSES_OUT", POSES_OUT,std::string("poses_out"));
     //get only best poses (1 pose output) or multiple poses
     nh.param("bestPoseOnly", bestPoseOnly, true);
-    nh.param("minConfidence", minConfidence, 0.0d);
-    nh.param("aboveTable", aboveTable, 0.01d);
+    nh.param("minConfidence", minConfidence, 0.0);
+    nh.param("aboveTable", aboveTable, 0.01);
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
@@ -369,7 +377,7 @@ int main(int argc, char** argv)
 
     pc_sub = nh.subscribe(POINTS_IN,1,updateCloudData);
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
-    nh.param("pairWidth", pairWidth, 0.05d);
+    nh.param("pairWidth", pairWidth, 0.05);
     // pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
 
     objrec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
@@ -399,9 +407,12 @@ int main(int argc, char** argv)
     std::cerr << "Downsample: " << down_ss << std::endl;
     
     std::string mesh_path;
-    //get parameter for mesh path and curname
+    //get parameter for mesh path and cur_name
     nh.param("mesh_path", mesh_path,std::string("data/mesh/"));
     std::vector<std::string> cur_name = stringVectorArgsReader(nh, "cur_name", std::string("drill"));
+    
+    //get symmetry parameter of the objects
+    objectDict = fillDictionary(nh, cur_name);
     
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
     {
