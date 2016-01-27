@@ -5,6 +5,9 @@
  * Created on July 25, 2014, 2:36 PM
  */
 
+#ifndef FEATURES_H
+#define FEATURES_H
+
 #include "sp_segmenter/utility/utility.h"
 //#include "../omp/ompcore.h"
 
@@ -325,3 +328,4 @@ private:
     size_t sp_num;
 };
 
+#endif //features_h
