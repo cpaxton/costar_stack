@@ -16,7 +16,6 @@ struct poseT{
     std::string model_name;
     Eigen::Vector3f shift;
     Eigen::Quaternion<float> rotation;
-    double confidence;
 };
 
 struct ModelT{

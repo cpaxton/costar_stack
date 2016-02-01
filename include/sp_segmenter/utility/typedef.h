@@ -265,14 +265,4 @@ static bool comp2( const std::pair<int, float> &p1, const std::pair<int, float> 
     return p1.second < p2.second;
 }
 
-
-//for normalizing object rotation
-struct objectSymmetry
-{
-    double roll;
-    double pitch;
-    double yaw;
-};
-
-
 #endif

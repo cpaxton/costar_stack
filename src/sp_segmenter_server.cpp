@@ -26,16 +26,14 @@
 // chi objrec ransac utils
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
-// contains function for spatial data structure that also normalize the orientation of pose
-#include "sp_segmenter/spatial_pose.h"
+// contains function to normalize the orientation of symmetric object
+#include "sp_segmenter/symmetricOrientationRealignment.h"
 
 #define OBJECT_MAX 100
 
 //for TF
-bool hasTF;
-objectRtree sp_segmenter_poses;
-std::vector<value> sp_segmenter_detectedPoses;
-
+bool hasTF; 
+std::vector<poseT> sp_segmenter_poses;
 sensor_msgs::PointCloud2 inputCloud;
 
 // for orientation normalization
@@ -175,6 +173,8 @@ std::vector<poseT> spSegmenterCallback(
 		}
 
 	}
+    // normalize symmetric object Orientation
+    normalizeAllModelOrientation (all_poses, objectDict);
 	return all_poses;
 
 }
@@ -202,12 +202,24 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
 	output_msg.header.frame_id = inputCloud.header.frame_id;
 	pc_pub.publish(output_msg);
 
-    if (!hasTF) createTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec());
-    else updateTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec());
+	//converting all_poses to geometry_msgs::Pose and update the sp_segmenter_poses
+	// geometry_msgs::PoseArray msg;
+	// msg.header.frame_id = inputCloud.header.frame_id;
+	// for (poseT &p: all_poses) {
+	// 	geometry_msgs::Pose pmsg;
+	// 	std::cout <<"pose = ("<<p.shift.x()<<","<<p.shift.y()<<","<<p.shift.z()<<")"<<std::endl;
+	// 	pmsg.position.x = p.shift.x();
+	// 	pmsg.position.y = p.shift.y();
+	// 	pmsg.position.z = p.shift.z();
+	// 	pmsg.orientation.x = p.rotation.x();
+	// 	pmsg.orientation.y = p.rotation.y();
+	// 	pmsg.orientation.z = p.rotation.z();
+	// 	pmsg.orientation.w = p.rotation.w();
 
-    // get the detected poses from tree
-    sp_segmenter_detectedPoses.clear();
-    sp_segmenter_detectedPoses = getAllNodes(sp_segmenter_poses);
+	// 	msg.poses.push_back(pmsg);
+	// }
+    sp_segmenter_poses = all_poses;
+
     hasTF = true;
     return true;
 }
@@ -362,18 +374,22 @@ int main(int argc, char** argv)
         if (hasTF)
         {
             // broadcast all transform
-            for (size_t i = 0; i < sp_segmenter_detectedPoses.size(); i++) {
-                const value * v = &sp_segmenter_detectedPoses.at(i);
-                std::string * parent = &(inputCloud.header.frame_id);
-                const poseT * p = &(std::get<1>(*v).pose);
+            std::string parent = inputCloud.header.frame_id;
+            int index = 0;
+            for (poseT &p: sp_segmenter_poses)
+            {
                 tf::Transform transform;
-                transform.setOrigin(tf::Vector3( p->shift.x(), p->shift.y(), p->shift.z() ));
+                transform.setOrigin(tf::Vector3( p.shift.x(), p.shift.y(), p.shift.z() ));
                 transform.setRotation(tf::Quaternion(
-                                                     p->rotation.x(),p->rotation.y(),p->rotation.z(),p->rotation.w()));
+                    p.rotation.x(),p.rotation.y(),p.rotation.z(),p.rotation.w()));
+                std::stringstream child;
+                // Does not have tracking yet, can not keep the label on object.
+                child << "Obj::" << p.model_name << "::" << ++index;
+
                 br.sendTransform(
-                                 tf::StampedTransform(
-                                                      transform,ros::Time::now(),*parent, getTFname(*v))
-                                 );
+                    tf::StampedTransform(
+                        transform,ros::Time::now(),parent, child.str())
+                    );
             }
         }
         ros::spinOnce();

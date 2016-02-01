@@ -21,14 +21,10 @@
 // chi objrec ransac utils
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
-// contains function for spatial data structure that also normalize the orientation of pose
-#include "sp_segmenter/spatial_pose.h"
+// contains function to normalize the orientation of symmetric object
+#include "sp_segmenter/symmetricOrientationRealignment.h"
 
 #define OBJECT_MAX 100
-
-
-bool hasTF;
-objectRtree sp_segmenter_poses;
 
 // for orientation normalization
 std::map<std::string, objectSymmetry> objectDict;
@@ -173,12 +169,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			std::cout << "# Poses found: " << all_poses.size() << std::endl;
             
             // normalize symmetric object Orientation
-            if (!hasTF) createTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec());
-            else updateTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec());
-            hasTF = true;
-            
-            all_poses.clear();
-            all_poses = getAllPoses(sp_segmenter_poses);
+            normalizeAllModelOrientation (all_poses, objectDict);
 
 			for (poseT &p: all_poses) {
 				geometry_msgs::Pose pmsg;
@@ -230,9 +221,7 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
-    
-    hasTF = false;
-    
+
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
     else

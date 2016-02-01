@@ -147,7 +147,6 @@ void greedyObjRansac::StandardBest(const pcl::PointCloud<myPointXYZ>::Ptr scene_
 
         new_pose.shift = Eigen::Vector3f (mat4x4[0][3], mat4x4[1][3], mat4x4[2][3]);
         new_pose.rotation = rot;
-        new_pose.confidence = best_shape -> getConfidence();
         poses.push_back(new_pose);
     }
 }
@@ -174,7 +173,7 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
             std::cerr << "Skipping shape: " << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() <<" is too low\n";
             continue;
         }
-	else std::cerr << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() << std::endl;
+	else std::cerr << shape->getUserData()->getLabel() << " confindence: " << shape->getConfidence() << std::endl;
         double **mat4x4 = mat_alloc(4, 4);
         shape->getHomogeneousRigidTransform(mat4x4);
         
@@ -187,7 +186,6 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
 
         new_pose.shift = Eigen::Vector3f (mat4x4[0][3], mat4x4[1][3], mat4x4[2][3]);
         new_pose.rotation = rot;
-        new_pose.confidence = shape->getConfidence();
         /*
         new_pose.tran << mat4x4[0][0], mat4x4[0][1], mat4x4[0][2], mat4x4[0][3],
                  mat4x4[1][0], mat4x4[1][1], mat4x4[1][2], mat4x4[1][3],

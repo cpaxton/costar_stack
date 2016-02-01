@@ -14,11 +14,20 @@
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 #include "sp_segmenter/utility/typedef.h"
 #include <math.h>
-#include <boost/math/constants/constants.hpp>
 
-std::map<std::string, objectSymmetry> fillDictionary(const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
+//for normalizing object rotation
+struct objectSymmetry
 {
-    const double degToRad = boost::math::constants::pi<double>() / 180;
+    double roll;
+    double pitch;
+    double yaw;
+};
+
+
+std::map<std::string, objectSymmetry> fillDictionary(ros::NodeHandle nh, std::vector<std::string> cur_name)
+{
+    const double pi = 3.1415926535897;
+    
     std::map<std::string, objectSymmetry> objectDict;
     for (unsigned int i = 0; i < cur_name.size(); i++) {
         objectSymmetry tmp;
@@ -27,17 +36,19 @@ std::map<std::string, objectSymmetry> fillDictionary(const ros::NodeHandle &nh, 
         nh.param(cur_name.at(i)+"/z", tmp.yaw,360.0);
         
         //convert degree to radians
-        tmp.roll = tmp.roll * degToRad ;
-        tmp.pitch = tmp.pitch * degToRad;
-        tmp.yaw = tmp.yaw * degToRad;
+        tmp.roll = tmp.roll / 180 * pi;
+        tmp.pitch = tmp.pitch / 180 * pi;
+        tmp.yaw = tmp.yaw / 180 * pi;
         
         objectDict[cur_name.at(i)] = tmp;
     }
     return objectDict;
 }
 
-void realignOrientation (Eigen::Matrix3f &rotMatrix, const objectSymmetry &object, const int &axisToAlign)
+void realignOrientation (Eigen::Matrix3f &rotMatrix, objectSymmetry object, int axisToAlign)
 {
+    const float pi = 3.1415926535897;
+    
     Eigen::Vector3f objAxes[3];
     objAxes[0] = Eigen::Vector3f(rotMatrix(0,0),rotMatrix(1,0),rotMatrix(2,0));
     objAxes[1] = Eigen::Vector3f(rotMatrix(0,1),rotMatrix(1,1),rotMatrix(2,1));
@@ -49,7 +60,7 @@ void realignOrientation (Eigen::Matrix3f &rotMatrix, const objectSymmetry &objec
     double dotProduct = axis.dot(objAxes[axisToAlign]);
     double angle = std::acos(dotProduct); //since the vector is unit vector
     
-//    Eigen::Vector3f rotAxis = axis.cross(objAxes[axisToAlign]);
+    Eigen::Vector3f rotAxis = axis.cross(objAxes[axisToAlign]);
     Eigen::Vector3f bestAxis[3];
     bestAxis[0] = Eigen::Vector3f(1,0,0);
     bestAxis[1] = Eigen::Vector3f(0,1,0);
@@ -102,10 +113,11 @@ void realignOrientation (Eigen::Matrix3f &rotMatrix, const objectSymmetry &objec
     //    std::cerr << "Rotate axis" << axisToRotate << " : " << angle * 180 / pi << " -> " << std::round(angle/objectLimit) * objectLimit * 180 / pi <<std::endl;
 }
 
-Eigen::Quaternion<float> normalizeModelOrientation(const Eigen::Quaternion<float> &q_from_pose, const objectSymmetry &object)
+void normalizeModelOrientation(poseT &p, const objectSymmetry object)
 {
+    const float pi = 3.1415926535897;
     float yaw,pitch,roll;
-    Eigen::Matrix3f rotMatrix = q_from_pose.toRotationMatrix();
+    Eigen::Matrix3f rotMatrix = p.rotation.toRotationMatrix();
     //    std::cerr << "Initial Rot Matrix: \n" << rotMatrix << std::endl;
     
     //convert to euler angle
@@ -128,26 +140,18 @@ Eigen::Quaternion<float> normalizeModelOrientation(const Eigen::Quaternion<float
     //    std::cerr << "Realign z Rot Matrix: \n" << rotMatrix << std::endl;
     realignOrientation(rotMatrix, object, 1);
     //    std::cerr << "Realign y Rot Matrix: \n" << rotMatrix << std::endl;
-    return Eigen::Quaternion<float>(rotMatrix);
+    p.rotation = Eigen::Quaternion<float>(rotMatrix);
 }
 
-Eigen::Quaternion<float> normalizeModelOrientation(const poseT &newPose,const poseT &previousPose, const objectSymmetry &object)
-{
-    Eigen::Quaternion<float> rotationChange = previousPose.rotation.inverse() * newPose.rotation;
-    // Since the rotationChange should be close to identity, realign the rotationChange as close as identity based on symmetric property of the object
-    rotationChange = normalizeModelOrientation(rotationChange, object);
-    
-    // fix the orientation of new pose
-    return (previousPose.rotation * rotationChange);
-}
-
-void normalizeAllModelOrientation (std::vector<poseT> &all_poses, const std::map<std::string, objectSymmetry> &objectDict)
+void normalizeAllModelOrientation (std::vector<poseT> &all_poses, std::map<std::string, objectSymmetry> objectDict)
 {
     for (unsigned int i = 0; i < all_poses.size(); i++)
     {
         //        std::cerr << "Object: " << all_poses[i].model_name << std::endl;
-        all_poses[i].rotation = normalizeModelOrientation(all_poses[i].rotation, objectDict.find(all_poses[i].model_name)->second);
+        normalizeModelOrientation(all_poses[i],objectDict[all_poses[i].model_name]);
     }
 }
+
+
 
 #endif /* symmetricOrientationRealignment_h */

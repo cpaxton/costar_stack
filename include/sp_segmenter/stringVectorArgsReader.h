@@ -6,8 +6,8 @@
 // ros header for roslaunch capability
 #include <ros/ros.h>
 
-std::vector<std::string> stringVectorArgsReader (const ros::NodeHandle &nh,
-    const std::string &param_name, const std::string &default_value)
+std::vector<std::string> stringVectorArgsReader (ros::NodeHandle nh, 
+    const std::string param_name, const std::string default_value)
 {
 // The function will read string arguments passed from nodehandle, 
 // separate it for every ',' character, and return it to vector<string> variable
