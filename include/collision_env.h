@@ -36,12 +36,12 @@ class collision_environment
 	;
 
 	public:
-		collision_environment(ros::NodeHandle nh);
+		collision_environment(const ros::NodeHandle &nh);
 		void getAllObjectTF();
-		void addAllCollisionObject(bool updateFrame = true);
+		void addAllCollisionObject(const bool &updateFrame = true);
 };
 
-std::vector<std::string> stringVectorSeparator (const std::string input,
-                                                const std::string charToFind, const std::string breakChar, const std::size_t loopEvery);
+std::vector<std::string> stringVectorSeparator (const std::string &input,
+                                                const std::string &charToFind, const std::string &breakChar, const int &loopInterval, const bool &debug);
 
 #endif

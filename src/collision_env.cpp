@@ -1,7 +1,7 @@
 #include "collision_env.h"
 
-std::vector<std::string> stringVectorSeparator (const std::string input,
-                                                const std::string charToFind, const std::string breakChar, const int loopInterval, bool debug)
+std::vector<std::string> stringVectorSeparator (const std::string &input,
+                                                const std::string &charToFind, const std::string &breakChar, const int &loopInterval, const bool &debug)
 {
     // This function will break the string to vector and alternate between finding input char and
     // break char every n value. If loopInterval = 3, it will try to find 2 charToFind and a breakChar before finding charToFind again
@@ -37,7 +37,7 @@ std::vector<std::string> stringVectorSeparator (const std::string input,
     return result;
 }
 
-collision_environment::collision_environment(ros::NodeHandle nh)
+collision_environment::collision_environment(const ros::NodeHandle &nh)
 {
     this->nh = nh;
     nh.param("loopInterval", loopInterval,3);
@@ -49,14 +49,14 @@ collision_environment::collision_environment(ros::NodeHandle nh)
 
 //    parentFrame = "/camera_2/depth_registered/points";
 	std::cerr << "Started \n";
-	add_collision_object_publisher = nh.advertise<moveit_msgs::CollisionObject>("collision_objects",1000);
+	add_collision_object_publisher = this->nh.advertise<moveit_msgs::CollisionObject>("collision_objects",1000);
 	sleep(1.0);
 	getAllObjectTF();
 	// listOfTF = listener.allFramesAsString();
 	// std::cerr << "Initial List of all frames:\n" << listOfTF << std::endl;
 };
 
-void collision_environment::addAllCollisionObject(bool updateFrame)
+void collision_environment::addAllCollisionObject(const bool &updateFrame)
 {
 	// update list of object
     if (updateFrame) {
