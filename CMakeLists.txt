@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 SET(CMAKE_BUILD_TYPE "Release")
-find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf QUIET)# greedy_objrec_ransac)
+find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions QUIET)# greedy_objrec_ransac)
 
 project(sp_segmenter C CXX)
 
@@ -75,7 +75,7 @@ if(catkin_FOUND)
     )
   endif()
 endif()
-    
+
 include_directories(include utility)
 
 find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)

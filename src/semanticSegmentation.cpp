@@ -21,6 +21,7 @@ void semanticSegmentation::setNodeHandle(const ros::NodeHandle &nh)
     this->nh = nh;
     initializeSemanticSegmentation(); // initialize all variables before doing semantic segmentation
     this->classReady = true;
+    this->doingGripperSegmentation = false;
 }
 
 semanticSegmentation::semanticSegmentation(int argc, char** argv, const ros::NodeHandle &nh)
@@ -74,7 +75,9 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("aboveTable", aboveTable, 0.01);
     this->haveTable = false;
     this->nh.param("loadTable",loadTable, true);
-    
+    this->nh.param("setObjectOrientation",setObjectOrientationTarget,false);
+    this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
+  
     tableConvexHull = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
     
     lab_pooler_set.resize(6);
@@ -260,11 +263,9 @@ void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCl
 
 std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> & final_cloud)
 {
-    // By default pcl::PassThrough will remove NaNs point unless setKeepOrganized is true
-    pcl::PassThrough<PointT> pass;
     pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
     *scene_f = *full_cloud;
-    
+  
     if( viewer )
     {
         std::cerr<<"Visualize whole screen"<<std::endl;
@@ -339,10 +340,39 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
 
     std::vector<poseT> all_poses = all_poses1;
     // RefinePoses(scene_xyz, mesh_set, all_poses1);
-
-    // normalize symmetric object Orientation
-    normalizeAllModelOrientation (all_poses, objectDict);
-    return all_poses;
+  
+    if (doingGripperSegmentation || !hasTF){
+      // normalize symmetric object Orientation
+        Eigen::Quaternion<double> baseRotation;
+        if (setObjectOrientationTarget){
+            if (listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(1.5)))
+            {
+              tf::StampedTransform transform;
+              listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),transform);
+              tf::quaternionTFToEigen(transform.getRotation(),baseRotation);
+            }
+        }
+        else
+            baseRotation.setIdentity();
+    
+        if (!doingGripperSegmentation)
+        {
+            std::cerr << "create tree\n";
+            // this will create tree and normalize the orientation to the baseRotation
+            createTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex, baseRotation);
+        }
+        else
+        {
+            std::cerr << "update one value on tree\n";
+            updateOneValue(segmentedObjectTree, targetTFtoUpdate, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex, baseRotation);
+        }
+    }
+    else
+    {
+        std::cerr << "update tree\n";
+        updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+    }
+    return getAllPoses(segmentedObjectTree);
 }
 
 bool semanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
@@ -396,6 +426,27 @@ void semanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &pc)
     }
 }
 
+void semanticSegmentation::populateTFMapFromTree()
+{
+  ros::param::del("/instructor_landmark/objects");
+  
+  std::vector<value> sp_segmenter_detectedPoses = getAllNodes(segmentedObjectTree);
+  segmentedObjectTFMap.clear();
+  
+  for (std::size_t i = 0; i < sp_segmenter_detectedPoses.size(); i++)
+  {
+    const value * v = &sp_segmenter_detectedPoses.at(i);
+    const poseT * p = &(std::get<1>(*v).pose);
+    const std::string * objectTFname = &(std::get<1>(*v).tfName);
+    segmentedObjectTF objectTmp(*p,*objectTFname);
+    segmentedObjectTFMap[objectTmp.TFnames] = objectTmp;
+    std::stringstream ss;
+    ss << "/instructor_landmark/objects/" << p->model_name << "/" << &(std::get<1>(*v).index);
+    
+    ros::param::set(ss.str(), objectTmp.TFnames);
+  }
+}
+
 bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     if (!classReady) return false;
@@ -436,18 +487,9 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
         std::cerr << "Fail to segment objects on the table.\n";
         return false;
     }
-    ros::param::del("/instructor_landmark/objects");
-    std::map<std::string, unsigned int> tmpIndex = objectTFIndex;
-    segmentedObjectTFMap.clear();
-    for (poseT &p: all_poses)
-    {
-        segmentedObjectTF objectTmp(p,++tmpIndex[p.model_name]);
-        segmentedObjectTFMap[objectTmp.TFnames] = objectTmp;
-        std::stringstream ss;
-        ss << "/instructor_landmark/objects/" << p.model_name << "/" << tmpIndex[p.model_name];
-        ros::param::set(ss.str(), objectTmp.TFnames);
-    }
-    
+  
+    this->populateTFMapFromTree();
+  
     std::cerr << "Segmentation done.\n";
     
     hasTF = true;
@@ -459,7 +501,9 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     std::cerr << "Segmenting object on gripper...\n";
     bool bestPoseOriginal = bestPoseOnly;
     bestPoseOnly = true; // only get best pose when segmenting object in gripper;
-    
+    targetTFtoUpdate = request.tfToUpdate;
+    this->doingGripperSegmentation = true;
+  
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
     std::string segmentFail("Object in gripper segmentation fails.");
@@ -468,6 +512,8 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     if (full_cloud->size() < 1){
         std::cerr << "No cloud available";
         response.result = segmentFail;
+        bestPoseOnly = bestPoseOriginal;
+        this->doingGripperSegmentation = false;
         return false;
     }
     
@@ -483,18 +529,25 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     {
         std::cerr << "Fail to get transform between: "<< gripperTF << " and "<< inputCloud.header.frame_id << std::endl;
         response.result = segmentFail;
+        bestPoseOnly = bestPoseOriginal;
+        this->doingGripperSegmentation = false;
         return false;
     }
     
-    if (full_cloud->size() < 1)
-    std::cerr << "No cloud available around gripper. Make sure the object can be seen by the camera.\n";
-    
+    if (full_cloud->size() < 1){
+        std::cerr << "No cloud available around gripper. Make sure the object can be seen by the camera.\n";
+        bestPoseOnly = bestPoseOriginal;
+        this->doingGripperSegmentation = false;
+        return false;
+    }
     // get best poses from spSegmenterCallback
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
     
     if (all_poses.size() < 1) {
         std::cerr << "Fail to segment the object around gripper.\n";
         response.result = segmentFail;
+        bestPoseOnly = bestPoseOriginal;
+        this->doingGripperSegmentation = false;
         return false;
     }
     
@@ -503,17 +556,12 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     toROSMsg(*final_cloud,output_msg);
     output_msg.header.frame_id = inputCloud.header.frame_id;
     pc_pub.publish(output_msg);
-    
-    for (poseT &p: all_poses)
-    {
-        segmentedObjectTF objectTmp(p, 0);
-        objectTmp.TFnames = request.tfToUpdate;
-        segmentedObjectTFMap[request.tfToUpdate] = objectTmp;
-    }
-    
+  
+    this->populateTFMapFromTree();
+  
     std::cerr << "Object In gripper segmentation done.\n";
     bestPoseOnly = bestPoseOriginal;
-    hasTF = true;
+    this->doingGripperSegmentation = false;
     
     response.result = "Object In gripper segmentation done.\n";
     return true;
@@ -527,7 +575,6 @@ void semanticSegmentation::publishTF()
         // broadcast all transform
         std::string parent = inputCloud.header.frame_id;
         // int index = 0;
-        std::map<std::string, unsigned int> tmpIndex = objectTFIndex;
         for (std::map<std::string, segmentedObjectTF>::iterator it=segmentedObjectTFMap.begin(); it!=segmentedObjectTFMap.end(); ++it)
         {
             br.sendTransform(

@@ -20,6 +20,8 @@
 #include <std_srvs/Empty.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+#include <object_recognition_msgs/RecognizedObjectArray.h>
 
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
@@ -27,7 +29,8 @@
 // chi objrec ransac utils
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 // contains function to normalize the orientation of symmetric object
-#include "sp_segmenter/symmetricOrientationRealignment.h"
+#include "sp_segmenter/spatial_pose.h"
+//#include "sp_segmenter/symmetricOrientationRealignment.h"
 #include "sp_segmenter/table_segmenter.h"
 
 // ros service messages for segmenting gripper
@@ -42,7 +45,14 @@ private:
     
     bool classReady, useTFinsteadOfPoses;
     // TF related
-    bool hasTF;
+    bool hasTF, doingGripperSegmentation;
+  
+    objectRtree segmentedObjectTree;
+//    std::vector<value> sp_segmenter_detectedPoses; // value: std::pair<point3d,objectPose>. see spatial_pose.h
+    std::string targetNormalObjectTF;
+    std::string targetTFtoUpdate;
+    bool setObjectOrientationTarget;
+  
     std::map<std::string, segmentedObjectTF> segmentedObjectTFMap; // the object poses result in TF
     std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
     tf::TransformListener * listener;
@@ -58,7 +68,7 @@ private:
     pcl::PointCloud<PointT>::Ptr tableConvexHull; // for object in table segmentation
     double aboveTable; // point cloud need to be this value above the table in meters
     std::string POINTS_IN, POINTS_OUT, POSES_OUT;
-    ros::Publisher pc_pub, pose_pub;
+    ros::Publisher pc_pub, pose_pub, objRecognition_pub;
     ros::Subscriber pc_sub;
     
     // Segmentation related
@@ -89,6 +99,7 @@ protected:
     bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc);
     void updateCloudData (const sensor_msgs::PointCloud2 &pc);
     void initializeSemanticSegmentation();
+    void populateTFMapFromTree();
 public:
     semanticSegmentation(int argc, char** argv);
     semanticSegmentation(int argc, char** argv, const ros::NodeHandle &nh);

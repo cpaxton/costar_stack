@@ -21,13 +21,18 @@
 // chi objrec ransac utils
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
-// contains function to normalize the orientation of symmetric object
-#include "sp_segmenter/symmetricOrientationRealignment.h"
+// contains function for spatial data structure that also normalize the orientation of pose
+#include "sp_segmenter/spatial_pose.h"
 
 #define OBJECT_MAX 100
 
+
+bool hasTF;
+objectRtree sp_segmenter_poses;
+
 // for orientation normalization
 std::map<std::string, objectSymmetry> objectDict;
+std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
 
 bool compute_pose = false;
 bool view_flag = false;
@@ -169,7 +174,12 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			std::cout << "# Poses found: " << all_poses.size() << std::endl;
             
             // normalize symmetric object Orientation
-            normalizeAllModelOrientation (all_poses, objectDict);
+            if (!hasTF) createTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            else updateTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            hasTF = true;
+            
+            all_poses.clear();
+            all_poses = getAllPoses(sp_segmenter_poses);
 
 			for (poseT &p: all_poses) {
 				geometry_msgs::Pose pmsg;
@@ -221,7 +231,9 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
-
+    
+    hasTF = false;
+    
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
     else
@@ -274,7 +286,7 @@ int main(int argc, char** argv)
         model_name[model_id+1] = temp_cur;
         model_name_map[temp_cur] = model_id+1;
         ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
-        
+        objectTFIndex[temp_cur] = 0;
         mesh_set.push_back(mesh_buf);
     }
     if( pcl::console::find_switch(argc, argv, "-v") == true )

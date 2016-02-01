@@ -16,6 +16,9 @@
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
 
+  <arg name="setObjectOrientation" default="false" doc="use specified TF as Object preferred orientation" />
+  <arg name="preferredOrientation" default="tableTF" doc="use this TF as the preferred object orientation" />
+
   <arg name="gripperTF"      default="endpoint_marker" doc="The gripper tf where target object would be attached" />
 
   <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
@@ -27,7 +30,7 @@
   <arg name="pcl_out"        default="points_out"/>
   <arg name="poses_out"      default="poses_out"/>
 
-  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)">  
+  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)" >  
     <!-- SPSegmenterNode Node arg pass -->
     <param name="cur_name"   type="str" value="$(arg object)" />
     <param name="bestPoseOnly" type="bool" value="$(arg bestPoseOnly)" />
@@ -40,6 +43,9 @@
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
+    
+    <param name="setObjectOrientation"   type="bool" value="$(arg setObjectOrientation)" />
+    <param name="preferredOrientation" type="str" value="$(arg preferredOrientation)" />
 
     <!-- SPSegmenterNode subscriber/publisher args pass -->
     <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
