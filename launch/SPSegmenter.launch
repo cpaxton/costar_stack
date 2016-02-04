@@ -32,6 +32,7 @@
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
+    <rosparam command="load" file="$(find sp_segmenter)/launch/segmentRegion.yaml" />
   </node>
 
   <group ns="$(arg NodeName)">

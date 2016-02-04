@@ -39,13 +39,21 @@ sensor_msgs::PointCloud2 inputCloud;
 // for orientation normalization
 std::map<std::string, objectSymmetry> objectDict;
 
+struct cutPointCloud
+{
+   double max[3], min[3];
+   bool cutRegion[3];
+};
+
+cutPointCloud regionData;
+
 bool compute_pose = false;
 bool view_flag = false;
 pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
 std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set(5+1);
 std::vector<model*> binary_models(3);
-float zmax = 0.9;
+float maxRegion[3],minRegion[3];
 float radius = 0.02;
 float down_ss = 0.003;
 double aboveTable;
@@ -63,6 +71,27 @@ std::string POINTS_IN, POINTS_OUT, POSES_OUT;
 ros::Publisher pc_pub;
 // ros::Publisher pose_pub;
 ros::Subscriber pc_sub;
+
+cutPointCloud loadRegion(const ros::NodeHandle &nh)
+{
+    cutPointCloud result;
+    std::string paramToLoad = "maxCoordinate";
+    nh.param(paramToLoad+"/x", result.max[0],0.0);
+    nh.param(paramToLoad+"/y", result.max[1],0.0);
+    nh.param(paramToLoad+"/z", result.max[2],0.0);
+    
+    paramToLoad = "minCoordinate";
+    nh.param(paramToLoad+"/x", result.min[0],0.0);
+    nh.param(paramToLoad+"/y", result.min[1],0.0);
+    nh.param(paramToLoad+"/z", result.min[2],0.9);
+    
+    paramToLoad = "useAxis";
+    nh.param(paramToLoad+"/x", result.cutRegion[0],false);
+    nh.param(paramToLoad+"/y", result.cutRegion[1],false);
+    nh.param(paramToLoad+"/z", result.cutRegion[2],true);
+
+    return result;
+}
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 
@@ -89,12 +118,25 @@ std::vector<poseT> spSegmenterCallback(
 {
 	// By default pcl::PassThrough will remove NaNs point unless setKeepOrganized is true
 	pcl::PassThrough<PointT> pass;
-	pass.setInputCloud (full_cloud);
-	pass.setFilterFieldName ("z");
-	pass.setFilterLimits (0.1, zmax);
-	//pass.setFilterLimitsNegative (true);
 	pcl::PointCloud<PointT>::Ptr scene(new pcl::PointCloud<PointT>());
-	pass.filter (*scene);
+    *scene = *full_cloud;
+    for (unsigned int i = 0; i < 3; i++)
+	{
+        if (!regionData.cutRegion[i]) continue; //Do not cut region unless the value is true
+		pass.setInputCloud (scene);
+        std::string axisName;
+        switch (i){
+            case 0: axisName = "x"; break;
+            case 1: axisName = "y"; break;
+            default: axisName = "z"; break;
+        }
+        std::cerr << "Segmenting axis: " << axisName << "max: " << regionData.max[i] << "min: " << regionData.min[i] << std::endl;
+    	pass.setFilterFieldName (axisName);
+    	pass.setFilterLimits (regionData.min[i], regionData.max[i]);
+    	//pass.setFilterLimitsNegative (true);
+    	pass.filter (*scene);
+	}
+
 
 	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene,aboveTable);
 
@@ -132,10 +174,11 @@ std::vector<poseT> spSegmenterCallback(
 		viewer->spin();
 	}
 
-	
+	std::size_t numberOfObject = mesh_set.size();
 	for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
 	{
-		if( foreground_cloud->at(l).label > 0 )
+        //red point cloud: background for object > 1?
+		if( foreground_cloud->at(l).label > 0 || ( foreground_cloud->at(l).label > 1 && numberOfObject > 1 ))
 			final_cloud.push_back(foreground_cloud->at(l));
 	}
 
@@ -146,7 +189,7 @@ std::vector<poseT> spSegmenterCallback(
 			std::vector<poseT> all_poses1;
 
 			pcl::PointCloud<myPointXYZ>::Ptr foreground(new pcl::PointCloud<myPointXYZ>());
-			pcl::copyPointCloud(*foreground_cloud, *foreground);
+			pcl::copyPointCloud(final_cloud, *foreground);
 
             if (bestPoseOnly)
                 objrec->StandardBest(foreground, all_poses1);
@@ -247,6 +290,9 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
+    
+    //get point cloud region to exclude
+    regionData = loadRegion(nh);
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
@@ -280,7 +326,7 @@ int main(int argc, char** argv)
     
     pcl::console::parse_argument(argc, argv, "--rt", ratio);
     pcl::console::parse_argument(argc, argv, "--ss", down_ss);
-    pcl::console::parse_argument(argc, argv, "--zmax", zmax);
+    // pcl::console::parse_argument(argc, argv, "--zmax", zmax); not used anymore
     std::cerr << "Ratio: " << ratio << std::endl;
     std::cerr << "Downsample: " << down_ss << std::endl;
     

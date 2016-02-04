@@ -7,7 +7,7 @@
   <arg name="pairWidth"      default="0.05" />
   <arg name="NodeName"       default="SPServer" />
   <arg name="bestPoseOnly"   default="false" />
-  <arg name="minConfidence"  default="0.2" />
+  <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="aboveTable"     default="0.01" />
 
 
@@ -32,6 +32,7 @@
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
+    <rosparam command="load" file="$(find sp_segmenter)/launch/segmentRegion.yaml" />
   </node>
 
   <group ns="$(arg NodeName)">
