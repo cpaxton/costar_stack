@@ -39,6 +39,7 @@ sensor_msgs::PointCloud2 inputCloud;
 // for orientation normalization
 std::map<std::string, objectSymmetry> objectDict;
 
+
 struct cutPointCloud
 {
    double max[3], min[3];
@@ -238,6 +239,7 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
 
 	// get all poses from spSegmenterCallback
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
+    
 
     //publishing the segmented point cloud
 	sensor_msgs::PointCloud2 output_msg;
@@ -337,7 +339,8 @@ int main(int argc, char** argv)
     
     //get symmetry parameter of the objects
     objectDict = fillDictionary(nh, cur_name);
-    
+    std::map<std::string, unsigned int> objectTFIndex;
+
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
     {
         // add all models. model_id starts in model_name start from 1.
@@ -348,6 +351,7 @@ int main(int argc, char** argv)
         ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
         
         mesh_set.push_back(mesh_buf);
+        objectTFIndex[temp_cur] = 0;
     }
     if( pcl::console::find_switch(argc, argv, "-v") == true )
         view_flag = true;
@@ -421,7 +425,8 @@ int main(int argc, char** argv)
         {
             // broadcast all transform
             std::string parent = inputCloud.header.frame_id;
-            int index = 0;
+            // int index = 0;
+            std::map<std::string, unsigned int> tmpIndex = objectTFIndex;
             for (poseT &p: sp_segmenter_poses)
             {
                 tf::Transform transform;
@@ -430,7 +435,7 @@ int main(int argc, char** argv)
                     p.rotation.x(),p.rotation.y(),p.rotation.z(),p.rotation.w()));
                 std::stringstream child;
                 // Does not have tracking yet, can not keep the label on object.
-                child << "Obj::" << p.model_name << "::" << ++index;
+                child << "Obj::" << p.model_name << "::" << ++tmpIndex[p.model_name];
 
                 br.sendTransform(
                     tf::StampedTransform(
