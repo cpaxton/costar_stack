@@ -17,7 +17,7 @@ class collision_environment
 {
 	protected:
 		ros::NodeHandle nh;
-		ros::Publisher add_collision_object_publisher;
+//		ros::Publisher add_collision_object_publisher;
 		tf::TransformListener listener;
 	;
 
@@ -25,20 +25,27 @@ class collision_environment
 		bool debug;
 		std::vector<std::string> listOfTF;
 		std::vector<objectTF> detectedObjectsTF;
+        std::vector<moveit_msgs::CollisionObject>* segmentedObjects;
 		std::string mesh_source;
         std::string charToFind,breakChar;
         int loopInterval;
         std::string parentFrame; //parent of the TF frame that objects attached to
 		int objectNameFormatIndex;
+        bool classReady;
 		// after breaking the list of TF to several items, which item define the object name
 		// Example: with format Obj::NameOfObject::index, objectNameFormatIndex = 2. 
 		// If format Obj::index::NameOfObject = 3, objectNameFormatIndex = 3.
 	;
 
 	public:
-		collision_environment(const ros::NodeHandle &nh);
+		collision_environment();
+        collision_environment(const ros::NodeHandle &nh);
+        void setNodeHandle(const ros::NodeHandle &nh);
 		void getAllObjectTF();
-		void addAllCollisionObject(const bool &updateFrame = true);
+		void updateCollisionObjects(const bool &updateFrame = true);
+        std::vector<std::string> getListOfTF() const;
+        const std::vector<moveit_msgs::CollisionObject> getCollisionObjects() const;
+        const std::vector<moveit_msgs::CollisionObject> generateOldObjectToRemove() const;
 };
 
 std::vector<std::string> stringVectorSeparator (const std::string &input,

@@ -37,8 +37,14 @@ std::vector<std::string> stringVectorSeparator (const std::string &input,
     return result;
 }
 
+collision_environment::collision_environment()
+{
+    classReady = false; // not ready to be used
+}
+
 collision_environment::collision_environment(const ros::NodeHandle &nh)
 {
+    classReady = true;
     this->nh = nh;
     nh.param("loopInterval", loopInterval,3);
     nh.param("objectNameIdx", objectNameFormatIndex,2);
@@ -46,30 +52,56 @@ collision_environment::collision_environment(const ros::NodeHandle &nh)
     nh.param("breakChar", breakChar,std::string(" "));
     nh.param("charToFind", charToFind,std::string("::"));
     nh.param("mesh_source", mesh_source,std::string("data/mesh"));
-
-//    parentFrame = "/camera_2/depth_registered/points";
+    
+    this->segmentedObjects = new std::vector<moveit_msgs::CollisionObject>();
+    
 	std::cerr << "Started \n";
-	add_collision_object_publisher = this->nh.advertise<moveit_msgs::CollisionObject>("collision_objects",1000);
+//	add_collision_object_publisher = this->nh.advertise<moveit_msgs::CollisionObject>("collision_objects",1000);
 	sleep(1.0);
 	getAllObjectTF();
 	// listOfTF = listener.allFramesAsString();
 	// std::cerr << "Initial List of all frames:\n" << listOfTF << std::endl;
 };
 
-void collision_environment::addAllCollisionObject(const bool &updateFrame)
+void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
 {
+    classReady = true;
+    this->nh = nh;
+    nh.param("loopInterval", loopInterval,3);
+    nh.param("objectNameIdx", objectNameFormatIndex,2);
+    nh.param("debug", debug,false);
+    nh.param("breakChar", breakChar,std::string(" "));
+    nh.param("charToFind", charToFind,std::string("::"));
+    nh.param("mesh_source", mesh_source,std::string("data/mesh"));
+    
+    this->segmentedObjects = new std::vector<moveit_msgs::CollisionObject>();
+    
+    std::cerr << "Started \n";
+    sleep(1.0);
+    getAllObjectTF();
+}
+
+void collision_environment::updateCollisionObjects(const bool &updateFrame)
+{
+    if (!classReady)
+    {
+        std::cerr << "ERROR, class has no nodehandle to subscribe.\n";
+        return;
+    }
+    
 	// update list of object
     if (updateFrame) {
         getAllObjectTF();
     }
     
-    moveit_msgs::CollisionObject co;
-    co.id = "segmented_object";
-    co.header.frame_id = parentFrame;
+    segmentedObjects->clear();
 //    co.meshes.resize(detectedObjectsTF.size());
 //    co.mesh_poses.resize(detectedObjectsTF.size());
     
     for (int i = 0; i < detectedObjectsTF.size(); i++) {
+        moveit_msgs::CollisionObject co;
+        co.id = detectedObjectsTF.at(i).frame_id;
+        co.header.frame_id = parentFrame;
         std::stringstream ss;
         ss << "file://" << mesh_source << "/" << detectedObjectsTF.at(i).name << ".obj";
         
@@ -80,9 +112,11 @@ void collision_environment::addAllCollisionObject(const bool &updateFrame)
         co_mesh = boost::get<shape_msgs::Mesh>(co_mesh_msg);
         co.meshes.push_back(co_mesh);
         co.mesh_poses.push_back(detectedObjectsTF.at(i).pose);
+        co.operation = co.ADD;
+        segmentedObjects->push_back(co);
     }
-    co.operation = co.ADD;
-    add_collision_object_publisher.publish(co);
+    
+//    add_collision_object_publisher.publish(co);
     if (debug) std::cerr << "Collision Object Published\n";
     
 	// load the mesh of all detected object
@@ -101,40 +135,70 @@ void collision_environment::getAllObjectTF()
             std::cerr << "Frame " << i << ": " << listOfTF.at(i) <<std::endl;
         }
     }
+    
     // get parent of objectTF
     listener.getParent(listOfTF.at(0),ros::Time(0),parentFrame);
     std::cerr << "parentFrame: " << parentFrame << std::endl;
     
 	detectedObjectsTF.clear();
+    std::vector<std::string> newestListOfTF;
     
+    ros::Time now = ros::Time::now();
     // get the name of TFs and its object name
     for (unsigned int i = 0; i < listOfTF.size(); i++) {
         std::vector<std::string> tmp = stringVectorSeparator(listOfTF.at(i), charToFind, breakChar, loopInterval, debug);
         if (tmp.size() > objectNameFormatIndex)
         {
-            objectTF detectedObject;
-            detectedObject.name = tmp.at(objectNameFormatIndex-1);
-            detectedObject.frame_id = listOfTF.at(i);
-            
-            tf::StampedTransform transform;
-            listener.lookupTransform(listOfTF.at(i),parentFrame,ros::Time(0),transform);
-            geometry_msgs::TransformStamped msg;
-            transformStampedTFToMsg(transform, msg);
-            
-            detectedObject.pose.position.x = msg.transform.translation.x;
-            detectedObject.pose.position.y = msg.transform.translation.y;
-            detectedObject.pose.position.z = msg.transform.translation.z;
-            detectedObject.pose.orientation = msg.transform.rotation;
-            
-            detectedObjectsTF.push_back(detectedObject);
+            if (listener.waitForTransform(listOfTF.at(i),parentFrame,now,ros::Duration(3.0)))
+            {
+                objectTF detectedObject;
+                detectedObject.name = tmp.at(objectNameFormatIndex-1);
+                detectedObject.frame_id = listOfTF.at(i);
+                newestListOfTF.push_back(detectedObject.frame_id);
+                tf::StampedTransform transform;
+                listener.lookupTransform(listOfTF.at(i),parentFrame,ros::Time(0),transform);
+                geometry_msgs::TransformStamped msg;
+                transformStampedTFToMsg(transform, msg);
+                
+                detectedObject.pose.position.x = msg.transform.translation.x;
+                detectedObject.pose.position.y = msg.transform.translation.y;
+                detectedObject.pose.position.z = msg.transform.translation.z;
+                detectedObject.pose.orientation = msg.transform.rotation;
+                
+                detectedObjectsTF.push_back(detectedObject);
+            }
         }
 	}
     
-	// filter the TF list to grab the object list
+    listOfTF = newestListOfTF; // update list of TF to contain only newest set of object TF frames
+    
+	// filter the TF list to display the object list
     if (debug) {
         std::cerr <<"Num of Objects: " << detectedObjectsTF.size() <<std::endl;
         for (unsigned int i = 0; i < detectedObjectsTF.size(); i++)
             std::cerr << "name: " << detectedObjectsTF.at(i).name << ", frame id: " << detectedObjectsTF.at(i).frame_id << std::endl;
     }
-	
 };
+
+const std::vector<moveit_msgs::CollisionObject> collision_environment::generateOldObjectToRemove() const
+{
+    std::vector<moveit_msgs::CollisionObject> objectsToRemove;
+    for (unsigned int i = 0; i < listOfTF.size(); i++) {
+        moveit_msgs::CollisionObject co;
+        co.id = detectedObjectsTF.at(i).frame_id;
+        co.header.frame_id = parentFrame;
+        co.operation = co.REMOVE;
+        objectsToRemove.push_back(co);
+    }
+    return objectsToRemove;
+}
+
+const std::vector<moveit_msgs::CollisionObject> collision_environment::getCollisionObjects() const
+{
+    return *segmentedObjects;
+}
+
+std::vector<std::string> collision_environment::getListOfTF() const
+{
+    return listOfTF;
+}

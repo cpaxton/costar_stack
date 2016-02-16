@@ -8,6 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs #may not needed
   geometric_shapes
   moveit_core
+  moveit_msgs
+  moveit_ros_planning_interface
   tf
 )
 
