@@ -1,4 +1,6 @@
 <launch>
+  <include file="$(find ur5_moveit_config)/launch/demo.launch" />
+  
   <!-- main collision environment parameter -->
   <arg name="mesh_source"         default="$(find moveit_collision_environment)/data/mesh" />
   <arg name="charToFind"          default="::" />
@@ -12,7 +14,7 @@
   <!-- Enable for debugging purpose -->
   <arg name="debug"               default="false" />
 
-  <node pkg="moveit_collision_environment" type="moveit_collision_environment" name="obj_collision_env">  
+  <node pkg="moveit_collision_environment" type="moveit_collision_environment" name="planningSceneGenerator">  
   <!-- moveit_collision_environment arg pass -->
     <param name="mesh_source"     type="str" value="$(arg mesh_source   )" />
     <param name="charToFind"      type="str" value="$(arg charToFind    )" />

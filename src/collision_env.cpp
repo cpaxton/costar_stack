@@ -89,9 +89,14 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
         return;
     }
     
+    
 	// update list of object
     if (updateFrame) {
         getAllObjectTF();
+        if (listOfTF.size() == 0) {
+            std::cerr << "No Frame available yet.\n";
+            return;
+        }
     }
     
     segmentedObjects->clear();
@@ -129,6 +134,10 @@ void collision_environment::getAllObjectTF()
 {
 	// get the TF list
     listener.getFrameStrings(listOfTF);
+    if (listOfTF.size() == 0) {
+        std::cerr << "No Frame available yet.\n";
+        return;
+    }
     
     if (debug) {
         for (unsigned int i = 0; i < listOfTF.size(); i++) {
