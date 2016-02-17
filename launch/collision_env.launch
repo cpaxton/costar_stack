@@ -1,11 +1,9 @@
 <launch>
-  <include file="$(find ur5_moveit_config)/launch/demo.launch" />
-  
   <!-- main collision environment parameter -->
   <arg name="mesh_source"         default="$(find moveit_collision_environment)/data/mesh" />
   <arg name="charToFind"          default="::" />
   <arg name="objectNameIdx"       default="2" />
-
+  <arg name="tableTFname"         default="tableTF" />
 
   <!-- Unused parameter for current implementation -->
   <arg name="breakChar"           default=" " />
@@ -21,6 +19,8 @@
     <param name="breakChar"       type="str" value="$(arg breakChar     )" />
     <param name="objectNameIdx"   type="int" value="$(arg objectNameIdx )" />
     <param name="loopInterval"	  type="int" value="$(arg loopInterval  )" />
+
+    <param name="tableTFname"    type="str" value="$(arg tableTFname  )" />
 
     <param name="debug"          type="bool" value="$(arg debug)" />
   </node>

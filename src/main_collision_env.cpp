@@ -25,7 +25,6 @@ class moveitPlanningSceneGenerator
 //        moveit_msgs::DisplayTrajectory display_trajectory;
         moveit_msgs::PlanningScene planning_scene;
         collision_environment collisionObjectGenerator;
-        bool anyUpdate;
     ;
     
     public:
@@ -36,10 +35,12 @@ class moveitPlanningSceneGenerator
 
 void moveitPlanningSceneGenerator::addCollisionObjects(const std::vector<moveit_msgs::CollisionObject>& collision_objects)
 {
-    if (collision_objects.size() < 1){
-        anyUpdate = false;
+    std::cerr << collision_objects.size() << std::endl;
+    if (collision_objects.size() < 1)
+    {
         return;
     }
+    
     for (unsigned i = 0; i < collision_objects.size(); i++)
     {
         this->planning_scene.world.collision_objects.push_back(collision_objects.at(i));
@@ -48,21 +49,27 @@ void moveitPlanningSceneGenerator::addCollisionObjects(const std::vector<moveit_
 
 bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-    anyUpdate = true;
     // remove old collision objects
     planning_scene.world.collision_objects.clear();
+    std::cerr << "Number of old object to remove: ";
     this->addCollisionObjects(collisionObjectGenerator.generateOldObjectToRemove());
     
     // add new collision objects
+    std::cerr << "Updating objects.\n";
     collisionObjectGenerator.updateCollisionObjects();
+    
+    std::cerr << "Number of new object to add: ";
     this->addCollisionObjects(collisionObjectGenerator.getCollisionObjects());
     
+    bool anyUpdate = planning_scene.world.collision_objects.size() > 0;
     if (anyUpdate) {
         planning_scene.is_diff = true;
         planning_scene_diff_publisher.publish(planning_scene);
+        std::cerr << "Update done\n";
     }
     else
         std::cerr << "No update done since there is no object TF detected\n";
+    std::cerr << std::endl;
     return anyUpdate;
 }
 
@@ -83,16 +90,8 @@ int main(int argc, char** argv)
     
     // setting up moveit
     moveitPlanningSceneGenerator planningScene(nh);
-//	ros::Rate r (10);
+    
     ros::ServiceServer planningSceneGenerator = nh.advertiseService("planningSceneGenerator", &moveitPlanningSceneGenerator::updateCollisionObject, &planningScene);
     ros::spin();
-//	while (ros::ok())
-//	{
-//        r.sleep();
-		// std::cerr << "List frame \n" << listener2.allFramesAsString() << std::endl;
-		// environment.addAllCollisionObject();
-		// ros::spin();
-//	}
-	// load all mesh
 	return 1;
 }

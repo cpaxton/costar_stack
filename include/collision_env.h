@@ -3,6 +3,7 @@
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
 #include <geometric_shapes/mesh_operations.h>
 #include <geometric_shapes/shape_operations.h>
 #include <shape_msgs/Mesh.h>
@@ -26,12 +27,17 @@ class collision_environment
 		std::vector<std::string> listOfTF;
 		std::vector<objectTF> detectedObjectsTF;
         std::vector<moveit_msgs::CollisionObject>* segmentedObjects;
+        moveit_msgs::CollisionObject tableObject;
+    
+        std::string tableTFname, parentTableTF;
 		std::string mesh_source;
         std::string charToFind,breakChar;
         int loopInterval;
         std::string parentFrame; //parent of the TF frame that objects attached to
 		int objectNameFormatIndex;
-        bool classReady;
+        bool classReady,hasParent, hasTableTF,hasObjects;
+    
+        bool getTable();
 		// after breaking the list of TF to several items, which item define the object name
 		// Example: with format Obj::NameOfObject::index, objectNameFormatIndex = 2. 
 		// If format Obj::index::NameOfObject = 3, objectNameFormatIndex = 3.
