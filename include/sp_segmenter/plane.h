@@ -1,15 +1,8 @@
 #ifndef SP_SEGMENTER_PLANE
 #define SP_SEGMENTER_PLANE
 
-pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scene, double aboveTable=0.025, float T = 0.02)
+pcl::PointCloud<PointT>::Ptr getPlane (const pcl::PointCloud<PointT>::Ptr &inputCloud, const pcl::PointCloud<PointT>::Ptr & scene, const float &T)
 {
-    //Downsample the point cloud for faster plane segmentation
-    pcl::PointCloud<PointT>::Ptr downsampledPointCloud (new pcl::PointCloud<PointT>);
-    pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
-    sor.setInputCloud (scene);
-    sor.setLeafSize (0.01f, 0.01f, 0.01f);
-    sor.filter (*downsampledPointCloud); 
-
     pcl::ModelCoefficients::Ptr plane_coef(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
     // Create the segmentation object
@@ -19,7 +12,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
     seg.setMethodType(pcl::SAC_RANSAC);
     seg.setDistanceThreshold(T);
 
-    seg.setInputCloud(downsampledPointCloud);
+    seg.setInputCloud(inputCloud);
     seg.segment(*inliers, *plane_coef);
     
     pcl::ProjectInliers<PointT> proj;
@@ -29,6 +22,19 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr scen
 
     pcl::PointCloud<PointT>::Ptr scene_projected(new pcl::PointCloud<PointT>());
     proj.filter (*scene_projected);
+    return scene_projected;
+}
+
+pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr & scene, const double aboveTable=0.025,const float T = 0.02)
+{
+    //Downsample the point cloud for faster plane segmentation
+    pcl::PointCloud<PointT>::Ptr downsampledPointCloud (new pcl::PointCloud<PointT>);
+    pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
+    sor.setInputCloud (scene);
+    sor.setLeafSize (0.01f, 0.01f, 0.01f);
+    sor.filter (*downsampledPointCloud); 
+
+    pcl::PointCloud<PointT>::Ptr scene_projected = getPlane(downsampledPointCloud, scene, T);
 
     pcl::PointCloud<PointT>::iterator it_ori = scene->begin();
     pcl::PointCloud<PointT>::iterator it_proj = scene_projected->begin();

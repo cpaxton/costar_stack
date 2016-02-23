@@ -91,8 +91,16 @@ Execute with:
 roslaunch sp_segmenter SPServer.launch
 ```
 
-It supports the same args as SPSegmenter launch. After one service call, it will constantly publishes TF frames.
+It supports the same args as SPSegmenter launch.
+Additional Args list for SPServer:
+loadTable	:	Setting this arg true will make the program try to load table.pcd located in data folder which will be used for segmenting object above the table. If the program fails to get the table.pcd or this arg set to false, It will redo the table training. Default: `true`
+saveTable	:	Setting this arg true will update table.pcd with new table convex hull. If the code successfully load table.pcd, this arg will have no effect. Default: `true`
+tableTF		:	The name of TF frame that represents the center of table. This arg only used if the program fails to load table.pcd. The program will make box segmentation with box size 1 meters cubic around the TF position. Default: `camera_2/ar_marker_0`
+
+After one service call, it will constantly publishes TF frames.
 The object TF naming convension generated from SPServer is: ```Obj::<the name of object>::<objectIndex>```.
+
+Note: If there is no prior table training or there are some changes to the table position, set loadTable to true and place AR tag with code: `0` to the center of the table before running the roslaunch.
 
 Example (to update the TF frames):
 

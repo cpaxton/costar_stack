@@ -9,7 +9,10 @@
   <arg name="bestPoseOnly"   default="false" />
   <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="aboveTable"     default="0.01" />
-
+  <arg name="tableTF"        default="camera_2/ar_marker_0" />
+  <arg name="saveTabledir"   default="$(find sp_segmenter)/data" />
+  <arg name="loadTable"      default="true" />
+  <arg name="saveTable"      default="true" />
 
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
@@ -22,6 +25,12 @@
     <param name="bestPoseOnly" type="bool" value="$(arg bestPoseOnly)" />
     <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
     <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
+    
+    <param name="tableTF"        type="str" value="$(arg tableTF)"/>
+    <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
+    <param name="saveTable"   type="bool" value="$(arg saveTable)" />
+    <param name="loadTable"   type="bool" value="$(arg loadTable)" />
+    
 
     <!-- SPSegmenterNode subscriber/publisher args pass -->
     <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
@@ -32,7 +41,6 @@
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
-    <rosparam command="load" file="$(find sp_segmenter)/launch/segmentRegion.yaml" />
   </node>
 
   <group ns="$(arg NodeName)">

@@ -19,6 +19,7 @@
 #include <std_srvs/Empty.h>
 // #include <tf/tf_conversions.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
@@ -28,6 +29,7 @@
 
 // contains function to normalize the orientation of symmetric object
 #include "sp_segmenter/symmetricOrientationRealignment.h"
+#include "sp_segmenter/table_segmenter.h"
 
 #define OBJECT_MAX 100
 
@@ -39,14 +41,7 @@ sensor_msgs::PointCloud2 inputCloud;
 // for orientation normalization
 std::map<std::string, objectSymmetry> objectDict;
 
-
-struct cutPointCloud
-{
-   double max[3], min[3];
-   bool cutRegion[3];
-};
-
-cutPointCloud regionData;
+pcl::PointCloud<PointT>::Ptr tableConvexHull(new pcl::PointCloud<PointT>);
 
 bool compute_pose = false;
 bool view_flag = false;
@@ -73,27 +68,6 @@ ros::Publisher pc_pub;
 // ros::Publisher pose_pub;
 ros::Subscriber pc_sub;
 
-cutPointCloud loadRegion(const ros::NodeHandle &nh)
-{
-    cutPointCloud result;
-    std::string paramToLoad = "maxCoordinate";
-    nh.param(paramToLoad+"/x", result.max[0],0.0);
-    nh.param(paramToLoad+"/y", result.max[1],0.0);
-    nh.param(paramToLoad+"/z", result.max[2],0.0);
-    
-    paramToLoad = "minCoordinate";
-    nh.param(paramToLoad+"/x", result.min[0],0.0);
-    nh.param(paramToLoad+"/y", result.min[1],0.0);
-    nh.param(paramToLoad+"/z", result.min[2],0.9);
-    
-    paramToLoad = "useAxis";
-    nh.param(paramToLoad+"/x", result.cutRegion[0],false);
-    nh.param(paramToLoad+"/y", result.cutRegion[1],false);
-    nh.param(paramToLoad+"/z", result.cutRegion[2],true);
-
-    return result;
-}
-
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 
 { {0, 0, 0}, 
@@ -115,112 +89,140 @@ pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr 
 /*********************************************************************************/
 
 std::vector<poseT> spSegmenterCallback(
-	const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> & final_cloud)
+    const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> & final_cloud)
 {
-	// By default pcl::PassThrough will remove NaNs point unless setKeepOrganized is true
-	pcl::PassThrough<PointT> pass;
-	pcl::PointCloud<PointT>::Ptr scene(new pcl::PointCloud<PointT>());
-    *scene = *full_cloud;
-    for (unsigned int i = 0; i < 3; i++)
-	{
-        if (!regionData.cutRegion[i]) continue; //Do not cut region unless the value is true
-		pass.setInputCloud (scene);
-        std::string axisName;
-        switch (i){
-            case 0: axisName = "x"; break;
-            case 1: axisName = "y"; break;
-            default: axisName = "z"; break;
-        }
-        std::cerr << "Segmenting axis: " << axisName << "max: " << regionData.max[i] << "min: " << regionData.min[i] << std::endl;
-    	pass.setFilterFieldName (axisName);
-    	pass.setFilterLimits (regionData.min[i], regionData.max[i]);
-    	//pass.setFilterLimitsNegative (true);
-    	pass.filter (*scene);
-	}
+    // By default pcl::PassThrough will remove NaNs point unless setKeepOrganized is true
+    pcl::PassThrough<PointT> pass;
+    pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
+        *scene_f = *full_cloud;
+        
+    if( viewer )
+            {
+                std::cout<<"VISUALIZING"<<std::endl;
+                viewer->removeAllPointClouds();
+                viewer->addPointCloud(scene_f, "whole_scene");
+                viewer->spin();
+                viewer->removeAllPointClouds();
+            }
+    //pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene,aboveTable);
 
+    // pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
+    //computeNormals(cloud, cloud_normal, radius);
+    //pcl::PointCloud<PointT>::Ptr label_cloud = recog.recognize(cloud, cloud_normal);
 
-	pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene,aboveTable);
-
-	// pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
-	//computeNormals(cloud, cloud_normal, radius);
-	//pcl::PointCloud<PointT>::Ptr label_cloud = recog.recognize(cloud, cloud_normal);
-
-	spPooler triple_pooler;
-	triple_pooler.lightInit(scene_f, hie_producer, radius, down_ss);
-	std::cerr << "LAB Pooling!" << std::endl;
-	triple_pooler.build_SP_LAB(lab_pooler_set, false);
+    spPooler triple_pooler;
+    triple_pooler.lightInit(scene_f, hie_producer, radius, down_ss);
+    std::cerr << "LAB Pooling!" << std::endl;
+    triple_pooler.build_SP_LAB(lab_pooler_set, false);
 
     if(viewer)
     {
       viewer->removeAllPointClouds();
     }
     
-	pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
-	for( int ll = 0 ; ll <= 2 ; ll++ )
-	{
-		std::cerr << "L" << ll <<" Inference!" << std::endl;
-		bool reset_flag = ll == 0 ? true : false;
-		if( ll >= 1 ) {
-			triple_pooler.extractForeground(false);
-		}
-		triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
+    pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
+    for( int ll = 0 ; ll <= 2 ; ll++ )
+    {
+        std::cerr << "L" << ll <<" Inference!" << std::endl;
+        bool reset_flag = ll == 0 ? true : false;
+        if( ll >= 1 ) {
+            triple_pooler.extractForeground(false);
+        }
+        triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
 
-	}
+    }
 
-	foreground_cloud = triple_pooler.getSemanticLabels();
-	if( viewer )
-	{
-		//viewer->addPointCloud(final_cloud, "labels");
-		visualizeLabels(foreground_cloud, viewer, color_label);
-		viewer->spin();
-	}
+    foreground_cloud = triple_pooler.getSemanticLabels();
+    if( viewer )
+    {
+        //viewer->addPointCloud(final_cloud, "labels");
+        visualizeLabels(foreground_cloud, viewer, color_label);
+        viewer->spin();
+    }
 
-	std::size_t numberOfObject = mesh_set.size();
-	for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
-	{
+    std::size_t numberOfObject = mesh_set.size();
+    for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
+    {
         //red point cloud: background for object > 1?
-		if( foreground_cloud->at(l).label > 0 || ( foreground_cloud->at(l).label > 1 && numberOfObject > 1 ))
-			final_cloud.push_back(foreground_cloud->at(l));
-	}
+        if( (foreground_cloud->at(l).label > 0 && numberOfObject == 0 )|| ( foreground_cloud->at(l).label > 1 && numberOfObject > 1 ))
+            final_cloud.push_back(foreground_cloud->at(l));
+    }
 
-	std::vector<poseT> all_poses;
-	/* POSE */
-	if (compute_pose) {
-		for (int i = 0; i < 1; ++i) { // was 99
-			std::vector<poseT> all_poses1;
+    std::vector<poseT> all_poses;
+    /* POSE */
+    if (compute_pose) {
+        for (int i = 0; i < 1; ++i) { // was 99
+            std::vector<poseT> all_poses1;
 
-			pcl::PointCloud<myPointXYZ>::Ptr foreground(new pcl::PointCloud<myPointXYZ>());
-			pcl::copyPointCloud(final_cloud, *foreground);
+            pcl::PointCloud<myPointXYZ>::Ptr foreground(new pcl::PointCloud<myPointXYZ>());
+            pcl::copyPointCloud(final_cloud, *foreground);
 
             if (bestPoseOnly)
                 objrec->StandardBest(foreground, all_poses1);
             else
-			    objrec->StandardRecognize(foreground, all_poses1,minConfidence);
+                objrec->StandardRecognize(foreground, all_poses1,minConfidence);
 
-			pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
-			pcl::copyPointCloud(*scene_f, *scene_xyz);
+            pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
+            pcl::copyPointCloud(*scene_f, *scene_xyz);
 
-			all_poses =  RefinePoses(scene_xyz, mesh_set, all_poses1);
-			std::cout << "# Poses found: " << all_poses.size() << std::endl;
+            all_poses =  RefinePoses(scene_xyz, mesh_set, all_poses1);
+            std::cout << "# Poses found: " << all_poses.size() << std::endl;
 
-			std::cout<<"done objrec ransac"<<std::endl;
-			if( viewer )
-			{
-				std::cout<<"VISUALIZING"<<std::endl;
-				viewer->removeAllPointClouds();
-				viewer->addPointCloud(scene_f, "whole_scene");
-				objrec->visualize_m(viewer, all_poses, model_name_map, color_label);
-				viewer->spin();
-				objrec->clearMesh(viewer, all_poses);
-				viewer->removeAllPointClouds();
-			}
-		}
+            std::cout<<"done objrec ransac"<<std::endl;
+            if( viewer )
+            {
+                std::cout<<"VISUALIZING"<<std::endl;
+                viewer->removeAllPointClouds();
+                viewer->addPointCloud(scene_f, "whole_scene");
+                objrec->visualize_m(viewer, all_poses, model_name_map, color_label);
+                viewer->spin();
+                objrec->clearMesh(viewer, all_poses);
+                viewer->removeAllPointClouds();
+            }
+        }
 
-	}
+    }
     // normalize symmetric object Orientation
     normalizeAllModelOrientation (all_poses, objectDict);
-	return all_poses;
+    return all_poses;
 
+}
+
+bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc, const ros::NodeHandle &nh)
+{
+    std::string tableTFname, tableTFparent;
+    nh.param("tableTF", tableTFname,std::string("/tableTF"));
+    tf::TransformListener listener;
+    sleep(1.0);
+    listener.getParent(tableTFname,ros::Time(0),tableTFparent);
+    if (listener.waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
+    {
+    std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
+        tf::StampedTransform transform;
+        listener.lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
+        pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+
+    fromROSMsg(inputCloud,*full_cloud);
+    std::cerr << "PCL organized: " << full_cloud->isOrganized() << std::endl;
+    volumeSegmentation(full_cloud,transform,0.5);
+    tableConvexHull = getTableConvexHull(full_cloud);
+    
+    bool saveTable;
+        nh.param("updateTable",saveTable, true);
+    if (saveTable){
+            std::string saveTable_directory;
+            nh.param("saveTable_directory",saveTable_directory,std::string("./data"));
+        pcl::PCDWriter writer;
+        writer.write<PointT> (saveTable_directory+"/table.pcd", *tableConvexHull, true);
+        std::cerr << "Saved table point cloud in : " << saveTable_directory <<"/table.pcd"<<std::endl;
+    }
+        return true;
+    }
+    else {
+    std::cerr << "Fail to get table TF with name: '" << tableTFname << "'" << std::endl;
+    std::cerr << "Parent: " << tableTFparent << std::endl;
+    return false;
+    }
 }
 
 void updateCloudData (const sensor_msgs::PointCloud2 &pc)
@@ -235,34 +237,27 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
 
-	fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
-
-	// get all poses from spSegmenterCallback
+    fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+    if (full_cloud->size() < 1){
+        std::cerr << "No cloud available";
+        return false;
+    }
+    
+    segmentCloudAboveTable(full_cloud, tableConvexHull);
+    if (full_cloud->size() < 1){
+        std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
+        return false;
+    }
+    // get all poses from spSegmenterCallback
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
     
 
     //publishing the segmented point cloud
-	sensor_msgs::PointCloud2 output_msg;
-	toROSMsg(*final_cloud,output_msg);
-	output_msg.header.frame_id = inputCloud.header.frame_id;
-	pc_pub.publish(output_msg);
+    sensor_msgs::PointCloud2 output_msg;
+    toROSMsg(*final_cloud,output_msg);
+    output_msg.header.frame_id = inputCloud.header.frame_id;
+    pc_pub.publish(output_msg);
 
-	//converting all_poses to geometry_msgs::Pose and update the sp_segmenter_poses
-	// geometry_msgs::PoseArray msg;
-	// msg.header.frame_id = inputCloud.header.frame_id;
-	// for (poseT &p: all_poses) {
-	// 	geometry_msgs::Pose pmsg;
-	// 	std::cout <<"pose = ("<<p.shift.x()<<","<<p.shift.y()<<","<<p.shift.z()<<")"<<std::endl;
-	// 	pmsg.position.x = p.shift.x();
-	// 	pmsg.position.y = p.shift.y();
-	// 	pmsg.position.z = p.shift.z();
-	// 	pmsg.orientation.x = p.rotation.x();
-	// 	pmsg.orientation.y = p.rotation.y();
-	// 	pmsg.orientation.z = p.rotation.z();
-	// 	pmsg.orientation.w = p.rotation.w();
-
-	// 	msg.poses.push_back(pmsg);
-	// }
     sp_segmenter_poses = all_poses;
 
     hasTF = true;
@@ -292,9 +287,24 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
-    
-    //get point cloud region to exclude
-    regionData = loadRegion(nh);
+    bool loadTable, haveTable = false;
+    nh.param("loadTable",loadTable, true);
+
+    if(loadTable)
+    {
+       std::string load_directory;
+       nh.param("saveTable_directory",load_directory,std::string("./data"));
+       pcl::PCDReader reader;
+       if( reader.read (load_directory+"/table.pcd", *tableConvexHull) == 0){ 
+            std::cerr << "Table load successfully\n";
+           haveTable = true;
+        }
+       else {
+            haveTable = false;
+            std::cerr << "Fail to load table. Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
+        }
+    }
+
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
@@ -445,6 +455,7 @@ int main(int argc, char** argv)
         }
         ros::spinOnce();
         r.sleep();
+        if (!haveTable) haveTable=getAndSaveTable(inputCloud, nh);        
     }
 
     for( int ll = 0 ; ll <= 2 ; ll++ )
