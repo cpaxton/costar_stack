@@ -294,7 +294,12 @@ pcl::CorrespondencesPtr matchSIFT(const cv::Mat &descr1, const cv::Mat &descr2)
     
     cv::flann::Index sift_tree;
     cv::flann::LinearIndexParams params;
+
+#ifdef opencv_miniflann_build_h
+    extFlannIndexBuild(sift_tree,descr1, params);
+#else
     sift_tree.build(descr1, params);
+#endif
 
     for( int i = 0 ; i < descr2.rows ; i++ )
     {

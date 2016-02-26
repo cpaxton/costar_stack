@@ -281,8 +281,12 @@ int Pooler_L0::LoadSeedsPool(std::string pool_seed_file)
     
     cv::flann::LinearIndexParams indexParams;
     // cv::flann::KDTreeIndexParams indexParams;
+#ifdef opencv_miniflann_build_h
+    extFlannIndexBuild(pool_tree,pool_seeds, indexParams);
+#else
     pool_tree.build(pool_seeds, indexParams);
-
+#endif
+    
     pool_len = pool_seeds.rows;
 
     return pool_len;
@@ -310,7 +314,11 @@ cv::Mat Pooler_L0::PoolHybridDomain(const cv::Mat &mixed_domain, const cv::Mat &
     cv::flann::LinearIndexParams indexParams;
     //cv::flann::KDTreeIndexParams indexParams;
     cv::flann::Index mixed_tree;
+#ifdef opencv_miniflann_build_h
+    extFlannIndexBuild(mixed_tree, mixed_domain, indexParams);
+#else
     mixed_tree.build(mixed_domain, indexParams);
+#endif
     
     std::vector<cv::Mat> fea_vec(hybrid_len);
     for( int i = 0 ; i < hybrid_len ; i++ )

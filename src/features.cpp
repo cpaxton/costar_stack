@@ -1,5 +1,15 @@
 #include "sp_segmenter/features.h"
 
+#ifdef opencv_miniflann_build_h
+
+//#include <opencv2/opencv.hpp>
+void extFlannIndexBuild(cv::flann::Index &result, cv::InputArray _data, const cv::flann::IndexParams& params, const cvflann::flann_distance_t _distType)
+{
+    //    cv::InputArray * _wholedata = &(_data);
+    result.build( _data, _data, params, _distType);
+}
+#endif
+
 void setObjID(std::map<std::string, int> &model_name_map)
 {
     model_name_map["drill"] = 1;
@@ -690,8 +700,12 @@ void LoadSeedsNormal(std::string normal_seed_file, cv::flann::Index &fea_tree, c
     
     cv::flann::LinearIndexParams indexParams;
     //cv::flann::KDTreeIndexParams indexParams(fea_seeds, indexParams);
+#ifdef opencv_miniflann_build_h
+    extFlannIndexBuild(fea_tree,fea_seeds, indexParams);
+#else
     fea_tree.build(fea_seeds, indexParams);
-
+#endif
+    
     int len = fea_seeds.rows;
 
     feaK = len * ratio;
@@ -707,8 +721,13 @@ void LoadSeedsHigh(std::string high_seed_file, cv::flann::Index &fea_tree, cv::M
     
     //cv::flann::LinearIndexParams indexParams;
     cv::flann::KDTreeIndexParams indexParams;
+    
+#ifdef opencv_miniflann_build_h
+    extFlannIndexBuild(fea_tree, fea_seeds, indexParams);
+#else
     fea_tree.build(fea_seeds, indexParams);
-
+#endif
+    
     int len = fea_seeds.rows;
     
     feaK = len * ratio;

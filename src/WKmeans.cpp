@@ -49,8 +49,12 @@ float WKmeans::M_step(cv::Mat centers)
     cv::flann::LinearIndexParams indexParams;
     
     cv::flann::Index center_tree;
+
+#ifdef opencv_miniflann_build_h
+    extFlannIndexBuild(center_tree, centers, indexParams);
+#else
     center_tree.build(centers, indexParams);
-    
+#endif
     
     std::vector< std::vector<std::vector<int> > > index_set(thread_num);
     std::vector< float > dist_set(thread_num, 0);
