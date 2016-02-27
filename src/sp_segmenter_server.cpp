@@ -94,16 +94,16 @@ std::vector<poseT> spSegmenterCallback(
     // By default pcl::PassThrough will remove NaNs point unless setKeepOrganized is true
     pcl::PassThrough<PointT> pass;
     pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
-        *scene_f = *full_cloud;
+    *scene_f = *full_cloud;
         
     if( viewer )
-            {
-                std::cout<<"VISUALIZING"<<std::endl;
-                viewer->removeAllPointClouds();
-                viewer->addPointCloud(scene_f, "whole_scene");
-                viewer->spin();
-                viewer->removeAllPointClouds();
-            }
+    {
+        std::cout<<"VISUALIZING"<<std::endl;
+        viewer->removeAllPointClouds();
+        viewer->addPointCloud(scene_f, "whole_scene");
+        viewer->spin();
+        viewer->removeAllPointClouds();
+    }
     //pcl::PointCloud<PointT>::Ptr scene_f = removePlane(scene,aboveTable);
 
     // pcl::PointCloud<NormalT>::Ptr cloud_normal(new pcl::PointCloud<NormalT>());
@@ -197,31 +197,35 @@ bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc, const ros::NodeHandle 
     listener.getParent(tableTFname,ros::Time(0),tableTFparent);
     if (listener.waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
     {
-    std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
+        std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
         tf::StampedTransform transform;
         listener.lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
         pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
 
-    fromROSMsg(inputCloud,*full_cloud);
-    std::cerr << "PCL organized: " << full_cloud->isOrganized() << std::endl;
-    volumeSegmentation(full_cloud,transform,0.5);
-    tableConvexHull = getTableConvexHull(full_cloud);
-    
-    bool saveTable;
+        fromROSMsg(inputCloud,*full_cloud);
+        std::cerr << "PCL organized: " << full_cloud->isOrganized() << std::endl;
+        volumeSegmentation(full_cloud,transform,0.5);
+        tableConvexHull = getTableConvexHull(full_cloud);
+        if (tableConvexHull->size() < 10) {
+            std::cerr << "Retrying table segmentation...\n";
+            return false;
+        }
+        
+        bool saveTable;
         nh.param("updateTable",saveTable, true);
-    if (saveTable){
+        if (saveTable){
             std::string saveTable_directory;
             nh.param("saveTable_directory",saveTable_directory,std::string("./data"));
-        pcl::PCDWriter writer;
-        writer.write<PointT> (saveTable_directory+"/table.pcd", *tableConvexHull, true);
-        std::cerr << "Saved table point cloud in : " << saveTable_directory <<"/table.pcd"<<std::endl;
-    }
+            pcl::PCDWriter writer;
+            writer.write<PointT> (saveTable_directory+"/table.pcd", *tableConvexHull, true);
+            std::cerr << "Saved table point cloud in : " << saveTable_directory <<"/table.pcd"<<std::endl;
+        }
         return true;
     }
     else {
-    std::cerr << "Fail to get table TF with name: '" << tableTFname << "'" << std::endl;
-    std::cerr << "Parent: " << tableTFparent << std::endl;
-    return false;
+        std::cerr << "Fail to get table TF with name: '" << tableTFname << "'" << std::endl;
+        std::cerr << "Parent: " << tableTFparent << std::endl;
+        return false;
     }
 }
 
@@ -243,7 +247,7 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
         return false;
     }
     
-    segmentCloudAboveTable(full_cloud, tableConvexHull);
+    segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
     if (full_cloud->size() < 1){
         std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
         return false;

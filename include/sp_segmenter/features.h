@@ -30,9 +30,9 @@ struct Hypo{
 //#define BOX_HEIGHT 0.05
 #define IN_OVERLAP_RATIO 0.25
 
-#if((CV_MAJOR_VERSION == 2) && (CV_MINOR_VERSION == 4) && (CV_SUBMINOR_VERSION > 8))
+#if((CV_MAJOR_VERSION == 2) && (CV_MINOR_VERSION == 4) && (CV_SUBMINOR_VERSION > 11))
 #define opencv_miniflann_build_h
-// extend build method for opencv version > 2.4.8 to accomodate the change in opencv/flann/miniflann build function
+// extend build method for opencv version > 2.4.11 to accomodate the change in opencv/flann/miniflann build function
 void extFlannIndexBuild(cv::flann::Index &result,cv::InputArray _data, const cv::flann::IndexParams& params, const cvflann::flann_distance_t _distType = cvflann::FLANN_DIST_L2);
 #endif
 

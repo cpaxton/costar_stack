@@ -45,7 +45,7 @@ void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::Sta
 	}
 }
 
-void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl::PointCloud<PointT>::Ptr &convexHull)
+void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl::PointCloud<PointT>::Ptr &convexHull, const double aboveTable = 0.01)
 {
 
 	std::cerr << "\nSegment object above table \n";
@@ -55,7 +55,7 @@ void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl
 	prism.setInputPlanarHull(convexHull);
 
 	// from 1 cm above table to 50 cm above table
-	prism.setHeightLimits(0.01f, 0.5f);
+	prism.setHeightLimits(aboveTable, 0.5f);
 	pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices);
 
 	prism.segment(*objectIndices);
@@ -90,19 +90,21 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 	mps.setInputCloud (negative);
 	std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
 	mps.segmentAndRefine (regions);
-	
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>);
-	boundary->points = regions[0].getContour();
-
-	// Retrieve the convex hull.
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
-
-	pcl::ConvexHull<pcl::PointXYZRGBA> hull;
-	hull.setInputCloud(boundary);
-	// Make sure that the resulting hull is bidimensional.
-	hull.setDimension(2);
-	hull.reconstruct(*convexHull);
-	return convexHull;
+    
+    // Retrieve the convex hull.
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+    if (regions.size() > 0) {
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>);
+        boundary->points = regions[0].getContour();
+        
+        pcl::ConvexHull<pcl::PointXYZRGBA> hull;
+        hull.setInputCloud(boundary);
+        // Make sure that the resulting hull is bidimensional.
+        hull.setDimension(2);
+        hull.reconstruct(*convexHull);
+    }
+    else std::cerr << "Fail to segment Table.\n";
+    return convexHull;
 }
 
 #endif
