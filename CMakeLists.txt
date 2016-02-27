@@ -58,12 +58,21 @@ if(catkin_FOUND)
       std_msgs
     )
 
+  if (APPLE)
     catkin_package(
       INCLUDE_DIRS include utility
       LIBRARIES 
       CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
-      DEPENDS PCL OpenCV OpenMP 
+      DEPENDS PCL OpenCV 
     )
+  else()
+    catkin_package(
+      INCLUDE_DIRS include utility
+      LIBRARIES 
+      CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
+      DEPENDS PCL OpenCV OpenMP
+    )
+  endif()
 endif()
     
 include_directories(include utility)
