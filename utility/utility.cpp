@@ -1592,11 +1592,12 @@ void GenSVMParamter(parameter &param, float CC)
     param.nr_weight  = 0;
     param.weight_label = NULL;
     param.weight = NULL;
+    param.init_sol = NULL;
 
 #ifdef LIBLINEAR_WEIGHT
     param.nr_weight = 2;
-    param.weight_label = new int[param.nr_weight];
-    param.weight = new double[param.nr_weight];
+    param.weight_label = (int*)std::malloc(sizeof(int) * param.nr_weight);
+    param.weight = (double*)std::mallloc(sizeof(double) * param.nr_weight);
 #endif
     switch(param.solver_type)
     {
