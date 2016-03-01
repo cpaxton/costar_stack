@@ -36,7 +36,8 @@ class collision_environment
         std::string parentFrame; //parent of the TF frame that objects attached to
 		int objectNameFormatIndex;
         bool classReady,hasParent, hasTableTF,hasObjects;
-    
+        bool defineParent;
+        std::string definedParent;
         bool getTable();
 		// after breaking the list of TF to several items, which item define the object name
 		// Example: with format Obj::NameOfObject::index, objectNameFormatIndex = 2. 

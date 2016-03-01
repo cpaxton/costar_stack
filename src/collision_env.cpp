@@ -62,6 +62,11 @@ void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
     nh.param("charToFind", charToFind,std::string("::"));
     nh.param("mesh_source", mesh_source,std::string("data/mesh"));
     nh.param("tableTFname",tableTFname,std::string("tableTF"));
+    nh.param("defineParent",defineParent,false);
+    if (defineParent) {
+        nh.param("parentFrameName",definedParent,std::string("base_link"));
+    }
+    
     this->segmentedObjects = new std::vector<moveit_msgs::CollisionObject>();
     
     std::cerr << "Started \n";
@@ -79,13 +84,20 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
     
     segmentedObjects->clear();
     
-    if (getTable())
-        segmentedObjects->push_back(this->tableObject);
+    bool updateTable;
+    nh.param("renewTable", updateTable, true);
+    if (updateTable) {
+        if (getTable())
+            segmentedObjects->push_back(this->tableObject);
+    }
+    else
+        if (hasTableTF) {
+            segmentedObjects->push_back(this->tableObject);
+        }
     
     if (debug)
         std::cerr << "Number of object after add table: " << segmentedObjects->size() <<std::endl;
 
-    
 	// update list of object
     if (updateFrame) {
         getAllObjectTF();
@@ -105,7 +117,7 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
         co.id = detectedObjectsTF.at(i).frame_id;
         co.header.frame_id = parentFrame;
         std::stringstream ss;
-        ss << "file://" << mesh_source << "/" << detectedObjectsTF.at(i).name << ".obj";
+        ss << "file://" << mesh_source << "/" << detectedObjectsTF.at(i).name << ".stl";
         
         shapes::Mesh * tmpMesh = shapes::createMeshFromResource(ss.str());
         shape_msgs::Mesh co_mesh;
@@ -146,9 +158,13 @@ void collision_environment::getAllObjectTF()
             if (tmp.size() > objectNameFormatIndex)
             {
                 // get parent of objectTF
-                listener.getParent(listOfTF.at(i),ros::Time(0),parentFrame);
-                if (debug)
-                    std::cerr << "parentFrame of ObjectTF ->" << parentFrame << std::endl;
+                if (!defineParent) {
+                    listener.getParent(listOfTF.at(i),ros::Time(0),parentFrame);
+                    if (debug)
+                        std::cerr << "parentFrame of ObjectTF ->" << parentFrame << std::endl;
+                }
+                else
+                    parentFrame = definedParent;
                 hasParent = true;
                 break;
             }
@@ -231,7 +247,12 @@ bool collision_environment::getTable()
     
     moveit_msgs::CollisionObject co;
     std::string parentTableTF;
-    listener.getParent(tableTFname,ros::Time(0),parentTableTF);
+    
+    if (!defineParent) {
+        listener.getParent(tableTFname,ros::Time(0),parentTableTF);
+    }
+    else parentTableTF = definedParent;
+
     if (!listener.waitForTransform(tableTFname,parentTableTF,ros::Time::now(),ros::Duration(0.5)))
     {
         std::cerr << "Fail to get tf for table: " << tableTFname << std::endl;

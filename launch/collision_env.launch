@@ -4,6 +4,9 @@
   <arg name="charToFind"          default="::" />
   <arg name="objectNameIdx"       default="2" />
   <arg name="tableTFname"         default="tableTF" />
+  <arg name="defineParent"        default="false" />
+  <arg name="renewTable"          default="true" />
+  <arg name="parentFrameName"     default="base_link"/>
 
   <!-- Unused parameter for current implementation -->
   <arg name="breakChar"           default=" " />
@@ -20,7 +23,11 @@
     <param name="objectNameIdx"   type="int" value="$(arg objectNameIdx )" />
     <param name="loopInterval"	  type="int" value="$(arg loopInterval  )" />
 
-    <param name="tableTFname"    type="str" value="$(arg tableTFname  )" />
+    <param name="tableTFname"    type="str"  value="$(arg tableTFname   )" />
+    <param name="renewTable"     type="bool" value="$(arg renewTable    )" />
+
+    <param name="defineParent"    type="bool" value="$(arg defineParent  )" />
+    <param name="parentFrameName" type="str"  value="$(arg parentFrameName )" />
 
     <param name="debug"          type="bool" value="$(arg debug)" />
   </node>

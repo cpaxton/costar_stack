@@ -20,9 +20,6 @@ class moveitPlanningSceneGenerator
         ros::Publisher planning_scene_diff_publisher;
     ;
     private:
-//        moveit::planning_interface::MoveGroup * group;
-//        ros::Publisher display_publisher;
-//        moveit_msgs::DisplayTrajectory display_trajectory;
         moveit_msgs::PlanningScene planning_scene;
         collision_environment collisionObjectGenerator;
     ;
@@ -76,9 +73,7 @@ bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Reque
 moveitPlanningSceneGenerator::moveitPlanningSceneGenerator(const ros::NodeHandle &nh)
 {
     this->nh = nh;
-//    this->group = new moveit::planning_interface::MoveGroup("robot_description");
-//    display_publisher = this->nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-    planning_scene_diff_publisher = this->nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
+    planning_scene_diff_publisher = this->nh.advertise<moveit_msgs::PlanningScene>("/planning_scene", 1);
     collisionObjectGenerator.setNodeHandle(this->nh);
 }
 
