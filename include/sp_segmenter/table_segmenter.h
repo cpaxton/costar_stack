@@ -14,13 +14,13 @@
 
 #include "sp_segmenter/utility/typedef.h"
 
-void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::StampedTransform &transform,const double &region)
+void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::StampedTransform &transform,const double &region, bool keepOrganized = true)
 {
 	for (unsigned int i = 0; i < 3; i++)
   {
   	pcl::PassThrough<PointT> pass;
   	pass.setInputCloud (cloud_input);
-  	pass.setKeepOrganized(true);
+  	pass.setKeepOrganized(keepOrganized);
   	std::string axisName;
   	double positionToSegment;
 		

@@ -59,6 +59,8 @@ bool bestPoseOnly;
 double minConfidence;
 bool segmentingGripper = false;
 
+tf::TransformListener * listener;
+
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
 std::vector<ModelT> mesh_set;
@@ -194,14 +196,13 @@ bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc, const ros::NodeHandle 
 {
     std::string tableTFname, tableTFparent;
     nh.param("tableTF", tableTFname,std::string("/tableTF"));
-    tf::TransformListener listener;
-    sleep(1.0);
-    listener.getParent(tableTFname,ros::Time(0),tableTFparent);
-    if (listener.waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
+    
+    listener->getParent(tableTFname,ros::Time(0),tableTFparent);
+    if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
     {
         std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
         tf::StampedTransform transform;
-        listener.lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
+        listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
         pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
 
         fromROSMsg(inputCloud,*full_cloud);
@@ -250,13 +251,13 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
     }
     
     if (segmentingGripper) {
-        tf::TransformListener listener;
-        if (listener.waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
+        if (listener->waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
         {
             tf::StampedTransform transform;
-            listener.lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
+            listener->lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
             // do a box segmentation around the gripper (50x50x50 cm)
-            volumeSegmentation(full_cloud,transform,0.25);
+            volumeSegmentation(full_cloud,transform,0.25,false);
+            std::cerr << "Volume Segmentation done.\n";
         }
         else
         {
@@ -268,9 +269,13 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
         segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
     
     if (full_cloud->size() < 1){
-        std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
+        if (segmentingGripper)
+            std::cerr << "No cloud available around gripper. Make sure the object can be seen by the camera.\n";
+        else
+            std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
         return false;
     }
+    else std::cerr << full_cloud->size();
     // get all poses from spSegmenterCallback
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
     
@@ -302,6 +307,7 @@ int main(int argc, char** argv)
     ros::init(argc,argv,"sp_segmenter_server");    
     ros::NodeHandle nh("~");
     ros::Rate r(10); //10Hz
+    listener = new (tf::TransformListener);
     ros::ServiceServer spSegmenter = nh.advertiseService("SPSegmenter",serviceCallback);
     ros::ServiceServer segmentGripper = nh.advertiseService("segmentInGripper",serviceCallbackGripper);
     
