@@ -1,18 +1,24 @@
 <launch>
   <!-- Object file Name without extension-->
-  <arg name="object"         default="drill" />
-  <arg name="data_path"      default="$(find sp_segmenter)/data" />
-  <arg name="svm_path"       default="UR5_drill_svm" />
+  <arg name="object"         default="drill" doc="object mesh name" />
+  <arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />
+  <arg name="svm_path"       default="UR5_drill_svm" doc="Object svm folder name located in data path" />
+
+  <!-- Segmentation Parameters parameters-->
   <arg name="params"         default="" />
   <arg name="pairWidth"      default="0.05" />
-  <arg name="NodeName"       default="SPServer" />
-  <arg name="bestPoseOnly"   default="false" />
+  <arg name="bestPoseOnly"   default="false" doc="Get best pose only or all pose above minConfidence" />
   <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
-  <arg name="aboveTable"     default="0.01" />
-  <arg name="tableTF"        default="camera_2/ar_marker_0" />
-  <arg name="saveTabledir"   default="$(find sp_segmenter)/data" />
-  <arg name="loadTable"      default="true" />
-  <arg name="saveTable"      default="true" />
+
+  <arg name="aboveTable"     default="0.01" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
+  <arg name="tableTF"        default="camera_2/ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
+  <arg name="saveTabledir"   default="$(find sp_segmenter)/data" doc="Save/Load folder for segmenting table" />
+  <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
+  <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
+
+  <arg name="gripperTF"      default="endpoint_marker" doc="The gripper tf where target object would be attached" />
+
+  <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
 
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
@@ -31,6 +37,7 @@
     <param name="saveTable"   type="bool" value="$(arg saveTable)" />
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
     
+    <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
 
     <!-- SPSegmenterNode subscriber/publisher args pass -->
     <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>

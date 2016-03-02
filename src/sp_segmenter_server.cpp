@@ -57,12 +57,14 @@ double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
 double minConfidence;
-    
+bool segmentingGripper = false;
+
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
 std::vector<ModelT> mesh_set;
 
 std::string POINTS_IN, POINTS_OUT, POSES_OUT;
+std::string gripperTF;
 
 ros::Publisher pc_pub;
 // ros::Publisher pose_pub;
@@ -247,7 +249,24 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
         return false;
     }
     
-    segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+    if (segmentingGripper) {
+        tf::TransformListener listener;
+        if (listener.waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
+        {
+            tf::StampedTransform transform;
+            listener.lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
+            // do a box segmentation around the gripper (50x50x50 cm)
+            volumeSegmentation(full_cloud,transform,0.25);
+        }
+        else
+        {
+            std::cerr << "Fail to get transform between: "<< gripperTF << " and "<< inputCloud.header.frame_id << std::endl;
+            return false;
+        }
+    }
+    else
+        segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+    
     if (full_cloud->size() < 1){
         std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
         return false;
@@ -263,9 +282,19 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
     pc_pub.publish(output_msg);
 
     sp_segmenter_poses = all_poses;
-
+    std::cerr << "Segmentation done.\n";
+    
     hasTF = true;
     return true;
+}
+
+bool serviceCallbackGripper (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    segmentingGripper = true;
+    std::cerr << "Segmenting object on gripper...\n";
+    bool result = serviceCallback(request, response);
+    segmentingGripper = false;
+    return result;
 }
 
 int main(int argc, char** argv)
@@ -274,9 +303,11 @@ int main(int argc, char** argv)
     ros::NodeHandle nh("~");
     ros::Rate r(10); //10Hz
     ros::ServiceServer spSegmenter = nh.advertiseService("SPSegmenter",serviceCallback);
+    ros::ServiceServer segmentGripper = nh.advertiseService("segmentInGripper",serviceCallbackGripper);
+    
     hasTF = false;
     static tf::TransformBroadcaster br;
-
+    nh.param("GripperTF",gripperTF,std::string("endpoint_marker"));
 
 // From SPSegmenter main Starts
 

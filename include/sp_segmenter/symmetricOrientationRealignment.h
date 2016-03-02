@@ -47,7 +47,7 @@ std::map<std::string, objectSymmetry> fillDictionary(ros::NodeHandle nh, std::ve
 
 void realignOrientation (Eigen::Matrix3f &rotMatrix, objectSymmetry object, int axisToAlign)
 {
-    const float pi = 3.1415926535897;
+//    const float pi = 3.1415926535897;
     
     Eigen::Vector3f objAxes[3];
     objAxes[0] = Eigen::Vector3f(rotMatrix(0,0),rotMatrix(1,0),rotMatrix(2,0));
@@ -60,7 +60,7 @@ void realignOrientation (Eigen::Matrix3f &rotMatrix, objectSymmetry object, int 
     double dotProduct = axis.dot(objAxes[axisToAlign]);
     double angle = std::acos(dotProduct); //since the vector is unit vector
     
-    Eigen::Vector3f rotAxis = axis.cross(objAxes[axisToAlign]);
+//    Eigen::Vector3f rotAxis = axis.cross(objAxes[axisToAlign]);
     Eigen::Vector3f bestAxis[3];
     bestAxis[0] = Eigen::Vector3f(1,0,0);
     bestAxis[1] = Eigen::Vector3f(0,1,0);
@@ -115,7 +115,7 @@ void realignOrientation (Eigen::Matrix3f &rotMatrix, objectSymmetry object, int 
 
 void normalizeModelOrientation(poseT &p, const objectSymmetry object)
 {
-    const float pi = 3.1415926535897;
+//    const float pi = 3.1415926535897;
     float yaw,pitch,roll;
     Eigen::Matrix3f rotMatrix = p.rotation.toRotationMatrix();
     //    std::cerr << "Initial Rot Matrix: \n" << rotMatrix << std::endl;
