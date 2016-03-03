@@ -31,11 +31,19 @@
 #include "sp_segmenter/symmetricOrientationRealignment.h"
 #include "sp_segmenter/table_segmenter.h"
 
+// ros service messages for segmenting gripper
+#include "sp_segmenter/segmentInGripper.h"
+#include "sp_segmenter/segmenterTFObject.h"
+
 #define OBJECT_MAX 100
 
+std::map<std::string, segmentedObjectTF> segmentedObjectTFMap;
+std::map<std::string, unsigned int> objectTFIndex;
+
+
 //for TF
-bool hasTF; 
-std::vector<poseT> sp_segmenter_poses;
+bool hasTF;
+
 sensor_msgs::PointCloud2 inputCloud;
 
 // for orientation normalization
@@ -57,7 +65,6 @@ double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
 double minConfidence;
-bool segmentingGripper = false;
 
 tf::TransformListener * listener;
 
@@ -250,32 +257,13 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
         return false;
     }
     
-    if (segmentingGripper) {
-        if (listener->waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
-        {
-            tf::StampedTransform transform;
-            listener->lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
-            // do a box segmentation around the gripper (50x50x50 cm)
-            volumeSegmentation(full_cloud,transform,0.25,false);
-            std::cerr << "Volume Segmentation done.\n";
-        }
-        else
-        {
-            std::cerr << "Fail to get transform between: "<< gripperTF << " and "<< inputCloud.header.frame_id << std::endl;
-            return false;
-        }
-    }
-    else
-        segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+    segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
     
     if (full_cloud->size() < 1){
-        if (segmentingGripper)
-            std::cerr << "No cloud available around gripper. Make sure the object can be seen by the camera.\n";
-        else
-            std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
+        std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
         return false;
     }
-    else std::cerr << full_cloud->size();
+    
     // get all poses from spSegmenterCallback
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
     
@@ -285,21 +273,88 @@ bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Respon
     toROSMsg(*final_cloud,output_msg);
     output_msg.header.frame_id = inputCloud.header.frame_id;
     pc_pub.publish(output_msg);
-
-    sp_segmenter_poses = all_poses;
+    
+    if (all_poses.size() < 1) {
+        std::cerr << "Fail to segment objects on the table.\n";
+        return false;
+    }
+    
+    std::map<std::string, unsigned int> tmpIndex = objectTFIndex;
+    for (poseT &p: all_poses)
+    {
+        segmentedObjectTF objectTmp(p,++tmpIndex[p.model_name]);
+        segmentedObjectTFMap[objectTmp.TFnames] = objectTmp;
+    }
+    
     std::cerr << "Segmentation done.\n";
     
     hasTF = true;
     return true;
 }
 
-bool serviceCallbackGripper (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+bool serviceCallbackGripper (sp_segmenter::segmentInGripper::Request & request, sp_segmenter::segmentInGripper::Response& response)
 {
-    segmentingGripper = true;
     std::cerr << "Segmenting object on gripper...\n";
-    bool result = serviceCallback(request, response);
-    segmentingGripper = false;
-    return result;
+    bool bestPoseOriginal = bestPoseOnly;
+    bestPoseOnly = true; // only get best pose when segmenting object in gripper;
+    
+    pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+    pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
+    std::string segmentFail("Object in gripper segmentation fails.");
+    
+    fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+    if (full_cloud->size() < 1){
+        std::cerr << "No cloud available";
+        response.result = segmentFail;
+        return false;
+    }
+    
+    if (listener->waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
+    {
+        tf::StampedTransform transform;
+        listener->lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
+        // do a box segmentation around the gripper (50x50x50 cm)
+        volumeSegmentation(full_cloud,transform,0.25,false);
+        std::cerr << "Volume Segmentation done.\n";
+    }
+    else
+    {
+        std::cerr << "Fail to get transform between: "<< gripperTF << " and "<< inputCloud.header.frame_id << std::endl;
+        response.result = segmentFail;
+        return false;
+    }
+    
+    if (full_cloud->size() < 1)
+        std::cerr << "No cloud available around gripper. Make sure the object can be seen by the camera.\n";
+    
+    // get best poses from spSegmenterCallback
+    std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
+    
+    if (all_poses.size() < 1) {
+        std::cerr << "Fail to segment the object around gripper.\n";
+        response.result = segmentFail;
+        return false;
+    }
+    
+    //publishing the segmented point cloud
+    sensor_msgs::PointCloud2 output_msg;
+    toROSMsg(*final_cloud,output_msg);
+    output_msg.header.frame_id = inputCloud.header.frame_id;
+    pc_pub.publish(output_msg);
+    
+    for (poseT &p: all_poses)
+    {
+        segmentedObjectTF objectTmp(p, 0);
+        objectTmp.TFnames = request.tfToUpdate;
+        segmentedObjectTFMap[request.tfToUpdate] = objectTmp;
+    }
+    
+    std::cerr << "Object In gripper segmentation done.\n";
+    bestPoseOnly = bestPoseOriginal;
+    hasTF = true;
+    
+    response.result = "Object In gripper segmentation done.\n";
+    return true;
 }
 
 int main(int argc, char** argv)
@@ -390,7 +445,6 @@ int main(int argc, char** argv)
     
     //get symmetry parameter of the objects
     objectDict = fillDictionary(nh, cur_name);
-    std::map<std::string, unsigned int> objectTFIndex;
 
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
     {
@@ -478,19 +532,10 @@ int main(int argc, char** argv)
             std::string parent = inputCloud.header.frame_id;
             // int index = 0;
             std::map<std::string, unsigned int> tmpIndex = objectTFIndex;
-            for (poseT &p: sp_segmenter_poses)
+            for (std::map<std::string, segmentedObjectTF>::iterator it=segmentedObjectTFMap.begin(); it!=segmentedObjectTFMap.end(); ++it)
             {
-                tf::Transform transform;
-                transform.setOrigin(tf::Vector3( p.shift.x(), p.shift.y(), p.shift.z() ));
-                transform.setRotation(tf::Quaternion(
-                    p.rotation.x(),p.rotation.y(),p.rotation.z(),p.rotation.w()));
-                std::stringstream child;
-                // Does not have tracking yet, can not keep the label on object.
-                child << "Obj::" << p.model_name << "::" << ++tmpIndex[p.model_name];
-
                 br.sendTransform(
-                    tf::StampedTransform(
-                        transform,ros::Time::now(),parent, child.str())
+                    it->second.generateStampedTransform(parent)
                     );
             }
         }

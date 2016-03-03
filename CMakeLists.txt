@@ -51,6 +51,7 @@ if(catkin_FOUND)
     add_service_files(
       FILES
       SPSegmenterServer.srv
+      segmentInGripper.srv
     )
 
     generate_messages(
