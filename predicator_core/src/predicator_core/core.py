@@ -69,8 +69,8 @@ class Predicator(object):
 
         self._subscriber = rospy.Subscriber('predicator/input', PredicateList, self.callback)
         self._validSubscriber = rospy.Subscriber('predicator/valid_input', ValidPredicates, self.validCallback)
-        self._publisher = rospy.Publisher('predicator/all', PredicateSet)
-        self._list_publisher = rospy.Publisher('predicator/list', PredicateList)
+        self._publisher = rospy.Publisher('predicator/all', PredicateSet, queue_size=1000)
+        self._list_publisher = rospy.Publisher('predicator/list', PredicateList, queue_size=1000)
         self._testService = rospy.Service('predicator/test_predicate', TestPredicate, self.test_predicate)
         self._getService = rospy.Service('predicator/get_assignment', GetAssignment, self.get_assignment)
         self._valuePredicatesService = rospy.Service('predicator/get_value_predicates', GetList, self.get_value_predicates)
@@ -85,8 +85,8 @@ class Predicator(object):
 
         # adding in functionality from predicator_params module
         self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
-        self.publisher_ = rospy.Publisher('predicator/input', PredicateList)
-        self.valid_publisher_ = rospy.Publisher('predicator/valid_input', ValidPredicates)
+        self.publisher_ = rospy.Publisher('predicator/input', PredicateList, queue_size=1000)
+        self.valid_publisher_ = rospy.Publisher('predicator/valid_input', ValidPredicates, queue_size=1000)
 
         self._verbosity = rospy.get_param('~verbosity',0)
 
