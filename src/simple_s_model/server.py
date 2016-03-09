@@ -37,17 +37,38 @@
 import rospy
 from robotiq_s_model_control.msg import _SModel_robot_output  as outputMsg
 from robotiq_s_model_control.msg import _SModel_robot_input  as inputMsg
+from os.path import join
 
 class SimpleSModelServer:
 
     def __init__(self,ns=""):
-        self.sub = Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, status_cb)
+        self.sub = Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.status_cb)
         self.pub = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output)
+        self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
+        self.close = rospy.Service(join(ns,"close"), Empty, self.close_gripper)
+        self.wide_mode = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)
+        self.pinch_mode = rospy.Service(join(ns,"pinch_mode"), Empty, pinch_mode)
+        self.basic_mode = rospy.Service(join(ns,"basic_mode"), Empty, basic_mode)
 
-    def status_cb(msg):
+    def open_gripper(self):
+        pass
+
+    def close_gripper(self):
+        pass
+
+    def wide_mode(self):
+        pass
+
+    def pinch_mode(self):
+        pass
+
+    def basic_mode(self):
+        pass
+
+    def status_cb(self,msg):
         rospy.loginfo(statusInterpreter(msg))
 
-    def statusInterpreter(status):
+    def statusInterpreter(self,status):
         """Generate a string according to the current value of the status variables."""
 
         output = '\n-----\nS-Model status interpreter\n-----\n'
