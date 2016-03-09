@@ -2,6 +2,17 @@
 
 Predicator is the CoSTAR package for logical statements.
 
+This software is further described and used in these papers:
+
+        1. Guerin, K., Lea, C., Paxton, C., & Hager, G.D. (2015).
+           A Framework for End-User Instruction of a Robot Assistant for Manufacturing.
+           In IEEE International Conference on Robotics and Automation (ICRA).
+        2. Paxton, C., Bohren, J., and Hager, G. D. (2014).
+           Standards for Grounding Symbols for Robotic Task Ontologies.
+           At IROS 2014 workshop on Standardized Knowledge Representation and Ontologies for Robotics and Automation.
+
+So please cite if you find it useful!
+
 ## Starting Predicator
 
 ### Using Launch Files
