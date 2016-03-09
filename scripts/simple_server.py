@@ -4,5 +4,5 @@ import rospy
 from simple_s_model import SimpleSModelServer
 
 rospy.init_node("simple_s_model_server")
-server = SimpleSModelServer("")
+server = SimpleSModelServer("s_model")
 rospy.spin()

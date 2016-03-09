@@ -38,47 +38,88 @@ import rospy
 from robotiq_s_model_control.msg import _SModel_robot_output  as outputMsg
 from robotiq_s_model_control.msg import _SModel_robot_input  as inputMsg
 from os.path import join
+from std_srvs.srv import Empty
+
+def getDefaultMsg():
+    command = outputMsg.SModel_robot_output();
+    command.rACT = 1
+    command.rGTO = 1
+    command.rSPA = 255
+    command.rFRA = 150
+    return command
 
 class SimpleSModelServer:
 
-    def __init__(self,ns=""):
-        self.sub = Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.status_cb)
+    def __init__(self,ns="s_model"):
+        self.sub = rospy.Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.status_cb)
         self.pub = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output)
         self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
         self.close = rospy.Service(join(ns,"close"), Empty, self.close_gripper)
         self.wide_mode = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)
-        self.pinch_mode = rospy.Service(join(ns,"pinch_mode"), Empty, pinch_mode)
-        self.basic_mode = rospy.Service(join(ns,"basic_mode"), Empty, basic_mode)
+        self.pinch_mode = rospy.Service(join(ns,"pinch_mode"), Empty, self.pinch_mode)
+        self.basic_mode = rospy.Service(join(ns,"basic_mode"), Empty, self.basic_mode)
+        self.scissor_mode = rospy.Service(join(ns,"scissor_mode"), Empty, self.scissor_mode)
+        self.reactivate = rospy.Service(join(ns,"activate"), Empty, self.activate)
 
-    def open_gripper(self):
-        pass
+        self.activated = True;
 
-    def close_gripper(self):
-        pass
+        self.activate()
 
-    def wide_mode(self):
-        pass
+    def activate(self,msg=None):
+        command = getDefaultMsg()
+        self.pub.publish(command)
+        return []
 
-    def pinch_mode(self):
-        pass
+    def open_gripper(self,msg=None):
+        command = getDefaultMsg();
+        command.rPRA = 0
+        self.pub.publish(command)
+        return []
 
-    def basic_mode(self):
-        pass
+    def close_gripper(self,msg=None):
+        command = getDefaultMsg();
+        command.rPRA = 255
+        self.pub.publish(command)
+        return []
+
+    def wide_mode(self,msg=None):
+        command = getDefaultMsg();
+        command.rMOD = 2
+        self.pub.publish(command)
+        return []
+
+    def pinch_mode(self,msg=None):
+        command = getDefaultMsg();
+        command.rMOD = 1
+        self.pub.publish(command)
+        return []
+
+    def basic_mode(self,msg=None):
+        command = getDefaultMsg();
+        command.rMOD = 0
+        self.pub.publish(command)
+        return []
+
+    def scissor_mode(self,msg=None):
+        command = getDefaultMsg();
+        command.rMOD = 3
+        self.pub.publish(command)
+        return []
 
     def status_cb(self,msg):
-        rospy.loginfo(statusInterpreter(msg))
+        rospy.loginfo(self.statusInterpreter(msg))
 
     def statusInterpreter(self,status):
         """Generate a string according to the current value of the status variables."""
 
-        output = '\n-----\nS-Model status interpreter\n-----\n'
+        output = 'S-Model status:\n'
 
         #gACT
         output += 'gACT = ' + str(status.gACT) + ': '
         if(status.gACT == 0):
-           output += 'Gripper reset\n'
+            output += 'Gripper reset\n'
         if(status.gACT == 1):
-           output += 'Gripper activation\n'
+            output += 'Gripper activation\n'
 
         ##gMOD
         #output += 'gMOD = ' + str(status.gMOD) + ': '
@@ -130,7 +171,7 @@ class SimpleSModelServer:
             output += 'Finger A has stopped due to a contact while closing\n'
         if(status.gDTA == 3):
             output += 'Finger A is at requested position\n'
-           
+
         #gDTB
         output += 'gDTB = ' + str(status.gDTB) + ': '
         if(status.gDTB == 0):
@@ -186,45 +227,6 @@ class SimpleSModelServer:
             output += 'Major Fault: Changing mode fault, interferences detected on Scissor (for more than 20 sec)\n'
         if(status.gFLT == 0x0F):
             output += 'Major Fault: Automatic release completed. Reset and activation is required\n'
-
-        #gPRA
-        output += 'gPRA = ' + str(status.gPRA) + ': '
-        output += 'Echo of the requested position for the Gripper (or finger A in individual mode): ' + str(status.gPRA) + '/255\n'
-
-        #gPOA
-        output += 'gPOA = ' + str(status.gPOA) + ': ' str(status.gPRB) + '/255\n'
-
-        #gPOB
-        output += 'gPOB = ' + str(status.gPOB) + ': '
-        output += 'Position of Finger B: ' + str(status.gPOB) + '/255\n'
-
-        #gCUB
-        output += 'gCUB = ' + str(status.gCUB) + ': '
-        output += 'Current of Finger B: ' + str(status.gCUB * 10) + ' mA\n'
-
-        #gPRC
-        output += 'gPRC = ' + str(status.gPRC) + ': '
-        output += 'Echo of the requested position for finger C: ' + str(status.gPRC) + '/255\n'
-
-        #gPOC
-        output += 'gPOC = ' + str(status.gPOC) + ': '
-        output += 'Position of Finger C: ' + str(status.gPOC) + '/255\n'
-
-        #gCUC
-        output += 'gCUC = ' + str(status.gCUC) + ': '
-        output += 'Current of Finger C: ' + str(status.gCUC * 10) + ' mA\n'
-
-        #gPRS
-        output += 'gPRS = ' + str(status.gPRS) + ': '
-        output += 'Echo of the requested position for the scissor axis: ' + str(status.gPRS) + '/255\n'
-
-        #gPOS
-        output += 'gPOS = ' + str(status.gPOS) + ': '
-        output += 'Position of the scissor axis: ' + str(status.gPOS) + '/255\n'
-
-        #gCUS
-        output += 'gCUS = ' + str(status.gCUS) + ': '
-        output += 'Current of the scissor axis: ' + str(status.gCUS * 10) + ' mA\n'        
 
         return output
 
