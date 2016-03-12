@@ -122,10 +122,17 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(collision_env
-#  src/collision_env.cpp
-#  include/collision_env.h
-#)
+add_library(collision_env
+  src/collision_env.cpp
+  include/collision_env.h
+)
+target_link_libraries(collision_env ${catkin_LIBRARIES})
+
+add_library(planning_scene_generator
+  src/planning_scene_generator.cpp
+  include/planning_scene_generator.h
+)
+target_link_libraries(planning_scene_generator collision_env ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -133,14 +140,14 @@ include_directories(
 # add_dependencies(moveit_collision_environment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(moveit_collision_environment src/main_collision_env.cpp src/collision_env.cpp)
+add_executable(moveit_collision_environment src/main_collision_env.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(moveit_collision_environment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(moveit_collision_environment
+target_link_libraries(moveit_collision_environment planning_scene_generator
    ${catkin_LIBRARIES}
 )
 

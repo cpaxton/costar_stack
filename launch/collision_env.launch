@@ -1,35 +1,40 @@
 <launch>
   <!-- main collision environment parameter -->
-  <arg name="mesh_source"         default="$(find moveit_collision_environment)/data/mesh" />
-  <arg name="charToFind"          default="::" />
-  <arg name="objectNameIdx"       default="2" />
-  <arg name="tableTFname"         default="tableTF" />
-  <arg name="defineParent"        default="false" />
-  <arg name="renewTable"          default="true" />
-  <arg name="parentFrameName"     default="base_link"/>
+  <arg name="mesh_source"         default="$(find moveit_collision_environment)/data/mesh" 
+    doc="Location of the folder that contains the mesh object files" />
+  <arg name="file_extension"      default="stl" 
+    doc="The extension that used by all mesh files. Supports assimp importable extension, such as: stl, obj, dae, blend" />
 
-  <!-- Unused parameter for current implementation -->
-  <arg name="breakChar"           default=" " />
-  <arg name="loopInterval"        default="3" />
+  <arg name="charToFind"          default="::" 
+    doc="Signature characters that separates between the name of object inside of the TF name"/>
+  <arg name="objectNameIdx"       default="2" 
+    doc="The position of the object name after charToFind separation"/>
+  <arg name="tableTFname"         default="tableTF" 
+    doc="The TF name for the table" />
+  <arg name="defineParent"        default="false" 
+    doc="Boolean variable to set whether we use predefined parent name for collision object TF header or not" />
+  <arg name="parentFrameName"     default="base_link"
+    doc="Predefined collision object TF header" />
+  <arg name="renewTable"          default="true" />
 
   <!-- Enable for debugging purpose -->
   <arg name="debug"               default="false" />
 
   <node pkg="moveit_collision_environment" type="moveit_collision_environment" name="planningSceneGenerator">  
   <!-- moveit_collision_environment arg pass -->
-    <param name="mesh_source"     type="str" value="$(arg mesh_source   )" />
-    <param name="charToFind"      type="str" value="$(arg charToFind    )" />
-    <param name="breakChar"       type="str" value="$(arg breakChar     )" />
-    <param name="objectNameIdx"   type="int" value="$(arg objectNameIdx )" />
-    <param name="loopInterval"	  type="int" value="$(arg loopInterval  )" />
+    <param name="mesh_source"     type="str"  value="$(arg mesh_source   )" />
+    <param name="file_extension"  type="str"  value="$(arg file_extension)" />
 
-    <param name="tableTFname"    type="str"  value="$(arg tableTFname   )" />
-    <param name="renewTable"     type="bool" value="$(arg renewTable    )" />
+    <param name="charToFind"      type="str"  value="$(arg charToFind    )" />
+    <param name="objectNameIdx"   type="int"  value="$(arg objectNameIdx )" />
+
+    <param name="tableTFname"     type="str"  value="$(arg tableTFname   )" />
+    <param name="renewTable"      type="bool" value="$(arg renewTable    )" />
 
     <param name="defineParent"    type="bool" value="$(arg defineParent  )" />
-    <param name="parentFrameName" type="str"  value="$(arg parentFrameName )" />
+    <param name="parentFrameName" type="str"  value="$(arg parentFrameName)" />
 
-    <param name="debug"          type="bool" value="$(arg debug)" />
+    <param name="debug"           type="bool" value="$(arg debug)" />
   </node>
 
 </launch>

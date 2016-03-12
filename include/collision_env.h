@@ -18,7 +18,6 @@ class collision_environment
 {
 	protected:
 		ros::NodeHandle nh;
-//		ros::Publisher add_collision_object_publisher;
 		tf::TransformListener listener;
 	;
 
@@ -30,9 +29,8 @@ class collision_environment
         moveit_msgs::CollisionObject tableObject;
     
         std::string tableTFname, parentTableTF;
-		std::string mesh_source;
+		std::string mesh_source, file_extension;
         std::string charToFind,breakChar;
-        int loopInterval;
         std::string parentFrame; //parent of the TF frame that objects attached to
 		int objectNameFormatIndex;
         bool classReady,hasParent, hasTableTF,hasObjects;
@@ -56,6 +54,6 @@ class collision_environment
 };
 
 std::vector<std::string> stringVectorSeparator (const std::string &input,
-                                                const std::string &charToFind, const std::string &breakChar, const int &loopInterval, const bool &debug);
+                                                const std::string &charToFind, const std::string &breakChar, const bool &debug);
 
 #endif

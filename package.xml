@@ -42,7 +42,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>geometric_shapes</build_depend>
-  <build_depend>moveit_core</build_depend>
   <build_depend>moveit_msgs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>moveit_ros_planning_interface</build_depend>
@@ -50,7 +49,6 @@
 
   <run_depend>geometry_msgs</run_depend>
   <run_depend>geometric_shapes</run_depend>
-  <run_depend>moveit_core</run_depend>
   <run_depend>moveit_ros_planning_interface</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>message_runtime</run_depend>  
