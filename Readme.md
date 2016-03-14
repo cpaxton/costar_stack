@@ -2,6 +2,8 @@
 
 ***Collaborative System for Task Automation and Recognition***
 
+This is a project by a few members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. Our goal is to build a system which facilitates end-user instruction of industrial robots to performa a variety of different tasks.
+
 These are the tools and utilities we created to get the CoSTAR project up and off the ground.
 
 ## Packages
