@@ -1,0 +1,6 @@
+string id
+string type
+---
+string text
+
+librarian_msgs/Status status
