@@ -60,50 +60,57 @@ class SimpleSModelServer:
         self.basic_mode = rospy.Service(join(ns,"basic_mode"), Empty, self.basic_mode)
         self.scissor_mode = rospy.Service(join(ns,"scissor_mode"), Empty, self.scissor_mode)
         self.reactivate = rospy.Service(join(ns,"activate"), Empty, self.activate)
+        self.command = getDefaultMsg()
 
         self.activated = True;
 
         self.activate()
 
     def activate(self,msg=None):
-        command = getDefaultMsg()
-        self.pub.publish(command)
+        self.command = getDefaultMsg()
+        self.pub.publish(self.command)
         return []
 
     def open_gripper(self,msg=None):
-        command = getDefaultMsg();
-        command.rPRA = 0
-        self.pub.publish(command)
+        #command = getDefaultMsg();
+        self.command.rPRA = 0
+        self.pub.publish(self.command)
+        rospy.sleep(2.0)
         return []
 
     def close_gripper(self,msg=None):
-        command = getDefaultMsg();
-        command.rPRA = 255
-        self.pub.publish(command)
+        #command = getDefaultMsg();
+        self.command.rPRA = 255
+        self.pub.publish(self.command)
+        rospy.sleep(2.0)
         return []
 
     def wide_mode(self,msg=None):
-        command = getDefaultMsg();
-        command.rMOD = 2
-        self.pub.publish(command)
+        #command = getDefaultMsg();
+        self.command.rMOD = 2
+        self.pub.publish(self.command)
+        rospy.sleep(2.0)
         return []
 
     def pinch_mode(self,msg=None):
-        command = getDefaultMsg();
-        command.rMOD = 1
-        self.pub.publish(command)
+        #command = getDefaultMsg();
+        self.command.rMOD = 1
+        self.pub.publish(self.command)
+        rospy.sleep(2.0)
         return []
 
     def basic_mode(self,msg=None):
-        command = getDefaultMsg();
-        command.rMOD = 0
-        self.pub.publish(command)
+        #command = getDefaultMsg();
+        self.command.rMOD = 0
+        self.pub.publish(self.command)
+        rospy.sleep(2.0)
         return []
 
     def scissor_mode(self,msg=None):
-        command = getDefaultMsg();
-        command.rMOD = 3
-        self.pub.publish(command)
+        #command = getDefaultMsg();
+        self.command.rMOD = 3
+        self.pub.publish(self.command)
+        rospy.sleep(2.0)
         return []
 
     def status_cb(self,msg):
