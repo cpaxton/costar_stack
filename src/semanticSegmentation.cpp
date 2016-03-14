@@ -251,10 +251,10 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     
     if( viewer )
     {
-        std::cout<<"VISUALIZING"<<std::endl;
+        std::cerr<<"Visualize whole screen"<<std::endl;
         viewer->removeAllPointClouds();
         viewer->addPointCloud(scene_f, "whole_scene");
-        viewer->spin();
+        viewer->spinOnce(2000);
         viewer->removeAllPointClouds();
     }
     
@@ -281,12 +281,12 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     }
     
     foreground_cloud = triple_pooler.getSemanticLabels();
-//    if( viewer )
-//    {
-//        //viewer->addPointCloud(final_cloud, "labels");
-//        visualizeLabels(foreground_cloud, viewer, color_label);
-//        viewer->spin();
-//    }
+    if( viewer )
+    {
+        //viewer->addPointCloud(final_cloud, "labels");
+        std::cerr<<"Visualize after segmentation"<<std::endl;
+        visualizeLabels(foreground_cloud, viewer, color_label);
+    }
     
     std::size_t numberOfObject = mesh_set.size();
     for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
@@ -319,11 +319,11 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
             std::cout<<"done objrec ransac"<<std::endl;
             if( viewer )
             {
-                std::cout<<"VISUALIZING"<<std::endl;
+                std::cerr<<"Visualize with mesh"<<std::endl;
                 viewer->removeAllPointClouds();
                 viewer->addPointCloud(scene_f, "whole_scene");
                 objrec->visualize_m(viewer, all_poses, model_name_map, color_label);
-                viewer->spin();
+                viewer->spinOnce(2000);
                 objrec->clearMesh(viewer, all_poses);
                 viewer->removeAllPointClouds();
             }
