@@ -6,6 +6,13 @@ Sample TF name: Obj::link_uniform::1 <br>
 
 The rosnode will publish the planning scene in `/planningscene` topic.
 
+# Installation
+Dependencies: No external dependencies
+Instructions:
+1. Go to catkin workspace src. Example: `cd ~/catkin_ws/src`
+2. Clone this repo with `git clone https://github.com/fjonath1/moveit_collision_environment.git`
+3. Do catkin_make or `catkin build moveit_collision_environment`
+
 # Executing moveit_collision_environment
 To execute this rosnode use:
 ```
@@ -40,3 +47,10 @@ To ignore any further change in Table AR tag, use:
 , otherwise use:
 ```rosparam set /planningSceneGenerator/renewTable true```
 to keep updating table collision object for each service call
+
+# How To Use this rosnode
+1. Open node with moveit setup. Example: `roslaunch ur5_moveit_config demo.launch`
+2. Run this node with `roslaunch moveit_collision_environment collision_env.launch`
+3. Have another rosnode that publishes object TF in the specified TF name format and/or put the tableTF object in the middle of the table.
+4. Run `rosservice call /planningSceneGenerator/planningSceneGenerator` to update the environment according to TF that correspond to the object naming convention and table TF if available.
+5. If removing the tableTF object is necessary or you want to keep the table collision object constant, use `rosparam set /planningSceneGenerator/renewTable false` . This param will be read on each service call and enable/disable the table collision object update.
