@@ -9,11 +9,14 @@ These are the tools and utilities we created to get the CoSTAR project up and of
   * Bringup: launch tools
   * Librarian: file management
   * Predicator: robot knowledge management
-  * S Model Server: simple control utility for the Robotiq S-Model Gripper
+  * Gripper: utilities for integrating different grippers into UI
+  * Tools: packages used for different aspects of the UI
 
 ## Bringup
 
-## S Model Server
+## Gripper
+
+  * ***Simple S Model Server***: This is a part of our CoSTAR UI -- cross platform robot graphical user interface for teaching complex behaviors to industrial robots. This wraps a couple simple 3-finger gripper commands, which we can then expose as UI behaviors.=
 
 ## Librarian
 
