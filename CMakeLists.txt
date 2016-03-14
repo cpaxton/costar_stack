@@ -99,6 +99,10 @@ target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES
 add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
+add_library(semanticSegmentation include/sp_segmenter/semanticSegmentation.h src/semanticSegmentation.cpp)
+target_link_libraries(semanticSegmentation Utility DataParser PoolLib #${Boost_LIBRARIES} 
+                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
+
 #add_executable(spTraining src/main_sp_training.cpp) 
 #target_link_libraries(spTraining Utility DataParser PoolLib ${Boost_LIBRARIES} 
 #              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
@@ -125,7 +129,7 @@ add_executable(foreRun include/sp_segmenter/greedyObjRansac.h src/main_foregroun
 target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
 
 add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
-target_link_libraries(SPSegmenterServer Utility DataParser PoolLib #${Boost_LIBRARIES} 
+target_link_libraries(SPSegmenterServer semanticSegmentation Utility DataParser PoolLib #${Boost_LIBRARIES} 
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 #add_executable(sift_test src/main_sift_test.cpp) 
 #target_link_libraries(sift_test Utility DataParser PoolLib ${Boost_LIBRARIES} 

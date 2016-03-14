@@ -35,4 +35,4 @@ tf::StampedTransform segmentedObjectTF::generateStampedTransform(const std::stri
     return tf::StampedTransform(this->transform,ros::Time::now(),parent, this->TFnames);
 }
 
-#endif /* end of include guard: SP_SEGMENTER_PLANE */
+#endif

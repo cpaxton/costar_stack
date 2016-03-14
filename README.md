@@ -83,7 +83,7 @@ roslaunch sp_segmenter SPSegmenter.launch object:=mallet_ball_pein pcl_in:=/kine
 ```
 
 ## SPServer
-Runs exactly the same as SPSegmenter, but the sp_segmentation will only run when the service call has made.
+Runs exactly the same as SPSegmenter if useTF param is set false, otherwise the sp_segmentation will only run when the service call has made and publish TF frame instead of pose array.
 
 Execute with:
 
@@ -97,6 +97,7 @@ loadTable	:	Setting this arg true will make the program try to load table.pcd lo
 saveTable	:	Setting this arg true will update table.pcd with new table convex hull. If the code successfully load table.pcd, this arg will have no effect. Default: `true`
 tableTF		:	The name of TF frame that represents the center of table. This arg only used if the program fails to load table.pcd. The program will make box segmentation with box size 1 meters cubic around the TF position. Default: `camera_2/ar_marker_0`
 gripperTF   :   The name of TF frame of the gripper where the object would approximately be when grabbed. Default: `endpoint_marker`
+useTF       :   Use TF frames instead of pose array for object pose representation. Default: `true`
 
 
 After one service call, it will constantly publishes TF frames.
@@ -110,7 +111,7 @@ Example (to update the TF frames):
 rosservice call /SPServer/SPSegmenter
 ```
 
-To segment grabbed object on the gripper:
+To segment grabbed object on the gripper and update a particular object TF (in this case: Obj::link_uniform::1) :
 ```
-rosservice call /SPServer/segmentInGripper
+rosservice call /SPServer/segmentInGripper Obj::link_uniform::1
 ```

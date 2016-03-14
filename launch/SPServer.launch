@@ -20,6 +20,8 @@
 
   <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
 
+  <arg name="useTF"          default="true" doc="Whether use TF frames instead of pose array for object pose representation" />
+
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
   <arg name="pcl_out"        default="points_out"/>
@@ -45,7 +47,8 @@
     <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
     <param name="pairWidth"  type="double" value="$(arg pairWidth)"/>
     <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
-
+    <param name="useTF"      type="bool" value="$(arg useTF)" />
+    
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
   </node>
