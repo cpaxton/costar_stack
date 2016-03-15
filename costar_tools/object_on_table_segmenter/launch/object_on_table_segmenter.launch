@@ -1,0 +1,44 @@
+<launch>
+  <!-- Objects file Name and save directory-->
+  <arg name="object"              default="cloud_cluster_" />
+  <arg name="save_directory"      default="$(find object_on_table_segmenter)/result" />
+  <arg name="pcl_in"              default="/camera/depth_registered/points" />
+  <arg name="save_index"	        default="0" />
+
+  <arg name="load_table"          default="false" />
+  <arg name="update_table"        default="false" />
+  <arg name="load_directory"      default="$(find object_on_table_segmenter)/data" />
+  
+  <!-- PCL distance filtered viewer-->
+  <arg name="viewer"              default="false" />
+
+  <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter_Node">  
+  <!-- object_on_table_segmenter_Node arg pass -->
+    <param name="save_directory"  type="str"  value="$(arg save_directory)/" />
+    <param name="object"          type="str"  value="$(arg object)" />
+    <param name="POINTS_IN"       type="str"  value="$(arg pcl_in)" />
+    <param name="save_index"      type="int"  value="$(arg save_index)" />
+
+    <param name="pcl_viewer"      type="bool" value="$(arg viewer)" />
+
+    <param name="environment_only" type="bool" value="false" />
+
+
+    <param name="load_table"      type="bool" value="$(arg load_table)" />
+    <param name="update_table"    type="bool" value="$(arg update_table)" />
+    <param name="load_directory"  type="str"  value="$(arg load_directory)" />
+    
+    <param name="limit_X"         type="bool" value="true" />
+    <param name="limit_Y"         type="bool" value="false" />
+    <param name="limit_Z"         type="bool" value="true" />
+
+    <param name="xMin"       type="double" value="-0.4" />
+    <param name="yMin"       type="double" value="0" />
+    <param name="zMin"       type="double" value="0" />
+    <param name="xMax"       type="double" value="0.4" />
+    <param name="yMax"       type="double" value="0" />
+    <param name="zMax"       type="double" value="0.75" />
+    
+  </node>
+
+</launch>
