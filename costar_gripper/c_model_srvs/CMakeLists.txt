@@ -1,7 +1,7 @@
 # http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
 project(c_model_srvs)
-find_package(catkin REQUIRED COMPONENTS rospy message_generation std_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs)
 
 
 #set the default path for built executables to the "bin" directory
@@ -31,7 +31,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    CATKIN_DEPENDS rospy message_runtime
+    CATKIN_DEPENDS message_runtime
 )
 
 #############
