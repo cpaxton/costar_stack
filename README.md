@@ -1,5 +1,7 @@
 # object_on_table_segmenter (BETA)
 
+Author: Felix Jonathan (fjonath1@jhu.edu)
+
 ## Prerequisites
 
 To run this code you need:
@@ -19,6 +21,6 @@ It is possible to pass some arguments to set the directory data, point cloud inp
 Args list:
 object		:	the object folder name without extension. Default: ```cloud_cluster_```
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
-viewer	    :	See first distance filtered pcl and save it. Default: ```false```
+viewer	    	:	See first distance filtered pcl and save it. Default: ```false```
 save_directory	:	Location of save directory. Default: ```$(find object_on_table_segmenter)/result```
 
