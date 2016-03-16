@@ -4,27 +4,57 @@ from costar_robot_msgs.srv import *
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectoryPoint
 from std_srvs.srv import Empty as EmptyService
+from sensor_msgs.msg import JointState
+import tf_conversions as tf_c
+import numpy as np
+
+import PyKDL
+import urdf_parser_py
+from urdf_parser_py.urdf import URDF
+from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
+from pykdl_utils.kdl_kinematics import KDLKinematics
 
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm'}
-
 
 class SimpleIIWADriver:
 
     def __init__(self):
+        base_link = 'iiwa_link_0'
+        end_link = 'iiwa_link_ee'
+        self.q0 = [0,0,0,0,0,0,0]
         self.teach_mode = rospy.Service('costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
         self.shutdown = rospy.Service('costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
         self.servo = rospy.Service('costar/ServoToPose',ServoToPose,self.servo_to_pose_call)
         self.driver_status = 'IDLE'
         self.status_publisher = rospy.Publisher('costar/DriverStatus',String,queue_size=1000)
-        self.iiwa_mode_publisher = rospy.Publisher('interaction_mode',String,queue_size=1000)
-        self.pt_publisher = rospy.Publisher('joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
+        self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
+        self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
+        self.robot = URDF.from_parameter_server()
+        self.js_subscriber = rospy.Subscriber('/iiwa/joint_states',JointState,self.js_cb)
+        self.tree = kdl_tree_from_urdf_model(self.robot)
+        self.chain = self.tree.getChain(base_link, end_link)
+        #print self.tree.getNrOfSegments()
+        #print self.chain.getNrOfJoints()
+        self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
+
+        self.MAX_ACC = 1;
+        self.MAX_VEL = 1;
+
+    def js_cb(self,msg):
+        self.q0 = np.array(msg.position)
+        #print self.q0
 
     def servo_to_pose_call(self,req): 
+        #rospy.loginfo('Recieved servo to pose request')
+        #print req
         if self.driver_status == 'SERVO':
-            T = tf_c.fromMsg(req.target)
-            a,axis = T.M.GetRotAngle()
-            pose = list(T.p) + [a*axis[0],a*axis[1],a*axis[2]]
+            T = tf_c.toMatrix(tf_c.fromMsg(req.target))
+            #a,axis = T.M.GetRotAngle()
+            #pose = list(T.p) + [a*axis[0],a*axis[1],a*axis[2]]
+
+            #print T
+
             # Check acceleration and velocity limits
             if req.accel > self.MAX_ACC:
                 acceleration = self.MAX_ACC
@@ -35,7 +65,17 @@ class SimpleIIWADriver:
             else:
                 velocity = req.vel
             # Send command
-            self.rob.movel(pose,acc=acceleration,vel=velocity)
+
+            pt = JointTrajectoryPoint()
+            q = self.kdl_kin.inverse(T,self.q0)
+            
+            #print self.q0
+            #print q
+
+            pt.positions = q
+
+            self.pt_publisher.publish(pt)
+
             return 'SUCCESS - moved to pose'
         else:
             rospy.logerr('SIMPLE UR -- Not in servo mode')
