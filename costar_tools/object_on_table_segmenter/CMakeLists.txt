@@ -4,18 +4,18 @@ project(object_on_table_segmenter)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
+  PCL
+  tf
   pcl_conversions
-  pcl_ros
   sensor_msgs
 )
 
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
-find_package(PCL REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -105,7 +105,7 @@ find_package(PCL REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES object_on_table_segmenter
-#  CATKIN_DEPENDS pcl_conversion pcl_ros sensor_msgs
+#  CATKIN_DEPENDS pcl_conversion sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -118,12 +118,9 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
 
 # add_library(object_on_table_segmenter
 #   src/${PROJECT_NAME}/object_on_table_segmenter.cpp
@@ -144,7 +141,6 @@ add_executable(object_on_table_segmenter src/object_on_table_segmenter.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(object_on_table_segmenter
    ${catkin_LIBRARIES}
-   ${PCL_LIBRARIES}
 )
 
 #############

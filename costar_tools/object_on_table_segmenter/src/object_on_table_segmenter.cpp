@@ -23,20 +23,20 @@
 
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
-
+#include <tf/transform_listener.h>
 // for segment object above table
 #include <pcl/surface/convex_hull.h>
 #include <pcl/segmentation/extract_polygonal_prism_data.h>
 
-bool dist_viewer, distance_limit_enable[3],haveTable,update_table;
-double limitX[2],limitY[2],limitZ[2];
+bool dist_viewer ,haveTable,update_table;
 std::string POINTS_IN;
 std::string save_directory, object_name, load_directory;
+std::string tableTFname;
 int cloud_save_index;
 ros::Subscriber pc_sub;
 pcl::PCDWriter writer;
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
-
+tf::TransformListener * listener;
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
 {
@@ -52,42 +52,45 @@ int getch()
   return c;
 }
 
-pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input)
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input, const tf::StampedTransform &transform)
 {
   //std::cerr << "Cloud points before distance filtering: " << cloud_input->points.size() << std::endl;
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
-
-  pcl::PassThrough<pcl::PointXYZRGBA> pass;
-  *cloud_filtered = *cloud_input;
-
-  pass.setInputCloud (cloud_filtered);
-  pass.setKeepOrganized(true);
-  
-  if (distance_limit_enable[0])
+  double region = 0.5;
+  for (unsigned int i = 0; i < 3; i++)
   {
-	pass.setFilterFieldName ("x");
-	pass.setFilterLimits (limitX[0], limitX[1]);
-	pass.filter (*cloud_filtered);
+    pcl::PassThrough<pcl::PointXYZRGBA> pass;
+    std::cerr << "cloud input organized" << cloud_input->isOrganized() << std::endl;
+    pass.setInputCloud (cloud_input);
+    pass.setKeepOrganized(true);
+    std::string axisName;
+    double positionToSegment;
+    
+    switch (i){
+      case 0:
+        axisName = "x";
+        positionToSegment = transform.getOrigin().getX();
+        break;
+      case 1: 
+        axisName = "y"; 
+        positionToSegment = transform.getOrigin().getY();
+        break;
+      default: 
+        axisName = "z";
+        positionToSegment = transform.getOrigin().getZ();
+        break;
+      }
+    std::cerr << "Segmenting axis: " << axisName << "max: " << positionToSegment + region << " min: " << positionToSegment - region << std::endl;
+    pass.setFilterFieldName (axisName);
+    pass.setFilterLimits (positionToSegment - region, positionToSegment + region);
+    pass.filter (*cloud_input);
+    std::cerr << "cloud output organized" << cloud_input->isOrganized() << std::endl;
   }
-  if (distance_limit_enable[1])
-  {
-	pass.setFilterFieldName ("y");
-	pass.setFilterLimits (limitY[0], limitY[1]);
-	pass.filter (*cloud_filtered);
-  }
-  if (distance_limit_enable[2])
-  {
-	pass.setFilterFieldName ("z");
-	pass.setFilterLimits (limitZ[0], limitZ[1]);
-	pass.filter (*cloud_filtered);
-  }
-  //std::cerr << "Cloud after distance filtering: " << cloud_filtered->points.size() << std::endl;
-  return cloud_filtered;
+  return cloud_input;
 }
 
-void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull)
+void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_input, const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &convexHull)
 {
-
+  std::cerr << "cloud input organized" << cloud_input->isOrganized() << std::endl;
   std::cerr << "\nSegment object above table \n";
   // Prism object.
   pcl::ExtractPolygonalPrismData<pcl::PointXYZRGBA> prism;
@@ -95,7 +98,7 @@ void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input,
   prism.setInputPlanarHull(convexHull);
 
   // from 1 cm above table to 50 cm above table
-  prism.setHeightLimits(0.01f, 0.5f);
+  prism.setHeightLimits(0.015f, 0.5f);
   pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices);
 
   prism.segment(*objectIndices);
@@ -107,6 +110,7 @@ void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_input,
   extract.setKeepOrganized(true);
   extract.filter(*objects);
   *cloud_input = *objects;
+  std::cerr << "cloud output organized" << cloud_input->isOrganized() << std::endl;
 }
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr negative)
@@ -146,12 +150,9 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   return convexHull;
 }
 
-void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_cloud)
+void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_filtered)
 {
   std::cerr << "Object Segmentation process begin \n";
-  // Remove point outside certain distance
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
-  cloud_filtered = cloud_filter_distance(input_cloud);
   if (dist_viewer)
   {
   	std::cerr << "See distance filtered cloud. Press q to quit viewer. \n";
@@ -161,7 +162,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
     	{
     	}
   	dist_viewer = false;
-  	writer.write<pcl::PointXYZRGBA> (save_directory+"distance_filtered.pcd", *cloud_filtered, true);
+  	writer.write<pcl::PointXYZRGBA> (load_directory+"distance_filtered.pcd", *cloud_filtered, true);
   }
 
   // Get Normal Cloud
@@ -214,11 +215,11 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
   pcl::OrganizedConnectedComponentSegmentation<pcl::PointXYZRGBA,pcl::Label> euclidean_segmentation (euclidean_cluster_comparator_);
   euclidean_segmentation.setInputCloud (cloud_filtered);
   euclidean_segmentation.segment (euclidean_labels, euclidean_label_indices);
-
+  unsigned int initialIndex = cloud_save_index;
   // save detected cluster data
   for (size_t i = 0; i < euclidean_label_indices.size (); i++)
   {
-  	if (euclidean_label_indices[i].indices.size () > 1000)
+  	if (euclidean_label_indices[i].indices.size () > 500)
     {
 	    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
@@ -233,12 +234,12 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr input_clou
 	    std::stringstream ss;
 	    ss << save_directory << object_name << cloud_save_index << ".pcd";
 	    writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud_cluster, true);
-	    std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd" << std::endl;
+	    std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd \tcluster size: "<< euclidean_label_indices[i].indices.size () << std::endl;
 	    cloud_save_index++;
   	}
   }
 
-  std::cerr << "Segmentation done.\n Waiting keypress to get new data \n";
+  std::cerr << "Segmented object: " << cloud_save_index - initialIndex <<". Segmentation done.\n Waiting for keypress to get new data \n";
 }
 
 void callback(const sensor_msgs::PointCloud2 &pc)
@@ -254,7 +255,20 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   else
   {
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
-    cloud_filtered = cloud_filter_distance(cloud);
+    std::string tableTFparent;
+    listener->getParent(tableTFname,ros::Time(0),tableTFparent);
+    if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
+    {
+        std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
+        tf::StampedTransform transform;
+        listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
+        cloud_filtered = cloud_filter_distance(cloud, transform);
+    }
+    else{
+      std::cerr << "Fail to get TF: "<< tableTFname << std::endl;
+      return;
+    }
+
     if (dist_viewer)
     {
       std::cerr << "See distance filtered cloud. Press q to quit viewer. \n";
@@ -303,18 +317,9 @@ int main (int argc, char** argv)
   nh.param("load_table",load_table,false);
   nh.param("update_table",update_table,false);
   nh.param("load_directory",load_directory,std::string("./data"));
+  nh.param("tableTF", tableTFname,std::string("/tableTF"));
 
-
-  //getting other parameters
-  nh.param("limit_X",distance_limit_enable[0],false);
-  nh.param("limit_Y",distance_limit_enable[1],false);
-  nh.param("limit_Z",distance_limit_enable[2],true);
-  nh.param("xMin",limitX[0],0.0d);
-  nh.param("yMin",limitY[0],0.0d);
-  nh.param("zMin",limitZ[0],0.0d);
-  nh.param("xMax",limitX[1],0.0d);
-  nh.param("yMax",limitY[1],0.0d);
-  nh.param("zMax",limitZ[1],1.5d);
+  listener = new (tf::TransformListener);
 
   bool justCaptureEnvironment;
   nh.param("environment_only",justCaptureEnvironment,false);
@@ -361,7 +366,7 @@ int main (int argc, char** argv)
       r.sleep();
     }
   }
-  
+  delete (listener);
   ros::shutdown();
   return (0);
 }
