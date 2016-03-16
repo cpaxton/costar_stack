@@ -1,8 +1,17 @@
 <launch>
 
   <arg name="gripper_ip_address" default="172.31.1.146"/>
+  <arg name="sim" default="false"/>
 
   <include file="$(find costar_bringup)/launch/utilities.launch"/>
+
+  <!--<include if="$(arg sim)" file="$(find iiwa_moveit)/-->
+
+  <include if="$(arg sim)" file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch">
+    <remap from="/joint_states" to="/iiwa/joint_states"/>
+  </include>
+  <include unless="$(arg sim)" file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch">
+  </include>
 
   <!-- Gripper stuff -->
   <node name="robotiq_s_model_interface" pkg="robotiq_s_model_control" type="SModelTcpNode.py" args="$(arg gripper_ip_address)"/>

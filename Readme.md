@@ -6,6 +6,20 @@ This is a project by a few members of the JHU Laboratory for Computational Sensi
 
 These are the tools and utilities we created to get the CoSTAR project up and off the ground.
 
+Basic execution for a simulation:
+```
+roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
+roslaunch instructor_core instructor.launch
+roslaunch costar_bringup iiwa14_s_model.launch sim:=true
+```
+
+Otherwise:
+```
+roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
+roslaunch instructor_core instructor.launch
+roslaunch costar_bringup iiwa14_s_model.launch
+```
+
 ## Packages
 
   * Bringup: launch tools
