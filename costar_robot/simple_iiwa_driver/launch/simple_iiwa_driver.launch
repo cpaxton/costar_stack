@@ -1,0 +1,10 @@
+<launch>
+
+  <arg name="model" default="iiwa14"/>
+
+  <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch"/>
+
+
+  <node pkg="simple_iiwa_driver" name="simple_iiwa_driver_node" type="iiwa_driver.py"/>
+
+</launch>
