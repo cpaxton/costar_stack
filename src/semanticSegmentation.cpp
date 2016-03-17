@@ -425,12 +425,16 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
         std::cerr << "Fail to segment objects on the table.\n";
         return false;
     }
-    
+    ros::param::del("/instructor_landmark/objects");
     std::map<std::string, unsigned int> tmpIndex = objectTFIndex;
+    segmentedObjectTFMap.clear();
     for (poseT &p: all_poses)
     {
         segmentedObjectTF objectTmp(p,++tmpIndex[p.model_name]);
         segmentedObjectTFMap[objectTmp.TFnames] = objectTmp;
+        std::stringstream ss;
+        ss << "/instructor_landmark/objects/" << p.model_name << "/" << tmpIndex[p.model_name];
+        ros::param::set(ss.str(), objectTmp.TFnames);
     }
     
     std::cerr << "Segmentation done.\n";

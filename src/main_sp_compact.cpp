@@ -144,7 +144,7 @@ int main(int argc, char** argv)
 
     int cur_order_max = 3;
     // Reading features to train svm
-    float CC = 0.001;
+    float CC = 0.001; // weight of incorrectly classified examples (false positive cost)
     std::vector< std::pair<int, int> > piece_inds;
     for( int ll = 0 ; ll < cur_order_max ; ll++ )
     {
