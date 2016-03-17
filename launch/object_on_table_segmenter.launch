@@ -4,11 +4,11 @@
   <arg name="save_directory"      default="$(find object_on_table_segmenter)/result" />
   <arg name="pcl_in"              default="/camera/depth_registered/points" />
   <arg name="save_index"	        default="0" />
-
+  <arg name="environment_only"	  default="false" />
   <arg name="load_table"          default="false" />
   <arg name="update_table"        default="true" />
   <arg name="load_directory"      default="$(find object_on_table_segmenter)/data" />
-  <arg name="tableTF"             default="ar_marker_2" doc="Any TF frame located in the table can be used for table segmentation" />
+  <arg name="tableTF"             default="ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
   
   <!-- PCL distance filtered viewer-->
   <arg name="viewer"              default="false" />
@@ -22,7 +22,7 @@
 
     <param name="pcl_viewer"      type="bool" value="$(arg viewer)" />
 
-    <param name="environment_only" type="bool" value="false" />
+    <param name="environment_only" type="bool" value="$(arg environment_only)" />
 
 
     <param name="load_table"      type="bool" value="$(arg load_table)" />
