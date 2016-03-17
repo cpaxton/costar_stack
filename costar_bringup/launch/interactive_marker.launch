@@ -1,0 +1,5 @@
+<launch>
+  
+  <node pkg="lcsr_tf_tools" type="interactive_transform_publisher" name="teach_endpoint" args="0 0 0 0 0 0 1 iiwa_link_ee cmd 100"/>
+
+</launch>

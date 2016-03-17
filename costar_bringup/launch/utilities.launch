@@ -1,6 +1,9 @@
 <launch>
     <!-- Librarian -->
     <node pkg="librarian_core" type="core.py" name="librarian_core"/>
+
     <!-- Predicator -->
     <include file="$(find predicator_bringup)/launch/core.launch"></include>
+
+    <include file="$(find moveit_collision_environment)/launch/collision_env.launch"></include>
 </launch>

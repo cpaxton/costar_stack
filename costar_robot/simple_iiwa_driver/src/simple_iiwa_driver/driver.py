@@ -31,7 +31,7 @@ class SimpleIIWADriver:
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.robot = URDF.from_parameter_server()
-        self.js_subscriber = rospy.Subscriber('/iiwa/joint_states',JointState,self.js_cb)
+        self.js_subscriber = rospy.Subscriber('/joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
         #print self.tree.getNrOfSegments()
@@ -41,8 +41,17 @@ class SimpleIIWADriver:
         self.MAX_ACC = 1;
         self.MAX_VEL = 1;
 
+        self.at_goal = True
+        self.goal = np.array([0,0,0,0,0,0,0])
+
     def js_cb(self,msg):
         self.q0 = np.array(msg.position)
+        goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
+        #print goal_diff
+        #if self.at_goal:
+        #    self.goal = self.q0
+        if goal_diff < 0.001:
+                self.at_goal = True
         #print self.q0
 
     def servo_to_pose_call(self,req): 
@@ -68,15 +77,32 @@ class SimpleIIWADriver:
 
             pt = JointTrajectoryPoint()
             q = self.kdl_kin.inverse(T,self.q0)
+
+            if q is None:
+                q = self.kdl_kin.inverse(T,None)
             
-            #print self.q0
-            #print q
+            print self.q0
+            print q
 
             pt.positions = q
 
-            self.pt_publisher.publish(pt)
+            if not q is None:
+                self.pt_publisher.publish(pt)
+                self.at_goal = False
+                self.goal = q
+                rate = rospy.Rate(10)
+                start_t = rospy.Time.now()
 
-            return 'SUCCESS - moved to pose'
+                # wait until robot is at goal
+                while not self.at_goal:
+                    if (start_t - rospy.Time.now()).to_sec() > 30:
+                        return 'FAILED - timeout'
+                    rate.sleep()
+
+                return 'SUCCESS - moved to pose'
+            else:
+                rospy.logerr('SIMPLE UR -- IK failed')
+                return 'FAILED - not in servo mode'
         else:
             rospy.logerr('SIMPLE UR -- Not in servo mode')
             return 'FAILED - not in servo mode'
