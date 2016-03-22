@@ -46,7 +46,7 @@ bool bestPoseOnly;
 double minConfidence;
 bool enableTracking;
 
-Tracker* tracker;
+boost::shared_ptr<Tracker> tracker;
     
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
@@ -197,7 +197,8 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
       if(enableTracking)
       {
-        tracker->generateTrackingPoints(pc.header.stamp, mesh_set, all_poses);
+        std::cout << "adding tracking points" << std::endl;
+        tracker->generateTrackingPoints(pc.header.stamp, all_poses);
         std::cout << "added tracking points" << std::endl;
       }
 
@@ -360,14 +361,24 @@ int main(int argc, char** argv)
     }
 
     if(enableTracking)
-      tracker = new Tracker(mesh_set.size());
+    {
+      tracker = boost::shared_ptr<Tracker>(new Tracker());
+      for(ModelT& model : mesh_set)
+      {
+         
+        if(!tracker->addTracker(model))
+        {
+          ROS_ERROR("Tried to add duplicate model name to tracker");
+          return -1;
+        }
+      }
+    }
 
     ros::spin();
     
     for( int ll = 0 ; ll <= 2 ; ll++ )
         free_and_destroy_model(&binary_models[ll]);
 
-    delete tracker;
 //    for( int ll = 1 ; ll <= 4 ; ll++ )
 //        free_and_destroy_model(&multi_models[ll]);
     

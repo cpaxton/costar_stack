@@ -4,9 +4,7 @@
 
 using namespace cv;
 
-Tracker::Tracker(int num_trackers): nh("~"), klt_trackers(num_trackers),
-  current_poses(num_trackers, Eigen::Matrix4f::Identity()),
-  last_track_times(num_trackers)
+Tracker::Tracker(): nh("~")
 {
   nh.param("CAMERA_INFO_IN", CAMERA_INFO_IN,std::string("/camera/camera_info"));
   nh.param("IMAGE_IN", IMAGE_IN,std::string("/camera/image_raw"));
@@ -31,36 +29,74 @@ void Tracker::monitorQueue()
   }
 }
 
-void Tracker::generateTrackingPoints(ros::Time stamp, const std::vector<ModelT>& meshs,
-  const std::vector<poseT>& poses)
+bool Tracker::addTracker(const ModelT& model)
 {
-  assert(poses.size() == mesh.size());
+  TrackingInfo ti(model);
 
+  std::pair<TrackingMap::iterator, bool> res = trackers.insert(std::make_pair(model.model_label, ti));
+  return res.second;
+}
+
+void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>& poses)
+{
   // Fine closest depth map
   unsigned int depth_match_idx, image_match_idx;
-  for(depth_match_idx = 0; depth_match_idx < depth_history.size(); depth_match_idx++)
+  unsigned int final_image_idx = 0;
+  Mat depth_match;
+  std::vector<Mat> ff_imgs;
   {
-    if(depth_history[depth_match_idx].first >= stamp)
-      break;
-  }
-  for(image_match_idx = 0; image_match_idx < image_history.size(); image_match_idx++)
-  {
-    if(image_history[image_match_idx].first >= stamp)
-      break;
-  }
-  if(image_match_idx == image_history.size() || depth_match_idx == depth_history.size()
-    || (image_history[image_match_idx].first-stamp).toSec() > 0.5
-    || (depth_history[depth_match_idx].first-stamp).toSec() > 0.5)
-  {
-    ROS_WARN("Tracker: Could not find image or depth matching pose stamp");
-    return;
-  }
-  // TODO: check if closest time less than stamp is closer
+    boost::mutex::scoped_lock lock(history_mutex);
+    for(depth_match_idx = 0; depth_match_idx < depth_history.size(); depth_match_idx++)
+    {
+      if(depth_history[depth_match_idx].first >= stamp)
+        break;
+    }
+    for(image_match_idx = 0; image_match_idx < image_history.size(); image_match_idx++)
+    {
+      if(image_history[image_match_idx].first >= stamp)
+        break;
+    }
+    // TODO: check if closest time less than stamp is closer
+    if(image_match_idx == image_history.size() || depth_match_idx == depth_history.size()
+      || (image_history[image_match_idx].first-stamp).toSec() > 0.5
+      || (depth_history[depth_match_idx].first-stamp).toSec() > 0.5)
+    {
+      ROS_WARN("Tracker: Could not find image or depth matching pose stamp");
+      return;
+    }
+    depth_match = depth_history[depth_match_idx].second;
 
-  unsigned int largest_final_image_idx = 0;
-  for(int i = 0; i < meshs.size(); i++)
+    // Find last image to fastforward to
+    ros::Time max_track_time;
+    {
+      boost::mutex::scoped_lock lock(track_time_mutex); 
+      max_track_time = max_element(trackers.begin(), trackers.end(),
+        [](const std::pair<std::string, TrackingInfo>& p1,
+           const std::pair<std::string, TrackingInfo>& p2) {
+          return p1.second.last_track_time < p2.second.last_track_time; })->second.last_track_time; 
+     
+    }
+    for(; final_image_idx < image_history.size(); final_image_idx++)
+    {
+      if(image_history.at(final_image_idx).first < max_track_time)
+      {
+        ff_imgs.push_back(image_history.at(final_image_idx).second);
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
+  
+  // Generate points for each pose
+  for(int i = 0; i < poses.size(); i++)
   {
-    pcl::PolygonMesh::Ptr pmesh = meshs.at(i).model_mesh;
+    auto search = trackers.find(poses.at(i).model_name);
+    if(search == trackers.end())
+      ROS_WARN("Tracker not present for model \"%s\"", poses.at(i).model_name.c_str()); 
+       
+    pcl::PolygonMesh::Ptr pmesh = search->second.mesh.model_mesh;
     // Project mesh triangles to get mask
     Eigen::Matrix4f pose_trfm;
     pose_trfm.setIdentity();
@@ -72,32 +108,26 @@ void Tracker::generateTrackingPoints(ros::Time stamp, const std::vector<ModelT>&
     // Extract KPs from mesh silhouette  
     // Backproject to 3D
     // Fast-forward tracking of new 2D points to current frame
-    std::vector<Mat> ff_imgs;
-    unsigned int final_image_idx = image_match_idx;
-    for(; final_image_idx < image_history.size(); final_image_idx++)
+    KLTTracker& klt_tracker = search->second.klt_tracker;
+    std::vector<Mat> ff_imgs_i = ff_imgs;
+    if(klt_tracker.hasTracking())
     {
-      if(image_history.at(final_image_idx).first < last_track_times.at(i))
-      {
-        ff_imgs.push_back(image_history.at(final_image_idx).second);
-      }
-      else
-      {
-        break;
-      }
+      ff_imgs_i.push_back(klt_tracker.getLastImage());
     }
-    if(klt_trackers.at(i).hasTracking())
     {
-      ff_imgs.push_back(klt_trackers.at(i).getLastImage());
+      boost::mutex::scoped_lock lock(klt_mutex); 
+      klt_tracker.initPointsAndFastforward(ff_imgs_i, depth_match, K_eig,
+        pose_trfm, mask);
     }
-    klt_trackers.at(i).initPointsAndFastforward(ff_imgs, depth_history[depth_match_idx].second, K_eig,
-      pose_trfm, mask);
-    largest_final_image_idx = max(largest_final_image_idx, final_image_idx);
   } 
-  // TODO: might need a better way of deleting history
-  // Purge past frames up until most recently used one
-  image_history.erase(image_history.begin(), image_history.begin()+largest_final_image_idx);
-  // TODO: this assumes image and depth are synced...should search for depth idx instead
-  depth_history.erase(depth_history.begin(), depth_history.begin()+largest_final_image_idx);
+  {
+    boost::mutex::scoped_lock lock(history_mutex);
+    // TODO: might need a better way of deleting history
+    // Purge past frames up until most recently used one
+    image_history.erase(image_history.begin(), image_history.begin()+final_image_idx);
+    // TODO: this assumes image and depth are synced...should search for depth idx instead
+    depth_history.erase(depth_history.begin(), depth_history.begin()+final_image_idx);
+  }
 } 
 
 // TODO: Maybe get depth map from this too?
@@ -165,7 +195,10 @@ void Tracker::depthImageCallback(const sensor_msgs::ImageConstPtr &dep)
 {
   cv_bridge::CvImageConstPtr cvImg = cv_bridge::toCvCopy(dep);
   Mat image = cvImg->image;
-  depth_history.push_back(std::pair<ros::Time, cv::Mat> (dep->header.stamp, image));
+  {
+    boost::mutex::scoped_lock lock(history_mutex);
+    depth_history.push_back(std::pair<ros::Time, cv::Mat> (dep->header.stamp, image));
+  }
 }
 
 void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
@@ -173,37 +206,46 @@ void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
   cv_bridge::CvImageConstPtr cvImg = cv_bridge::toCvCopy(im);
   Mat image = cvImg->image;
   // Loop on vector of KLTTrackers, one for each mesh
-  for(int i = 0; i < klt_trackers.size(); i++)
+  for(TrackingMap::iterator titr = trackers.begin(); titr != trackers.end(); titr++)
+  //for(int i = 0; i < klt_trackers.size(); i++)
   {
     // Process frame if tracking is valid
-    if(klt_trackers[i].hasTracking())
+    if(titr->second.klt_tracker.hasTracking())
     {
       Mat tracking_viz;
       std::vector<Point2f> pts2d;
       std::vector<Point3f> pts3d;
       std::vector<int> ptIds;
-      klt_trackers[i].processFrame(image, tracking_viz, pts2d, pts3d, ptIds);
-      last_track_times.at(i) = im->header.stamp;
+      {
+        boost::mutex::scoped_lock lock(klt_mutex);
+        titr->second.klt_tracker.processFrame(image, tracking_viz, pts2d, pts3d, ptIds);
+      }
+      {
+        boost::mutex::scoped_lock lock(track_time_mutex); 
+        titr->second.last_track_time = im->header.stamp;
+      }
       // SolvePnP
       Eigen::Matrix4f tfran;
       double pnpReprojError;
       std::vector<int> inlierIdx;
-      PnPUtil::RansacPnP(pts3d, pts2d, Kcv, current_poses[i], tfran, inlierIdx,
+      PnPUtil::RansacPnP(pts3d, pts2d, Kcv, titr->second.current_pose, tfran, inlierIdx,
         &pnpReprojError);
       if(inlierIdx.size() > min_tracking_inliers && pnpReprojError < max_tracking_reproj_error)
       {
-        current_poses[i] = tfran;
+        titr->second.current_pose = tfran;
 
         cv::Mat tf_viz;
         createTfViz(image, tf_viz, tfran, K_eig);
-        namedWindow(std::string("Object Transform ") + std::to_string(i), WINDOW_NORMAL);
-        imshow(std::string("Object Transform ") + std::to_string(i), tf_viz);
+        namedWindow(std::string("Object Transform ") + titr->first, WINDOW_NORMAL);
+        imshow(std::string("Object Transform ") + titr->first, tf_viz);
       }
     }
   }      
-  // TODO: add locking everywhere!
   // Store frame
-  image_history.push_back(std::pair<ros::Time, cv::Mat> (im->header.stamp, image));
+  {
+    boost::mutex::scoped_lock lock(history_mutex);
+    image_history.push_back(std::pair<ros::Time, cv::Mat> (im->header.stamp, image));
+  }
   waitKey(1); 
 }
 

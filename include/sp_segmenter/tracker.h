@@ -2,11 +2,13 @@
 #define _SP_TRACKER_HPP_
 
 #include <vector>
+#include <map>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 
 #include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <Eigen/Dense>
 
@@ -19,11 +21,26 @@
 class Tracker
 {
   public:
-  Tracker(int num_trackers);
-  void generateTrackingPoints(ros::Time stamp, const std::vector<ModelT>& meshs,
+  Tracker();
+  bool addTracker(const ModelT& mesh);
+  void generateTrackingPoints(ros::Time stamp,
     const std::vector<poseT>& poses);
 
   private:
+
+  struct TrackingInfo
+  {
+    TrackingInfo(ModelT mesh): mesh(mesh)
+    {
+      current_pose.setIdentity();
+    }
+    KLTTracker klt_tracker;
+    ModelT mesh;
+    Eigen::Matrix4f current_pose;
+    ros::Time last_track_time;
+  };
+  using TrackingMap = std::map<std::string, TrackingInfo>;
+
   cv::Mat meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& pose_trfm);
   void monitorQueue();
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &ci);
@@ -38,11 +55,11 @@ class Tracker
   sensor_msgs::CameraInfo cam_info;
 
   boost::thread callback_thread;
+  boost::mutex klt_mutex, history_mutex, track_time_mutex;
   ros::CallbackQueue callback_queue;
 
-  std::vector<KLTTracker> klt_trackers;
-  std::vector<Eigen::Matrix4f> current_poses;
-  std::vector<ros::Time> last_track_times;
+  TrackingMap trackers; ///> map from model names to trackers
+
   std::vector<std::pair<ros::Time, cv::Mat> > image_history;
   std::vector<std::pair<ros::Time, cv::Mat> > depth_history;
 
