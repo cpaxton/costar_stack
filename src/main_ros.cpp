@@ -30,7 +30,7 @@
 // for orientation normalization
 std::map<std::string, objectSymmetry> objectDict;
 
-bool compute_pose = false;
+bool compute_pose = true;
 bool view_flag = false;
 pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
@@ -154,10 +154,12 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	toROSMsg(*final_cloud,output_msg);
 	output_msg.header.frame_id = pc.header.frame_id;
 	pc_pub.publish(output_msg);
+  
 
 	/* POSE */
 	if (compute_pose) {
 
+    ROS_INFO("Computing poses");
 		geometry_msgs::PoseArray msg;
 		msg.header.frame_id = pc.header.frame_id;
 		for (int i = 0; i < 1; ++i) { // was 99
@@ -197,9 +199,7 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
       if(enableTracking)
       {
-        std::cout << "adding tracking points" << std::endl;
         tracker->generateTrackingPoints(pc.header.stamp, all_poses);
-        std::cout << "added tracking points" << std::endl;
       }
 
 			if( viewer )

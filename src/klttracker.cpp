@@ -35,9 +35,15 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
   const Eigen::Matrix4f& inputTf, const cv::Mat& mask)
 {
   if(inputFrames.size() == 0)
+  {
+    std::cout << "KLTTracker: number of input frames = 0" << std::endl;
     return;
-  if(m_ptIDs.size() == m_maxNumberOfPoints)
+  }
+  if(m_ptIDs.size() >= m_maxNumberOfPoints/4.)
+  {
+    std::cout << "KLTTracker: Max keypoints reached" << std::endl;
     return;
+  }
 
   std::vector<cv::KeyPoint> detected_pts;
   std::vector<cv::Point2f> new_pts;
@@ -47,6 +53,7 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
   std::random_shuffle(detected_pts.begin(), detected_pts.end());
   unsigned int num_new_pts = min(detected_pts.size(), m_maxNumberOfPoints - m_ptIDs.size());
 
+  std::cout << "detected " << num_new_pts << " new pts" << std::endl;
   // Backproject points to 3D using depth data
   // TODO: try with model instead???
   for (size_t i=0; i<num_new_pts; i++)
@@ -66,6 +73,7 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
     new_3d_pts.push_back(Point3f(backproj_h(0), backproj_h(1), backproj_h(2)));
     new_pts.push_back(detected_pts.at(i).pt);
   }
+  std::cout << "backprojected " << new_pts.size() << " pts"  << std::endl;
 
   // Fastforward tracked points to current frame
   std::vector<cv::Point2f> prev_pts = new_pts;
@@ -85,13 +93,20 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
         valid_3dpts.push_back(new_3d_pts.at(j));
       }
     }
+    //std::cout << "frame " << i << "/" << inputFrames.size() << " " << next_pts.size() << " pts" 
+    //  << std::endl;
     new_3d_pts = valid_3dpts;
   }
   
   assert(new_3dpts.size() == prev_pts.size());
+  // Add prev image if initializing
+  if(m_prevImg.cols == 0)
+    m_prevImg = inputFrames.back();
   // Add new points to tracker
+  std::cout <<"adding " << prev_pts.size() << " new pts" << std::endl;
   m_tracked3dPts.insert(m_tracked3dPts.end(), new_3d_pts.begin(), new_3d_pts.end());
   m_prevPts.insert(m_prevPts.end(), prev_pts.begin(), prev_pts.end());
+  std::cout <<"pts_size=" << m_prevPts.size() << std::endl;
   for(unsigned int i = 0; i < new_3d_pts.size(); i++)
   {
     m_ptIDs.push_back(m_nextID++);
@@ -109,6 +124,11 @@ bool KLTTracker::processFrameInternal(const cv::Mat& prev_image, const cv::Mat& 
   if (prev_pts.size() > 0)
   {
     cv::calcOpticalFlowPyrLK(prev_image, next_image, prev_pts, next_pts, status, error);
+  }
+  else
+  { 
+    std::cout << "prev_points.size()=0" << std::endl;
+    return false;
   }
 
   std::vector<cv::Point2f> lkPrevPts, lkNextPts;
@@ -133,8 +153,8 @@ bool KLTTracker::processFrameInternal(const cv::Mat& prev_image, const cv::Mat& 
   {
     if (epStatus[i])
     {
-      trackedPts.push_back(lkNextPts[i]);
-      epIds.push_back(lkIds[i]);
+      trackedPts.push_back(lkNextPts.at(i));
+      epIds.push_back(lkIds.at(i));
     }
   }
 
@@ -148,17 +168,25 @@ bool KLTTracker::processFrameInternal(const cv::Mat& prev_image, const cv::Mat& 
   return true;
 }
 
-//! Processes a frame and returns output image
+//!// Processes a frame and returns output image
 bool KLTTracker::processFrame(const cv::Mat& inputFrame, cv::Mat& outputFrame, 
   std::vector<cv::Point2f>& pts2d, std::vector<cv::Point3f>& pts3d, std::vector<int>& ptIDs)
 {
   pts2d.clear();
   pts3d.clear();
   inputFrame.copyTo(m_nextImg);
-  cv::cvtColor(inputFrame, outputFrame, CV_GRAY2BGR);
+  inputFrame.copyTo(outputFrame);
+  //cv::cvtColor(inputFrame, outputFrame, CV_GRAY2BGR);
   
   std::vector<unsigned char> status;
+  //std::cout << "processing internal..." << std::endl;
+  //std::cout <<"next dim=" << m_nextImg.rows << "x" << m_nextImg.cols << std::endl;
+  //std::cout <<"prev dim=" << m_prevImg.rows << "x" << m_prevImg.cols << std::endl;
+  //imshow("next_img", m_nextImg);
+  //imshow("prev_img", m_prevImg);
+  //waitKey(1);
   processFrameInternal(m_prevImg, m_nextImg, m_prevPts, m_nextPts, status);
+  //std::cout << "processed internal..." << std::endl;
 
   std::vector<cv::Point2f> trackedPts;
   std::vector<cv::Point3f> tracked3dPts;

@@ -65,6 +65,7 @@ class Tracker
 
   Eigen::Matrix3f K_eig;
   cv::Mat Kcv;
+  bool has_cam_info;
   
   double max_tracking_reproj_error;
   int min_tracking_inliers;
