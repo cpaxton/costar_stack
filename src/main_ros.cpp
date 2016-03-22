@@ -8,6 +8,7 @@
 #include "sp_segmenter/refinePoses.h"
 #include "sp_segmenter/common.h"
 #include "sp_segmenter/stringVectorArgsReader.h"
+#include "sp_segmenter/tracker.h"
 
 // ros stuff
 #include <ros/ros.h>
@@ -43,6 +44,9 @@ double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
 double minConfidence;
+bool enableTracking;
+
+Tracker* tracker;
     
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
@@ -53,6 +57,9 @@ std::string POINTS_IN, POINTS_OUT, POSES_OUT;
 ros::Publisher pc_pub;
 ros::Publisher pose_pub;
 ros::Subscriber pc_sub;
+
+
+sensor_msgs::CameraInfo cam_info;
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 
@@ -74,6 +81,8 @@ pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr 
 
 
 /*********************************************************************************/
+
+
 
 void callback(const sensor_msgs::PointCloud2 &pc) {
 
@@ -184,8 +193,14 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
 				msg.poses.push_back(pmsg);
 			}
-
 			std::cout<<"done objrec ransac"<<std::endl;
+
+      if(enableTracking)
+      {
+        tracker->generateTrackingPoints(pc.header.stamp, mesh_set, all_poses);
+        std::cout << "added tracking points" << std::endl;
+      }
+
 			if( viewer )
 			{
 				std::cout<<"VISUALIZING"<<std::endl;
@@ -221,6 +236,7 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
+    nh.param("enableTracking", enableTracking, false);
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
@@ -231,6 +247,7 @@ int main(int argc, char** argv)
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
     nh.param("pairWidth", pairWidth, 0.05);
     pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
+ 
 
     objrec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
@@ -342,10 +359,15 @@ int main(int argc, char** argv)
         viewer->setSize(1280, 960);
     }
 
+    if(enableTracking)
+      tracker = new Tracker(mesh_set.size());
+
     ros::spin();
     
     for( int ll = 0 ; ll <= 2 ; ll++ )
         free_and_destroy_model(&binary_models[ll]);
+
+    delete tracker;
 //    for( int ll = 1 ; ll <= 4 ; ll++ )
 //        free_and_destroy_model(&multi_models[ll]);
     
