@@ -4,6 +4,8 @@
  *
  * Created on March 30, 2015, 4:56 PM
  */
+#ifndef SEG_H
+#define SEG_H
 
 #include "sp_segmenter/utility/utility.h"
 
@@ -66,3 +68,5 @@ ModelT LoadMesh(std::string filename, std::string label);
 pcl::PointCloud<PointT>::Ptr cropCloud(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::ModelCoefficients::Ptr planeCoef, float elev);
   
 void setObjID(std::map<std::string, int> &model_name_map);
+
+#endif

@@ -8,6 +8,7 @@
 #include "sp_segmenter/refinePoses.h"
 #include "sp_segmenter/common.h"
 #include "sp_segmenter/stringVectorArgsReader.h"
+#include "sp_segmenter/seg.h"
 
 // ros stuff
 #include <ros/ros.h>
@@ -32,6 +33,7 @@
 // ros service messages for segmenting gripper
 #include "sp_segmenter/segmentInGripper.h"
 #include "sp_segmenter/segmenterTFObject.h"
+
 #define OBJECT_MAX 100
 class semanticSegmentation
 {
@@ -66,6 +68,7 @@ private:
     Hier_Pooler hie_producer;
     std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set;
     std::vector<model*> binary_models;
+    std::vector<model*> multi_models;
     float radius, ratio;
     float down_ss;
     double pairWidth;
@@ -73,7 +76,7 @@ private:
     bool bestPoseOnly;
     double minConfidence;
     
-    boost::shared_ptr<greedyObjRansac> objrec;
+    std::vector<boost::shared_ptr<greedyObjRansac> > objrec;
     std::vector<std::string> model_name;
     std::vector<ModelT> mesh_set;
     
