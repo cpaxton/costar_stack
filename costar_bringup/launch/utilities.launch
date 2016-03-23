@@ -4,6 +4,10 @@
 
     <!-- Predicator -->
     <include file="$(find predicator_bringup)/launch/core.launch"></include>
-
-    <include file="$(find moveit_collision_environment)/launch/collision_env.launch"></include>
+   
+    <!-- Moveit Environment -->
+    <arg name ="tableTFname" default="ar_marker_0" />
+    <include file="$(find moveit_collision_environment)/launch/collision_env.launch">
+    	<arg name="tableTFname" value ="$(arg tableTFname)"/>
+    </include>
 </launch>

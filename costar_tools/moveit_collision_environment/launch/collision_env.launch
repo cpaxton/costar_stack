@@ -9,9 +9,9 @@
     doc="Signature characters that separates between the name of object inside of the TF name"/>
   <arg name="objectNameIdx"       default="2" 
     doc="The position of the object name after charToFind separation"/>
-  <arg name="tableTFname"         default="tableTF" 
+  <arg name="tableTFname"         default="ar_marker_0" 
     doc="The TF name for the table" />
-  <arg name="defineParent"        default="false" 
+  <arg name="defineParent"        default="true" 
     doc="Boolean variable to set whether we use predefined parent name for collision object TF header or not" />
   <arg name="parentFrameName"     default="base_link"
     doc="Predefined collision object TF header" />

@@ -1,0 +1,32 @@
+<launch>
+
+  <arg name="ee_frame" default="/iiwa_link_ee"/>
+
+
+  <param name="s_model_description" command="cat $(find robotiq_s_model_visualization)/cfg/s-model_mesh.urdf"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="ee_to_gripper_frame" args="0.025 0 0 0 1.57079632679 0 $(arg ee_frame) /s_model_frame 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="ee_to_gripper_base" args="0.025 0 0 1.57079632679 0 0 /s_model_frame /s_model_base 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="gripper_base_to_palm" args="0 0 0 0 0 0 /s_model_base /s_model/palm 1000"/>
+  <!--<node pkg="tf" type="static_transform_publisher" name="base_to_endpoint" args="0.20725 0 0 0 0 0 /s_model_base /endpoint 1000"/>-->
+  <node pkg="tf" type="static_transform_publisher" name="base_to_endpoint_pinch" args="0 0 0.20725 0 0 0 /s_model_base /endpoint_pinch 1000"/>
+  <!--
+    From attachment point to tag center:
+      -0.0744 0.030 0.4650
+
+    Rotation:
+      10.85 degrees around x = 0.18936822
+      -69.96 degrees around y = -1.22103234
+      +86 degrees around z = 1.50098
+  -->
+  <node pkg="tf" type="static_transform_publisher" name="base_to_endpoint_marker_attachment" args="-0.0744 0.030 0.04650 0.18936822 -1.22103234 1.50098 /s_model_base /endpoint_marker_attachment 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="endpoint_attachment_to_marker" args="0 0 0 0 -1.57079632679 -1.57079632679 /endpoint_marker_attachment /endpoint_marker 1000"/>
+
+  <node pkg="robot_state_publisher" name="s_model_visualization_publisher" type="robot_state_publisher">
+    <remap from="robot_description" to="s_model_description"/>
+    <param name="use_tf_static" value="true"/>
+    <param name="tf_prefix" value="s_model"/>
+  </node>
+
+  <!-- 95.25 + 112 -->
+</launch>

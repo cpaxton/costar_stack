@@ -26,6 +26,7 @@ class SimpleIIWADriver:
         self.servo_mode = rospy.Service('costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
         self.shutdown = rospy.Service('costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
         self.servo = rospy.Service('costar/ServoToPose',ServoToPose,self.servo_to_pose_call)
+        self.servo = rospy.Service('costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
         self.driver_status = 'IDLE'
         self.status_publisher = rospy.Publisher('costar/DriverStatus',String,queue_size=1000)
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
@@ -53,6 +54,59 @@ class SimpleIIWADriver:
         if goal_diff < 0.001:
                 self.at_goal = True
         #print self.q0
+
+    def plan_to_pose_call(self,req): 
+        #rospy.loginfo('Recieved servo to pose request')
+        #print req
+        if self.driver_status == 'SERVO':
+            T = tf_c.toMatrix(tf_c.fromMsg(req.target))
+            #a,axis = T.M.GetRotAngle()
+            #pose = list(T.p) + [a*axis[0],a*axis[1],a*axis[2]]
+
+            #print T
+
+            # Check acceleration and velocity limits
+            if req.accel > self.MAX_ACC:
+                acceleration = self.MAX_ACC
+            else:
+                acceleration = req.accel
+            if req.vel > self.MAX_VEL:
+                velocity = self.MAX_VEL
+            else:
+                velocity = req.vel
+            # Send command
+
+            pt = JointTrajectoryPoint()
+            q = self.kdl_kin.inverse(T,self.q0)
+
+            if q is None:
+                q = self.kdl_kin.inverse(T,None)
+            
+            print self.q0
+            print q
+
+            pt.positions = q
+
+            if not q is None:
+                self.pt_publisher.publish(pt)
+                self.at_goal = False
+                self.goal = q
+                rate = rospy.Rate(10)
+                start_t = rospy.Time.now()
+
+                # wait until robot is at goal
+                while not self.at_goal:
+                    if (start_t - rospy.Time.now()).to_sec() > 30:
+                        return 'FAILED - timeout'
+                    rate.sleep()
+
+                return 'SUCCESS - moved to pose'
+            else:
+                rospy.logerr('SIMPLE UR -- IK failed')
+                return 'FAILED - not in servo mode'
+        else:
+            rospy.logerr('SIMPLE UR -- Not in servo mode')
+            return 'FAILED - not in servo mode'
 
     def servo_to_pose_call(self,req): 
         #rospy.loginfo('Recieved servo to pose request')
