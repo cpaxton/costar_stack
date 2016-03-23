@@ -41,7 +41,7 @@ class Tracker
   };
   using TrackingMap = std::map<std::string, TrackingInfo>;
 
-  cv::Mat meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& pose_trfm);
+  cv::Mat meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& pose_trfm, cv::Mat&);
   void monitorQueue();
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &ci);
   void imageCallback(const sensor_msgs::ImageConstPtr &im);

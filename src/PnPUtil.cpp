@@ -41,7 +41,7 @@ bool PnPUtil::RansacPnP(const std::vector<Point3f>& matchPts3d, const std::vecto
   
   // RANSAC PnP
   const int niter = 50; // Assumes about 45% outliers
-  const double reprojThresh = 5.0; // in pixels
+  const double reprojThresh = 3.0; // in pixels
   const int m = 4; // points per sample
   const int inlier_ratio_cutoff = 0.4; 
   std::vector<int> ind;

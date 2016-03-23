@@ -87,7 +87,7 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
 
     // Find last image to fastforward to
     final_image_idx = image_history.size()-1;
-    for(int imidx = image_match_idx; imidx <= final_image_idx; imidx++)
+    for(unsigned int imidx = image_match_idx; imidx <= final_image_idx; imidx++)
     {
       ff_imgs.push_back(image_history.at(imidx).second);
     }
@@ -136,9 +136,18 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
     pose_trfm.topLeftCorner<3,3>() = poses.at(i).rotation.toRotationMatrix();
     pose_trfm.block<3,1>(0,3) = poses.at(i).shift;
 
-    Mat mask = meshPoseToMask(pmesh, pose_trfm);
+    Mat model_depth;
+    Mat mask = meshPoseToMask(pmesh, pose_trfm, model_depth);
     namedWindow(std::string("Object Mask ") + poses.at(i).model_name, WINDOW_NORMAL);
     imshow(std::string("Object Mask ") + poses.at(i).model_name, mask);
+
+    double min, max;
+    cv::minMaxIdx(model_depth, &min, &max);
+    cv::Mat scaled_model_depth;
+    cv::convertScaleAbs(model_depth, scaled_model_depth, 255 / max);
+
+    namedWindow(std::string("Object Depth ") + poses.at(i).model_name, WINDOW_NORMAL);
+    imshow(std::string("Object Depth ") + poses.at(i).model_name, scaled_model_depth);
     waitKey(1);
 
     // Extract KPs from mesh silhouette  
@@ -152,41 +161,51 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
     }
     {
       boost::mutex::scoped_lock lock(klt_mutex); 
-      klt_tracker.initPointsAndFastforward(ff_imgs_i, depth_match, K_eig,
-        pose_trfm, mask);
+      //klt_tracker.initPointsAndFastforward(ff_imgs_i, depth_match, K_eig,
+      //  pose_trfm.inverse(), mask);
+      klt_tracker.initPointsAndFastforward(ff_imgs_i, model_depth, K_eig,
+        pose_trfm.inverse(), mask);
+      // TODO: fastforward pose estimate too
+      search->second.current_pose = pose_trfm;
     }
   } 
   {
     boost::mutex::scoped_lock lock(history_mutex);
-    // TODO: might need a better way of deleting history
     // Purge past frames up until most recently used one
     image_history.erase(image_history.begin(), image_history.begin()+final_image_idx);
     // TODO: this assumes image and depth are synced...should search for depth idx instead
-    depth_history.erase(depth_history.begin(), depth_history.begin()+final_image_idx);
+    unsigned int final_depth_idx = std::min(final_image_idx, uint(depth_history.size()-1));
+    depth_history.erase(depth_history.begin(), depth_history.begin()+final_depth_idx);
   }
 } 
 
 // TODO: Maybe get depth map from this too?
-Mat Tracker::meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& pose_trfm)
+Mat Tracker::meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& pose_trfm,
+  Mat& depth_out)
 {
   Mat mask(cam_info.height, cam_info.width, CV_8UC1, cv::Scalar(0));
+  Mat depth(cam_info.height, cam_info.width, CV_32FC1, cv::Scalar(0));
   pcl::PointCloud<myPointXYZ> cloud;
   pcl::fromPCLPointCloud2(pmesh->cloud, cloud);
   for(pcl::Vertices& verts : pmesh->polygons)
   {
     // Project triangle verts
     Eigen::Vector3f p_projs[3];
+    double p_depths[3];
     for(int k = 0; k < 3; k++)
     {  
       myPointXYZ p = cloud.points.at(verts.vertices.at(k));  
       Eigen::Vector3f pe(p.x, p.y, p.z);
       Eigen::Vector3f p_proj = K_eig*(pose_trfm*pe.homogeneous()).head<3>();
+      p_depths[k] = p_proj(2);
       p_proj /= p_proj(2);
       p_projs[k] = p_proj;
     }
     // Fill triangle
     Eigen::Vector2f d1 = (p_projs[1] - p_projs[0]).head<2>();
     Eigen::Vector2f d2 = (p_projs[2] - p_projs[0]).head<2>();
+    double dep_slope1 = p_depths[1] - p_depths[0];
+    double dep_slope2 = p_depths[2] - p_depths[0];
     for(double d1_step = 0; d1_step <= 1; d1_step+=1./d1.norm())
     {
       for(double d2_step = 0; d2_step <= 1; d2_step+=1./d2.norm())
@@ -198,11 +217,20 @@ Mat Tracker::meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& 
             tri_pt(1) < cam_info.height && tri_pt(1) >= 0)
           {
             mask.at<uchar>(int(tri_pt(1)), int(tri_pt(0))) = 255;
+            float p_depth = p_depths[0] + d1_step*dep_slope1 + d2_step*dep_slope2;
+            
+            if(depth.at<float>(int(tri_pt(1)), int(tri_pt(0))) == 0)
+              depth.at<float>(int(tri_pt(1)), int(tri_pt(0))) = p_depth;
+            else
+              depth.at<float>(int(tri_pt(1)), int(tri_pt(0))) =
+                min(depth.at<float>(int(tri_pt(1)), int(tri_pt(0))), p_depth);
           }
         }
       }
     }
   }
+  medianBlur(depth, depth_out, 3);
+  medianBlur(mask, mask, 3);
   return mask;
 }
 
@@ -219,10 +247,10 @@ void Tracker::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &ci)
            ci->K[3], ci->K[4], ci->K[5],
            ci->K[6], ci->K[7], ci->K[8];
 
-  image_sub = nh.subscribe<sensor_msgs::Image>(IMAGE_IN, 100,
+  image_sub = nh.subscribe<sensor_msgs::Image>(IMAGE_IN, 1,
     &Tracker::imageCallback,
     this, ros::TransportHints().tcpNoDelay());
-  depth_image_sub = nh.subscribe<sensor_msgs::Image>(DEPTH_IN, 100,
+  depth_image_sub = nh.subscribe<sensor_msgs::Image>(DEPTH_IN, 1,
     &Tracker::depthImageCallback,
     this, ros::TransportHints().tcpNoDelay());
   has_cam_info = true;
@@ -269,6 +297,8 @@ void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
         boost::mutex::scoped_lock lock(track_time_mutex); 
         titr->second.last_track_time = im->header.stamp;
       }
+      if(pts2d.size() == 0)
+        continue;
       namedWindow(std::string("Tracking ") + titr->first, WINDOW_NORMAL);
       imshow(std::string("Tracking ") + titr->first, tracking_viz);
       
@@ -287,6 +317,11 @@ void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
         createTfViz(image, tf_viz, tfran, K_eig);
         namedWindow(std::string("Object Transform ") + titr->first, WINDOW_NORMAL);
         imshow(std::string("Object Transform ") + titr->first, tf_viz);
+      }
+      else
+      {
+        std::cout << "Bad tracking: #inliers=" << inlierIdx.size() << " reproj error=" << pnpReprojError
+          << std::endl;
       }
     }
   }      
