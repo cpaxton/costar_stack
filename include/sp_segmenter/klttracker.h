@@ -14,6 +14,7 @@ public:
   virtual bool processFrame(const cv::Mat& inputFrame, cv::Mat& outputFrame,
     std::vector<cv::Point2f>& pts2d, std::vector<cv::Point3f>& pts3d, std::vector<int>& ptIDs);
   bool hasTracking();
+  unsigned int getNumPointsTracked();
   cv::Mat getLastImage();
 
 private:

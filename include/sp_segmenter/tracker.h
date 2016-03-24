@@ -15,6 +15,8 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
 
+#include <tf/transform_broadcaster.h>
+
 #include "sp_segmenter/klttracker.h"
 #include "sp_segmenter/utility/utility.h"
 
@@ -42,6 +44,8 @@ class Tracker
   using TrackingMap = std::map<std::string, TrackingInfo>;
 
   cv::Mat meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& pose_trfm, cv::Mat&);
+  void publishTf(const Eigen::Matrix4f& tf, std::string name, std::string base_frame, 
+    ros::Time stamp);
   void monitorQueue();
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &ci);
   void imageCallback(const sensor_msgs::ImageConstPtr &im);
@@ -66,9 +70,11 @@ class Tracker
   Eigen::Matrix3f K_eig;
   cv::Mat Kcv;
   bool has_cam_info;
+  tf::TransformBroadcaster br;
   
   double max_tracking_reproj_error;
   int min_tracking_inliers;
+  bool show_tracking_debug;
   std::string CAMERA_INFO_IN, IMAGE_IN, DEPTH_IN;
 };
 

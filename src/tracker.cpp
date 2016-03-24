@@ -1,5 +1,6 @@
 #include "sp_segmenter/tracker.h"
 #include "sp_segmenter/PnPUtil.h"
+
 #include <cv_bridge/cv_bridge.h>
 
 using namespace cv;
@@ -11,6 +12,7 @@ Tracker::Tracker(): nh("~"), has_cam_info(false)
   nh.param("DEPTH_IN", DEPTH_IN,std::string("/camera/depth"));
   nh.param("min_tracking_inliers", min_tracking_inliers, 8);
   nh.param("max_tracking_reproj_error", max_tracking_reproj_error, 3.0);
+  nh.param("show_tracking_debug", show_tracking_debug, false);
 
   cam_info_sub = nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO_IN, 1000,
     &Tracker::cameraInfoCallback,
@@ -38,23 +40,27 @@ bool Tracker::addTracker(const ModelT& model)
   return res.second;
 }
 
+// poses should be pose of object in frame of camera
 void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>& poses)
 {
   if(!has_cam_info)
     return;
-  ROS_INFO("Generating tracking points");
-  // Fine closest depth map
-  unsigned int depth_match_idx, image_match_idx;
+  //ROS_INFO("Generating tracking points");
+  // Find closest image to stamp
+  //unsigned int depth_match_idx;
+  unsigned int image_match_idx;
   unsigned int final_image_idx;
-  Mat depth_match;
+  //Mat depth_match;
   std::vector<Mat> ff_imgs;
   {
     boost::mutex::scoped_lock lock(history_mutex);
+    /*
     for(depth_match_idx = 0; depth_match_idx < depth_history.size(); depth_match_idx++)
     {
       if(depth_history[depth_match_idx].first >= stamp)
         break;
     }
+    */
     for(image_match_idx = 0; image_match_idx < image_history.size(); image_match_idx++)
     {
       if(image_history[image_match_idx].first >= stamp)
@@ -66,24 +72,26 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
     {
       image_match_idx = image_match_idx-1;
     }
+    /*
     if(depth_match_idx > 0 &&
       abs(depth_history[depth_match_idx].first.toSec()-stamp.toSec()) > abs(depth_history[depth_match_idx-1].first.toSec()-stamp.toSec()))
     {
       depth_match_idx = depth_match_idx-1;
     }
-    if(image_match_idx != image_history.size() || depth_match_idx != depth_history.size())
+    */
+    if(image_match_idx != image_history.size())// || depth_match_idx != depth_history.size())
     {
       std::cout << "time diff=" << image_history[image_match_idx].first.toSec()-stamp.toSec() 
         << std::endl;
     }
-    if(image_match_idx == image_history.size() || depth_match_idx == depth_history.size()
-      || (image_history[image_match_idx].first-stamp).toSec() > 0.5
-      || (depth_history[depth_match_idx].first-stamp).toSec() > 0.5)
+    if(image_match_idx == image_history.size()// || depth_match_idx == depth_history.size()
+      || (image_history[image_match_idx].first-stamp).toSec() > 0.5)
+      //|| (depth_history[depth_match_idx].first-stamp).toSec() > 0.5)
     {
       ROS_WARN("Tracker: Could not find image or depth matching pose stamp");
       return;
     }
-    depth_match = depth_history[depth_match_idx].second;
+    //depth_match = depth_history[depth_match_idx].second;
 
     // Find last image to fastforward to
     final_image_idx = image_history.size()-1;
@@ -127,7 +135,13 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
       ROS_WARN("Tracker not present for model \"%s\"", poses.at(i).model_name.c_str()); 
       continue;
     }
-    ROS_INFO("Generating points for model \"%s\"", poses.at(i).model_name.c_str());
+
+    KLTTracker& klt_tracker = search->second.klt_tracker;
+
+    if(klt_tracker.getNumPointsTracked() >= 100)
+      continue;
+
+    ROS_INFO("Generating new tracking points for model \"%s\"", poses.at(i).model_name.c_str());
        
     pcl::PolygonMesh::Ptr pmesh = search->second.mesh.model_mesh;
     // Project mesh triangles to get mask
@@ -138,22 +152,24 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
 
     Mat model_depth;
     Mat mask = meshPoseToMask(pmesh, pose_trfm, model_depth);
-    namedWindow(std::string("Object Mask ") + poses.at(i).model_name, WINDOW_NORMAL);
-    imshow(std::string("Object Mask ") + poses.at(i).model_name, mask);
+    if(show_tracking_debug)
+    {
+      namedWindow(std::string("Object Mask ") + poses.at(i).model_name, WINDOW_NORMAL);
+      imshow(std::string("Object Mask ") + poses.at(i).model_name, mask);
 
-    double min, max;
-    cv::minMaxIdx(model_depth, &min, &max);
-    cv::Mat scaled_model_depth;
-    cv::convertScaleAbs(model_depth, scaled_model_depth, 255 / max);
+      double min, max;
+      cv::minMaxIdx(model_depth, &min, &max);
+      cv::Mat scaled_model_depth;
+      cv::convertScaleAbs(model_depth, scaled_model_depth, 255 / max);
 
-    namedWindow(std::string("Object Depth ") + poses.at(i).model_name, WINDOW_NORMAL);
-    imshow(std::string("Object Depth ") + poses.at(i).model_name, scaled_model_depth);
-    waitKey(1);
+      namedWindow(std::string("Object Depth ") + poses.at(i).model_name, WINDOW_NORMAL);
+      imshow(std::string("Object Depth ") + poses.at(i).model_name, scaled_model_depth);
+      waitKey(1);
+    }
 
     // Extract KPs from mesh silhouette  
     // Backproject to 3D
     // Fast-forward tracking of new 2D points to current frame
-    KLTTracker& klt_tracker = search->second.klt_tracker;
     std::vector<Mat> ff_imgs_i = ff_imgs;
     if(klt_tracker.hasTracking())
     {
@@ -163,10 +179,11 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
       boost::mutex::scoped_lock lock(klt_mutex); 
       //klt_tracker.initPointsAndFastforward(ff_imgs_i, depth_match, K_eig,
       //  pose_trfm.inverse(), mask);
+      if(!klt_tracker.hasTracking())
+        search->second.current_pose = pose_trfm;
       klt_tracker.initPointsAndFastforward(ff_imgs_i, model_depth, K_eig,
         pose_trfm.inverse(), mask);
       // TODO: fastforward pose estimate too
-      search->second.current_pose = pose_trfm;
     }
   } 
   {
@@ -174,12 +191,11 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
     // Purge past frames up until most recently used one
     image_history.erase(image_history.begin(), image_history.begin()+final_image_idx);
     // TODO: this assumes image and depth are synced...should search for depth idx instead
-    unsigned int final_depth_idx = std::min(final_image_idx, uint(depth_history.size()-1));
-    depth_history.erase(depth_history.begin(), depth_history.begin()+final_depth_idx);
+    //unsigned int final_depth_idx = std::min(final_image_idx, uint(depth_history.size()-1));
+    //depth_history.erase(depth_history.begin(), depth_history.begin()+final_depth_idx);
   }
 } 
 
-// TODO: Maybe get depth map from this too?
 Mat Tracker::meshPoseToMask(pcl::PolygonMesh::Ptr pmesh, const Eigen::Matrix4f& pose_trfm,
   Mat& depth_out)
 {
@@ -250,9 +266,9 @@ void Tracker::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &ci)
   image_sub = nh.subscribe<sensor_msgs::Image>(IMAGE_IN, 1,
     &Tracker::imageCallback,
     this, ros::TransportHints().tcpNoDelay());
-  depth_image_sub = nh.subscribe<sensor_msgs::Image>(DEPTH_IN, 1,
-    &Tracker::depthImageCallback,
-    this, ros::TransportHints().tcpNoDelay());
+  //depth_image_sub = nh.subscribe<sensor_msgs::Image>(DEPTH_IN, 1,
+  //  &Tracker::depthImageCallback,
+  //  this, ros::TransportHints().tcpNoDelay());
   has_cam_info = true;
 }
 
@@ -299,9 +315,12 @@ void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
       }
       if(pts2d.size() == 0)
         continue;
-      namedWindow(std::string("Tracking ") + titr->first, WINDOW_NORMAL);
-      imshow(std::string("Tracking ") + titr->first, tracking_viz);
-      
+
+      if(show_tracking_debug)
+      {
+        namedWindow(std::string("Tracking ") + titr->first, WINDOW_NORMAL);
+        imshow(std::string("Tracking ") + titr->first, tracking_viz);
+      }
       // SolvePnP
       Eigen::Matrix4f tfran;
       double pnpReprojError;
@@ -311,16 +330,21 @@ void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
       if(inlierIdx.size() > min_tracking_inliers && pnpReprojError < max_tracking_reproj_error)
       {
         titr->second.current_pose = tfran;
-        std::cout <<"t="<< tfran.block<3,1>(0,3).transpose() << std::endl;
 
-        cv::Mat tf_viz;
-        createTfViz(image, tf_viz, tfran, K_eig);
-        namedWindow(std::string("Object Transform ") + titr->first, WINDOW_NORMAL);
-        imshow(std::string("Object Transform ") + titr->first, tf_viz);
+        // Publish pose
+        publishTf(tfran, titr->first + std::string("_tracking"), im->header.frame_id, im->header.stamp);
+        if(show_tracking_debug)
+        {
+          cv::Mat tf_viz;
+          createTfViz(image, tf_viz, tfran, K_eig);
+          namedWindow(std::string("Object Transform ") + titr->first, WINDOW_NORMAL);
+          imshow(std::string("Object Transform ") + titr->first, tf_viz);
+        }
       }
       else
       {
-        std::cout << "Bad tracking: #inliers=" << inlierIdx.size() << " reproj error=" << pnpReprojError
+        std::cout << "Tracker: Bad tracking: #inliers=" << inlierIdx.size() << " reproj error="
+          << pnpReprojError
           << std::endl;
       }
     }
@@ -330,8 +354,20 @@ void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
     boost::mutex::scoped_lock lock(history_mutex);
     image_history.push_back(std::pair<ros::Time, cv::Mat> (im->header.stamp, image));
   }
-  waitKey(1); 
+  if(show_tracking_debug)
+    waitKey(1); 
 }
+
+void Tracker::publishTf(const Eigen::Matrix4f& tf, std::string name, std::string base_frame, 
+  ros::Time stamp)
+{
+  tf::Transform tf_transform;
+  tf_transform.setOrigin(tf::Vector3(tf(0,3), tf(1,3), tf(2,3)));
+  tf_transform.setBasis(tf::Matrix3x3(tf(0,0), tf(0,1), tf(0,2),
+                                      tf(1,0), tf(1,1), tf(1,2),
+                                      tf(2,0), tf(2,1), tf(2,2)));
+  br.sendTransform(tf::StampedTransform(tf_transform, stamp, base_frame, name));
+} 
 
 void Tracker::createTfViz(Mat& src, Mat& dst, const Eigen::Matrix4f& tf,
   const Eigen::Matrix3f& K)

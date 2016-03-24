@@ -11,9 +11,14 @@ KLTTracker::KLTTracker()
   m_fastDetector = cv::FastFeatureDetector::create(std::string("FAST"));
 }
 
+unsigned int KLTTracker::getNumPointsTracked()
+{
+  return m_ptIDs.size();
+}
+
 bool KLTTracker::hasTracking()
 {
- return m_ptIDs.size() > 0;
+ return m_ptIDs.size() > 0 && m_prevPts.size() > 0;
 }
 
 cv::Mat KLTTracker::getLastImage()
@@ -39,7 +44,7 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
     std::cout << "KLTTracker: number of input frames = 0" << std::endl;
     return;
   }
-  if(m_ptIDs.size() >= m_maxNumberOfPoints/4.)
+  if(m_ptIDs.size() == m_maxNumberOfPoints)
   {
     std::cout << "KLTTracker: Max keypoints reached" << std::endl;
     return;
@@ -82,6 +87,11 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
   std::vector<unsigned char> status;
   for(unsigned int i = 1; i < inputFrames.size(); i++)
   {
+    if(prev_pts.size() == 0)
+    {
+      std::cout << "KLTTracker: Fastforward failed" << std::endl;
+      break;
+    }
     processFrameInternal(inputFrames.at(i-1), inputFrames.at(i), prev_pts, next_pts, status);
     prev_pts.clear();
     valid_3dpts.clear();
