@@ -270,7 +270,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         std::cerr<<"Visualize whole screen"<<std::endl;
         viewer->removeAllPointClouds();
         viewer->addPointCloud(scene_f, "whole_scene");
-        viewer->spinOnce(2000);
+        viewer->spin();
         viewer->removeAllPointClouds();
     }
     // std::vector< pcl::PointCloud<myPointXYZ>::Ptr > &cloud_set
@@ -281,7 +281,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
 
     // pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
     // std::vector< std::vector<PR_ELEM> > cur_fore_pr(3);
-    for( int ll = 0 ; ll <= 2 ; ll++ )
+    for( int ll = 0 ; ll <= 1 ; ll++ )
     {
         bool reset_flag = ll == 0 ? true : false;
         if( ll >= 1 )
@@ -293,7 +293,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     if (mesh_set.size() > 1) // more than one objects, do multi object classification
     {
         pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
-        for( int ll = 1 ; ll <= 2 ; ll++ )
+        for( int ll = 1 ; ll <= 1 ; ll++ )
         {
            bool reset_flag = ll == 1 ? true : false;
            triple_pooler.InputSemantics(multi_models[ll], ll, reset_flag, false);

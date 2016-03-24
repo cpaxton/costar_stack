@@ -57,7 +57,8 @@ void extractFea(std::string root_path, std::string out_fea_path,
 	std::vector<std::string> obj_names, std::vector<std::string>  bg_names,
 	feaExtractor object_ext, feaExtractor background_ext)
 {
-    int obj_sample_num = 10;
+    // the sample number extracted in one pcd files. 1200 foreground 800 background
+    int obj_sample_num = 66;
     int bg_sample_num = 100;
     int cur_order_max = 3;
 
@@ -237,7 +238,7 @@ int main(int argc, char** argv)
 
             parameter param;
             GenSVMParamter(param, CC);
-            std::cerr<<std::endl<<"Starting Liblinear Training..."<<std::endl;
+            std::cerr<<std::endl<<"St100000arting Liblinear Training..."<<std::endl;
 
             model* cur_model = train(&train_prob, &param);
             save_model((out_svm_path + "multi_L"+mm.str()+"_f.model").c_str(), cur_model);

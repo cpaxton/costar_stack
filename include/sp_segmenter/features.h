@@ -236,6 +236,7 @@ private:
     
 };
 
+/// Class to extract superpixels from any given point cloud
 class spExt{
 public:
     spExt(float ss_=0.005);
@@ -253,6 +254,16 @@ public:
     void clear();
     
     void setSS(float ss_){down_ss = ss_;}
+
+    /// Parameters used to define how superpixels are found
+    ///
+    /// If you change these parameters, it is recommended you retrain the SVM 
+    ///
+    /// @param voxel_resol size of voxels used to define superpixels (in m)
+    /// @param seed_resol resolution of seed voxels which are grown into superpixels (in m)
+    /// @param color_w color width if adjacent points have similar colors, the likelihood voxels will be merged (in m)
+    /// @param spatial_w 3d distance value likelihood voxels will be merged (in m)
+    /// @param normal_w similarity of normals likelihood voxels will be merged (in m)
     void setParams(float voxel_resol, float seed_resol, float color_w, float spatial_w, float normal_w);
 private:
     pcl::PointCloud<PointT>::Ptr down_cloud;
