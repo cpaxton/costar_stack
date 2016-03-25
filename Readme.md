@@ -31,6 +31,11 @@ roslaunch instructor_core shoulder_smooth.launch
 
 # hand-eye calibration
 rosrun instructor_core shoulder_calibrate.py
+
+# object detection and moveit planning scene
+roslaunch moveit_collision_environment collision_env.launch tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world debug:=false mesh_source:='/home/cpaxton/.costar/mesh' 
+
+
 ```
 
 ### Bringing up individual components

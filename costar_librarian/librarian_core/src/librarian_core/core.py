@@ -40,6 +40,7 @@ class Librarian(object):
             self._load_param_srv = rospy.Service('librarian/load_params', LoadParams, self.load_params)
             self._add_type_srv = rospy.Service('librarian/add_type', AddType, self.add_type)
             self._get_path_srv = rospy.Service('librarian/get_path', GetPath, self.create_path)
+            self._get_path_to_type_srv = rospy.Service('librarian/get_path_to_type', GetTypePath, self.create_type_path)
             self._delete_srv = rospy.Service('librarian/delete', Delete, self.delete)
 
         self.init()
@@ -67,7 +68,27 @@ class Librarian(object):
                 resp.path = filename
 
         return resp
+    '''
+    create_path()
+    Create a path
+    '''
+    def create_type_path(self, req):
+        resp = GetTypePathResponse()
+        if len(req.type) == 0:
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.TYPE_MISSING
+                resp.status.info = "No type provided!"
+        else:
+            filename = join(self._root, req.type)
 
+            if not os.path.exists(filename):
+                resp.status.result = Status.FAILURE
+                resp.status.error = Status.NO_SUCH_TYPE
+                resp.status.info = "Type %s does not exist!"%(req.type)
+            else:
+                resp.path = filename
+
+        return resp
 
     '''
     init()

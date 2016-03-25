@@ -25,6 +25,7 @@ add_service_files(
   List.srv
   AddType.srv
   GetPath.srv
+  GetTypePath.srv
   LoadParams.srv
   Delete.srv
 )
