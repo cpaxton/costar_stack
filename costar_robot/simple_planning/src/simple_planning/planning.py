@@ -49,7 +49,7 @@ class SimplePlanning:
 
         print "IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val)
 
-        print ik_resp.solution
+        #print ik_resp.solution
 
         ###############################
         # now create the goal based on inverse kinematics
@@ -112,6 +112,6 @@ class SimplePlanning:
 
         rospy.logwarn("Done: " + str(res.error_code.val))
 
-        print res
+        #print res
 
         return res

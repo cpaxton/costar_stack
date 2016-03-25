@@ -16,6 +16,9 @@ from pykdl_utils.kdl_kinematics import KDLKinematics
 
 from simple_planning import SimplePlanning
 
+from moveit_msgs.msg import *
+from moveit_msgs.srv import *
+
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm'}
 
 class SimpleIIWADriver:
@@ -40,6 +43,7 @@ class SimpleIIWADriver:
         #print self.tree.getNrOfSegments()
         #print self.chain.getNrOfJoints()
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
+        self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.planner = SimplePlanning(base_link,end_link,"manipulator")
 
@@ -89,29 +93,45 @@ class SimpleIIWADriver:
             print self.q0
             print q
 
-            self.planner.getPlan(req.target,self.q0)
+            res = self.planner.getPlan(req.target,self.q0)
 
-            pt.positions = q
+            #pt.positions = q
+            if not res is None and len(res.planned_trajectory.joint_trajectory.points) > 0:
 
-            if not q is None:
-                self.pt_publisher.publish(pt)
+
+                disp = DisplayTrajectory()
+                disp.trajectory.append(res.planned_trajectory)
+                disp.trajectory_start = res.trajectory_start
+                self.display_pub.publish(disp)
+
+                traj = res.planned_trajectory.joint_trajectory
+
+                t = rospy.Time(0)
+
+                for pt in traj.points:
+                  self.pt_publisher.publish(pt)
+
+                  rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
+                  t = pt.time_from_start
+
+                pt = traj.points[-1]
                 self.at_goal = False
-                self.goal = q
+                self.goal = pt.positions
                 rate = rospy.Rate(10)
                 start_t = rospy.Time.now()
 
                 # wait until robot is at goal
                 while not self.at_goal:
-                    if (start_t - rospy.Time.now()).to_sec() > 30:
+                    if (rospy.Time.now() - start_t).to_sec() > 30:
                         return 'FAILED - timeout'
                     rate.sleep()
 
                 return 'SUCCESS - moved to pose'
             else:
-                rospy.logerr('SIMPLE UR -- IK failed')
+                rospy.logerr('DRIVER -- PLANNING failed')
                 return 'FAILED - not in servo mode'
         else:
-            rospy.logerr('SIMPLE UR -- Not in servo mode')
+            rospy.logerr('DRIVER -- IK fail/not in servo mode')
             return 'FAILED - not in servo mode'
 
     def servo_to_pose_call(self,req): 
@@ -161,10 +181,10 @@ class SimpleIIWADriver:
 
                 return 'SUCCESS - moved to pose'
             else:
-                rospy.logerr('SIMPLE UR -- IK failed')
+                rospy.logerr('SIMPLE DRIVER -- IK failed')
                 return 'FAILED - not in servo mode'
         else:
-            rospy.logerr('SIMPLE UR -- Not in servo mode')
+            rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILED - not in servo mode'
 
     def set_teach_mode_call(self,req):
