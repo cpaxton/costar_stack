@@ -4,7 +4,50 @@
 
 This is a project by a few members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. Our goal is to build a system which facilitates end-user instruction of industrial robots to performa a variety of different tasks.
 
-These are the tools and utilities we created to get the CoSTAR project up and off the ground.
+These are the tools and utilities we created to get the CoSTAR project up and off the ground. This document describes the CoSTAR project for an LBR iiwa 14 R820 with an attahed Robotiq 3-finger adaptive gripper.
+
+Note that unfortunately the CoSTAR UI is not open source, so email me at cpaxton3@jhu.edu if you are interested in it.
+
+## Starting CoSTAR for the LBR iiwa with GRL
+
+Making sure you are connected to the robot:
+
+```
+ping 192.170.10.2 # connection to FRI port for joint states
+ping 172.31.1.146 # connection to Robotiq 3-finger gripper to send commands
+ping 172.31.1.147 # connection to JAVA port on the robot to send commands
+```
+
+How to bring this robot up on our own platform:
+
+```
+# core features and UI
+roslaunch costar_bringup iiwa14_s_model.launch
+roslaunch instructor_core instructor.launch
+
+# bring up the semi static transformer
+roslaunch costar_bringup semi_static.launch
+roslaunch instructor_core shoulder_smooth.launch
+
+# hand-eye calibration
+rosrun instructor_core shoulder_calibrate.py
+```
+
+### Bringing up individual components
+
+Bring up AR Track Alvar:
+```
+roslaunch instructor_core shoulder_alvar.launch camera_2_name:=camera
+```
+
+MoveIt:
+```
+roslaunch moveit_collision_environment colision_env.launch mesh_source:=$(find moveit_collision_environment)/data/mesh tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world
+```
+
+## Testing things in Simulation [INCOMPLETE]
+
+You can bring many parts of the software up in simulation. This is not fully-featured yet, but it gives you a way to set waypoints and play around with the UI at least.
 
 Basic execution for a simulation:
 ```
@@ -18,26 +61,6 @@ Otherwise:
 roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
 roslaunch instructor_core instructor.launch
 roslaunch costar_bringup iiwa14_s_model.launch
-```
-
-## Starting CoSTAR for the LBR iiwa with GRL
-
-Making sure you are connected to the robot:
-
-```
-ping 192.170.10.2 # connection to FRI port for joint states
-ping 172.31.1.146 # connection to Robotiq 3-finger gripper to send commands
-ping 172.31.1.147 # connection to JAVA port on the robot to send commands
-```
-
-Bring up AR Track Alvar:
-```
-roslaunch instructor_core shoulder_alvar.launch camera_2_name:=camera
-```
-
-MoveIt:
-```
-roslaunch moveit_collision_environment colision_env.launch mesh_source:=$(find moveit_collision_environment)/data/mesh tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world
 ```
 
 ## Packages
