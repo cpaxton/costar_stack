@@ -1,12 +1,11 @@
 <launch>
   <!-- Objects file Name without extension. Support several file by giving `,`, such as object:=object1,object2,...,objectn-->
   <arg name="object"              default="drill" />
-  <arg name="bg_names"            default="UR5_2" />
+  <arg name="bg_names"            default="UR5" />
   <arg name="training_folder"     default="$(find sp_segmenter)/data/training/" />
 
   <!-- spCompactNode output path args -->
   <arg name="out_fea_path"        default="$(arg training_folder)/fea_pool/" />
-  <arg name="out_svm_path"        default="$(arg training_folder)/svm_pool/"/>
 
 
   <!-- for debugging purpose, use current fea from out_fea_path and do svm -->
@@ -18,7 +17,6 @@
     <param name="obj_names"       type="str" value="$(arg object)" />
     <param name="bg_names"        type="str" value="$(arg bg_names)" />
     <param name="out_fea_path"    type="str" value="$(arg out_fea_path)" />
-    <param name="out_svm_path"    type="str" value="$(arg out_svm_path)" />
     <param name="skip_fea"    	 type="bool" value="$(arg skip_fea)" />
   </node>
 

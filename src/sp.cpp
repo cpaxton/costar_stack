@@ -10,8 +10,8 @@ spExt::spExt(float ss_)
     down_ss = ss_;
     clear();
     
-    voxel_resol = 0.005; // 0.005
-    seed_resol = 0.1;    //0.005
+    voxel_resol = 0.005; // 0.005m
+    seed_resol = 0.1;    //0.
     color_w = 1.0;
     spatial_w = 0.3;
     normal_w = 0.9;
@@ -269,7 +269,9 @@ void spPooler::lightInit(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler& 
     computeNormals(cloud, cloud_normals, radius);
     data = convertPCD(cloud, cloud_normals);
     
+    // ext_sp is for superpixel extraction from the segmented point cloud
     ext_sp.setSS(down_ss);
+    ext_sp.setParams(0.005, 0.05, 0.0, 1.0, 0.0);   //TODO, from ROS main
     ext_sp.clear();
     ext_sp.LoadPointCloud(cloud);
     data.down_cloud  = ext_sp.getCloud();

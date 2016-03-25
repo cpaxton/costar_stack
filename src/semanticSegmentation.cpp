@@ -79,6 +79,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     
     lab_pooler_set.resize(6);
     binary_models.resize(3);
+    multi_models.resize(3);
     model_name = std::vector<std::string>(OBJECT_MAX, "");
     
     if(loadTable)
@@ -116,7 +117,6 @@ void semanticSegmentation::initializeSemanticSegmentation()
         pc_sub = nh.subscribe(POINTS_IN,1,&semanticSegmentation::updateCloudData,this);
     }
     
-    objrec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
 
     std::string svm_path,shot_path;
     //get path parameter for svm and shot
@@ -133,12 +133,15 @@ void semanticSegmentation::initializeSemanticSegmentation()
     
     //get symmetry parameter of the objects
     objectDict = fillDictionary(nh, cur_name);
-    
+
+    objrec.resize(cur_name.size());
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
     {
         // add all models. model_id starts in model_name start from 1.
         std::string temp_cur = cur_name.at(model_id);
-        objrec->AddModel(mesh_path + temp_cur, temp_cur);
+
+        objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
+        objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
         model_name[model_id+1] = temp_cur;
         model_name_map[temp_cur] = model_id+1;
         ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
@@ -146,7 +149,14 @@ void semanticSegmentation::initializeSemanticSegmentation()
         mesh_set.push_back(mesh_buf);
         objectTFIndex[temp_cur] = 0;
     }
-
+/***************************
+    objrec[1]->AddModel(mesh_path + "link", "link");
+    objrec[2]->AddModel(mesh_path + "node", "node");
+    // model_name[model_id+1] = temp_cur;
+    // model_name_map[temp_cur] = model_id+1;
+    ModelT mesh_buf = LoadMesh(mesh_path + "link.obj", "link");
+    mesh_set.push_back(mesh_buf);
+***************************/
 
     hie_producer = Hier_Pooler(radius);
     hie_producer.LoadDict_L0(shot_path, "200", "200");
@@ -159,12 +169,14 @@ void semanticSegmentation::initializeSemanticSegmentation()
         lab_pooler_set[i] = cur_pooler;
     }
     
-    for( int ll = 0 ; ll <= 2 ; ll++ )
+    for( int ll = 0 ; ll < 3 ; ll++ )
     {
         std::stringstream ss;
         ss << ll;
         
         binary_models[ll] = load_model((svm_path+"binary_L"+ss.str()+"_f.model").c_str());
+        if (cur_name.size() > 1) // doing more than one object classisfication
+            multi_models[ll] = load_model((svm_path+"multi_L"+ss.str()+"_f.model").c_str());
     }
     
     if( view_flag )
@@ -178,8 +190,12 @@ void semanticSegmentation::initializeSemanticSegmentation()
 }
 
 semanticSegmentation::~semanticSegmentation(){
-    for( int ll = 0 ; ll <= 2 ; ll++ )
+    for( int ll = 0 ; ll < 3 ; ll++ )
+    {
         free_and_destroy_model(&binary_models[ll]);
+        if (mesh_set.size() > 1)
+            free_and_destroy_model(&multi_models[ll]);
+    }
 }
 
 void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
@@ -254,81 +270,76 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         std::cerr<<"Visualize whole screen"<<std::endl;
         viewer->removeAllPointClouds();
         viewer->addPointCloud(scene_f, "whole_scene");
-        viewer->spinOnce(2000);
+        viewer->spin();
         viewer->removeAllPointClouds();
     }
-    
+    // std::vector< pcl::PointCloud<myPointXYZ>::Ptr > &cloud_set
     spPooler triple_pooler;
     triple_pooler.lightInit(scene_f, hie_producer, radius, down_ss);
     std::cerr << "LAB Pooling!" << std::endl;
     triple_pooler.build_SP_LAB(lab_pooler_set, false);
-    
-    if(viewer)
+
+    // pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
+    // std::vector< std::vector<PR_ELEM> > cur_fore_pr(3);
+    for( int ll = 0 ; ll <= 1 ; ll++ )
     {
-        viewer->removeAllPointClouds();
-    }
-    
-    pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
-    for( int ll = 0 ; ll <= 2 ; ll++ )
-    {
-        std::cerr << "L" << ll <<" Inference!" << std::endl;
         bool reset_flag = ll == 0 ? true : false;
-        if( ll >= 1 ) {
+        if( ll >= 1 )
             triple_pooler.extractForeground(false);
-        }
         triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
-        
     }
+
+    triple_pooler.extractForeground(true);
+    if (mesh_set.size() > 1) // more than one objects, do multi object classification
+    {
+        pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
+        for( int ll = 1 ; ll <= 1 ; ll++ )
+        {
+           bool reset_flag = ll == 1 ? true : false;
+           triple_pooler.InputSemantics(multi_models[ll], ll, reset_flag, false);
+        }
+    }
+    pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
+    label_cloud = triple_pooler.getSemanticLabels();
+    triple_pooler.reset();
     
-    foreground_cloud = triple_pooler.getSemanticLabels();
     if( viewer )
     {
-        //viewer->addPointCloud(final_cloud, "labels");
         std::cerr<<"Visualize after segmentation"<<std::endl;
-        visualizeLabels(foreground_cloud, viewer, color_label);
+        visualizeLabels(label_cloud, viewer, color_label);
     }
-    
-    std::size_t numberOfObject = mesh_set.size();
-    for(  size_t l = 0 ; l < foreground_cloud->size() ;l++ )
-    {
-        //red point cloud: background for object > 1?
-        if( numberOfObject == 0 || ( foreground_cloud->at(l).label > 1 && numberOfObject > 1 ))
-            final_cloud.push_back(foreground_cloud->at(l));
-    }
-    
-    std::vector<poseT> all_poses;
-    /* POSE */
-    if (compute_pose) {
-        for (int i = 0; i < 1; ++i) { // was 99
-            std::vector<poseT> all_poses1;
-            
-            pcl::PointCloud<myPointXYZ>::Ptr foreground(new pcl::PointCloud<myPointXYZ>());
-            pcl::copyPointCloud(final_cloud, *foreground);
-            
+
+    std::vector< pcl::PointCloud<myPointXYZ>::Ptr > cloud_set(mesh_set.size()+1); // separate the clouds
+    for( size_t j = 0 ; j < cloud_set.size() ; j++ )
+        cloud_set[j] = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>()); // object cloud starts from 1
+    std::cerr<<"Split cloud after segmentation"<<std::endl;
+    splitCloud(label_cloud, cloud_set);
+
+    std::vector<poseT> all_poses1;
+    std::cerr<<"Calculate poses"<<std::endl;
+    #pragma omp parallel for schedule(dynamic, 1)
+    for(size_t j = 1 ; j <= mesh_set.size(); j++ ){ // loop over all objects
+        if( cloud_set[j]->empty() == false )
+        {
+            std::vector<poseT> tmp_poses;
             if (bestPoseOnly)
-                objrec->StandardBest(foreground, all_poses1);
+                objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
             else
-                objrec->StandardRecognize(foreground, all_poses1,minConfidence);
-            
-            pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
-            pcl::copyPointCloud(*scene_f, *scene_xyz);
-            
-            all_poses =  RefinePoses(scene_xyz, mesh_set, all_poses1);
-            std::cout << "# Poses found: " << all_poses.size() << std::endl;
-            
-            std::cout<<"done objrec ransac"<<std::endl;
-            if( viewer )
+                objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
+
+            #pragma omp critical
             {
-                std::cerr<<"Visualize with mesh"<<std::endl;
-                viewer->removeAllPointClouds();
-                viewer->addPointCloud(scene_f, "whole_scene");
-                objrec->visualize_m(viewer, all_poses, model_name_map, color_label);
-                viewer->spinOnce(2000);
-                objrec->clearMesh(viewer, all_poses);
-                viewer->removeAllPointClouds();
+                all_poses1.insert(all_poses1.end(), tmp_poses.begin(), tmp_poses.end());
             }
         }
     }
+
+    pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
+    pcl::copyPointCloud(*label_cloud, *scene_xyz);
+
+    std::vector<poseT> all_poses = all_poses1;
+    // RefinePoses(scene_xyz, mesh_set, all_poses1);
+
     // normalize symmetric object Orientation
     normalizeAllModelOrientation (all_poses, objectDict);
     return all_poses;

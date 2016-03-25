@@ -1,6 +1,6 @@
 <launch>
   <!-- Object file Name without extension-->
-  <arg name="object"         default="drill" doc="object mesh name" />
+  <arg name="object"         default="drill" doc="object mesh name. Pay attention to the object order if using multiple objects by following the order of object in the svm_path folder name" />
   <arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />
   <arg name="svm_path"       default="UR5_drill_svm" doc="Object svm folder name located in data path" />
 

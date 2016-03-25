@@ -67,7 +67,7 @@ By default, this roslaunch is exactly the same as ```rosrun sp_segmenter SPSegme
 
 It is possible to pass some arguments to set the object type, input point cloud topic, and the segmenter outputs.
 Args list:
-object		:	the object file name without extension. Support multiple object by adding ```,``` between object name. Default: ```drill```
+object		:	the object file name without extension. Support multiple object by adding ```,``` between object name. Pay attention to object order if using multiple object by following svm_path object order (Ignore background tag such as UR5).Default: ```drill```
 minConfidence	:	Minimum confidence for object ransac to be considered for pose publishing. Default: ```0.2```
 aboveTable  :   Minimum distance from table for object segmentation in meters. Default: ```0.01```
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```

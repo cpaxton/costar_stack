@@ -57,9 +57,10 @@ void extractFea(std::string root_path, std::string out_fea_path,
 	std::vector<std::string> obj_names, std::vector<std::string>  bg_names,
 	feaExtractor object_ext, feaExtractor background_ext)
 {
-    int obj_sample_num = 10;
+    // the sample number extracted in one pcd files. 1200 foreground 800 background
+    int obj_sample_num = 66;
     int bg_sample_num = 100;
-    int cur_order_max = -1;
+    int cur_order_max = 3;
 
 	for( size_t i = 0 ; i < obj_names.size() ; i++ )
     {
@@ -117,11 +118,19 @@ int main(int argc, char** argv)
     std::vector<std::string> obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
     
     // adding background classes by reading from nodeHandle args
-    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5_2"));
-    
+    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5"));
+
     std::string out_fea_path, out_svm_path;
     nh.param("out_fea_path",out_fea_path,std::string("fea_pool/"));
-    nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
+    std::stringstream ss;
+    ss << root_path << "/";
+    for (size_t i = 0; i < obj_names.size(); ++i)
+    {
+        ss << obj_names.at(i);
+        if (i < obj_names.size()-1) ss << "_";
+    }
+    out_svm_path = ss.str();
+    // nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
 
     boost::filesystem::create_directories(out_fea_path);
     boost::filesystem::create_directories(out_svm_path);
@@ -142,52 +151,106 @@ int main(int argc, char** argv)
     // extracting features for object classes
     if (!skip_fea) extractFea(root_path,out_fea_path,obj_names,bg_names,object_ext,background_ext);
 
-    int cur_order_max = 3;
-    // Reading features to train svm
-    float CC = 0.001; // weight of incorrectly classified examples (false positive cost)
-    std::vector< std::pair<int, int> > piece_inds;
-    for( int ll = 0 ; ll < cur_order_max ; ll++ )
+    // binary classification
     {
-        std::stringstream mm;
-        mm << ll;
-        std::vector<problem> train_prob_set;
-        // looping over all classes including background classes
-        for( size_t i = 0 ; i <= obj_names.size()  ; i++ )
+        int cur_order_max = 3;
+        // Reading features to train svm
+        float CC = 0.001; // weight of incorrectly classified examples (false positive cost) // CC = [1, 0.1, 0.01, 0.001, 0.0001]
+        std::vector< std::pair<int, int> > piece_inds;
+        for( int ll = 0 ; ll < cur_order_max ; ll++ )
         {
-            std::stringstream ss;
-            ss << i;
-            
-            std::string train_name = out_fea_path + "train_"+ss.str()+"_L"+mm.str()+".smat";
-            if( exists_test(train_name) == false )
-                continue;
-            
-            std::cerr << "Reading: " << train_name << std::endl;
-            std::vector<SparseDataOneClass> cur_data(1);
-            
-            int fea_dim = readSoluSparse_piecewise(train_name, cur_data[0].fea_vec, piece_inds);
-            cur_data[0].label = i+1; 
+            std::stringstream mm;
+            mm << ll;
+            std::vector<problem> train_prob_set;
+            // looping over all classes including background classes
+            for( size_t i = 0 ; i <= obj_names.size()  ; i++ )
+            {
+                std::stringstream ss;
+                ss << i;
+                
+                std::string train_name = out_fea_path + "train_"+ss.str()+"_L"+mm.str()+".smat";
+                if( exists_test(train_name) == false )
+                    continue;
+                
+                std::cerr << "Reading: " << train_name << std::endl;
+                std::vector<SparseDataOneClass> cur_data(1);
+                
+                int fea_dim = readSoluSparse_piecewise(train_name, cur_data[0].fea_vec, piece_inds);
+                cur_data[0].label = i > 0 ? 2 : 1; 
 
-            problem tmp;
-            FormFeaSparseMat(cur_data, tmp, cur_data[0].fea_vec.size(), fea_dim);
-            train_prob_set.push_back(tmp);
+                problem tmp;
+                FormFeaSparseMat(cur_data, tmp, cur_data[0].fea_vec.size(), fea_dim);
+                train_prob_set.push_back(tmp);
+            }
+            problem train_prob;
+            train_prob.l = 0;
+            mergeProbs(train_prob_set, train_prob);
+
+            parameter param;
+            GenSVMParamter(param, CC);
+            std::cerr<<std::endl<<"Starting Liblinear Training..."<<std::endl;
+
+            model* cur_model = train(&train_prob, &param);
+            save_model((out_svm_path + "binary_L"+mm.str()+"_f.model").c_str(), cur_model);
+            
+            destroy_param(&param);
+            free(train_prob.y);
+            for( int i = 0 ; i < train_prob.l ; i++ )
+                free(train_prob.x[i]);
+            free(train_prob.x);
         }
-        problem train_prob;
-        train_prob.l = 0;
-        mergeProbs(train_prob_set, train_prob);
-
-        parameter param;
-        GenSVMParamter(param, CC);
-        std::cerr<<std::endl<<"Starting Liblinear Training..."<<std::endl;
-
-        model* cur_model = train(&train_prob, &param);
-        save_model((out_svm_path + "svm_L"+mm.str()+".model").c_str(), cur_model);
-        
-        destroy_param(&param);
-        free(train_prob.y);
-        for( int i = 0 ; i < train_prob.l ; i++ )
-            free(train_prob.x[i]);
-        free(train_prob.x);
     }
+      
+    if (obj_names.size() > 1) // multi classification
+    {
+        int cur_order_max = 3;
+        // Reading features to train svm
+        float CC = 0.001; // weight of incorrectly classified examples (false positive cost)
+        std::vector< std::pair<int, int> > piece_inds;
+        for( int ll = 0 ; ll < cur_order_max ; ll++ )
+        {
+            std::stringstream mm;
+            mm << ll;
+            std::vector<problem> train_prob_set;
+            // looping over all classes including background classes
+            for( size_t i = 1 ; i <= obj_names.size()  ; i++ )
+            {
+                std::stringstream ss;
+                ss << i;
+                
+                std::string train_name = out_fea_path + "train_"+ss.str()+"_L"+mm.str()+".smat";
+                if( exists_test(train_name) == false )
+                    continue;
+                
+                std::cerr << "Reading: " << train_name << std::endl;
+                std::vector<SparseDataOneClass> cur_data(1);
+                
+                int fea_dim = readSoluSparse_piecewise(train_name, cur_data[0].fea_vec, piece_inds);
+                cur_data[0].label = i + 1; // label below 1: background, so object label must be > 1. Need to be clarified
+
+                problem tmp;
+                FormFeaSparseMat(cur_data, tmp, cur_data[0].fea_vec.size(), fea_dim);
+                train_prob_set.push_back(tmp);
+            }
+            problem train_prob;
+            train_prob.l = 0;
+            mergeProbs(train_prob_set, train_prob);
+
+            parameter param;
+            GenSVMParamter(param, CC);
+            std::cerr<<std::endl<<"St100000arting Liblinear Training..."<<std::endl;
+
+            model* cur_model = train(&train_prob, &param);
+            save_model((out_svm_path + "multi_L"+mm.str()+"_f.model").c_str(), cur_model);
+            
+            destroy_param(&param);
+            free(train_prob.y);
+            for( int i = 0 ; i < train_prob.l ; i++ )
+                free(train_prob.x[i]);
+            free(train_prob.x);
+        }
+    }
+
     
     std::cerr<<std::endl<<"Training complete"<<std::endl;
     ros::shutdown();
