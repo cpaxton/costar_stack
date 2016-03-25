@@ -1,6 +1,6 @@
 <launch>
   <!-- main collision environment parameter -->
-  <arg name="mesh_source"         default="$(find moveit_collision_environment)/data/mesh" 
+  <arg name="mesh_source"         default="$(find moveit_collision_environment)/" 
     doc="Location of the folder that contains the mesh object files" />
   <arg name="file_extension"      default="stl" 
     doc="The extension that used by all mesh files. Supports assimp importable extension, such as: stl, obj, dae, blend" />

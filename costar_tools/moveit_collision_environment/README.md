@@ -54,3 +54,8 @@ to keep updating table collision object for each service call
 3. Have another rosnode that publishes object TF in the specified TF name format and/or put the tableTF object in the middle of the table.
 4. Run `rosservice call /planningSceneGenerator/planningSceneGenerator` to update the environment according to TF that correspond to the object naming convention and table TF if available.
 5. If removing the tableTF object is necessary or you want to keep the table collision object constant, use `rosparam set /planningSceneGenerator/renewTable false` . This param will be read on each service call and enable/disable the table collision object update.
+
+For example:
+```
+roslaunch moveit_collision_environment colision_env.launch mesh_source:=$(find moveit_collision_environment)/data/mesh tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world
+```

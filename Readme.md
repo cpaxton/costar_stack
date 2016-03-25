@@ -20,6 +20,26 @@ roslaunch instructor_core instructor.launch
 roslaunch costar_bringup iiwa14_s_model.launch
 ```
 
+## Starting CoSTAR for the LBR iiwa with GRL
+
+Making sure you are connected to the robot:
+
+```
+ping 192.170.10.2 # connection to FRI port for joint states
+ping 172.31.1.146 # connection to Robotiq 3-finger gripper to send commands
+ping 172.31.1.147 # connection to JAVA port on the robot to send commands
+```
+
+Bring up AR Track Alvar:
+```
+roslaunch instructor_core shoulder_alvar.launch camera_2_name:=camera
+```
+
+MoveIt:
+```
+roslaunch moveit_collision_environment colision_env.launch mesh_source:=$(find moveit_collision_environment)/data/mesh tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world
+```
+
 ## Packages
 
   * Bringup: launch tools
