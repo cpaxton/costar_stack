@@ -28,11 +28,17 @@ roslaunch sp_segmenter SPCompact.launch object:=object1,object2,object3 bg_names
 
 By default, this will read all pcd files in the $(find sp_segmenter)/data/training/(object OR background folder) for every object and background that being passed to roslaunch.
 Separate every object/background name with `,` 
+
 Args list:
+
 object		:	Object folder name without extension. Supports multiple object by inserting `,` between object folder name. Default: ```drill```
+
 bg_names	:	Background folder name without extension. Supports multiple object by inserting `,` between background folder name. Default: ```UR5_2```
+
 training_folder	:	Training folder directory where the object and background folder can be found. Default: ```$(find sp_segmenter)/data/training/```
+
 out_fea_path	:	Output fea folder. Default: ```$(arg training_folder)/fea_pool/```
+
 out_svm_path	:	Output svm folder. Default: ```$(arg training_folder)/svm_pool/```
 
 
@@ -67,13 +73,20 @@ By default, this roslaunch is exactly the same as ```rosrun sp_segmenter SPSegme
 
 It is possible to pass some arguments to set the object type, input point cloud topic, and the segmenter outputs.
 Args list:
+
 object		:	the object file name without extension. Support multiple object by adding ```,``` between object name. Pay attention to object order if using multiple object by following svm_path object order (Ignore background tag such as UR5).Default: ```drill```
+
 minConfidence	:	Minimum confidence for object ransac to be considered for pose publishing. Default: ```0.2```
 aboveTable  :   Minimum distance from table for object segmentation in meters. Default: ```0.01```
+
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
+
 pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
+
 poses_out	:	Output poses topic name. Default: ```/SPSegmenterNode/POSES_OUT```
+
 data_path	:	Location of data folder. Default: ```$(find sp_segmenter)/data```
+
 svm_path	:	SVM folder directory in data folder to be loaded. Default: ```UR5_drill_svm```
 
 Example:
