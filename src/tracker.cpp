@@ -2,6 +2,7 @@
 #include "sp_segmenter/PnPUtil.h"
 
 #include <cv_bridge/cv_bridge.h>
+#include <unsupported/Eigen/MatrixFunctions>
 
 using namespace cv;
 
@@ -14,6 +15,7 @@ Tracker::Tracker(): nh("~"), has_cam_info(false)
   nh.param("max_tracking_reproj_error", max_tracking_reproj_error, 3.0);
   nh.param("show_tracking_debug", show_tracking_debug, false);
   nh.param("max_keypoints", max_kps, 50);
+  nh.param("rotation_smoothing_factor", rot_smooth_fac, 0.5);
 
   cam_info_sub = nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO_IN, 1000,
     &Tracker::cameraInfoCallback,
@@ -138,8 +140,14 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
     }
 
     KLTTracker& klt_tracker = search->second.klt_tracker;
-
-    if(klt_tracker.getNumPointsTracked() >= max_kps/2.)
+  
+   
+    unsigned int num_kps;
+    {
+      boost::mutex::scoped_lock lock(klt_mutex); 
+      num_kps = klt_tracker.getNumPointsTracked();
+    }
+    if(num_kps >= max_kps/2.)
       continue;
 
     ROS_INFO("Generating new tracking points for model \"%s\"", poses.at(i).model_name.c_str());
@@ -172,7 +180,12 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
     // Backproject to 3D
     // Fast-forward tracking of new 2D points to current frame
     std::vector<Mat> ff_imgs_i = ff_imgs;
-    if(klt_tracker.hasTracking())
+    bool has_tracking;
+    {
+      boost::mutex::scoped_lock lock(klt_mutex); 
+      has_tracking = klt_tracker.hasTracking();
+    }
+    if(has_tracking)
     {
       ff_imgs_i.push_back(klt_tracker.getLastImage());
     }
@@ -330,23 +343,38 @@ void Tracker::imageCallback(const sensor_msgs::ImageConstPtr &im)
         &pnpReprojError);
       if(inlierIdx.size() > min_tracking_inliers && pnpReprojError < max_tracking_reproj_error)
       {
-        titr->second.current_pose = tfran;
+        titr->second.current_pose.col(3) = tfran.col(3);
+        //Eigen::Matrix3f smooth_log = 
+        //  rot_smooth_fac*(titr->second.current_pose.topLeftCorner<3,3>().transpose()*tfran.topLeftCorner<3,3>()).log();
+          //rot_smooth_fac*titr->second.current_pose.topLeftCorner<3,3>().log()
+          //+ (1-rot_smooth_fac)*tfran.topLeftCorner<3,3>().log();
+        titr->second.current_pose.topLeftCorner<3,3>() = tfran.topLeftCorner<3,3>(); 
+          //titr->second.current_pose.topLeftCorner<3,3>()*smooth_log.exp();//smooth_log.exp();
+        
 
         // Publish pose
-        publishTf(tfran, titr->first + std::string("_tracking"), im->header.frame_id, im->header.stamp);
+        publishTf(titr->second.current_pose, titr->first + std::string("_tracking"),
+          im->header.frame_id, im->header.stamp);
         if(show_tracking_debug)
         {
           cv::Mat tf_viz;
-          createTfViz(image, tf_viz, tfran, K_eig);
+          createTfViz(image, tf_viz, titr->second.current_pose, K_eig);
           namedWindow(std::string("Object Transform ") + titr->first, WINDOW_NORMAL);
           imshow(std::string("Object Transform ") + titr->first, tf_viz);
         }
+        titr->second.tracking_failures = 0;
       }
       else
       {
+        titr->second.tracking_failures++;
         std::cout << "Tracker: Bad tracking: #inliers=" << inlierIdx.size() << " reproj error="
           << pnpReprojError
           << std::endl;
+        if(titr->second.tracking_failures >=25)
+        {
+          boost::mutex::scoped_lock lock(klt_mutex);
+          titr->second.klt_tracker.clear();
+        }
       }
     }
   }      

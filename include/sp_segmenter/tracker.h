@@ -32,7 +32,8 @@ class Tracker
 
   struct TrackingInfo
   {
-    TrackingInfo(ModelT mesh, unsigned int max_kps): mesh(mesh), klt_tracker(max_kps)
+    TrackingInfo(ModelT mesh, unsigned int max_kps): mesh(mesh), klt_tracker(max_kps),
+      tracking_failures(0)
     {
       current_pose.setIdentity();
     }
@@ -40,6 +41,7 @@ class Tracker
     ModelT mesh;
     Eigen::Matrix4f current_pose;
     ros::Time last_track_time;
+    unsigned int tracking_failures;
   };
   using TrackingMap = std::map<std::string, TrackingInfo>;
 
@@ -73,6 +75,7 @@ class Tracker
   tf::TransformBroadcaster br;
   
   double max_tracking_reproj_error;
+  double rot_smooth_fac;
   int min_tracking_inliers;
   bool show_tracking_debug;
   int max_kps;

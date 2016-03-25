@@ -22,6 +22,15 @@ bool KLTTracker::hasTracking()
  return m_ptIDs.size() > 0 && m_prevPts.size() > 0;
 }
 
+void KLTTracker::clear()
+{
+  m_prevPts.clear();
+  m_nextPts.clear();
+  m_tracked3dPts.clear();
+  m_ptIDs.clear();
+  m_prevImg = Mat(0,0,CV_8UC1);
+}
+
 cv::Mat KLTTracker::getLastImage()
 {
   return m_prevImg;
@@ -63,7 +72,7 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
     }
   );
   //std::random_shuffle(detected_pts.begin(), detected_pts.end());
-  unsigned int num_new_pts = min(detected_pts.size(), m_maxNumberOfPoints - m_ptIDs.size());
+  unsigned int num_new_pts = m_maxNumberOfPoints; //min(detected_pts.size(), m_maxNumberOfPoints - m_ptIDs.size());
 
   std::cout << "detected " << num_new_pts << " new pts" << std::endl;
   // Backproject points to 3D using depth data
@@ -77,6 +86,7 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
     if(pt_depth == 0 || pt_depth == -1 || std::isnan(pt_depth))
       continue;
 
+    std::cout << pt_depth << std::endl;
     Eigen::Vector3f backproj = K.inverse()*hkp;
     backproj /= backproj(2);    
     backproj *= pt_depth;
@@ -121,9 +131,12 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
     m_prevImg = inputFrames.back();
   // Add new points to tracker
   std::cout <<"adding " << prev_pts.size() << " new pts" << std::endl;
-  m_tracked3dPts.insert(m_tracked3dPts.end(), new_3d_pts.begin(), new_3d_pts.end());
-  m_prevPts.insert(m_prevPts.end(), prev_pts.begin(), prev_pts.end());
+  m_tracked3dPts = new_3d_pts;
+  m_prevPts = prev_pts;
+  //m_tracked3dPts.insert(m_tracked3dPts.end(), new_3d_pts.begin(), new_3d_pts.end());
+  //m_prevPts.insert(m_prevPts.end(), prev_pts.begin(), prev_pts.end());
   std::cout <<"pts_size=" << m_prevPts.size() << std::endl;
+  m_ptIDs.clear();
   for(unsigned int i = 0; i < new_3d_pts.size(); i++)
   {
     m_ptIDs.push_back(m_nextID++);

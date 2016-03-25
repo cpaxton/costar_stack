@@ -16,6 +16,7 @@ public:
   bool hasTracking();
   unsigned int getNumPointsTracked();
   cv::Mat getLastImage();
+  void clear();
 
 private:
   static bool processFrameInternal(const cv::Mat& prev_image, const cv::Mat& next_image,
