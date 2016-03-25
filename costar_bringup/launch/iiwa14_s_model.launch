@@ -4,6 +4,7 @@
   <arg name="sim" default="false"/>
   <arg name="start_semi_static" default="false"/>
   <arg name="start_camera" default="true"/>
+  <arg name="start_move_group" default="true"/>
 
   <param name="ee_frame" value="iiwa_link_ee"/>
   <param name="base_frame" value="iiwa_link_0"/>
@@ -26,8 +27,15 @@
     <param name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 
+  <!-- motion planning -->
+  <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
+    <param name="allow_trajectory_execution" value="false"/>
+  </include>
+
+  <!-- semi static transform for calibration -->
   <include if="$(arg start_semi_static)" file="$(find costar_bringup)/launch/semi_static.launch"/>
 
+  <!-- camera stuff -->
   <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
   </include>
 

@@ -49,6 +49,8 @@ class SimplePlanning:
 
         print "IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val)
 
+        #if ik_resp.error_code.val > 0:
+        #  return (ik_resp, None)
         #print ik_resp.solution
 
         ###############################
@@ -67,7 +69,7 @@ class SimplePlanning:
             joint.weight = 1.0
             goal.joint_constraints.append(joint)
 
-        return goal
+        return (ik_resp, goal)
 
 
     def getPlan(self,frame,q):
@@ -91,7 +93,12 @@ class SimplePlanning:
         motion_req.workspace_parameters.min_corner.z = -2.0
 
         # create the goal constraints
-        motion_req.goal_constraints.append(self.getConstraints(frame,q))
+        (ik_resp, goal) = self.getConstraints(frame,q)
+
+        #if (ik_resp.error_code.val > 0):
+        #  return (1,None)
+
+        motion_req.goal_constraints.append(goal)
         motion_req.group_name = self.group
         motion_req.num_planning_attempts = 10
         motion_req.allowed_planning_time = 5.0
@@ -114,4 +121,4 @@ class SimplePlanning:
 
         #print res
 
-        return res
+        return (res.error_code.val, res)

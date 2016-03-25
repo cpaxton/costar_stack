@@ -90,12 +90,12 @@ class SimpleIIWADriver:
             if q is None:
                 q = self.kdl_kin.inverse(T,None)
             
-            print self.q0
-            print q
-
-            res = self.planner.getPlan(req.target,self.q0)
+            (code,res) = self.planner.getPlan(req.target,self.q0)
 
             #pt.positions = q
+            if code > 0:
+              self.at_goal = True
+              return 'SUCCESS - at goal'
             if not res is None and len(res.planned_trajectory.joint_trajectory.points) > 0:
 
 
