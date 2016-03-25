@@ -14,6 +14,8 @@ from urdf_parser_py.urdf import URDF
 from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
 from pykdl_utils.kdl_kinematics import KDLKinematics
 
+from simple_planning import SimplePlanning
+
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm'}
 
 class SimpleIIWADriver:
@@ -38,6 +40,8 @@ class SimpleIIWADriver:
         #print self.tree.getNrOfSegments()
         #print self.chain.getNrOfJoints()
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
+
+        self.planner = SimplePlanning(base_link,end_link,"manipulator")
 
         self.MAX_ACC = 1;
         self.MAX_VEL = 1;
@@ -84,6 +88,8 @@ class SimpleIIWADriver:
             
             print self.q0
             print q
+
+            self.planner.getPlan(req.target,self.q0)
 
             pt.positions = q
 
