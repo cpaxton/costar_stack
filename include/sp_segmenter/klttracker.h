@@ -8,7 +8,7 @@ class KLTTracker
 {
 
 public:
-  KLTTracker();
+  KLTTracker(unsigned int max_kps);
   void initPointsAndFastforward(const std::vector<cv::Mat>& inputFrames, const cv::Mat& depth,
     const Eigen::Matrix3f& K, const Eigen::Matrix4f& inputTf, const cv::Mat& mask);
   virtual bool processFrame(const cv::Mat& inputFrame, cv::Mat& outputFrame,

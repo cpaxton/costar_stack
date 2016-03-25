@@ -13,6 +13,7 @@ Tracker::Tracker(): nh("~"), has_cam_info(false)
   nh.param("min_tracking_inliers", min_tracking_inliers, 8);
   nh.param("max_tracking_reproj_error", max_tracking_reproj_error, 3.0);
   nh.param("show_tracking_debug", show_tracking_debug, false);
+  nh.param("max_keypoints", max_kps, 50);
 
   cam_info_sub = nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO_IN, 1000,
     &Tracker::cameraInfoCallback,
@@ -34,7 +35,7 @@ void Tracker::monitorQueue()
 
 bool Tracker::addTracker(const ModelT& model)
 {
-  TrackingInfo ti(model);
+  TrackingInfo ti(model, max_kps);
 
   std::pair<TrackingMap::iterator, bool> res = trackers.insert(std::make_pair(model.model_label, ti));
   return res.second;
@@ -138,7 +139,7 @@ void Tracker::generateTrackingPoints(ros::Time stamp,  const std::vector<poseT>&
 
     KLTTracker& klt_tracker = search->second.klt_tracker;
 
-    if(klt_tracker.getNumPointsTracked() >= 100)
+    if(klt_tracker.getNumPointsTracked() >= max_kps/2.)
       continue;
 
     ROS_INFO("Generating new tracking points for model \"%s\"", poses.at(i).model_name.c_str());

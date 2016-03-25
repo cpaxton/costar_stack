@@ -32,7 +32,7 @@ class Tracker
 
   struct TrackingInfo
   {
-    TrackingInfo(ModelT mesh): mesh(mesh)
+    TrackingInfo(ModelT mesh, unsigned int max_kps): mesh(mesh), klt_tracker(max_kps)
     {
       current_pose.setIdentity();
     }
@@ -75,6 +75,7 @@ class Tracker
   double max_tracking_reproj_error;
   int min_tracking_inliers;
   bool show_tracking_debug;
+  int max_kps;
   std::string CAMERA_INFO_IN, IMAGE_IN, DEPTH_IN;
 };
 

@@ -1,13 +1,14 @@
 #include "sp_segmenter/klttracker.h"
 #include <iostream>
+#include <algorithm>
 
 using namespace Eigen;
 using namespace cv;
 
-KLTTracker::KLTTracker()
+KLTTracker::KLTTracker(unsigned int max_kps)
 {
   m_nextID = 0;
-  m_maxNumberOfPoints = 200;
+  m_maxNumberOfPoints = max_kps;
   m_fastDetector = cv::FastFeatureDetector::create(std::string("FAST"));
 }
 
@@ -55,7 +56,13 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
   std::vector<cv::Point3f> new_3d_pts;
   // Detect new points
   m_fastDetector->detect(inputFrames.at(0), detected_pts, mask);
-  std::random_shuffle(detected_pts.begin(), detected_pts.end());
+  std::sort(detected_pts.begin(), detected_pts.end(),
+    [](const cv::KeyPoint &a, const cv::KeyPoint& b) -> bool
+    { 
+      return a.response > b.response; 
+    }
+  );
+  //std::random_shuffle(detected_pts.begin(), detected_pts.end());
   unsigned int num_new_pts = min(detected_pts.size(), m_maxNumberOfPoints - m_ptIDs.size());
 
   std::cout << "detected " << num_new_pts << " new pts" << std::endl;

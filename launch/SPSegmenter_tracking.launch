@@ -12,6 +12,7 @@
   <arg name="min_tracking_inliers"     default="8" />
   <arg name="max_tracking_reproj_error"     default="3.0" />
   <arg name="enableTracking"     default="true" />
+  <arg name="show_tracking_debug"     default="false" />
 
 
   <!-- SPSegmenterNode subscriber/publisher args -->
@@ -38,6 +39,8 @@
     <param name="min_tracking_inliers"   type="int" value="$(arg min_tracking_inliers)" />
     <param name="max_tracking_reproj_error"   type="double" value="$(arg max_tracking_reproj_error)" />
     <param name="enableTracking"   type="bool" value="$(arg enableTracking)" />
+    <param name="show_tracking_debug"   type="bool" value="$(arg show_tracking_debug)" />
+    
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
