@@ -43,7 +43,7 @@ if __name__ == '__main__':
     rospy.init_node('point_cloud_recorder_node')
     obj_id = rospy.get_param('~id','unknown')
     #sub = rospy.Subscriber(topic,PointCloud2,cb)
-    s = rospy.Service('record_depth_registered', Empty, record)
+    s = rospy.Service('record_camera', Empty, record)
     rospy.loginfo("Ready to record!")
     rospy.spin()
 
