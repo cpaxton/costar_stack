@@ -247,14 +247,9 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
-<<<<<<< HEAD
-    
     hasTF = false;
-    
-=======
     nh.param("enableTracking", enableTracking, false);
 
->>>>>>> 2835385eeffa173ceb701c60a71913f90a2913b2
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
     else

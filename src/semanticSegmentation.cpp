@@ -562,7 +562,7 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     std::cerr << "Object In gripper segmentation done.\n";
     bestPoseOnly = bestPoseOriginal;
     this->doingGripperSegmentation = false;
-    
+    hasTF = true;
     response.result = "Object In gripper segmentation done.\n";
     return true;
 }
