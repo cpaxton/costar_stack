@@ -8,6 +8,7 @@
 #include "sp_segmenter/refinePoses.h"
 #include "sp_segmenter/common.h"
 #include "sp_segmenter/stringVectorArgsReader.h"
+#include "sp_segmenter/tracker.h"
 
 // ros stuff
 #include <ros/ros.h>
@@ -34,7 +35,7 @@ objectRtree sp_segmenter_poses;
 std::map<std::string, objectSymmetry> objectDict;
 std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
 
-bool compute_pose = false;
+bool compute_pose = true;
 bool view_flag = false;
 pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
@@ -48,6 +49,9 @@ double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
 double minConfidence;
+bool enableTracking;
+
+boost::shared_ptr<Tracker> tracker;
     
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
@@ -58,6 +62,9 @@ std::string POINTS_IN, POINTS_OUT, POSES_OUT;
 ros::Publisher pc_pub;
 ros::Publisher pose_pub;
 ros::Subscriber pc_sub;
+
+
+sensor_msgs::CameraInfo cam_info;
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 
@@ -79,6 +86,8 @@ pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr 
 
 
 /*********************************************************************************/
+
+
 
 void callback(const sensor_msgs::PointCloud2 &pc) {
 
@@ -150,10 +159,12 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	toROSMsg(*final_cloud,output_msg);
 	output_msg.header.frame_id = pc.header.frame_id;
 	pc_pub.publish(output_msg);
+  
 
 	/* POSE */
 	if (compute_pose) {
 
+    ROS_INFO("Computing poses");
 		geometry_msgs::PoseArray msg;
 		msg.header.frame_id = pc.header.frame_id;
 		for (int i = 0; i < 1; ++i) { // was 99
@@ -194,8 +205,13 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
 				msg.poses.push_back(pmsg);
 			}
-
 			std::cout<<"done objrec ransac"<<std::endl;
+
+      if(enableTracking)
+      {
+        tracker->generateTrackingPoints(pc.header.stamp, all_poses);
+      }
+
 			if( viewer )
 			{
 				std::cout<<"VISUALIZING"<<std::endl;
@@ -231,9 +247,14 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
+<<<<<<< HEAD
     
     hasTF = false;
     
+=======
+    nh.param("enableTracking", enableTracking, false);
+
+>>>>>>> 2835385eeffa173ceb701c60a71913f90a2913b2
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
     else
@@ -243,6 +264,7 @@ int main(int argc, char** argv)
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
     nh.param("pairWidth", pairWidth, 0.05);
     pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
+ 
 
     objrec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
@@ -354,10 +376,25 @@ int main(int argc, char** argv)
         viewer->setSize(1280, 960);
     }
 
+    if(enableTracking)
+    {
+      tracker = boost::shared_ptr<Tracker>(new Tracker());
+      for(ModelT& model : mesh_set)
+      {
+         
+        if(!tracker->addTracker(model))
+        {
+          ROS_ERROR("Tried to add duplicate model name to tracker");
+          return -1;
+        }
+      }
+    }
+
     ros::spin();
     
     for( int ll = 0 ; ll <= 2 ; ll++ )
         free_and_destroy_model(&binary_models[ll]);
+
 //    for( int ll = 1 ; ll <= 4 ; ll++ )
 //        free_and_destroy_model(&multi_models[ll]);
     

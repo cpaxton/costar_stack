@@ -50,7 +50,8 @@
   <build_depend>nodelet</build_depend>
   <build_depend>greedy_objrec_ransac</build_depend>
   <build_depend>object_recognition_msgs</build_depend>
-  
+  <build_depend>cv_bridge</build_depend>
+
   <run_depend>sensor_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>pcl_ros</run_depend>
@@ -60,6 +61,7 @@
   <run_depend>nodelet</run_depend>
   <run_depend>greedy_objrec_ransac</run_depend>
   <run_depend>object_recognition_msgs</run_depend>
+  <run_depend>cv_bridge</run_depend>
 
   <!-- needed for SPSegmenterServer -->
   <build_depend>message_generation</build_depend>
