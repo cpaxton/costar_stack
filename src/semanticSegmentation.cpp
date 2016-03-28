@@ -22,6 +22,7 @@ void semanticSegmentation::setNodeHandle(const ros::NodeHandle &nh)
     initializeSemanticSegmentation(); // initialize all variables before doing semantic segmentation
     this->classReady = true;
     this->doingGripperSegmentation = false;
+    this->number_of_segmentation_done = 0;
 }
 
 semanticSegmentation::semanticSegmentation(int argc, char** argv, const ros::NodeHandle &nh)
@@ -120,6 +121,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         pc_sub = nh.subscribe(POINTS_IN,1,&semanticSegmentation::updateCloudData,this);
     }
     
+    detected_object_pub = nh.advertise<costar_objrec_msgs::DetectedObjectList>("detected_object_list",1);
 
     std::string svm_path,shot_path;
     //get path parameter for svm and shot
@@ -432,7 +434,10 @@ void semanticSegmentation::populateTFMapFromTree()
   
   std::vector<value> sp_segmenter_detectedPoses = getAllNodes(segmentedObjectTree);
   segmentedObjectTFMap.clear();
-  
+  costar_objrec_msgs::DetectedObjectList object_list;
+  object_list.header.seq = ++(this->number_of_segmentation_done);
+  object_list.header.stamp = ros::Time::now();
+  object_list.header.frame_id =  inputCloud.header.frame_id;
   for (std::size_t i = 0; i < sp_segmenter_detectedPoses.size(); i++)
   {
     const value * v = &sp_segmenter_detectedPoses.at(i);
@@ -444,7 +449,21 @@ void semanticSegmentation::populateTFMapFromTree()
     ss << "/instructor_landmark/objects/" << p->model_name << "/" << &(std::get<1>(*v).index);
     
     ros::param::set(ss.str(), objectTmp.TFnames);
+    std::stringstream ss2;
+    ss2 << &(std::get<1>(*v).tfName);
+    costar_objrec_msgs::DetectedObject object_tmp;
+  	object_tmp.id = ss2.str();
+  	object_tmp.symmetry.x_rotation = objectDict[ p->model_name ].roll;
+  	object_tmp.symmetry.y_rotation = objectDict[ p->model_name ].pitch;
+  	object_tmp.symmetry.z_rotation = objectDict[ p->model_name ].yaw;
+  	object_tmp.symmetry.x_symmetries = std::floor(360.0 / objectDict[ p->model_name ].roll);
+  	object_tmp.symmetry.y_symmetries = std::floor(360.0 / objectDict[ p->model_name ].pitch);
+  	object_tmp.symmetry.z_symmetries = std::floor(360.0 / objectDict[ p->model_name ].yaw);
+  	object_tmp.object_class = p->model_name;
+  	object_list.objects.push_back(object_tmp);
   }
+
+  detected_object_pub.publish(object_list);
 }
 
 bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)

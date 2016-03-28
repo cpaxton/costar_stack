@@ -21,7 +21,9 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
-#include <object_recognition_msgs/RecognizedObjectArray.h>
+
+#include <costar_objrec_msgs/DetectedObject.h>
+#include <costar_objrec_msgs/DetectedObjectList.h>
 
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
@@ -67,9 +69,12 @@ private:
     sensor_msgs::PointCloud2 inputCloud; // cache the point cloud
     pcl::PointCloud<PointT>::Ptr tableConvexHull; // for object in table segmentation
     double aboveTable; // point cloud need to be this value above the table in meters
+
+    // Publisher related
     std::string POINTS_IN, POINTS_OUT, POSES_OUT;
-    ros::Publisher pc_pub, pose_pub, objRecognition_pub;
+    ros::Publisher pc_pub, pose_pub, detected_object_pub;
     ros::Subscriber pc_sub;
+    unsigned int number_of_segmentation_done;
     
     // Segmentation related
     bool compute_pose;
