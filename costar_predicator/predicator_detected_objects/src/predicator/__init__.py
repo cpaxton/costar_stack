@@ -1,1 +1,1 @@
-from detected_objects.py import *
+from detected_objects import *
