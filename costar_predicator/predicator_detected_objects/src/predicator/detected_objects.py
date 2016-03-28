@@ -15,7 +15,7 @@ class DetectedObjectsPublisher:
         true_msg = PredicateList()
         valid_msg = ValidPredicates()
 
-
+        
 
         self.pub.publish(true_msg)
         self.vpub.publish(valid_msg)
