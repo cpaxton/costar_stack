@@ -39,7 +39,7 @@
   <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
   </include>
 
-  <node pkg="predicator_detect_objects" name="predicator_detect_objects_node" type="predicator_detect_objects.py">
+  <node pkg="predicator_detected_objects" name="predicator_detected_objects_node" type="predicator_detect_objects.py">
     <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
   </node>
 

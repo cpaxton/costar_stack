@@ -17,3 +17,6 @@ class TrajectoryRecorder:
         pt.effort = msg.effort
         self.traj.points.append(pt)
         print self.traj
+
+    def save(self, filename):
+        pass
