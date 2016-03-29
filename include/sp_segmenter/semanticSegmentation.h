@@ -55,7 +55,7 @@ private:
     std::string targetTFtoUpdate;
     bool setObjectOrientationTarget;
     std::vector<segmentedObjectTF> segmentedObjectTFV;
-    std::map<std::string, segmentedObjectTF> segmentedObjectTFMap; // the object poses result in TF. depreciate, used TF instead
+//    std::map<std::string, segmentedObjectTF> segmentedObjectTFMap; // the object poses result in TF. depreciate, used TF instead
     std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
     tf::TransformListener * listener;
     std::string gripperTF; // keep information about gripper TF frame for object in gripper segmentation

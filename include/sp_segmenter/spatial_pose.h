@@ -192,12 +192,12 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
                                                                 p, std::get<1>(result_nn.at(0)).pose,
                                                                 objectDict.find(std::get<1>(result_nn.at(0)).pose.model_name)->second
                                                                 );
-            // tmpObject.tfName = std::get<1>(result_nn.at(0)).tfName; // Disabled keeping old TF name
+          // tmpObject.tfName = std::get<1>(result_nn.at(0)).tfName; // Disabled keeping old TF name
+          // tmpObject.index = std::get<1>(result_nn.at(0)).index;
             tmpObject.index = ++objectTFindex[p.model_name];
             // Does not have tracking yet, can not keep the label on object.
             std::stringstream child;
             child << "Obj::" << p.model_name << "::" << tmpObject.index;
-            tmpObject.index = std::get<1>(result_nn.at(0)).index;
             tmpObject.tfName = child.str();
             rtree.remove(result_nn.at(0)); // each nearest neighboor only can be assigned to one match
         

@@ -435,7 +435,7 @@ void semanticSegmentation::populateTFMapFromTree()
   ros::param::del("/instructor_landmark/objects");
   
   std::vector<value> sp_segmenter_detectedPoses = getAllNodes(segmentedObjectTree);
-  segmentedObjectTFMap.clear();
+//  segmentedObjectTFMap.clear();
   segmentedObjectTFV.clear();
   costar_objrec_msgs::DetectedObjectList object_list;
   object_list.header.seq = ++(this->number_of_segmentation_done);
@@ -450,9 +450,9 @@ void semanticSegmentation::populateTFMapFromTree()
     const std::string objectTFname = std::get<1>(v).tfName;
     segmentedObjectTF objectTmp(p,objectTFname);
     segmentedObjectTFV.push_back(objectTmp);
-    segmentedObjectTFMap[objectTmp.TFname] = objectTmp;
+//    segmentedObjectTFMap[objectTmp.TFname] = objectTmp;
     std::stringstream ss;
-    ss << "/instructor_landmark/objects/" << p.model_name << "/" << (i+1); //std::get<1>(v).index;
+    ss << "/instructor_landmark/objects/" << p.model_name << "/" << std::get<1>(v).index;
     std::cerr << "frame " << i << " name = " << objectTmp.TFname << "\n";
     
     ros::param::set(ss.str(), objectTmp.TFname);
