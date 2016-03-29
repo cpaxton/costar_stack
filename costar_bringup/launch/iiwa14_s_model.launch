@@ -5,6 +5,7 @@
   <arg name="start_semi_static" default="false"/>
   <arg name="start_camera" default="true"/>
   <arg name="start_move_group" default="true"/>
+  <arg name="start_alvar" default="true" />
 
   <param name="ee_frame" value="iiwa_link_ee"/>
   <param name="base_frame" value="iiwa_link_0"/>
@@ -37,9 +38,10 @@
 
   <!-- camera stuff -->
   <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
+    <param name="start_alvar" value="$(arg start_alvar)"/>
   </include>
 
-  <node pkg="predicator_detect_objects" name="predicator_detect_objects_node" type="predicator_detect_objects.py">
+  <node pkg="predicator_detect_objects" name="predicator_detect_objects_node" type="predicator_detected_objects.py">
     <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
   </node>
 
