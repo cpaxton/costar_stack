@@ -125,7 +125,7 @@ void KLTTracker::initPointsAndFastforward(const std::vector<cv::Mat>& inputFrame
     new_3d_pts = valid_3dpts;
   }
   
-  assert(new_3dpts.size() == prev_pts.size());
+  assert(new_3d_pts.size() == prev_pts.size());
   // Add prev image if initializing
   if(m_prevImg.cols == 0)
     m_prevImg = inputFrames.back();
