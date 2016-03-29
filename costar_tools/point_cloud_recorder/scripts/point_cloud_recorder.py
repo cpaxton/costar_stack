@@ -27,7 +27,7 @@ def record(req):
     print time_str
 
     filename = '%s_iter_%d_%s.bag'%(time_str,num_recorded,obj_id)
-    test_proc = Popen(["rosbag","record","/camera/.*","/tf","/joint_states","--duration=5", "--size=150", "-e", "--output-name=%s"%(filename)])
+    test_proc = Popen(["rosbag","record","/camera/.*","/tf","/joint_states","--duration=1", "--size=50", "-e", "--output-name=%s"%(filename)])
 
 
     rospy.sleep(15.0);
