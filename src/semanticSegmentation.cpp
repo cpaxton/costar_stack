@@ -441,7 +441,7 @@ void semanticSegmentation::populateTFMapFromTree()
     segmentedObjectTF objectTmp(*p,*objectTFname);
     segmentedObjectTFMap[objectTmp.TFnames] = objectTmp;
     std::stringstream ss;
-    ss << "/instructor_landmark/objects/" << p->model_name << "/" << &(std::get<1>(*v).index);
+    ss << "/instructor_landmark/objects/" << p->model_name << "/" << std::get<1>(*v).index;
     
     ros::param::set(ss.str(), objectTmp.TFnames);
   }
