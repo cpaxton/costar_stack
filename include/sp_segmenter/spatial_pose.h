@@ -167,7 +167,7 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
     
     //get closest point that belongs to same object
     int knnNumber = 2;
-    double distance = 0.025; // Limit search area to 2.5 cm around the point
+    double distance = 0.5; // Limit search area to 2.5 cm around the point
     for (const poseT &p: all_poses) {
         objectPose tmpObject;
         //        tmpObject.name = p.model_name;

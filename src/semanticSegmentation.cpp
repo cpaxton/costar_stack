@@ -438,28 +438,34 @@ void semanticSegmentation::populateTFMapFromTree()
   object_list.header.seq = ++(this->number_of_segmentation_done);
   object_list.header.stamp = ros::Time::now();
   object_list.header.frame_id =  inputCloud.header.frame_id;
+
+  std::cerr << "detected poses: " << sp_segmenter_detectedPoses.size() << "\n";
   for (std::size_t i = 0; i < sp_segmenter_detectedPoses.size(); i++)
   {
-    const value * v = &sp_segmenter_detectedPoses.at(i);
-    const poseT * p = &(std::get<1>(*v).pose);
-    const std::string * objectTFname = &(std::get<1>(*v).tfName);
-    segmentedObjectTF objectTmp(*p,*objectTFname);
-    segmentedObjectTFMap[objectTmp.TFnames] = objectTmp;
+    const value &v = sp_segmenter_detectedPoses.at(i);
+    const poseT &p = std::get<1>(v).pose;
+    const std::string objectTFname = std::get<1>(v).tfName;
+    segmentedObjectTF objectTmp(p,objectTFname);
+    segmentedObjectTFMap[objectTmp.TFname] = objectTmp;
     std::stringstream ss;
-    ss << "/instructor_landmark/objects/" << p->model_name << "/" << std::get<1>(*v).index;
+    ss << "/instructor_landmark/objects/" << p.model_name << "/" << std::get<1>(v).index;
+    std::cerr << "frame " << i << " name = " << objectTmp.TFname << "\n";
     
-    ros::param::set(ss.str(), objectTmp.TFnames);
+    ros::param::set(ss.str(), objectTmp.TFname);
     std::stringstream ss2;
-    ss2 << &(std::get<1>(*v).tfName);
+    ss2 << std::get<1>(v).tfName;
     costar_objrec_msgs::DetectedObject object_tmp;
   	object_tmp.id = ss2.str();
-  	object_tmp.symmetry.x_rotation = objectDict[ p->model_name ].roll;
-  	object_tmp.symmetry.y_rotation = objectDict[ p->model_name ].pitch;
-  	object_tmp.symmetry.z_rotation = objectDict[ p->model_name ].yaw;
-  	object_tmp.symmetry.x_symmetries = std::floor(360.0 / objectDict[ p->model_name ].roll);
-  	object_tmp.symmetry.y_symmetries = std::floor(360.0 / objectDict[ p->model_name ].pitch);
-  	object_tmp.symmetry.z_symmetries = std::floor(360.0 / objectDict[ p->model_name ].yaw);
-  	object_tmp.object_class = p->model_name;
+
+    std::cerr << object_tmp.id << "; " << ss.str() << "\n";
+
+  	object_tmp.symmetry.x_rotation = objectDict[ p.model_name ].roll;
+  	object_tmp.symmetry.y_rotation = objectDict[ p.model_name ].pitch;
+  	object_tmp.symmetry.z_rotation = objectDict[ p.model_name ].yaw;
+  	object_tmp.symmetry.x_symmetries = std::floor(360.0 / objectDict[ p.model_name ].roll);
+  	object_tmp.symmetry.y_symmetries = std::floor(360.0 / objectDict[ p.model_name ].pitch);
+  	object_tmp.symmetry.z_symmetries = std::floor(360.0 / objectDict[ p.model_name ].yaw);
+  	object_tmp.object_class = p.model_name;
   	object_list.objects.push_back(object_tmp);
   }
 
@@ -468,32 +474,37 @@ void semanticSegmentation::populateTFMapFromTree()
 
 bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-    if (!classReady) return false;
+    if (!classReady) {
+      ROS_ERROR("Class is not ready!");
+      return false;
+    }
     // Service call will run SPSegmenter
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
     
     if (!haveTable)
     {
-        std::cerr << "Error, class does not have table data yet. Return...\n";
+        ROS_ERROR("Class does not have table data yet!");
         return false; // still does not have table
     }
     
     fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
     if (full_cloud->size() < 1){
-        std::cerr << "No cloud available";
+        ROS_ERROR("No cloud available!");
         return false;
     }
     
     segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
     
     if (full_cloud->size() < 1){
-        std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
+        ROS_ERROR("No cloud available after removing all object outside the table. Put objects above the table.");
         return false;
     }
     
     // get all poses from spSegmenterCallback
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
+    ROS_INFO("Found %u objects",all_poses.size());
+    std::cerr << "found: " << all_poses.size() << "\n";
     
     
     //publishing the segmented point cloud
@@ -503,13 +514,14 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     pc_pub.publish(output_msg);
     
     if (all_poses.size() < 1) {
-        std::cerr << "Fail to segment objects on the table.\n";
+        ROS_WARN("Failed to segment objects on the table.");
         return false;
     }
   
     this->populateTFMapFromTree();
   
     std::cerr << "Segmentation done.\n";
+    ROS_INFO("Segmentation done.");
     
     hasTF = true;
     return true;
