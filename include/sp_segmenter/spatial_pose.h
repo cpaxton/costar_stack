@@ -143,6 +143,7 @@ void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<s
         {
             tmpObject.index = ++objectTFindex[p.model_name];
         }
+        else tmpObject.index = std::get<1>(result_nn.at(0)).index;
         rtree.insert(value(generatePoint(p),tmpObject)); // add new value
         break;
     }
@@ -167,7 +168,7 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
     
     //get closest point that belongs to same object
     int knnNumber = 2;
-    double distance = 0.5; // Limit search area to 2.5 cm around the point
+    double distance = 0.025; // Limit search area to 2.5 cm around the point
     for (const poseT &p: all_poses) {
         objectPose tmpObject;
         //        tmpObject.name = p.model_name;
@@ -191,7 +192,13 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
                                                                 p, std::get<1>(result_nn.at(0)).pose,
                                                                 objectDict.find(std::get<1>(result_nn.at(0)).pose.model_name)->second
                                                                 );
-            tmpObject.tfName = std::get<1>(result_nn.at(0)).tfName;
+            // tmpObject.tfName = std::get<1>(result_nn.at(0)).tfName; // Disabled keeping old TF name
+            tmpObject.index = ++objectTFindex[p.model_name];
+            // Does not have tracking yet, can not keep the label on object.
+            std::stringstream child;
+            child << "Obj::" << p.model_name << "::" << tmpObject.index;
+            tmpObject.index = std::get<1>(result_nn.at(0)).index;
+            tmpObject.tfName = child.str();
             rtree.remove(result_nn.at(0)); // each nearest neighboor only can be assigned to one match
         
         }

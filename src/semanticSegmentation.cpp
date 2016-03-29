@@ -342,6 +342,8 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
 
     std::vector<poseT> all_poses = all_poses1;
     // RefinePoses(scene_xyz, mesh_set, all_poses1);
+
+    std::map<std::string, unsigned int> tmpTFIndex = objectTFIndex;
   
     if (doingGripperSegmentation || !hasTF){
       // normalize symmetric object Orientation
@@ -356,23 +358,23 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         }
         else
             baseRotation.setIdentity();
-    
+        
         if (!doingGripperSegmentation)
         {
             std::cerr << "create tree\n";
             // this will create tree and normalize the orientation to the baseRotation
-            createTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex, baseRotation);
+            createTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
         }
         else
         {
             std::cerr << "update one value on tree\n";
-            updateOneValue(segmentedObjectTree, targetTFtoUpdate, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex, baseRotation);
+            updateOneValue(segmentedObjectTree, targetTFtoUpdate, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
         }
     }
     else
     {
         std::cerr << "update tree\n";
-        updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+        updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex);
     }
     return getAllPoses(segmentedObjectTree);
 }
@@ -434,6 +436,7 @@ void semanticSegmentation::populateTFMapFromTree()
   
   std::vector<value> sp_segmenter_detectedPoses = getAllNodes(segmentedObjectTree);
   segmentedObjectTFMap.clear();
+  segmentedObjectTFV.clear();
   costar_objrec_msgs::DetectedObjectList object_list;
   object_list.header.seq = ++(this->number_of_segmentation_done);
   object_list.header.stamp = ros::Time::now();
@@ -446,9 +449,10 @@ void semanticSegmentation::populateTFMapFromTree()
     const poseT &p = std::get<1>(v).pose;
     const std::string objectTFname = std::get<1>(v).tfName;
     segmentedObjectTF objectTmp(p,objectTFname);
+    segmentedObjectTFV.push_back(objectTmp);
     segmentedObjectTFMap[objectTmp.TFname] = objectTmp;
     std::stringstream ss;
-    ss << "/instructor_landmark/objects/" << p.model_name << "/" << std::get<1>(v).index;
+    ss << "/instructor_landmark/objects/" << p.model_name << "/" << (i+1); //std::get<1>(v).index;
     std::cerr << "frame " << i << " name = " << objectTmp.TFname << "\n";
     
     ros::param::set(ss.str(), objectTmp.TFname);
@@ -606,11 +610,18 @@ void semanticSegmentation::publishTF()
         // broadcast all transform
         std::string parent = inputCloud.header.frame_id;
         // int index = 0;
-        for (std::map<std::string, segmentedObjectTF>::iterator it=segmentedObjectTFMap.begin(); it!=segmentedObjectTFMap.end(); ++it)
-        {
+        for (std::size_t i = 0; i < segmentedObjectTFV.size(); i++){
+            // std::cerr << "Publishing: " << segmentedObjectTFV.at(i).TFname << "\n";
             br.sendTransform(
-                             it->second.generateStampedTransform(parent)
-                             );
+                segmentedObjectTFV.at(i).generateStampedTransform(parent)
+                );
         }
+        // for (std::map<std::string, segmentedObjectTF>::iterator it=segmentedObjectTFMap.begin(); it!=segmentedObjectTFMap.end(); ++it)
+        // {
+        //     std::cerr << "Publishing: " << it->second.TFname << "\n";
+        //     br.sendTransform(
+        //                      it->second.generateStampedTransform(parent)
+        //                      );
+        // }
     }
 }
