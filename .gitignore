@@ -32,3 +32,6 @@ build/*
 xcodebuild/*
 build2/*
 xcodebuild2/*
+
+# temporary files
+*~
