@@ -37,6 +37,12 @@ Training data is in seperate folders, one for each class. For example:
 
 Here, "link", "node", and "sander" are classes, and "UR5" is background data.
 
+Example execution for data in ``~/data/primesense``:
+
+```
+roslaunch sp_segmenter SPCompact.launch training_folder:=$HOME/data/primesense object:=link,node,sander bg_names:=UR5
+```
+
 ## Training using roslaunch
 How to train using roslaunch:
 
