@@ -13,7 +13,7 @@
   <!-- PCL distance filtered viewer-->
   <arg name="viewer"              default="false" />
 
-  <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter_Node">  
+  <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter_Node" output="screen">  
   <!-- object_on_table_segmenter_Node arg pass -->
     <param name="save_directory"  type="str"  value="$(arg save_directory)/" />
     <param name="object"          type="str"  value="$(arg object)" />
@@ -40,6 +40,9 @@
     <param name="xMax"       type="double" value="0.4" />
     <param name="yMax"       type="double" value="0" />
     <param name="zMax"       type="double" value="0.75" />
+
+    <param name="aboveTableMin" type="double" value="0.135" />
+    <param name="aboveTableMax" type="double" value="0.5" />
     
   </node>
 
