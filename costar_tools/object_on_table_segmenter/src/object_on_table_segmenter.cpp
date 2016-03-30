@@ -257,9 +257,10 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   if (haveTable and keyPress)
   {
     std::stringstream ss;
-    ss << original_directory << "/" << object_name << cloud_save_index << "_original_cloud.pcd";
+    ss << original_directory << object_name << cloud_save_index << "_original_cloud.pcd";
     std::cout << "original saved to :" << ss.str() << "\n";
     try {
+      std::cerr << "cloud of size " << cloud->size() << " read in from topic!\n";
       writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud, true);
     } catch (pcl::IOException e) {
       ROS_ERROR("could not write to %s!",ss.str().c_str());
@@ -324,8 +325,8 @@ int main (int argc, char** argv)
   nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
 
   //getting save parameters
-  nh.param("save_directory",save_directory,std::string("./result"));
-  nh.param("original_directory",original_directory,std::string("./original"));
+  nh.param("save_directory",save_directory,std::string("result/"));
+  nh.param("original_directory",original_directory,std::string("original/"));
   nh.param("object",object_name,std::string("cloud_cluster_"));
   nh.param("pcl_viewer",dist_viewer,false);
   nh.param("save_index",cloud_save_index,0);
