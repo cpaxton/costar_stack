@@ -249,6 +249,9 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   pcl::fromROSMsg(pc, *cloud);
   if (haveTable)
   {
+	std::stringstream ss;
+	ss << save_directory << object_name << cloud_save_index << "_original_cloud.pcd";
+	writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud, true);
     segmentCloudAboveTable(cloud,tableHull);
     cloud_segmenter_and_save(cloud);
   }
