@@ -13,6 +13,7 @@ class DetectedObjectsPublisher:
         self.pub = rospy.Publisher('/predicator/input', PredicateList, queue_size=1000)
         self.vpub = rospy.Publisher('/predicator/valid_input', ValidPredicates, queue_size=1000)
         self.valid_msg = ValidPredicates()
+        self.valid_msg.pheader.source = rospy.get_name()
         self.valid_msg.predicates.append('class_detected')
         self.valid_msg.predicates.append('member_detected')
 
@@ -21,6 +22,7 @@ class DetectedObjectsPublisher:
     def callback(self,msg):
         print msg
         true_msg = PredicateList()
+        true_msg.pheader.source = rospy.get_name()
 
         for obj in msg.objects:
             ps = PredicateStatement()

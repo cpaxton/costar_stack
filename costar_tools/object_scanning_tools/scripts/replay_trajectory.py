@@ -3,14 +3,14 @@
 import rospy
 from costar import TrajectoryRecorder
 
-rospy.init_node('costar_trajectory_recorder_node')
+rospy.init_node('costar_trajectory_replayer_node')
 filename = rospy.get_param('~filename','trajectory.yml')
 
 tr = TrajectoryRecorder()
-tr.record(filename)
+tr.load(filename)
 #rospy.spin()
 
-print 'Done. Saving to file "%s"...'%(filename)
-tr.save(filename)
-print 'Saved!'
+print "Playing..."
+tr.play()
+print "Done."
 
