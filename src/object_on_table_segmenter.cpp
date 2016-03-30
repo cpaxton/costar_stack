@@ -37,6 +37,8 @@ ros::Subscriber pc_sub;
 pcl::PCDWriter writer;
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
 tf::TransformListener * listener;
+double aboveTableMin;
+double aboveTableMax;
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
 {
@@ -98,7 +100,8 @@ void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_input
   prism.setInputPlanarHull(convexHull);
 
   // from 1 cm above table to 50 cm above table
-  prism.setHeightLimits(0.015f, 0.5f);
+  //prism.setHeightLimits(0.135f, 0.5f);
+  prism.setHeightLimits(aboveTableMin,aboveTableMax);
   pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices);
 
   prism.segment(*objectIndices);
@@ -318,6 +321,9 @@ int main (int argc, char** argv)
   nh.param("update_table",update_table,false);
   nh.param("load_directory",load_directory,std::string("./data"));
   nh.param("tableTF", tableTFname,std::string("/tableTF"));
+
+  nh.param("aboveTableMin",aboveTableMin,0.135);
+  nh.param("aboveTableMax",aboveTableMax,0.50);
 
   listener = new (tf::TransformListener);
 

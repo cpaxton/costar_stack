@@ -24,3 +24,10 @@ pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/poi
 viewer	    	:	See first distance filtered pcl and save it. Default: ```false```
 save_directory	:	Location of save directory. Default: ```$(find object_on_table_segmenter)/result```
 
+save_index = 0
+
+laod_directory
+
+tableTF    : marker we are going to use
+
+
