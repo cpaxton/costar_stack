@@ -1,6 +1,6 @@
 #include "sp_segmenter/semanticSegmentation.h"
 
-semanticSegmentation::semanticSegmentation(int argc, char** argv)
+semanticSegmentation::semanticSegmentation(int argc, char** argv) : useTableSegmentation(true)
 {
     this->classReady = false;
     
@@ -76,6 +76,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("aboveTable", aboveTable, 0.01);
     this->haveTable = false;
     this->nh.param("loadTable",loadTable, true);
+    this->nh.param("useTableSegmentation",useTableSegmentation,true);
     this->nh.param("setObjectOrientation",setObjectOrientationTarget,false);
     this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
   
@@ -86,7 +87,12 @@ void semanticSegmentation::initializeSemanticSegmentation()
     multi_models.resize(3);
     model_name = std::vector<std::string>(OBJECT_MAX, "");
     
-    if(loadTable)
+
+    if (!useTableSegmentation) {
+      std::cerr << "WARNING: not using table segmentation!\n";
+    }
+
+    if(loadTable && useTableSegmentation)
     {
         std::string load_directory;
         nh.param("saveTable_directory",load_directory,std::string("./data"));
@@ -97,7 +103,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         }
         else {
             haveTable = false;
-            std::cerr << "Fail to load table. Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
+            std::cerr << "Failed to load table. Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
         }
     }
     
@@ -206,7 +212,7 @@ semanticSegmentation::~semanticSegmentation(){
 void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
 {
     if (!classReady) return;
-    if (!haveTable)
+    if (!haveTable && useTableSegmentation)
     {
         haveTable = getAndSaveTable(inputCloud);
         if (!haveTable) return; // still does not have table
@@ -218,11 +224,13 @@ void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCl
     
     fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
     if (full_cloud->size() < 1){
-        std::cerr << "No cloud available";
+        std::cerr << "No cloud available!\n";
         return;
     }
     
-    segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+    if (useTableSegmentation) {
+      segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+    }
     
     if (full_cloud->size() < 1){
         std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
@@ -239,7 +247,7 @@ void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCl
     pc_pub.publish(output_msg);
     
     if (all_poses.size() < 1) {
-        std::cerr << "Fail to segment objects on the table.\n";
+        std::cerr << "Failed to segment objects on the table.\n";
         return;
     }
     else
@@ -413,7 +421,7 @@ bool semanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
         return true;
     }
     else {
-        std::cerr << "Fail to get table TF with name: '" << tableTFname << "'" << std::endl;
+        std::cerr << "Failed to get table TF with name: '" << tableTFname << "'" << std::endl;
         std::cerr << "Parent: " << tableTFparent << std::endl;
         return false;
     }
@@ -424,7 +432,7 @@ void semanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &pc)
     if (!classReady) return;
     // The callback from main only update the cloud data
     inputCloud = pc;
-    if (!haveTable)
+    if (!haveTable && useTableSegmentation)
     {
         haveTable = getAndSaveTable(pc);
     }
@@ -486,7 +494,7 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     pcl::PointCloud<PointLT>::Ptr final_cloud(new pcl::PointCloud<PointLT>());
     
-    if (!haveTable)
+    if (!haveTable && useTableSegmentation)
     {
         ROS_ERROR("Class does not have table data yet!");
         return false; // still does not have table
@@ -498,7 +506,9 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
         return false;
     }
     
-    segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+    if (useTableSegmentation) {
+      segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+    }
     
     if (full_cloud->size() < 1){
         ROS_ERROR("No cloud available after removing all object outside the table. Put objects above the table.");
@@ -518,7 +528,7 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     pc_pub.publish(output_msg);
     
     if (all_poses.size() < 1) {
-        ROS_WARN("Failed to segment objects on the table.");
+        ROS_ERROR("Failed to find any objects on the table.");
         return false;
     }
   

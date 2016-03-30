@@ -22,11 +22,12 @@
 #include <list>
 #include <vtkNew.h>
 
-
+#ifndef FOCAL_X
 #define FOCAL_X 539.4611119133837
 #define FOCAL_Y 540.5136158944412
 #define CENTER_X 313.183195464011
 #define CENTER_Y 232.1443718048976
+#endif
 
 static bool mycomp(const PointT &p1, const PointT &p2)
 {

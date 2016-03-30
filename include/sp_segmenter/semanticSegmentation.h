@@ -60,7 +60,7 @@ private:
     tf::TransformListener * listener;
     std::string gripperTF; // keep information about gripper TF frame for object in gripper segmentation
     std::map<std::string, objectSymmetry> objectDict; // for orientation normalization
-    bool loadTable, haveTable;
+    bool loadTable, haveTable, useTableSegmentation;
     tf::TransformBroadcaster br;
     ros::ServiceServer spSegmenter;
     ros::ServiceServer segmentGripper;
