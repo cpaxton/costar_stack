@@ -10,4 +10,8 @@
     <include file="$(find moveit_collision_environment)/launch/collision_env.launch">
     	<arg name="tableTFname" value ="$(arg tableTFname)"/>
     </include>-->
+
+    <node pkg="point_cloud_recorder" type="point_cloud_recorder.py" name="point_cloud_recorder_service">
+      <param name="id" value="costar"/>
+    </node>
 </launch>
