@@ -43,6 +43,9 @@
 
     <param name="aboveTableMin" type="double" value="0.135" />
     <param name="aboveTableMax" type="double" value="0.5" />
+
+    <param name="run_auto" type="bool" value="true" />
+    <param name="time_step" type="double" value="0.1" />
     
   </node>
 
