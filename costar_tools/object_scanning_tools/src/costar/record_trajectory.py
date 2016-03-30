@@ -1,5 +1,6 @@
 import rospy
 import rosbag
+from std_srvs.srv import Empty
 from sensor_msgs.msg import *
 from trajectory_msgs.msg import *
 import yaml
@@ -59,8 +60,23 @@ class TrajectoryRecorder:
     def load(self, filename):
         with open(filename,'r') as f:
             self.traj = yaml.load(f)
+
     def play(self,hz=1):
         rate = rospy.Rate(hz)
+        count = 0
         for pt in self.traj.points:
+            count += 1
+            print " - %d"%(count)
             self.pub.publish(pt)
             rate.sleep()
+
+    def play_and_call_empty_service(self,hz=1,service="/record_camera"):
+        rate = rospy.Rate(hz)
+        srv = rospy.ServiceProxy(service,Empty)
+        count = 0
+        for pt in self.traj.points:
+            count += 1
+            print " - %d"%(count)
+            self.pub.publish(pt)
+            rate.sleep()
+            srv()
