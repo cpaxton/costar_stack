@@ -31,3 +31,9 @@ laod_directory
 tableTF    : marker we are going to use
 
 
+## Examples
+
+```
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_vert_ tableTF:=ar_marker_2 loadTable:=false num_to_capture:=200
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_horizontal_ tableTF:=ar_marker_2 loadTable:=false num_to_capture:=200
+```

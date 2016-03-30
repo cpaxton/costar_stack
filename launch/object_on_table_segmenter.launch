@@ -10,6 +10,8 @@
   <arg name="update_table"        default="true" />
   <arg name="load_directory"      default="$(find object_on_table_segmenter)/data" />
   <arg name="tableTF"             default="ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
+  <arg name="time_step" default="0.5"/>
+  <arg name="num_to_capture" default="200"/>
   
   <!-- PCL distance filtered viewer-->
   <arg name="viewer"              default="false" />
@@ -47,7 +49,8 @@
     <param name="aboveTableMax" type="double" value="0.5" />
 
     <param name="run_auto" type="bool" value="true" />
-    <param name="time_step" type="double" value="0.1" />
+    <param name="time_step" type="double" value="$(arg time_step)" />
+    <param name="num_to_capture" type="int" value="$(arg num_to_capture)"/>
     
   </node>
 

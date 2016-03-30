@@ -42,6 +42,7 @@ double aboveTableMax;
 double time_step;
 bool keyPress = false;
 bool run_auto;
+int num_to_capture = 0;
 
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
@@ -330,6 +331,7 @@ int main (int argc, char** argv)
   nh.param("object",object_name,std::string("cloud_cluster_"));
   nh.param("pcl_viewer",dist_viewer,false);
   nh.param("save_index",cloud_save_index,0);
+  nh.param("num_to_capture",num_to_capture,200);
 
   nh.param("time_step",time_step,0.1);
   nh.param("run_auto",run_auto,false);
@@ -391,6 +393,7 @@ int main (int argc, char** argv)
       }
     } else {
       // run loop with time
+      int count = 0;
       while (ros::ok()) {
 
         if (not haveTable) {
@@ -403,6 +406,12 @@ int main (int argc, char** argv)
           std::cout << "Press any key to start data collection...\n";
           key = getch();
           keyPress = true;
+        }
+
+        ++count;
+        
+        if (num_to_capture > 0 && count >= num_to_capture) {
+          break;
         }
 
         ros::spinOnce();
