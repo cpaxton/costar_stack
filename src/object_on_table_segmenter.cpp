@@ -30,7 +30,7 @@
 
 bool dist_viewer ,haveTable,update_table;
 std::string POINTS_IN;
-std::string save_directory, object_name, load_directory;
+std::string save_directory, object_name, load_directory, original_directory;
 std::string tableTFname;
 int cloud_save_index;
 ros::Subscriber pc_sub;
@@ -39,6 +39,10 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableHull(new pcl::PointCloud<pcl::Point
 tf::TransformListener * listener;
 double aboveTableMin;
 double aboveTableMax;
+double time_step;
+bool keyPress = false;
+bool run_auto;
+
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
 {
@@ -66,7 +70,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pc
     pass.setKeepOrganized(true);
     std::string axisName;
     double positionToSegment;
-    
+
     switch (i){
       case 0:
         axisName = "x";
@@ -80,7 +84,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filter_distance(pcl::PointCloud<pc
         axisName = "z";
         positionToSegment = transform.getOrigin().getZ();
         break;
-      }
+    }
     std::cerr << "Segmenting axis: " << axisName << "max: " << positionToSegment + region << " min: " << positionToSegment - region << std::endl;
     pass.setFilterFieldName (axisName);
     pass.setFilterLimits (positionToSegment - region, positionToSegment + region);
@@ -138,7 +142,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   mps.setInputCloud (negative);
   std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
   mps.segmentAndRefine (regions);
-  
+
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>);
   boundary->points = regions[0].getContour();
 
@@ -158,14 +162,14 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   std::cerr << "Object Segmentation process begin \n";
   if (dist_viewer)
   {
-  	std::cerr << "See distance filtered cloud. Press q to quit viewer. \n";
-  	pcl::visualization::CloudViewer viewer ("Distance Filtered Cloud Viewer");
-  	viewer.showCloud (cloud_filtered);
-  	while (!viewer.wasStopped ())
-    	{
-    	}
-  	dist_viewer = false;
-  	writer.write<pcl::PointXYZRGBA> (load_directory+"distance_filtered.pcd", *cloud_filtered, true);
+    std::cerr << "See distance filtered cloud. Press q to quit viewer. \n";
+    pcl::visualization::CloudViewer viewer ("Distance Filtered Cloud Viewer");
+    viewer.showCloud (cloud_filtered);
+    while (!viewer.wasStopped ())
+    {
+    }
+    dist_viewer = false;
+    writer.write<pcl::PointXYZRGBA> (load_directory+"distance_filtered.pcd", *cloud_filtered, true);
   }
 
   // Get Normal Cloud
@@ -222,24 +226,24 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   // save detected cluster data
   for (size_t i = 0; i < euclidean_label_indices.size (); i++)
   {
-  	if (euclidean_label_indices[i].indices.size () > 500)
+    if (euclidean_label_indices[i].indices.size () > 500)
     {
-	    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
-	    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
+      pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
+      pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
 
-  		pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices);
-  		*object_cloud_indices = euclidean_label_indices[i];
-  		extract.setInputCloud(cloud_filtered);
-  		extract.setIndices(object_cloud_indices);
-  		extract.setKeepOrganized(true);
-  		extract.filter(*cloud_cluster);
+      pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices);
+      *object_cloud_indices = euclidean_label_indices[i];
+      extract.setInputCloud(cloud_filtered);
+      extract.setIndices(object_cloud_indices);
+      extract.setKeepOrganized(true);
+      extract.filter(*cloud_cluster);
 
-	    std::stringstream ss;
-	    ss << save_directory << object_name << cloud_save_index << ".pcd";
-	    writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud_cluster, true);
-	    std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd \tcluster size: "<< euclidean_label_indices[i].indices.size () << std::endl;
-	    cloud_save_index++;
-  	}
+      std::stringstream ss;
+      ss << save_directory << object_name << cloud_save_index << ".pcd";
+      writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud_cluster, true);
+      std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd \tcluster size: "<< euclidean_label_indices[i].indices.size () << std::endl;
+      cloud_save_index++;
+    }
   }
 
   std::cerr << "Segmented object: " << cloud_save_index - initialIndex <<". Segmentation done.\n Waiting for keypress to get new data \n";
@@ -250,11 +254,16 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
   // convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA
   pcl::fromROSMsg(pc, *cloud);
-  if (haveTable)
+  if (haveTable and keyPress)
   {
-	std::stringstream ss;
-	ss << save_directory << object_name << cloud_save_index << "_original_cloud.pcd";
-	writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud, true);
+    std::stringstream ss;
+    ss << original_directory << "/" << object_name << cloud_save_index << "_original_cloud.pcd";
+    std::cout << "original saved to :" << ss.str() << "\n";
+    try {
+      writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud, true);
+    } catch (pcl::IOException e) {
+      ROS_ERROR("could not write to %s!",ss.str().c_str());
+    }
     segmentCloudAboveTable(cloud,tableHull);
     cloud_segmenter_and_save(cloud);
   }
@@ -265,10 +274,10 @@ void callback(const sensor_msgs::PointCloud2 &pc)
     listener->getParent(tableTFname,ros::Time(0),tableTFparent);
     if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
     {
-        std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
-        tf::StampedTransform transform;
-        listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
-        cloud_filtered = cloud_filter_distance(cloud, transform);
+      std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
+      tf::StampedTransform transform;
+      listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
+      cloud_filtered = cloud_filter_distance(cloud, transform);
     }
     else{
       std::cerr << "Fail to get TF: "<< tableTFname << std::endl;
@@ -281,8 +290,8 @@ void callback(const sensor_msgs::PointCloud2 &pc)
       pcl::visualization::CloudViewer viewer ("Distance Filtered Cloud Viewer");
       viewer.showCloud (cloud_filtered);
       while (!viewer.wasStopped ())
-        {
-        }
+      {
+      }
     }
     tableHull = getTableConvexHull(cloud_filtered);
     if (update_table)
@@ -316,9 +325,13 @@ int main (int argc, char** argv)
 
   //getting save parameters
   nh.param("save_directory",save_directory,std::string("./result"));
+  nh.param("original_directory",original_directory,std::string("./original"));
   nh.param("object",object_name,std::string("cloud_cluster_"));
   nh.param("pcl_viewer",dist_viewer,false);
   nh.param("save_index",cloud_save_index,0);
+
+  nh.param("time_step",time_step,0.1);
+  nh.param("run_auto",run_auto,false);
 
   nh.param("load_table",load_table,false);
   nh.param("update_table",update_table,false);
@@ -365,14 +378,35 @@ int main (int argc, char** argv)
     ros::Rate r(10); // 10 hz
     int key = 0;
 
-    while (ros::ok())
-    {
-      key = getch();
-      if ((key == 's') || (key == 'S'))
+    if (not run_auto) {
+      while (ros::ok())
+      {
+        key = getch();
+        if ((key == 's') || (key == 'S'))
+          ros::spinOnce();
+        else if ((key == 'q') || (key == 'Q'))
+          break;
+        r.sleep();
+      }
+    } else {
+      // run loop with time
+      while (ros::ok()) {
+
+        if (not haveTable) {
+          key = getch();
+          if ((key == 's') || (key == 'S'))
+            ros::spinOnce();
+          else if ((key == 'q') || (key == 'Q'))
+            break;
+        } else if (not keyPress) {
+          std::cout << "Press any key to start data collection...\n";
+          key = getch();
+          keyPress = true;
+        }
+
         ros::spinOnce();
-      else if ((key == 'q') || (key == 'Q'))
-        break;
-      r.sleep();
+        ros::Duration(time_step).sleep();
+      }
     }
   }
   delete (listener);
