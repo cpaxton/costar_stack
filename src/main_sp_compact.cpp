@@ -53,13 +53,16 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
 };
 
+int objSampleNum = 66;
+int bgSampleNum = 100;
+
 void extractFea(std::string root_path, std::string out_fea_path,
 	std::vector<std::string> obj_names, std::vector<std::string>  bg_names,
 	feaExtractor object_ext, feaExtractor background_ext)
 {
     // the sample number extracted in one pcd files. 1200 foreground 800 background
-    int obj_sample_num = 66;
-    int bg_sample_num = 100;
+    int obj_sample_num = objSampleNum; //66;
+    int bg_sample_num = bgSampleNum; //100;
     int cur_order_max = 3;
 
 	for( size_t i = 0 ; i < obj_names.size() ; i++ )
@@ -77,6 +80,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
             if( final_fea[ll].empty() == true )
                 continue;
             std::stringstream mm;
+;
             mm << ll;
             saveCvMatSparse(out_fea_path + "train_" + ss.str() + "_L" + mm.str() + ".smat", final_fea[ll], train_dim);
             final_fea[ll].clear();
@@ -89,6 +93,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
     int bg_dim = -1;
     for( size_t i = 0 ; i < bg_names.size() ; i++ )
     {
+;
         std::cerr << "Processing: " << root_path+bg_names[i]+"/" << endl;
         bg_dim = background_ext.computeFeature(root_path+bg_names[i]+"/", bg_fea, bg_sample_num);
     }
@@ -101,9 +106,11 @@ void extractFea(std::string root_path, std::string out_fea_path,
         mm << ll;
         // background class index 0
         saveCvMatSparse(out_fea_path + "train_0_L" + mm.str() + ".smat", bg_fea[ll], bg_dim);
+;
         bg_fea[ll].clear();
     }
     std::cerr << "Background Feature Extraction Done!" << std::endl;
+;
 }
 //*std::vector
 int main(int argc, char** argv)
@@ -112,7 +119,13 @@ int main(int argc, char** argv)
     ros::NodeHandle nh("~");
     
     std::string root_path;
+    float foregroundBackgroundCC;
+    float multiclassCC;
     nh.param("root_path", root_path, std::string("data/training/"));
+    nh.param("foreground_cc", foregroundBackgroundCC, 0.001f);
+    nh.param("multiclass_cc", multiclassCC, 0.001f);
+    nh.param("bg_sample_num", bgSampleNum, 66); //NUM_OBJECT_TRAINING_DATA*OBJ_SAMPLES = NUM_BACKGROUND_TRAINING_DATA*NUM_BG_SAMPLES
+    nh.param("obj_sample_num", objSampleNum, 100); // these should be chosen so the number of samples is the same for each
     
     // adding object classes by reading from nodeHandle args
     std::vector<std::string> obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
@@ -144,7 +157,6 @@ int main(int argc, char** argv)
     bool skip_fea;
     nh.param("skip_fea",skip_fea,false);
     
-    
     feaExtractor object_ext(shot_path, sift_path, fpfh_path);
     feaExtractor background_ext(shot_path, sift_path, fpfh_path);
     
@@ -155,7 +167,7 @@ int main(int argc, char** argv)
     {
         int cur_order_max = 3;
         // Reading features to train svm
-        float CC = 0.001; // weight of incorrectly classified examples (false positive cost) // CC = [1, 0.1, 0.01, 0.001, 0.0001]
+        float CC = foregroundBackgroundCC; // weight of incorrectly classified examples (false positive cost) // CC = [1, 0.1, 0.01, 0.001, 0.0001]
         std::vector< std::pair<int, int> > piece_inds;
         for( int ll = 0 ; ll < cur_order_max ; ll++ )
         {
@@ -205,7 +217,7 @@ int main(int argc, char** argv)
     {
         int cur_order_max = 3;
         // Reading features to train svm
-        float CC = 0.001; // weight of incorrectly classified examples (false positive cost)
+        float CC = multiclassCC; // weight of incorrectly classified examples (false positive cost)
         std::vector< std::pair<int, int> > piece_inds;
         for( int ll = 0 ; ll < cur_order_max ; ll++ )
         {
@@ -355,7 +367,7 @@ int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<s
         
         // disable sift and fpfh pooling for now
         spPooler triple_pooler;
-        triple_pooler.init(full_cloud, *hie_producer, radius, down_ss);
+        triple_pooler.lightInit(full_cloud, *hie_producer, radius, down_ss);
         triple_pooler.build_SP_LAB(lab_pooler_set, false);
 //        triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
 //        triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sift_det_vec, false);

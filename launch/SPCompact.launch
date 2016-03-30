@@ -3,6 +3,10 @@
   <arg name="object"              default="drill" />
   <arg name="bg_names"            default="UR5" />
   <arg name="training_folder"     default="$(find sp_segmenter)/data/training/" />
+  <arg name="multiclass_cc" default="0.001" doc="(float) cost of misclassifying object in training data"/>
+  <arg name="foreground_cc" default="0.001" doc="(float) cost of misclassifying foreground/background in training data"/>
+  <arg name="bg_sample_num" default="66" doc="(int) number of samples to draw from each background training frame"/>
+  <arg name="obj_sample_num" default="100" doc="(int) number of samples to draw from each training view of the objects"/>
 
   <!-- spCompactNode output path args -->
   <arg name="out_fea_path"        default="$(arg training_folder)/fea_pool/" />
@@ -18,6 +22,8 @@
     <param name="bg_names"        type="str" value="$(arg bg_names)" />
     <param name="out_fea_path"    type="str" value="$(arg out_fea_path)" />
     <param name="skip_fea"    	 type="bool" value="$(arg skip_fea)" />
+    <param name="multiclass_cc" type="float" value="$(arg multiclass_cc)" />
+    <param name="foreground_cc" type="float" value="$(arg foreground_cc)" />
   </node>
 
   <group ns="spCompactNode">

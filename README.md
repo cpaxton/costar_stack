@@ -19,6 +19,24 @@ These features are all saved to a sparse matrix for the provided data set. When 
 
 SVM learning is done in ```main_sp_svm.cpp.```
 
+Training data is in seperate folders, one for each class. For example:
+
+.
+├── costar_link
+├── costar_node
+├── fea_pool
+├── gripper
+├── link
+├── link_node
+├── node
+├── sander
+├── svm_pool
+└── UR5
+
+10 directories
+
+Here, "link", "node", and "sander" are classes, and "UR5" is background data.
+
 ## Training using roslaunch
 How to train using roslaunch:
 
