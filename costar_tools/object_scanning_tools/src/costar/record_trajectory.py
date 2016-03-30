@@ -11,6 +11,7 @@ class TrajectoryRecorder:
     
     def __init__(self):
         self.sub = rospy.Subscriber('joint_states',JointState,self.cb)
+        self.pub = rospy.Publisher('joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.traj = JointTrajectory()
         self.last_msg = None
             
@@ -58,4 +59,8 @@ class TrajectoryRecorder:
     def load(self, filename):
         with open(filename,'r') as f:
             self.traj = yaml.load(f)
-        
+    def play(self,hz=1):
+        rate = rospy.Rate(hz)
+        for pt in self.traj.points:
+            self.pub.publish(pt)
+            rate.sleep()
