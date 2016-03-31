@@ -1,0 +1,8 @@
+geometry_msgs/PoseArray transforms
+string frame_type
+predicator_msgs/PredicateStatement[] predicates
+---
+# returns the set of possible waypoints
+geometry_msgs/PoseArray waypoints
+string msg
+bool success

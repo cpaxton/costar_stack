@@ -54,7 +54,6 @@ add_message_files(
   UpdateParam.msg
   Header.msg
   FeatureValues.msg
-  WaypointDefinition.msg
 )
 
 add_service_files(
@@ -69,6 +68,7 @@ add_service_files(
   GetPredicateUseInfo.srv
   GetLength.srv
   Query.srv
+  GetWaypoints.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

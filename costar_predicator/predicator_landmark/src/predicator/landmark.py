@@ -5,7 +5,7 @@ import tf
 '''
 convert detected objects into predicate messages we can query later on
 '''
-class DetectedObjectsPublisher:
+class GetWaypointsService:
 
     valid_msg = None
 
@@ -17,13 +17,30 @@ class DetectedObjectsPublisher:
         #self.valid_msg.predicates.append('class_detected')
         #self.valid_msg.predicates.append('member_detected')
 
-        self.sub = rospy.Subscriber('/landmark_definitions', LandmarkDefinition, self.callback)
-        self.service = rospy.Service('/predicator/get_possible_waypoints',)
+        #self.sub = rospy.Subscriber('/landmark_definitions', LandmarkDefinition, self.callback)
+        self.and_srv = rospy.ServiceProxy('/predicator/match_AND',Query)
+        self.service = rospy.Service('/predicator/get_waypoints',GetWaypoints,self.get_waypoints)
 
-    def callback(self,msg):
+    def get_waypoints(self,req):
+        resp = GetWaypointsResponse()
 
-        self.pub.publish(true_msg)
-        self.vpub.publish(self.valid_msg)
+        self.and_srv.wait_for_service()
 
-        print self.valid_msg
-        print true_msg
+        type_predicate = PredicateStatement()
+        type_predicate.predicate = req.frame_type
+        type_predicate.params = ['*','','']
+
+        res = self.and_srv(type_predicate+predicates)
+
+        print "Found matches: " + str(res.matches)
+
+
+        if (not res.found)or len(res.matches) < 1:
+            resp.msg = 'FAILURE -- message not found!'
+            resp.success = False
+
+        for match in res.matches:
+            pass
+
+        return resp
+        
