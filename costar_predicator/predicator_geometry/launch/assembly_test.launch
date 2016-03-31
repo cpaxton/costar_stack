@@ -22,7 +22,6 @@
     </rosparam>
 
     <rosparam param="reference_frames">
-      - platform_link
       - world
     </rosparam>
 
