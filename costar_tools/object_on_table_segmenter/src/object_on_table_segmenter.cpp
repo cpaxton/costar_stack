@@ -265,8 +265,8 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform tra
     for (int j = -1; j < 2; j+=2)
     {
       pcl::PointXYZRGBA tmp;
-      tmp.x = i * distance;
-      tmp.y = j * distance;
+      tmp.x = i * distance/2;
+      tmp.y = j * distance/2;
       tmp.z = 0;
       tableTmp->push_back(tmp);
     }
