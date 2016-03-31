@@ -1,6 +1,7 @@
 import rospy
 from predicator_msgs.msg import *
 import tf
+import tf_conversions as tf_c
 
 '''
 convert detected objects into predicate messages we can query later on
@@ -35,7 +36,7 @@ class GetWaypointsService:
         print "Found matches: " + str(res.matches)
 
 
-        if (not res.found)or len(res.matches) < 1:
+        if (not res.found) or len(res.matches) < 1:
             resp.msg = 'FAILURE -- message not found!'
             resp.success = False
 
