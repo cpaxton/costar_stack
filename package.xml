@@ -43,9 +43,12 @@
   <build_depend>pcl_conversion</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>tf</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  
   <run_depend>pcl_conversion</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>tf</run_depend>
+  <build_depend>pcl_ros</build_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
