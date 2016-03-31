@@ -3,6 +3,7 @@
 
 int main(int argc, char** argv)
 {
+    pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
     ros::init(argc,argv,"sp_segmenter_server");    
     ros::NodeHandle nh("~");
     ros::Rate r(10); //10Hz

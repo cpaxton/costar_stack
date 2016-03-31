@@ -117,7 +117,7 @@ void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<s
   Eigen::Quaternion<float> baseRotation;
   if (result_nn.size() > 0) 
   {
-    std::cerr << "Found old pose: " << result_nn.size() << std::endl;
+    // std::cerr << "Found old pose: " << result_nn.size() << std::endl;
     baseRotation = std::get<1>(result_nn.at(0)).pose.rotation; // use old orientation
     object_type = std::get<1>(result_nn.at(0)).pose.model_name; // get old object type
     rtree.remove(result_nn.at(0)); // remove old value
@@ -187,7 +187,7 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
         
         
         if (result_nn.size() > 0) { // the pose exists in the prior rTree
-            std::cerr << "Found old value\n";
+            // std::cerr << "Found old value\n";
             tmpObject.pose.rotation = normalizeModelOrientation<float>(
                                                                 p, std::get<1>(result_nn.at(0)).pose,
                                                                 objectDict.find(std::get<1>(result_nn.at(0)).pose.model_name)->second

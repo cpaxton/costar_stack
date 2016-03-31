@@ -141,6 +141,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
 //*std::vector
 int main(int argc, char** argv)
 {
+    pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
     ros::init(argc,argv,"sp_compact_node");
     ros::NodeHandle nh("~");
     
