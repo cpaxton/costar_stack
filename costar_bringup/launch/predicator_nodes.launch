@@ -1,0 +1,8 @@
+<launch>
+
+  <!-- detected objects node -->
+  <node pkg="predicator_detected_objects" name="predicator_detected_objects_node" type="predicator_detected_objects.py">
+    <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
+  </node>
+
+</launch>

@@ -11,6 +11,7 @@
   <param name="base_frame" value="iiwa_link_0"/>
 
   <include file="$(find costar_bringup)/launch/utilities.launch"/>
+  <include file="$(find costar_bringup)/launch/predicator_nodes.launch"/>
 
   <!--<include if="$(arg sim)" file="$(find iiwa_moveit)/-->
 
@@ -40,9 +41,5 @@
   <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
     <param name="start_alvar" value="$(arg start_alvar)"/>
   </include>
-
-  <node pkg="predicator_detected_objects" name="predicator_detected_objects_node" type="predicator_detected_objects.py">
-    <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
-  </node>
 
 </launch>
