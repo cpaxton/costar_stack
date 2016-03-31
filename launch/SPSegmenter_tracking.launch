@@ -1,0 +1,54 @@
+<launch>
+  <!-- Object file Name without extension-->
+  <arg name="object"         default="drill" />
+  <arg name="data_path"      default="$(find sp_segmenter)/data" />
+  <arg name="svm_path"       default="UR5_drill_svm" />
+  <arg name="params"         default="" />
+  <arg name="pairWidth"      default="0.05" />
+  <arg name="NodeName"       default="SPSegmenter" />
+  <arg name="bestPoseOnly"   default="false" />
+  <arg name="minConfidence"  default="0.2" />
+  <arg name="aboveTable"     default="0.01" />
+  <arg name="min_tracking_inliers"     default="8" />
+  <arg name="max_tracking_reproj_error"     default="3.0" />
+  <arg name="enableTracking"     default="true" />
+  <arg name="show_tracking_debug"     default="false" />
+
+
+  <!-- SPSegmenterNode subscriber/publisher args -->
+  <arg name="pcl_in"         default="/camera/depth_registered/points" />
+  <arg name="pcl_out"        default="points_out"/>
+  <arg name="poses_out"      default="poses_out"/>
+
+  <node pkg="sp_segmenter" type="SPSegmenterNode" name="$(arg NodeName)" args="-p $(arg params)" output="screen" >  
+    <!-- SPSegmenterNode Node arg pass -->
+    <param name="cur_name"   type="str" value="$(arg object)" />
+    <param name="bestPoseOnly" type="bool" value="$(arg bestPoseOnly)" />
+    <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
+    <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
+
+    <!-- SPSegmenterNode subscriber/publisher args pass -->
+    <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
+    <param name="POINTS_OUT" type="str" value="$(arg pcl_out)"/>
+    <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
+    <param name="CAMERA_INFO_IN"  type="str" value="/camera/rgb/camera_info"/>
+    <param name="IMAGE_IN"  type="str" value="/camera/rgb/image_rect_color"/>
+    <param name="DEPTH_IN"  type="str" value="/camera/depth_registered/image_raw"/>
+    <param name="pairWidth"  type="double" value="$(arg pairWidth)"/>
+    <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
+    <param name="min_tracking_inliers"   type="int" value="$(arg min_tracking_inliers)" />
+    <param name="max_tracking_reproj_error"   type="double" value="$(arg max_tracking_reproj_error)" />
+    <param name="enableTracking"   type="bool" value="$(arg enableTracking)" />
+    <param name="show_tracking_debug"   type="bool" value="$(arg show_tracking_debug)" />
+    
+
+    <!-- objectDatabase -->
+    <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
+  </node>
+
+  <group ns="$(arg NodeName)">
+    <include file="$(find sp_segmenter)/launch/parameters.launch">
+        <arg name="data_path" value ="$(arg data_path)"/>
+    </include>
+  </group>
+</launch>

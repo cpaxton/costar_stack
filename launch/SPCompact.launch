@@ -1,12 +1,16 @@
 <launch>
   <!-- Objects file Name without extension. Support several file by giving `,`, such as object:=object1,object2,...,objectn-->
   <arg name="object"              default="drill" />
-  <arg name="bg_names"            default="UR5_2" />
+  <arg name="bg_names"            default="UR5" />
   <arg name="training_folder"     default="$(find sp_segmenter)/data/training/" />
+
+  <arg name="multiclass_cc" default="0.001" doc="(float) cost of misclassifying object in training data"/>
+  <arg name="foreground_cc" default="0.001" doc="(float) cost of misclassifying foreground/background in training data"/>
+  <arg name="bg_sample_num" default="100" doc="(int) number of samples to draw from each background training frame"/>
+  <arg name="obj_sample_num" default="30" doc="(int) number of samples to draw from each training view of the objects"/>
 
   <!-- spCompactNode output path args -->
   <arg name="out_fea_path"        default="$(arg training_folder)/fea_pool/" />
-  <arg name="out_svm_path"        default="$(arg training_folder)/svm_pool/"/>
 
 
   <!-- for debugging purpose, use current fea from out_fea_path and do svm -->
@@ -18,8 +22,11 @@
     <param name="obj_names"       type="str" value="$(arg object)" />
     <param name="bg_names"        type="str" value="$(arg bg_names)" />
     <param name="out_fea_path"    type="str" value="$(arg out_fea_path)" />
-    <param name="out_svm_path"    type="str" value="$(arg out_svm_path)" />
     <param name="skip_fea"    	 type="bool" value="$(arg skip_fea)" />
+    <param name="multiclass_cc" value="$(arg multiclass_cc)" />
+    <param name="foreground_cc" value="$(arg foreground_cc)" />
+    <param name="bg_sample_num" value="$(arg bg_sample_num)"/>
+    <param name="obj_sample_num" value="$(arg obj_sample_num)"/>
   </node>
 
   <group ns="spCompactNode">

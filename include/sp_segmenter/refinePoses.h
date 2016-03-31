@@ -51,14 +51,14 @@ std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, con
             if ( nres >= 1 && sqrDist[0] <= sqrT )
             {
                 #pragma omp critical
-                {   
+                {
                     bin_vec[count].push_back(i);
                 }
                 votes[i]++;
-            }
+           }
         }
     }
-    
+
     for( int it = 0 ; it < down_num ; it++ )
         for( std::vector<int>::iterator ii = bin_vec[it].begin() ; ii < bin_vec[it].end() ; ii++ )
             for( std::vector<int>::iterator jj = ii+1 ; jj < bin_vec[it].end() ; jj++ )
@@ -90,10 +90,10 @@ std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, con
         }
     }
     std::vector<poseT> refined_poses;
-    for( int i = 0 ; i < pose_num ; i++ )   
+    for( int i = 0 ; i < pose_num ; i++ )
         if( dead_flag[i] == false )
             refined_poses.push_back(all_poses[i]);
-    
+
     return refined_poses;
 }
 #endif

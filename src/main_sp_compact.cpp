@@ -21,6 +21,32 @@
  * 12/16/2015
 **************/
 
+#include <iostream>
+#include <boost/filesystem.hpp>
+#include <boost/lambda/bind.hpp>
+/*
+std::size_t num_files_in_folder(std::string string_path)
+{
+    using namespace boost::filesystem;
+    using namespace boost::lambda;
+
+    path the_path( "/home/myhome" );
+
+    int cnt = std::count_if(
+        directory_iterator(the_path),
+        directory_iterator(),
+        bind( static_cast<bool(*)(const path&)>(is_regular_file), 
+          bind( &directory_entry::path, _1 ) ) );
+    // a little explanation is required here,
+    // we need to use static_cast to specify which 
+    // version of is_regular_file function we intend to use
+
+    std::cout << cnt << std::endl;
+
+    return 0;
+}
+*/
+
 
 class feaExtractor{
 public:
@@ -36,6 +62,7 @@ public:
 
 private:
     void readData(std::string path, ObjectSet &scene_set);
+    std::vector<std::string> readData(std::string path);
     boost::shared_ptr<Hier_Pooler> hie_producer;
     
     std::vector< boost::shared_ptr<Pooler_L0> > sift_pooler_set;
@@ -53,13 +80,17 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
 };
 
+int objSampleNum = 66;
+int bgSampleNum = 100;
+
 void extractFea(std::string root_path, std::string out_fea_path,
 	std::vector<std::string> obj_names, std::vector<std::string>  bg_names,
 	feaExtractor object_ext, feaExtractor background_ext)
 {
-    int obj_sample_num = 10;
-    int bg_sample_num = 100;
-    int cur_order_max = -1;
+    // the sample number extracted in one pcd files. 1200 foreground 800 background
+    int obj_sample_num = objSampleNum; //66;
+    int bg_sample_num = bgSampleNum; //100;
+    int cur_order_max = 3;
 
 	for( size_t i = 0 ; i < obj_names.size() ; i++ )
     {
@@ -67,7 +98,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
         ss << i+1;
         
         std::vector< std::vector<sparseVec> > final_fea;
-        std::cerr << "Processing: " << root_path+obj_names[i]+"/" << endl;
+        std::cerr << "Processing object: " << root_path+obj_names[i]+"/" << endl;
         int train_dim = object_ext.computeFeature(root_path+obj_names[i]+"/", final_fea, obj_sample_num);
         cur_order_max = (int)final_fea.size();
         
@@ -76,6 +107,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
             if( final_fea[ll].empty() == true )
                 continue;
             std::stringstream mm;
+
             mm << ll;
             saveCvMatSparse(out_fea_path + "train_" + ss.str() + "_L" + mm.str() + ".smat", final_fea[ll], train_dim);
             final_fea[ll].clear();
@@ -88,7 +120,8 @@ void extractFea(std::string root_path, std::string out_fea_path,
     int bg_dim = -1;
     for( size_t i = 0 ; i < bg_names.size() ; i++ )
     {
-        std::cerr << "Processing: " << root_path+bg_names[i]+"/" << endl;
+;
+        std::cerr << "Processing background: " << root_path+bg_names[i]+"/" << endl;
         bg_dim = background_ext.computeFeature(root_path+bg_names[i]+"/", bg_fea, bg_sample_num);
     }
     
@@ -100,28 +133,46 @@ void extractFea(std::string root_path, std::string out_fea_path,
         mm << ll;
         // background class index 0
         saveCvMatSparse(out_fea_path + "train_0_L" + mm.str() + ".smat", bg_fea[ll], bg_dim);
+;
         bg_fea[ll].clear();
     }
     std::cerr << "Background Feature Extraction Done!" << std::endl;
+;
 }
 //*std::vector
 int main(int argc, char** argv)
 {
+    pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
     ros::init(argc,argv,"sp_compact_node");
     ros::NodeHandle nh("~");
     
     std::string root_path;
+    float foregroundBackgroundCC;
+    float multiclassCC;
     nh.param("root_path", root_path, std::string("data/training/"));
+    nh.param("foreground_cc", foregroundBackgroundCC, 0.001f);
+    nh.param("multiclass_cc", multiclassCC, 0.001f);
+    nh.param("bg_sample_num", bgSampleNum, 66); //NUM_OBJECT_TRAINING_DATA*OBJ_SAMPLES = NUM_BACKGROUND_TRAINING_DATA*NUM_BG_SAMPLES
+    nh.param("obj_sample_num", objSampleNum, 100); // these should be chosen so the number of samples is the same for each
     
     // adding object classes by reading from nodeHandle args
     std::vector<std::string> obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
     
     // adding background classes by reading from nodeHandle args
-    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5_2"));
-    
+    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5"));
+
     std::string out_fea_path, out_svm_path;
     nh.param("out_fea_path",out_fea_path,std::string("fea_pool/"));
-    nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
+    std::stringstream ss;
+    ss << root_path << "/";
+    for (size_t i = 0; i < obj_names.size(); ++i)
+    {
+        ss << obj_names.at(i);
+        if (i < obj_names.size()-1) ss << "_";
+    }
+    ss << "_svm/";
+    out_svm_path = ss.str();
+    // nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
 
     boost::filesystem::create_directories(out_fea_path);
     boost::filesystem::create_directories(out_svm_path);
@@ -135,59 +186,113 @@ int main(int argc, char** argv)
     bool skip_fea;
     nh.param("skip_fea",skip_fea,false);
     
-    
     feaExtractor object_ext(shot_path, sift_path, fpfh_path);
     feaExtractor background_ext(shot_path, sift_path, fpfh_path);
     
     // extracting features for object classes
     if (!skip_fea) extractFea(root_path,out_fea_path,obj_names,bg_names,object_ext,background_ext);
 
-    int cur_order_max = 3;
-    // Reading features to train svm
-    float CC = 0.001;
-    std::vector< std::pair<int, int> > piece_inds;
-    for( int ll = 0 ; ll < cur_order_max ; ll++ )
+    // binary classification
     {
-        std::stringstream mm;
-        mm << ll;
-        std::vector<problem> train_prob_set;
-        // looping over all classes including background classes
-        for( size_t i = 0 ; i <= obj_names.size()  ; i++ )
+        int cur_order_max = 3;
+        // Reading features to train svm
+        float CC = foregroundBackgroundCC; // weight of incorrectly classified examples (false positive cost) // CC = [1, 0.1, 0.01, 0.001, 0.0001]
+        std::vector< std::pair<int, int> > piece_inds;
+        for( int ll = 0 ; ll < cur_order_max ; ll++ )
         {
-            std::stringstream ss;
-            ss << i;
-            
-            std::string train_name = out_fea_path + "train_"+ss.str()+"_L"+mm.str()+".smat";
-            if( exists_test(train_name) == false )
-                continue;
-            
-            std::cerr << "Reading: " << train_name << std::endl;
-            std::vector<SparseDataOneClass> cur_data(1);
-            
-            int fea_dim = readSoluSparse_piecewise(train_name, cur_data[0].fea_vec, piece_inds);
-            cur_data[0].label = i+1; 
+            std::stringstream mm;
+            mm << ll;
+            std::vector<problem> train_prob_set;
+            // looping over all classes including background classes
+            for( size_t i = 0 ; i <= obj_names.size()  ; i++ )
+            {
+                std::stringstream ss;
+                ss << i;
+                
+                std::string train_name = out_fea_path + "train_"+ss.str()+"_L"+mm.str()+".smat";
+                if( exists_test(train_name) == false )
+                    continue;
+                
+                std::cerr << "Reading: " << train_name << std::endl;
+                std::vector<SparseDataOneClass> cur_data(1);
+                
+                int fea_dim = readSoluSparse_piecewise(train_name, cur_data[0].fea_vec, piece_inds);
+                cur_data[0].label = i > 0 ? 2 : 1; 
 
-            problem tmp;
-            FormFeaSparseMat(cur_data, tmp, cur_data[0].fea_vec.size(), fea_dim);
-            train_prob_set.push_back(tmp);
+                problem tmp;
+                FormFeaSparseMat(cur_data, tmp, cur_data[0].fea_vec.size(), fea_dim);
+                train_prob_set.push_back(tmp);
+            }
+            problem train_prob;
+            train_prob.l = 0;
+            mergeProbs(train_prob_set, train_prob);
+
+            parameter param;
+            GenSVMParamter(param, CC);
+            std::cerr<<std::endl<<"Starting Liblinear Training..."<<std::endl;
+
+            model* cur_model = train(&train_prob, &param);
+            save_model((out_svm_path + "binary_L"+mm.str()+"_f.model").c_str(), cur_model);
+            std::cerr << "Saved: " << out_svm_path << "binary_L"+mm.str() << "_f.model" << std::endl;
+            destroy_param(&param);
+            free(train_prob.y);
+            for( int i = 0 ; i < train_prob.l ; i++ )
+                free(train_prob.x[i]);
+            free(train_prob.x);
         }
-        problem train_prob;
-        train_prob.l = 0;
-        mergeProbs(train_prob_set, train_prob);
-
-        parameter param;
-        GenSVMParamter(param, CC);
-        std::cerr<<std::endl<<"Starting Liblinear Training..."<<std::endl;
-
-        model* cur_model = train(&train_prob, &param);
-        save_model((out_svm_path + "svm_L"+mm.str()+".model").c_str(), cur_model);
-        
-        destroy_param(&param);
-        free(train_prob.y);
-        for( int i = 0 ; i < train_prob.l ; i++ )
-            free(train_prob.x[i]);
-        free(train_prob.x);
     }
+      
+    if (obj_names.size() > 1) // multi classification
+    {
+        int cur_order_max = 3;
+        // Reading features to train svm
+        float CC = multiclassCC; // weight of incorrectly classified examples (false positive cost)
+        std::vector< std::pair<int, int> > piece_inds;
+        for( int ll = 0 ; ll < cur_order_max ; ll++ )
+        {
+            std::stringstream mm;
+            mm << ll;
+            std::vector<problem> train_prob_set;
+            // looping over all classes including background classes
+            for( size_t i = 1 ; i <= obj_names.size()  ; i++ )
+            {
+                std::stringstream ss;
+                ss << i;
+                
+                std::string train_name = out_fea_path + "train_"+ss.str()+"_L"+mm.str()+".smat";
+                if( exists_test(train_name) == false )
+                    continue;
+                
+                std::cerr << "Reading: " << train_name << std::endl;
+                std::vector<SparseDataOneClass> cur_data(1);
+                
+                int fea_dim = readSoluSparse_piecewise(train_name, cur_data[0].fea_vec, piece_inds);
+                cur_data[0].label = i + 1; // label below 1: background, so object label must be > 1. Need to be clarified
+
+                problem tmp;
+                FormFeaSparseMat(cur_data, tmp, cur_data[0].fea_vec.size(), fea_dim);
+                train_prob_set.push_back(tmp);
+            }
+            problem train_prob;
+            train_prob.l = 0;
+            mergeProbs(train_prob_set, train_prob);
+
+            parameter param;
+            GenSVMParamter(param, CC);
+            std::cerr<<std::endl<<"Starting Liblinear Training..."<<std::endl;
+
+            model* cur_model = train(&train_prob, &param);
+            save_model((out_svm_path + "multi_L"+mm.str()+"_f.model").c_str(), cur_model);
+            std::cerr << "Saved: " << out_svm_path << "multi_L"+mm.str() << "_f.model" << std::endl;
+            
+            destroy_param(&param);
+            free(train_prob.y);
+            for( int i = 0 ; i < train_prob.l ; i++ )
+                free(train_prob.x[i]);
+            free(train_prob.x);
+        }
+    }
+
     
     std::cerr<<std::endl<<"Training complete"<<std::endl;
     ros::shutdown();
@@ -211,7 +316,7 @@ feaExtractor::feaExtractor(std::string shot_path, std::string sift_path, std::st
     sift_pooler_set.clear();
     sift_pooler_set.resize(2);
     sift_pooler_set[1] = boost::shared_ptr<Pooler_L0> (new Pooler_L0(-1));
-    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sift_L0_400.cvmat"); 
+    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sifstd::vector<std::string> feaExtractor::readData(std::string path)t_L0_400.cvmat"); 
     
     fpfh_pooler_set.clear();
     fpfh_pooler_set.resize(2);
@@ -271,15 +376,37 @@ void feaExtractor::readData(std::string path, ObjectSet& scene_set)
     scene_set.push_back(cur_train);
 }
 
+std::vector<std::string> feaExtractor::readData(std::string path)
+{
+    // the input point cloud must be in the organized pcd format
+    // for object segment, the non-object area has no valid (x,y,z) values
+    
+    std::string workspace(path);
+    std::vector<std::string> pcd_files;
+    getNonNormalPCDFiles(workspace, pcd_files);
+
+    for( size_t j = 0 ; j < pcd_files.size() ; j++ )
+    {
+        std::string cloud_name(workspace + pcd_files[j]);
+        pcd_files[j] = cloud_name;
+    }
+    
+    return pcd_files;
+}
+
+
 
 //box_num is the number of supervoxels extracted from each object data at each order
 //usually for object data, box_num = 10; for background, box_num = 100~200; it is dependent on the actual memory size
 int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<sparseVec> > &final_fea, int box_num)
 {
     ObjectSet train_objects;
-    readData(in_path, train_objects);
+    //readData(in_path, train_objects);
+    std::vector<std::string> file_names = readData(in_path);
+    //std::cerr << "Read Data Done!" << std::endl;
     
-    int train_num = train_objects[0].size();
+    //int train_num = train_objects[0].size();
+    int train_num = file_names.size();
     int train_dim = -1;
     
     if( final_fea.size() != order + 1 )
@@ -287,42 +414,47 @@ int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<s
     #pragma omp parallel for schedule(dynamic, 1)
     for( int j = 0 ; j < train_num ; j++ )
     {
-        pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
-		std::cerr << "Processing (" << j << "/" << train_num <<")\n";
-        
-        // disable sift and fpfh pooling for now
-        spPooler triple_pooler;
-        triple_pooler.init(full_cloud, *hie_producer, radius, down_ss);
-        triple_pooler.build_SP_LAB(lab_pooler_set, false);
-//        triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
-//        triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sift_det_vec, false);
-        
-        for( int ll = 0 ; ll <= order ; ll++ )
+    	pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+        pcl::io::loadPCDFile(file_names[j], *full_cloud);
+        if( full_cloud->size() > 30 )	// process cloud more than 30 pts
         {
-            std::vector<cv::Mat> sp_fea = triple_pooler.sampleSPFea(ll, box_num, false, true);
-            for( std::vector<cv::Mat>::iterator it = sp_fea.begin(); it < sp_fea.end() ; it++ )
-            {
-                if( train_dim > 0 && it->cols != train_dim )
-                {
-                    std::cerr << "Error: fea_dim > 0 && cur_final.cols != fea_dim   " << train_dim << " " << it->cols << std::endl;
-                    exit(0);
-                }
-                else if( train_dim < 0 )
-                {
-                    #pragma omp critical
-                    {
-                        train_dim = it->cols;
-                        std::cerr << "Fea Dim: " << train_dim << std::endl;
-                    }
-                }	
-                std::vector< sparseVec> this_sparse;
-                sparseCvMat(*it, this_sparse);
-                #pragma omp critical
-                {
-                    final_fea[ll].push_back(this_sparse[0]);
-                }
-            }
-        }
+	        // pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
+			std::cerr << "Processing (" << j + 1 << "/" << train_num <<")\n";
+	        
+	        // disable sift and fpfh pooling for now
+	        spPooler triple_pooler;
+	        triple_pooler.lightInit(full_cloud, *hie_producer, radius, down_ss);
+	        triple_pooler.build_SP_LAB(lab_pooler_set, false);
+	//        triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
+	//        triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sift_det_vec, false);
+	        
+	        for( int ll = 0 ; ll <= order ; ll++ )
+	        {
+	            std::vector<cv::Mat> sp_fea = triple_pooler.sampleSPFea(ll, box_num, false, true);
+	            for( std::vector<cv::Mat>::iterator it = sp_fea.begin(); it < sp_fea.end() ; it++ )
+	            {
+	                if( train_dim > 0 && it->cols != train_dim )
+	                {
+	                    std::cerr << "Error: fea_dim > 0 && cur_final.cols != fea_dim   " << train_dim << " " << it->cols << std::endl;
+	                    exit(0);
+	                }
+	                else if( train_dim < 0 )
+	                {
+	                    #pragma omp critical
+	                    {
+	                        train_dim = it->cols;
+	                        std::cerr << "Fea Dim: " << train_dim << std::endl;
+	                    }
+	                }	
+	                std::vector< sparseVec> this_sparse;
+	                sparseCvMat(*it, this_sparse);
+	                #pragma omp critical
+	                {
+	                    final_fea[ll].push_back(this_sparse[0]);
+	                }
+	            }
+	        }
+    	}
     }
     train_objects.clear();
     

@@ -8,6 +8,7 @@
 #include "sp_segmenter/refinePoses.h"
 #include "sp_segmenter/common.h"
 #include "sp_segmenter/stringVectorArgsReader.h"
+#include "sp_segmenter/tracker.h"
 
 // ros stuff
 #include <ros/ros.h>
@@ -21,15 +22,20 @@
 // chi objrec ransac utils
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
-// contains function to normalize the orientation of symmetric object
-#include "sp_segmenter/symmetricOrientationRealignment.h"
+// contains function for spatial data structure that also normalize the orientation of pose
+#include "sp_segmenter/spatial_pose.h"
 
 #define OBJECT_MAX 100
 
+
+bool hasTF;
+objectRtree sp_segmenter_poses;
+
 // for orientation normalization
 std::map<std::string, objectSymmetry> objectDict;
+std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
 
-bool compute_pose = false;
+bool compute_pose = true;
 bool view_flag = false;
 pcl::visualization::PCLVisualizer::Ptr viewer;
 Hier_Pooler hie_producer;
@@ -43,6 +49,9 @@ double pairWidth = 0.05;
 double voxelSize = 0.003; 
 bool bestPoseOnly;
 double minConfidence;
+bool enableTracking;
+
+boost::shared_ptr<Tracker> tracker;
     
 boost::shared_ptr<greedyObjRansac> objrec;
 std::vector<std::string> model_name(OBJECT_MAX, "");
@@ -53,6 +62,9 @@ std::string POINTS_IN, POINTS_OUT, POSES_OUT;
 ros::Publisher pc_pub;
 ros::Publisher pose_pub;
 ros::Subscriber pc_sub;
+
+
+sensor_msgs::CameraInfo cam_info;
 
 std::map<std::string, int> model_name_map;
 uchar color_label[11][3] = 
@@ -74,6 +86,8 @@ pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr 
 
 
 /*********************************************************************************/
+
+
 
 void callback(const sensor_msgs::PointCloud2 &pc) {
 
@@ -145,10 +159,12 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 	toROSMsg(*final_cloud,output_msg);
 	output_msg.header.frame_id = pc.header.frame_id;
 	pc_pub.publish(output_msg);
+  
 
 	/* POSE */
 	if (compute_pose) {
 
+    ROS_INFO("Computing poses");
 		geometry_msgs::PoseArray msg;
 		msg.header.frame_id = pc.header.frame_id;
 		for (int i = 0; i < 1; ++i) { // was 99
@@ -169,7 +185,12 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			std::cout << "# Poses found: " << all_poses.size() << std::endl;
             
             // normalize symmetric object Orientation
-            normalizeAllModelOrientation (all_poses, objectDict);
+            if (!hasTF) createTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            else updateTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            hasTF = true;
+            
+            all_poses.clear();
+            all_poses = getAllPoses(sp_segmenter_poses);
 
 			for (poseT &p: all_poses) {
 				geometry_msgs::Pose pmsg;
@@ -184,8 +205,13 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 
 				msg.poses.push_back(pmsg);
 			}
-
 			std::cout<<"done objrec ransac"<<std::endl;
+
+      if(enableTracking)
+      {
+        tracker->generateTrackingPoints(pc.header.stamp, all_poses);
+      }
+
 			if( viewer )
 			{
 				std::cout<<"VISUALIZING"<<std::endl;
@@ -221,6 +247,8 @@ int main(int argc, char** argv)
     nh.param("bestPoseOnly", bestPoseOnly, true);
     nh.param("minConfidence", minConfidence, 0.0);
     nh.param("aboveTable", aboveTable, 0.01);
+    hasTF = false;
+    nh.param("enableTracking", enableTracking, false);
 
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
@@ -231,6 +259,7 @@ int main(int argc, char** argv)
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
     nh.param("pairWidth", pairWidth, 0.05);
     pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
+ 
 
     objrec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
@@ -274,7 +303,7 @@ int main(int argc, char** argv)
         model_name[model_id+1] = temp_cur;
         model_name_map[temp_cur] = model_id+1;
         ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
-        
+        objectTFIndex[temp_cur] = 0;
         mesh_set.push_back(mesh_buf);
     }
     if( pcl::console::find_switch(argc, argv, "-v") == true )
@@ -342,10 +371,25 @@ int main(int argc, char** argv)
         viewer->setSize(1280, 960);
     }
 
+    if(enableTracking)
+    {
+      tracker = boost::shared_ptr<Tracker>(new Tracker());
+      for(ModelT& model : mesh_set)
+      {
+         
+        if(!tracker->addTracker(model))
+        {
+          ROS_ERROR("Tried to add duplicate model name to tracker");
+          return -1;
+        }
+      }
+    }
+
     ros::spin();
     
     for( int ll = 0 ; ll <= 2 ; ll++ )
         free_and_destroy_model(&binary_models[ll]);
+
 //    for( int ll = 1 ; ll <= 4 ; ll++ )
 //        free_and_destroy_model(&multi_models[ll]);
     

@@ -4,6 +4,8 @@
  *
  * Created on March 30, 2015, 4:56 PM
  */
+#ifndef SEG_H
+#define SEG_H
 
 #include "sp_segmenter/utility/utility.h"
 
@@ -20,11 +22,12 @@
 #include <list>
 #include <vtkNew.h>
 
-
+#ifndef FOCAL_X
 #define FOCAL_X 539.4611119133837
 #define FOCAL_Y 540.5136158944412
 #define CENTER_X 313.183195464011
 #define CENTER_Y 232.1443718048976
+#endif
 
 static bool mycomp(const PointT &p1, const PointT &p2)
 {
@@ -66,3 +69,5 @@ ModelT LoadMesh(std::string filename, std::string label);
 pcl::PointCloud<PointT>::Ptr cropCloud(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::ModelCoefficients::Ptr planeCoef, float elev);
   
 void setObjID(std::map<std::string, int> &model_name_map);
+
+#endif

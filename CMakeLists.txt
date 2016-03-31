@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 SET(CMAKE_BUILD_TYPE "Release")
-find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf QUIET)# greedy_objrec_ransac)
-
+find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions cv_bridge costar_objrec_msgs QUIET)# greedy_objrec_ransac)
 project(sp_segmenter C CXX)
 
 
@@ -22,7 +21,7 @@ endif()
 find_package(PCL REQUIRED) 
 find_package(OpenCV REQUIRED) 
 find_package(OpenMP )
-#find_package(Boost COMPONENTS Chrono)
+find_package(Boost)
 find_package(VTK)
 
 IF(NOT VTK_FOUND)
@@ -51,6 +50,7 @@ if(catkin_FOUND)
     add_service_files(
       FILES
       SPSegmenterServer.srv
+      segmentInGripper.srv
     )
 
     generate_messages(
@@ -74,7 +74,7 @@ if(catkin_FOUND)
     )
   endif()
 endif()
-    
+
 include_directories(include utility)
 
 find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
@@ -84,6 +84,9 @@ link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} ${catkin_LIBRARY_DIR
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
 
 #library
+add_library(Tracking src/tracker.cpp src/klttracker.cpp src/PnPUtil.cpp)
+target_link_libraries(Tracking ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
+
 add_library(Utility include/sp_segmenter/utility/typedef.h include/sp_segmenter/utility/utility.h utility/utility.cpp include/sp_segmenter/utility/mcqd.h utility/mcqd.cpp include/sp_segmenter/seg.h src/seg.cpp include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
 target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
@@ -97,6 +100,10 @@ target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES
 
 add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
+
+add_library(semanticSegmentation include/sp_segmenter/semanticSegmentation.h src/semanticSegmentation.cpp)
+target_link_libraries(semanticSegmentation Utility DataParser PoolLib #${Boost_LIBRARIES} 
+                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 
 #add_executable(spTraining src/main_sp_training.cpp) 
 #target_link_libraries(spTraining Utility DataParser PoolLib ${Boost_LIBRARIES} 
@@ -116,7 +123,7 @@ target_link_libraries(SimpleSegmenter Utility DataParser PoolLib #${Boost_LIBRAR
 
 #if(CATKIN_FOUND)
     add_executable(SPSegmenterNode src/main_ros.cpp) 
-    target_link_libraries(SPSegmenterNode Utility DataParser PoolLib #${Boost_LIBRARIES} 
+    target_link_libraries(SPSegmenterNode Utility DataParser PoolLib Tracking #${Boost_LIBRARIES} 
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 #endif(CATKIN_FOUND)
 
@@ -124,7 +131,7 @@ add_executable(foreRun include/sp_segmenter/greedyObjRansac.h src/main_foregroun
 target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS})
 
 add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
-target_link_libraries(SPSegmenterServer Utility DataParser PoolLib #${Boost_LIBRARIES} 
+target_link_libraries(SPSegmenterServer semanticSegmentation Utility DataParser PoolLib #${Boost_LIBRARIES} 
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 #add_executable(sift_test src/main_sift_test.cpp) 
 #target_link_libraries(sift_test Utility DataParser PoolLib ${Boost_LIBRARIES} 
