@@ -10,7 +10,7 @@ class GetWaypointsService:
 
     valid_msg = None
 
-    def __init__(self):
+    def __init__(self,world="world"):
         #self.pub = rospy.Publisher('/predicator/input', PredicateList, queue_size=1000)
         #self.vpub = rospy.Publisher('/predicator/valid_input', ValidPredicates, queue_size=1000)
         #self.valid_msg = ValidPredicates()
@@ -19,6 +19,7 @@ class GetWaypointsService:
         #self.valid_msg.predicates.append('member_detected')
 
         #self.sub = rospy.Subscriber('/landmark_definitions', LandmarkDefinition, self.callback)
+        self.world = world
         self.and_srv = rospy.ServiceProxy('/predicator/match_AND',Query)
         self.service = rospy.Service('/predicator/get_waypoints',GetWaypoints,self.get_waypoints)
 
@@ -34,7 +35,6 @@ class GetWaypointsService:
         res = self.and_srv(type_predicate+predicates)
 
         print "Found matches: " + str(res.matches)
-
 
         if (not res.found) or len(res.matches) < 1:
             resp.msg = 'FAILURE -- message not found!'
