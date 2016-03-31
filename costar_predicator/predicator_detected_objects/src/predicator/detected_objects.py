@@ -42,6 +42,13 @@ class DetectedObjectsPublisher:
             true_msg.statements.append(ps)
 
             ps = PredicateStatement()
+            ps.predicate = 'is_detected_%s'%(obj.object_class)
+            ps.num_params = 1
+            ps.confidence = 1.0
+            ps.params[0] = obj.id
+            true_msg.statements.append(ps)
+
+            ps = PredicateStatement()
             ps.predicate = 'class_detected'
             ps.num_params = 1
             ps.confidence = 1.0
