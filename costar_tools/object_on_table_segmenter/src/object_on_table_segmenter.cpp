@@ -50,7 +50,7 @@ bool run_auto;
 int num_to_capture = 0;
 bool useTFsurface;
 bool useRosbag;
-
+bool doCluster;
 
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
@@ -166,6 +166,15 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   return convexHull;
 }
 
+void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input)
+{
+  std::stringstream ss;
+  ss << save_directory << object_name << cloud_save_index << ".pcd";
+  writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
+  std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd";
+  cloud_save_index++;
+}
+
 void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_filtered)
 {
   std::cerr << "Object Segmentation process begin \n";
@@ -247,16 +256,15 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
       extract.setKeepOrganized(true);
       extract.filter(*cloud_cluster);
 
-      std::stringstream ss;
-      ss << save_directory << object_name << cloud_save_index << ".pcd";
-      writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud_cluster, true);
-      std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd \tcluster size: "<< euclidean_label_indices[i].indices.size () << std::endl;
-      cloud_save_index++;
+      saveCloud(*cloud_cluster);
+      std::cerr << "\tcluster size: "<< euclidean_label_indices[i].indices.size () << std::endl;
     }
   }
 
   std::cerr << "Segmented object: " << cloud_save_index - initialIndex <<". Segmentation done.\n Waiting for keypress to get new data \n";
 }
+
+
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform transform, double distance = 0.5)
 {
@@ -302,7 +310,9 @@ void callback(const sensor_msgs::PointCloud2 &pc)
       ROS_ERROR("could not write to %s!",ss.str().c_str());
     }
     segmentCloudAboveTable(cloud,tableHull);
-    cloud_segmenter_and_save(cloud);
+    if (doCluster)
+	    cloud_segmenter_and_save(cloud);
+	else saveCloud(*cloud);
   }
   else
   {
@@ -381,6 +391,7 @@ int main (int argc, char** argv)
   nh.param("tableTF", tableTFname,std::string("/tableTF"));
   nh.param("useTFsurface",useTFsurface,false);
   nh.param("useRosbag",useRosbag,false);
+  nh.param("doCluster",doCluster,true);
 
   nh.param("aboveTableMin",aboveTableMin,0.135);
   nh.param("aboveTableMax",aboveTableMax,0.50);
