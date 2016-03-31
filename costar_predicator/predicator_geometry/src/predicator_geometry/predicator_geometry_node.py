@@ -10,9 +10,9 @@ class GeometryPredicator(object):
 
     def __init__(self, pub_topic, valid_pub_topic, value_pub_topic):
         self._listener = tf.TransformListener()
-        self._publisher = rospy.Publisher(pub_topic, PredicateList)
-        self._valid_publisher = rospy.Publisher(valid_pub_topic, ValidPredicates)
-        self._value_publisher = rospy.Publisher(value_pub_topic, FeatureValues)
+        self._publisher = rospy.Publisher(pub_topic, PredicateList, queue_size=1000)
+        self._valid_publisher = rospy.Publisher(valid_pub_topic, ValidPredicates, queue_size=1000)
+        self._value_publisher = rospy.Publisher(value_pub_topic, FeatureValues, queue_size=1000)
         self._frames = rospy.get_param('~frames')
         self._reference_frames = rospy.get_param('~reference_frames', [])
         if len(self._reference_frames) == 0:
@@ -61,7 +61,8 @@ class GeometryPredicator(object):
                 ps.value = height_difference
                 msg.statements.append(ps)
 
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException): pass
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
+            pass
 
         return msg
 
@@ -246,6 +247,9 @@ class GeometryPredicator(object):
                     for ref in self._reference_frames:
                         msg = self.addRelativeDirectionPredicates(msg, frame1, frame2, ref)
 
+        #print self._frames
+        #print self._reference_frames
+        #print msg
         return msg
 
     '''
@@ -311,6 +315,7 @@ if __name__ == "__main__":
     spin_rate = rospy.get_param('rate',10)
     rate = rospy.Rate(spin_rate)
 
+    rospy.sleep(1.0)
     print "starting geometry node"
 
     try:
