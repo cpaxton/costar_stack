@@ -41,7 +41,10 @@ Example execution for data in ``~/data/primesense``:
 
 ```
 roslaunch sp_segmenter SPCompact.launch training_folder:=$HOME/data/primesense object:=link,node,sander bg_names:=UR5
+roslaunch sp_segmenter SPCompact.launch object:=link,node,sander training_folder:=$HOME/data/primesense bg_sample_num:=100 obj_sasmple_num:=30
 ```
+
+We use ``bg_sample_num`` to set the number of samples drawn from each negative training data (background data), and ``obj_sample_num`` to determine the number of samples drawn from each foreground (object) partial view.
 
 ## Training using roslaunch
 How to train using roslaunch:
