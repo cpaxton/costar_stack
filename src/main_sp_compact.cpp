@@ -21,6 +21,32 @@
  * 12/16/2015
 **************/
 
+#include <iostream>
+#include <boost/filesystem.hpp>
+#include <boost/lambda/bind.hpp>
+/*
+std::size_t num_files_in_folder(std::string string_path)
+{
+    using namespace boost::filesystem;
+    using namespace boost::lambda;
+
+    path the_path( "/home/myhome" );
+
+    int cnt = std::count_if(
+        directory_iterator(the_path),
+        directory_iterator(),
+        bind( static_cast<bool(*)(const path&)>(is_regular_file), 
+          bind( &directory_entry::path, _1 ) ) );
+    // a little explanation is required here,
+    // we need to use static_cast to specify which 
+    // version of is_regular_file function we intend to use
+
+    std::cout << cnt << std::endl;
+
+    return 0;
+}
+*/
+
 
 class feaExtractor{
 public:
@@ -71,7 +97,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
         ss << i+1;
         
         std::vector< std::vector<sparseVec> > final_fea;
-        std::cerr << "Processing: " << root_path+obj_names[i]+"/" << endl;
+        std::cerr << "Processing object: " << root_path+obj_names[i]+"/" << endl;
         int train_dim = object_ext.computeFeature(root_path+obj_names[i]+"/", final_fea, obj_sample_num);
         cur_order_max = (int)final_fea.size();
         
@@ -94,7 +120,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
     for( size_t i = 0 ; i < bg_names.size() ; i++ )
     {
 ;
-        std::cerr << "Processing: " << root_path+bg_names[i]+"/" << endl;
+        std::cerr << "Processing background: " << root_path+bg_names[i]+"/" << endl;
         bg_dim = background_ext.computeFeature(root_path+bg_names[i]+"/", bg_fea, bg_sample_num);
     }
     
@@ -142,6 +168,7 @@ int main(int argc, char** argv)
         ss << obj_names.at(i);
         if (i < obj_names.size()-1) ss << "_";
     }
+    ss << "_svm/";
     out_svm_path = ss.str();
     // nh.param("out_svm_path",out_svm_path,std::string("svm_pool/"));
 
@@ -204,7 +231,7 @@ int main(int argc, char** argv)
 
             model* cur_model = train(&train_prob, &param);
             save_model((out_svm_path + "binary_L"+mm.str()+"_f.model").c_str(), cur_model);
-            
+            std::cerr << "Saved: " << out_svm_path << "binary_L"+mm.str() << "_f.model" << std::endl;
             destroy_param(&param);
             free(train_prob.y);
             for( int i = 0 ; i < train_prob.l ; i++ )
@@ -250,10 +277,11 @@ int main(int argc, char** argv)
 
             parameter param;
             GenSVMParamter(param, CC);
-            std::cerr<<std::endl<<"St100000arting Liblinear Training..."<<std::endl;
+            std::cerr<<std::endl<<"Starting Liblinear Training..."<<std::endl;
 
             model* cur_model = train(&train_prob, &param);
             save_model((out_svm_path + "multi_L"+mm.str()+"_f.model").c_str(), cur_model);
+            std::cerr << "Saved: " << out_svm_path << "multi_L"+mm.str() << "_f.model" << std::endl;
             
             destroy_param(&param);
             free(train_prob.y);
@@ -363,7 +391,7 @@ int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<s
     for( int j = 0 ; j < train_num ; j++ )
     {
         pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
-		std::cerr << "Processing (" << j << "/" << train_num <<")\n";
+		std::cerr << "Processing (" << j + 1 << "/" << train_num <<")\n";
         
         // disable sift and fpfh pooling for now
         spPooler triple_pooler;
