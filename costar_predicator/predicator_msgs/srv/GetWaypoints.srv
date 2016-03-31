@@ -1,4 +1,4 @@
-geometry_msgs/PoseArray transforms
+geometry_msgs/Pose[] transforms
 string frame_type
 predicator_msgs/PredicateStatement[] predicates
 ---

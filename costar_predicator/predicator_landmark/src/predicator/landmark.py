@@ -1,7 +1,8 @@
 import rospy
 from predicator_msgs.msg import *
+from predicator_msgs.srv import *
 import tf
-import tf_conversions as tf_c
+import tf_conversions.posemath as pm
 
 '''
 convert detected objects into predicate messages we can query later on
@@ -22,6 +23,7 @@ class GetWaypointsService:
         self.world = world
         self.and_srv = rospy.ServiceProxy('/predicator/match_AND',Query)
         self.service = rospy.Service('/predicator/get_waypoints',GetWaypoints,self.get_waypoints)
+        self.listener = tf.TransformListener()
 
     def get_waypoints(self,req):
         resp = GetWaypointsResponse()
@@ -32,16 +34,29 @@ class GetWaypointsService:
         type_predicate.predicate = req.frame_type
         type_predicate.params = ['*','','']
 
-        res = self.and_srv(type_predicate+predicates)
+        res = self.and_srv([type_predicate]+req.predicates)
 
-        print "Found matches: " + str(res.matches)
+        print "Found matches: " + str(res.matching)
 
-        if (not res.found) or len(res.matches) < 1:
+        if (not res.found) or len(res.matching) < 1:
             resp.msg = 'FAILURE -- message not found!'
             resp.success = False
+            return resp
 
-        for match in res.matches:
-            pass
+        poses = []
+        for tform in req.transforms:
+            poses.append(pm.fromMsg(tform))
 
+        print poses
+
+        for match in res.matching:
+            try:
+                (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
+                for pose in poses:
+                    resp.waypoints.poses.append(pm.toMsg(pose * pm.fromTf((trans,rot))))
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
+        
+        resp.msg = 'SUCCESS -- done!'
         return resp
         
