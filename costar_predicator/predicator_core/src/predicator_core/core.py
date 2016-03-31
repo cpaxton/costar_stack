@@ -37,11 +37,13 @@ def parse_key(key):
     ps = PredicateStatement()
 
     elems = [word for word in key[1:-1].split(',') if len(word) > 0]
-    ps.predicate = elems[0];
-    if len(elems) > 1:
-        ps.params = ['', '', '']
-        ps.params[0:(len(elems)-1)] = elems[1:len(elems)]
-        ps.num_params = len(ps.params)
+
+    if not len(elems) == 0:
+        ps.predicate = elems[0];
+        if len(elems) > 1:
+            ps.params = ['', '', '']
+            ps.params[0:(len(elems)-1)] = elems[1:len(elems)]
+            ps.num_params = len(ps.params)
 
     return ps
 
