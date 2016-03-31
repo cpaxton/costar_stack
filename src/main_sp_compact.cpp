@@ -62,6 +62,7 @@ public:
 
 private:
     void readData(std::string path, ObjectSet &scene_set);
+    std::vector<std::string> readData(std::string path);
     boost::shared_ptr<Hier_Pooler> hie_producer;
     
     std::vector< boost::shared_ptr<Pooler_L0> > sift_pooler_set;
@@ -106,7 +107,7 @@ void extractFea(std::string root_path, std::string out_fea_path,
             if( final_fea[ll].empty() == true )
                 continue;
             std::stringstream mm;
-;
+
             mm << ll;
             saveCvMatSparse(out_fea_path + "train_" + ss.str() + "_L" + mm.str() + ".smat", final_fea[ll], train_dim);
             final_fea[ll].clear();
@@ -315,7 +316,7 @@ feaExtractor::feaExtractor(std::string shot_path, std::string sift_path, std::st
     sift_pooler_set.clear();
     sift_pooler_set.resize(2);
     sift_pooler_set[1] = boost::shared_ptr<Pooler_L0> (new Pooler_L0(-1));
-    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sift_L0_400.cvmat"); 
+    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sifstd::vector<std::string> feaExtractor::readData(std::string path)t_L0_400.cvmat"); 
     
     fpfh_pooler_set.clear();
     fpfh_pooler_set.resize(2);
@@ -375,15 +376,37 @@ void feaExtractor::readData(std::string path, ObjectSet& scene_set)
     scene_set.push_back(cur_train);
 }
 
+std::vector<std::string> feaExtractor::readData(std::string path)
+{
+    // the input point cloud must be in the organized pcd format
+    // for object segment, the non-object area has no valid (x,y,z) values
+    
+    std::string workspace(path);
+    std::vector<std::string> pcd_files;
+    getNonNormalPCDFiles(workspace, pcd_files);
+
+    for( size_t j = 0 ; j < pcd_files.size() ; j++ )
+    {
+        std::string cloud_name(workspace + pcd_files[j]);
+        pcd_files[j] = cloud_name;
+    }
+    
+    return pcd_files;
+}
+
+
 
 //box_num is the number of supervoxels extracted from each object data at each order
 //usually for object data, box_num = 10; for background, box_num = 100~200; it is dependent on the actual memory size
 int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<sparseVec> > &final_fea, int box_num)
 {
     ObjectSet train_objects;
-    readData(in_path, train_objects);
+    //readData(in_path, train_objects);
+    std::vector<std::string> file_names = readData(in_path);
+    //std::cerr << "Read Data Done!" << std::endl;
     
-    int train_num = train_objects[0].size();
+    //int train_num = train_objects[0].size();
+    int train_num = file_names.size();
     int train_dim = -1;
     
     if( final_fea.size() != order + 1 )
@@ -391,42 +414,47 @@ int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<s
     #pragma omp parallel for schedule(dynamic, 1)
     for( int j = 0 ; j < train_num ; j++ )
     {
-        pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
-		std::cerr << "Processing (" << j + 1 << "/" << train_num <<")\n";
-        
-        // disable sift and fpfh pooling for now
-        spPooler triple_pooler;
-        triple_pooler.lightInit(full_cloud, *hie_producer, radius, down_ss);
-        triple_pooler.build_SP_LAB(lab_pooler_set, false);
-//        triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
-//        triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sift_det_vec, false);
-        
-        for( int ll = 0 ; ll <= order ; ll++ )
+    	pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+        pcl::io::loadPCDFile(file_names[j], *full_cloud);
+        if( full_cloud->size() > 30 )	// process cloud more than 30 pts
         {
-            std::vector<cv::Mat> sp_fea = triple_pooler.sampleSPFea(ll, box_num, false, true);
-            for( std::vector<cv::Mat>::iterator it = sp_fea.begin(); it < sp_fea.end() ; it++ )
-            {
-                if( train_dim > 0 && it->cols != train_dim )
-                {
-                    std::cerr << "Error: fea_dim > 0 && cur_final.cols != fea_dim   " << train_dim << " " << it->cols << std::endl;
-                    exit(0);
-                }
-                else if( train_dim < 0 )
-                {
-                    #pragma omp critical
-                    {
-                        train_dim = it->cols;
-                        std::cerr << "Fea Dim: " << train_dim << std::endl;
-                    }
-                }	
-                std::vector< sparseVec> this_sparse;
-                sparseCvMat(*it, this_sparse);
-                #pragma omp critical
-                {
-                    final_fea[ll].push_back(this_sparse[0]);
-                }
-            }
-        }
+	        // pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
+			std::cerr << "Processing (" << j + 1 << "/" << train_num <<")\n";
+	        
+	        // disable sift and fpfh pooling for now
+	        spPooler triple_pooler;
+	        triple_pooler.lightInit(full_cloud, *hie_producer, radius, down_ss);
+	        triple_pooler.build_SP_LAB(lab_pooler_set, false);
+	//        triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
+	//        triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sift_det_vec, false);
+	        
+	        for( int ll = 0 ; ll <= order ; ll++ )
+	        {
+	            std::vector<cv::Mat> sp_fea = triple_pooler.sampleSPFea(ll, box_num, false, true);
+	            for( std::vector<cv::Mat>::iterator it = sp_fea.begin(); it < sp_fea.end() ; it++ )
+	            {
+	                if( train_dim > 0 && it->cols != train_dim )
+	                {
+	                    std::cerr << "Error: fea_dim > 0 && cur_final.cols != fea_dim   " << train_dim << " " << it->cols << std::endl;
+	                    exit(0);
+	                }
+	                else if( train_dim < 0 )
+	                {
+	                    #pragma omp critical
+	                    {
+	                        train_dim = it->cols;
+	                        std::cerr << "Fea Dim: " << train_dim << std::endl;
+	                    }
+	                }	
+	                std::vector< sparseVec> this_sparse;
+	                sparseCvMat(*it, this_sparse);
+	                #pragma omp critical
+	                {
+	                    final_fea[ll].push_back(this_sparse[0]);
+	                }
+	            }
+	        }
+    	}
     }
     train_objects.clear();
     
