@@ -68,5 +68,5 @@ class DetectedObjectsPublisher:
         self.pub.publish(true_msg)
         self.vpub.publish(self.valid_msg)
 
-        print self.valid_msg
-        print true_msg
+        #print self.valid_msg
+        #print true_msg
