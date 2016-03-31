@@ -1,8 +1,37 @@
 <launch>
 
+  <arg name="output" default="screen"/>
+  <arg name="publish_values" default="0"/>
+
   <!-- detected objects node -->
   <node pkg="predicator_detected_objects" name="predicator_detected_objects_node" type="predicator_detected_objects.py">
     <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
   </node>
 
+  <!-- geometry node -->
+  <node name="predicator_geometry_node"
+    type="predicator_geometry_node.py"
+    pkg="predicator_geometry"
+    output="$(arg output)">
+
+    <param name="height_threshold" value="0.1"/>
+    <param name="rel_x_threshold" value="0.1"/>
+    <param name="rel_y_threshold" value="0.1"/>
+    <param name="rel_z_threshold" value="0.1"/>
+    <param name="near_2D_threshold" value="0.2"/>
+    <param name="near_3D_threshold" value="0.25"/>
+    <param name="publish_values" value="$(arg publish_values)"/>
+
+    <rosparam param="frames">
+      - gbeam_link_1/gbeam_link
+      - gbeam_node_1/gbeam_node
+      - gbeam_node_2/gbeam_node
+      - iiwa_link_0
+    </rosparam>
+
+    <rosparam param="reference_frames">
+      - iiwa_link_0
+    </rosparam>
+
+  </node>
 </launch>
