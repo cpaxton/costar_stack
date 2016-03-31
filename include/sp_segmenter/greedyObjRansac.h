@@ -13,7 +13,7 @@
 
 class greedyObjRansac{
 public:
-    greedyObjRansac(double pairWidth = 0.1, double voxelSize = 0.03);
+    greedyObjRansac(double pairWidth = 0.1, double voxelSize = 0.03, double relNumOfPairsInHashTable_ = 0.5);
     ~greedyObjRansac(){}
     
     void setParams(double vis_, double rel_);
@@ -32,6 +32,7 @@ public:
     void genHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::list<AcceptedHypothesis> &acc_hypotheses);
     void mergeHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::list<AcceptedHypothesis> &acc_hypotheses, std::vector<poseT> &poses);
     pcl::PointCloud<myPointXYZ>::Ptr FillModelCloud(const std::vector<poseT> &poses);
+    void setUseCUDA(bool useCUDA){objrec.setUseCUDA(useCUDA);}
     
 private:
     std::vector<ModelT> models;

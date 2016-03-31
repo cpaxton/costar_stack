@@ -250,6 +250,10 @@ int main(int argc, char** argv)
     hasTF = false;
     nh.param("enableTracking", enableTracking, false);
 
+    
+    bool use_cuda;
+    nh.param("use_cuda", use_cuda,true);
+
     if (bestPoseOnly)
         std::cerr << "Node will only output the best detected poses \n";
     else
@@ -262,6 +266,7 @@ int main(int argc, char** argv)
  
 
     objrec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
+    objrec->setUseCUDA(use_cuda);
     //pcl::console::parse_argument(argc, argv, "--p", in_path);
     //pcl::console::parse_argument(argc, argv, "--i", scene_name);
     

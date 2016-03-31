@@ -1,7 +1,7 @@
 #include "sp_segmenter/greedyObjRansac.h"
 
 //greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_) : objrec(pairWidth_, voxelSize_, 1.0)
-greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_) : objrec(pairWidth_, voxelSize_, 0.5)
+greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_, double relNumOfPairsInHashTable_) : objrec(pairWidth_, voxelSize_, relNumOfPairsInHashTable_)
 {
 //    successProbability = 0.9999999;
     successProbability = 0.99;

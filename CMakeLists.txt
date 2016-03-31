@@ -24,6 +24,30 @@ find_package(OpenMP )
 find_package(Boost)
 find_package(VTK)
 
+if(NOT EXISTS OBJREC_USE_CUDA)
+  FIND_PACKAGE(CUDA)
+  if(CUDA_FOUND)
+    set(OBJREC_USE_CUDA TRUE)
+  endif()
+endif()
+
+IF(OBJREC_USE_CUDA)
+  set(OBJREC_CUDA_DEVICE_ID 1 CACHE STRING "Which GPU device to use when running")
+  message(STATUS "CUDA Found and enabled with OBJREC_USE_CUDA=TRUE, Using CUDA GPU Device # " ${OBJREC_CUDA_DEVICE_ID})
+  add_definitions(-DUSE_CUDA)
+  add_definitions(-DCUDA_DEVICE_ID=${OBJREC_CUDA_DEVICE_ID})
+
+  set(CUDA_TOOLKIT_ROOT_DIR $ENV{CUDA_TOOLKIT_ROOT_DIR})
+  FIND_PACKAGE(CUDA REQUIRED)
+
+  add_definitions(-DOBJ_REC_RANSAC_PROFILE)
+
+  #add_definitions(-DOBJ_REC_RANSAC_VERBOSE)
+  #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_1)
+  #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_2)
+ENDIF()
+
+
 IF(NOT VTK_FOUND)
   message(FATAL_ERROR "VTK not found. VTK is not installed or cmake can not find it. Install VTK first and then try again.
   If VTK is installed but cmake can not find it, set the VTK_DIR entry to the folder which contains the file VTKConfig.cmake")

@@ -145,6 +145,9 @@ void semanticSegmentation::initializeSemanticSegmentation()
     //get symmetry parameter of the objects
     objectDict = fillDictionary(nh, cur_name);
 
+    bool use_cuda;
+    nh.param("use_cuda", use_cuda,true);
+
     objrec.resize(cur_name.size());
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
     {
@@ -152,6 +155,8 @@ void semanticSegmentation::initializeSemanticSegmentation()
         std::string temp_cur = cur_name.at(model_id);
 
         objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
+
+        objrec[model_id]->setUseCUDA(use_cuda);
         objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
         model_name[model_id+1] = temp_cur;
         model_name_map[temp_cur] = model_id+1;
