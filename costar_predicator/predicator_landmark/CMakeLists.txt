@@ -5,7 +5,9 @@ project(predicator_landmark)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  predicator
+  predicator_msgs
+  predicator_core
+  tf
 )
 
 ## System dependencies are found with CMake's conventions

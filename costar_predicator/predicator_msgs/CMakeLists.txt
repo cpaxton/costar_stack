@@ -7,6 +7,7 @@ project(predicator_msgs)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -53,6 +54,7 @@ add_message_files(
   UpdateParam.msg
   Header.msg
   FeatureValues.msg
+  WaypointDefinition.msg
 )
 
 add_service_files(
@@ -66,12 +68,14 @@ add_service_files(
   GetAssignmentUseInfo.srv
   GetPredicateUseInfo.srv
   GetLength.srv
+  Query.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ###################################

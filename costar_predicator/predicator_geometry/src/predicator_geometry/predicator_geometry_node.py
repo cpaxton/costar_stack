@@ -44,7 +44,7 @@ class GeometryPredicator(object):
 
             self._values["height_difference_" + str(frame1) + "_" + str(frame2)] = height_difference
 
-            if height_difference > self._higher_margin:
+            if height_difference < -1 * self._higher_margin:
                 ps = PredicateStatement()
                 ps.predicate = 'higher_than'
                 ps.params[0] = frame1
@@ -52,7 +52,7 @@ class GeometryPredicator(object):
                 ps.num_params = 2
                 ps.value = height_difference
                 msg.statements.append(ps)
-            elif height_difference < -1 * self._higher_margin:
+            elif height_difference < self._higher_margin:
                 ps = PredicateStatement()
                 ps.predicate = 'lower_than'
                 ps.params[0] = frame1
@@ -134,7 +134,7 @@ class GeometryPredicator(object):
             self._values["y_diff_" + str(frame1) + "_" + str(frame2)] = y_diff
             self._values["z_diff_" + str(frame1) + "_" + str(frame2)] = z_diff
 
-            if x_diff > self._x_threshold:
+            if x_diff < -1 * self._x_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'in_front_of'
                 ps.params[0] = frame1
@@ -143,7 +143,7 @@ class GeometryPredicator(object):
                 ps.num_params = 3
                 ps.value = x_diff
                 msg.statements.append(ps)
-            elif x_diff < -1 * self._x_threshold:
+            elif x_diff > self._x_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'in_back_of'
                 ps.params[0] = frame1
@@ -153,7 +153,7 @@ class GeometryPredicator(object):
                 ps.value = x_diff
                 msg.statements.append(ps)
 
-            if y_diff > self._y_threshold:
+            if y_diff < -1 * self._y_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'left_of'
                 ps.params[0] = frame1
@@ -162,7 +162,7 @@ class GeometryPredicator(object):
                 ps.num_params = 3
                 ps.value = y_diff
                 msg.statements.append(ps)
-            elif y_diff < -1 * self._y_threshold:
+            elif y_diff > self._y_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'right_of'
                 ps.params[0] = frame1
@@ -172,7 +172,7 @@ class GeometryPredicator(object):
                 ps.value = y_diff
                 msg.statements.append(ps)
 
-            if z_diff > self._z_threshold:
+            if z_diff < -1 * self._z_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'up_from'
                 ps.params[0] = frame1
@@ -181,7 +181,7 @@ class GeometryPredicator(object):
                 ps.num_params = 3
                 ps.value = z_diff
                 msg.statements.append(ps)
-            elif z_diff < -1 * self._z_threshold:
+            elif z_diff > self._z_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'down_from'
                 ps.params[0] = frame1

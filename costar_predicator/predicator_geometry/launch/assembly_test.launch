@@ -19,6 +19,7 @@
       - gbeam_link_1/gbeam_link
       - gbeam_node_1/gbeam_node
       - gbeam_node_2/gbeam_node
+      - world
     </rosparam>
 
     <rosparam param="reference_frames">

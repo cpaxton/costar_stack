@@ -40,8 +40,12 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>predicator</build_depend>
-  <run_depend>predicator</run_depend>
+  <build_depend>predicator_core</build_depend>
+  <run_depend>predicator_core</run_depend>
+  <build_depend>predicator_msgs</build_depend>
+  <run_depend>predicator_msgs</run_depend>
+  <build_depend>tf</build_depend>
+  <run_depend>tf</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
