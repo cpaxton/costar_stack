@@ -34,4 +34,6 @@
     </rosparam>
 
   </node>
+
+  <node pkg="predicator_landmark" name="predicator_landmark_service" type="get_waypoints_service.py"/>
 </launch>
