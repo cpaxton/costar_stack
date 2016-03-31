@@ -1,18 +1,22 @@
 <launch>
   <!-- Objects file Name and save directory-->
-  <arg name="object"              default="cloud_cluster_" />
+  <arg name="object"              default="cloud_cluster_" doc="The name of the point cloud"/>
   <arg name="save_directory"      default="$(find object_on_table_segmenter)/result" />
-  <arg name="original_directory"      default="$(find object_on_table_segmenter)/original" />
+  <arg name="original_directory"  default="$(find object_on_table_segmenter)/original" />
   <arg name="pcl_in"              default="/camera/depth_registered/points" />
-  <arg name="save_index"	        default="0" />
-  <arg name="environment_only"	  default="false" />
-  <arg name="load_table"          default="false" />
-  <arg name="update_table"        default="true" />
-  <arg name="load_directory"      default="$(find object_on_table_segmenter)/data" />
+  <arg name="save_index"	        default="0" doc="Starting index for point cloud"/>
+  <arg name="environment_only"	  default="false" doc="Will just save everything in the point cloud without doing any object point cloud segmentation"/>
+  <arg name="load_table"          default="false" doc="Load the table.pcd located in the data folder for convex hull"/>
+  <arg name="update_table"        default="true" doc="Update the table data located in the data folder"/>
+  <arg name="load_directory"      default="$(find object_on_table_segmenter)/data" doc="Where the table.pcd located"/>
   <arg name="tableTF"             default="ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
   <arg name="time_step" default="0.5"/>
   <arg name="num_to_capture" default="200"/>
-  
+  <arg name="useTFsurface"        default="false" doc="Use TF surface to define the plane. If false, algorithm will try to find the biggest plane around the surface to get the table convex hull."/>
+  <arg name="useRosbag"           default="false" doc="Data collection is done on rosbag. Setting this to true should fix the TF frame failed to be found when using rosbag."/>
+
+  <arg name="aboveTableMin"        default="0.135" doc="Min distance from the table"/>
+
   <!-- PCL distance filtered viewer-->
   <arg name="viewer"              default="false" />
 
@@ -32,20 +36,13 @@
     <param name="load_table"      type="bool" value="$(arg load_table)" />
     <param name="update_table"    type="bool" value="$(arg update_table)" />
     <param name="load_directory"  type="str"  value="$(arg load_directory)" />
-    <param name="tableTF"        type="str" value="$(arg tableTF)"/>
-    
-    <param name="limit_X"         type="bool" value="true" />
-    <param name="limit_Y"         type="bool" value="false" />
-    <param name="limit_Z"         type="bool" value="true" />
+    <param name="tableTF"         type="str" value="$(arg tableTF)"/>
 
-    <param name="xMin"       type="double" value="-0.4" />
-    <param name="yMin"       type="double" value="0" />
-    <param name="zMin"       type="double" value="0" />
-    <param name="xMax"       type="double" value="0.4" />
-    <param name="yMax"       type="double" value="0" />
-    <param name="zMax"       type="double" value="0.75" />
 
-    <param name="aboveTableMin" type="double" value="0.135" />
+    <param name="useRosbag"       type="bool" value="$(arg useRosbag)" />
+    <param name="useTFsurface"    type="bool" value="$(arg useTFsurface)" />
+
+    <param name="aboveTableMin" type="double" value="$(arg aboveTableMin)" />
     <param name="aboveTableMax" type="double" value="0.5" />
 
     <param name="run_auto" type="bool" value="true" />

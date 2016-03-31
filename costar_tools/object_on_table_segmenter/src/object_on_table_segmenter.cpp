@@ -24,9 +24,14 @@
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf/transform_listener.h>
+// for using tf surface
+#include <pcl_ros/transforms.h>
 // for segment object above table
 #include <pcl/surface/convex_hull.h>
 #include <pcl/segmentation/extract_polygonal_prism_data.h>
+
+// for creating directory automatically
+#include <boost/filesystem.hpp>
 
 bool dist_viewer ,haveTable,update_table;
 std::string POINTS_IN;
@@ -43,6 +48,9 @@ double time_step;
 bool keyPress = false;
 bool run_auto;
 int num_to_capture = 0;
+bool useTFsurface;
+bool useRosbag;
+
 
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
@@ -250,6 +258,33 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   std::cerr << "Segmented object: " << cloud_save_index - initialIndex <<". Segmentation done.\n Waiting for keypress to get new data \n";
 }
 
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform transform, double distance = 0.5)
+{
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableTmp(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  for (int i = -1; i < 2; i+=2)
+    for (int j = -1; j < 2; j+=2)
+    {
+      pcl::PointXYZRGBA tmp;
+      tmp.x = i * distance;
+      tmp.y = j * distance;
+      tmp.z = 0;
+      tableTmp->push_back(tmp);
+    }
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tfTable(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl_ros::transformPointCloud (*tableTmp, *tfTable, transform);
+  writer.write<pcl::PointXYZRGBA> (load_directory+"TF_boundary.pcd", *tfTable, true);
+
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+
+  pcl::ConvexHull<pcl::PointXYZRGBA> hull;
+  hull.setInputCloud(tfTable);
+  // Make sure that the resulting hull is bidimensional.
+  hull.setDimension(2);
+  hull.reconstruct(*convexHull);
+  writer.write<pcl::PointXYZRGBA> (load_directory+"TFconvexHull.pcd", *tfTable, true);
+  return convexHull;
+}
+
 void callback(const sensor_msgs::PointCloud2 &pc)
 {
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
@@ -273,11 +308,11 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   {
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
     std::string tableTFparent;
+    tf::StampedTransform transform;
     listener->getParent(tableTFname,ros::Time(0),tableTFparent);
-    if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
+    if (useRosbag || listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
     {
       std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
-      tf::StampedTransform transform;
       listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
       cloud_filtered = cloud_filter_distance(cloud, transform);
     }
@@ -295,7 +330,11 @@ void callback(const sensor_msgs::PointCloud2 &pc)
       {
       }
     }
-    tableHull = getTableConvexHull(cloud_filtered);
+    if (useTFsurface)
+      tableHull = useTFConvexHull(transform);
+    else
+      tableHull = getTableConvexHull(cloud_filtered);
+
     if (update_table)
       writer.write<pcl::PointXYZRGBA> (load_directory+"/table.pcd", *tableHull, true);
     haveTable = true;
@@ -340,6 +379,8 @@ int main (int argc, char** argv)
   nh.param("update_table",update_table,false);
   nh.param("load_directory",load_directory,std::string("./data"));
   nh.param("tableTF", tableTFname,std::string("/tableTF"));
+  nh.param("useTFsurface",useTFsurface,false);
+  nh.param("useRosbag",useRosbag,false);
 
   nh.param("aboveTableMin",aboveTableMin,0.135);
   nh.param("aboveTableMax",aboveTableMax,0.50);
@@ -348,6 +389,9 @@ int main (int argc, char** argv)
 
   bool justCaptureEnvironment;
   nh.param("environment_only",justCaptureEnvironment,false);
+  boost::filesystem::create_directories(load_directory);
+  boost::filesystem::create_directories(original_directory);
+  boost::filesystem::create_directories(save_directory);
 
   if (justCaptureEnvironment)
   { 

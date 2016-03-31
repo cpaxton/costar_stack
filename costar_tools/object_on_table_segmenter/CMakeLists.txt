@@ -5,10 +5,12 @@ project(object_on_table_segmenter)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(PCL REQUIRED)
+find_package(Boost REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   PCL
   tf
+  pcl_ros
   pcl_conversions
   sensor_msgs
 )
@@ -118,6 +120,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -141,6 +144,7 @@ add_executable(object_on_table_segmenter src/object_on_table_segmenter.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(object_on_table_segmenter
    ${catkin_LIBRARIES}
+   ${Boost_LIBRARIES}
 )
 
 #############
