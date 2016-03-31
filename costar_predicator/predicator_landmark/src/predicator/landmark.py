@@ -58,5 +58,6 @@ class GetWaypointsService:
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
         
         resp.msg = 'SUCCESS -- done!'
+        resp.success = True
         return resp
         
