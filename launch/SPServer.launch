@@ -19,6 +19,7 @@
   <arg name="saveTabledir"   default="$(find sp_segmenter)/data" doc="Save/Load folder for segmenting table" />
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
+  <arg name="useBinarySVM"   default="true" doc="This will do binary classification before multi class SVM."/>
 
   <arg name="setObjectOrientation" default="true" doc="use specified TF as Object preferred orientation" />
   <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
@@ -42,11 +43,14 @@
     <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
     <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
     <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
+    <param name="useBinarySVM"   type="bool" value="$(arg useBinarySVM)" />
     
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
     <param name="saveTable"   type="bool" value="$(arg saveTable)" />
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
+    
+
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
     

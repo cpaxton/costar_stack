@@ -64,6 +64,7 @@ private:
     tf::TransformBroadcaster br;
     ros::ServiceServer spSegmenter;
     ros::ServiceServer segmentGripper;
+    bool useBinarySVM;
     
     // Point cloud related
     sensor_msgs::PointCloud2 inputCloud; // cache the point cloud
@@ -97,7 +98,13 @@ private:
     
     std::map<std::string, int> model_name_map;
     uchar color_label[11][3];
-;
+
+    std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > cloud_vec;
+    int maxframes;
+    int cur_frame_idx;
+    bool cloud_ready;
+
+   
 protected:
 //    void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
     std::vector<poseT> spSegmenterCallback(const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> & final_cloud);

@@ -41,16 +41,25 @@ semanticSegmentation::semanticSegmentation(int argc, char** argv, const ros::Nod
         this->compute_pose = true;
     
     this->setNodeHandle(nh);
+
 }
 
 void semanticSegmentation::initializeSemanticSegmentation()
 {
+    maxframes = 15;
+    cur_frame_idx = 0;
+    cloud_ready = false;
+    cloud_vec.clear();
+    cloud_vec.resize(maxframes);
+    cur_frame_idx = 0;
+    cloud_ready = false;
+
     this->hasTF = false;
     this->radius = 0.02;
     this->pairWidth = 0.05;
     this->voxelSize = 0.003;
     uchar color_label_tmp[11][3] =
-    { {0, 0, 0},
+    { {255, 255, 255},
         {255, 0, 0},
         {0, 255, 0},
         {0, 0, 255},
@@ -67,7 +76,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("useTF",useTFinsteadOfPoses,true);
     this->nh.param("GripperTF",gripperTF,std::string("endpoint_marker"));
     
-    //getting subscriber/publisher parameters
+    //getting subscriber/publisher parameterscloud_ready = false;
     this->nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
     this->nh.param("POINTS_OUT", POINTS_OUT,std::string("points_out"));
     //get only best poses (1 pose output) or multiple poses
@@ -79,6 +88,8 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("useTableSegmentation",useTableSegmentation,true);
     this->nh.param("setObjectOrientation",setObjectOrientationTarget,false);
     this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
+    this->nh.param("useBinarySVM",useBinarySVM,false);
+  
   
     tableConvexHull = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
     
@@ -301,21 +312,25 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
 
     // pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
     // std::vector< std::vector<PR_ELEM> > cur_fore_pr(3);
-    for( int ll = 0 ; ll <= 1 ; ll++ )
+    if(useBinarySVM)
     {
-        bool reset_flag = ll == 0 ? true : false;
-        if( ll >= 1 )
-            triple_pooler.extractForeground(false);
-        triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
+        for( int ll = 0 ; ll <= 1 ; ll++ )
+        {
+            bool reset_flag = ll == 0 ? true : false;
+            if( ll >= 1 )
+                triple_pooler.extractForeground(false);
+            triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
+        }
+
+        triple_pooler.extractForeground(true);
     }
 
-    triple_pooler.extractForeground(true);
     if (mesh_set.size() > 1) // more than one objects, do multi object classification
     {
         pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
-        for( int ll = 1 ; ll <= 1 ; ll++ )
+        for( int ll = 0 ; ll <= 0 ; ll++ )
         {
-           bool reset_flag = ll == 1 ? true : false;
+           bool reset_flag = ll == 0 ? true : false;
            triple_pooler.InputSemantics(multi_models[ll], ll, reset_flag, false);
         }
     }
@@ -362,7 +377,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     // RefinePoses(scene_xyz, mesh_set, all_poses1);
 
     std::map<std::string, unsigned int> tmpTFIndex = objectTFIndex;
-  
+    
     if (doingGripperSegmentation || !hasTF){
       // normalize symmetric object Orientation
         Eigen::Quaternion<double> baseRotation;
@@ -446,6 +461,18 @@ void semanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &pc)
     {
         haveTable = getAndSaveTable(pc);
     }
+
+    pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+    
+    fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+    cloud_vec[cur_frame_idx] = full_cloud;
+    cur_frame_idx++;
+    // std::cerr << "PointCloud --- " << cur_frame_idx << "----" << full_cloud->size() << std::endl;
+    if( cur_frame_idx >= maxframes )
+    {
+        cloud_ready = true;
+        cur_frame_idx = 0; 
+    }
 }
 
 void semanticSegmentation::populateTFMapFromTree()
@@ -510,7 +537,21 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
         return false; // still does not have table
     }
     
-    fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+    // fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+    // fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+    if( cloud_ready == true )
+    {
+        std::cerr << "Averaging point clouds" << std::endl;
+        full_cloud = AveragePointCloud(cloud_vec);
+        // cloud_ready = false;
+        std::cerr << "Averaging point clouds Done" << std::endl;
+    }
+    else
+    {
+        ROS_INFO("Need to accumulate more frames!");
+        return false;
+    }
+
     if (full_cloud->size() < 1){
         ROS_ERROR("No cloud available!");
         return false;
@@ -530,13 +571,13 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     ROS_INFO("Found %u objects",all_poses.size());
     // std::cerr << "found: " << all_poses.size() << "\n";
     
-    
     //publishing the segmented point cloud
     sensor_msgs::PointCloud2 output_msg;
     toROSMsg(*final_cloud,output_msg);
     output_msg.header.frame_id = inputCloud.header.frame_id;
     pc_pub.publish(output_msg);
     
+    fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
     if (all_poses.size() < 1) {
         ROS_ERROR("Failed to find any objects on the table.");
         return false;

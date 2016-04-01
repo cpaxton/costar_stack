@@ -78,6 +78,44 @@ pcl::PointCloud<PointLT>::Ptr seg_cloud(new pcl::PointCloud<PointLT>());
     return seg_cloud;
 }
 
+pcl::PointCloud<PointT>::Ptr AveragePointCloud(const std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > &cloud_vec)
+{
+    pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+    if( cloud_vec.empty() == true )
+        return full_cloud;
+    
+    full_cloud->resize(cloud_vec[0]->size());
+    full_cloud->width = cloud_vec[0]->width;
+    full_cloud->height = cloud_vec[0]->height;
+    for( size_t i = 0 ; i < full_cloud->size() ; i++ )
+    {
+        int count = 0;
+        for( size_t j = 0 ; j < cloud_vec.size() ; j++ )
+        {
+            if( pcl_isfinite(cloud_vec[j]->at(i).x) == true )
+            {
+                full_cloud->at(i).x += cloud_vec[j]->at(i).x;
+                full_cloud->at(i).y += cloud_vec[j]->at(i).y;
+                full_cloud->at(i).z += cloud_vec[j]->at(i).z;
+                full_cloud->at(i).rgba = cloud_vec[j]->at(i).rgba;
+                count++;
+            }
+        }
+        if( count > cloud_vec.size() / 2.0 )
+        {
+            full_cloud->at(i).x /= count;
+            full_cloud->at(i).y /= count;
+            full_cloud->at(i).z /= count;
+        }
+        else
+        {
+            full_cloud->at(i).x = std::numeric_limits<float>::quiet_NaN();
+            full_cloud->at(i).y = std::numeric_limits<float>::quiet_NaN();
+            full_cloud->at(i).z = std::numeric_limits<float>::quiet_NaN();
+        }
+    }
+    return full_cloud;
+}
 
 void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3])
 {

@@ -38,7 +38,7 @@
        object represented in the scene will contain at least 5% of all scene
        points. TRADEOFF: lower values lead to more computation time and to
        higher success probability. -->
-       
+
   <arg name="sceneVisibility"  default=".1"  doc="ObjRecRANSAC: What visible proportion of an object is acceptable for a detection (0.0-1.0)."/>
 
   <!-- Object visibility is the expected visible object part expressed as
@@ -58,6 +58,7 @@
   <arg name="saveTabledir"   default="$(find sp_segmenter)/data" doc="Save/Load folder for segmenting table" />
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
+  <arg name="useBinarySVM"   default="true" doc="This will do binary classification before multi class SVM."/>
 
   <arg name="gripperTF"      default="endpoint_marker" doc="The gripper tf where target object would be attached" />
 
@@ -68,7 +69,7 @@
   <arg name="pcl_out"        default="points_out"/>
   <arg name="poses_out"      default="poses_out"/>
   <arg name="useTF"          default="true" doc="Whether use TF frames instead of pose array for object pose representation" />
-  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)" launch-prefix="$(arg debug_args)">  
+  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)">  
     <!-- SPSegmenterNode Node arg pass -->
     <param name="cur_name"   type="str" value="$(arg object)" />
     <param name="objRecRANSACdetector" type="str" value="$(arg objRecRANSACdetector)" />
@@ -81,6 +82,7 @@
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
     <param name="saveTable"   type="bool" value="$(arg saveTable)" />
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
+    <param name="useBinarySVM"   type="bool" value="$(arg useBinarySVM)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
 
