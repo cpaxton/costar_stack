@@ -21,7 +21,7 @@ It also provides ways to use and access these methods
 class SmartWaypointManager:
 
 
-    def __init__(self,world="world",ns=""):
+    def __init__(self,world="world",ns="",endpoint="/endpoint"):
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
 
         rospy.loginfo("[SmartMove] Waiting for LIBRARIAN to handle file I/O...")
@@ -36,7 +36,9 @@ class SmartWaypointManager:
 
 
         self.broadcaster = tf.TransformBroadcaster()
+        self.listener = tf.TransformListener()
         self.world = world
+        self.endpoint = endpoint
 
         self.folder = 'smartmove_waypoint'
 
@@ -90,8 +92,24 @@ class SmartWaypointManager:
     def get_detected_objects(self):
         return self.objs
 
+    def delete(self,move):
+        self.delete_service(id=move.strip('/'),type=self.folder)
+
     def get_detected_object_classes(self):
         return self.obj_classes
+
+    def save_new_waypoint(self,obj,name):
+        pose = self.get_new_waypoint(obj)
+        if not pose is None:
+            self.save_service(id=name.strip('/'),type=self.folder,text=yaml.dump([pose,self.obj_class[obj]]))
+
+    def get_new_waypoint(self,obj):
+        try:
+            (trans,rot) = self.listener.lookupTransform(obj,self.endpoint,rospy.Time(0))
+            return pm.toMsg(pm.fromTf((trans,rot)))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            rospy.logerr('Failed to lookup transform from %s to %s'%(obj,self.endpoint))
+        return None
 
     def get_moves_for_object(self,obj):
         print "obj class = %s"%self.obj_class[obj]

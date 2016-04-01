@@ -11,4 +11,5 @@ swm.load_all()
 rate = rospy.Rate(10)
 while not rospy.is_shutdown():
     swm.update_tf()
+    print swm.get_new_waypoint('gbeam_link_1/gbeam_link')
     rate.sleep()
