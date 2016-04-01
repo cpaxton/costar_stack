@@ -11,16 +11,20 @@ To run this code you need:
   
 ## Training Model
 
-Feature extraction fraining is implemented in ``main_sp_training.cpp```.
 
-This training code will extract LAB, FPFH, and SIFT features. You can choose which of these to use for SVM learning.
+Application for training:
 
-These features are all saved to a sparse matrix for the provided data set. When doing SVM training, you choose the features.
+`main_sp_compact`
+
+This has the training script that figures out how to separate the different objects you wish to recognize. Put the different object names in different folders as documented in the list of folders.
+
+This training code will perform feature extraction including LAB, FPFH, and SIFT features. You can choose which of these to use for SVM learning. These features are all saved to a sparse matrix for the provided data set. When doing SVM training, you choose the features.
 
 SVM learning is done in ```main_sp_svm.cpp.```
 
 Training data is in seperate folders, one for each class. For example:
 
+```
 .
 ├── costar_link
 ├── costar_node
@@ -32,6 +36,7 @@ Training data is in seperate folders, one for each class. For example:
 ├── sander
 ├── svm_pool
 └── UR5
+```
 
 10 directories
 
@@ -45,6 +50,45 @@ roslaunch sp_segmenter SPCompact.launch object:=link,node,sander training_folder
 ```
 
 We use ``bg_sample_num`` to set the number of samples drawn from each negative training data (background data), and ``obj_sample_num`` to determine the number of samples drawn from each foreground (object) partial view.
+
+
+
+
+
+### handling recognizing specific objects
+
+Objects are divided into "classes" drill, hammer, cube, rod.
+
+Two sections in main for training:
+
+- first binary foreground background classification
+- second multiclass object classification
+
+float CC foregroundBackgroundCC binary cc, "C" parameter in SVM algorithm (see papers on Support Vector Machines) this is the weight/cost of misclassifying objects in training data.
+
+
+parameters:
+
+obj_sample_num, bg_sample_num
+
+Data is resampled in the algorithm so it is important that the weights of the data being classified is appropriate. Therefore it is important to set the number of samples in foreground and the background.
+
+The total number of background data should be equal to the total number of the background data. We randomly sample patches
+
+Example:
+
+A is foreground
+B is background
+
+relationship between foreground and background should be the following for obj_samplenum and bg_sample_num:
+
+numObjectTrainingData*ObjSamples = numBackgroundTrainingData*NumBackgroundSamples
+
+Note that there is only one foreground and one background class, so the foreground data consists of all foreground data.
+
+
+
+
 
 ## Training using roslaunch
 How to train using roslaunch:
