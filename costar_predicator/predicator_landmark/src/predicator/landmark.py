@@ -27,25 +27,26 @@ class GetWaypointsService:
 
     def get_waypoints_srv(self,req):
         resp = GetWaypointsResponse()
-        poses = get_waypoints(req.frame_type,req.predicates)
+        poses = self.get_waypoints(req.frame_type,req.predicates,req.transforms)
 
-        if poses is None or len(poses < 1):
+        if poses is None or len(poses) < 1:
             resp.msg = 'FAILURE -- message not found!'
             resp.success = False
-            return resp
+        else:
+            resp.waypoints.poses = poses
+            resp.msg = 'SUCCESS -- done!'
+            resp.success = True
 
-        resp.msg = 'SUCCESS -- done!'
-        resp.success = True
         return resp
 
-    def get_waypoints(self,frame_type,predicates):
+    def get_waypoints(self,frame_type,predicates,transforms):
         self.and_srv.wait_for_service()
 
         type_predicate = PredicateStatement()
-        type_predicate.predicate = req.frame_type
+        type_predicate.predicate = frame_type
         type_predicate.params = ['*','','']
 
-        res = self.and_srv([type_predicate]+req.predicates)
+        res = self.and_srv([type_predicate]+predicates)
 
         print "Found matches: " + str(res.matching)
 
@@ -53,7 +54,7 @@ class GetWaypointsService:
           return None
 
         poses = []
-        for tform in req.transforms:
+        for tform in transforms:
             poses.append(pm.fromMsg(tform))
 
         print poses
@@ -68,4 +69,5 @@ class GetWaypointsService:
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
         
+        return new_poses
         
