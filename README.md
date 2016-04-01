@@ -155,3 +155,14 @@ To segment grabbed object on the gripper and update a particular object TF (in t
 ```
 rosservice call /SPServer/segmentInGripper Obj::link_uniform::1
 ```
+
+
+### debugging
+
+There are several facilities for debugging both the runtime execution performance of sp_segmenter and the detection/pose estimation performance.
+
+To view detection:
+
+```
+roslaunch sp_segmenter SPServerNode.launch params:=-v
+```
