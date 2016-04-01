@@ -104,11 +104,13 @@ class Predicator(object):
 
         vals = None
 
+        print "=== Match AND ==="
+
         for pred in req.predicates:
 
             try:
                 i = pred.params.index('*')
-                print i
+                #print i
             except:
                 rospy.logerr('Query with no open parameters! Include exactly one "*" field!')
                 return resp

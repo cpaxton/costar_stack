@@ -14,6 +14,6 @@ p.orientation.w = 1.0
 
 print p
 
-resp = srv(frame_type="link",predicates=[p2,p3],transforms=[p])
+resp = srv(frame_type="node",predicates=[p2,p3],transforms=[p],names=["center"])
 
 print resp

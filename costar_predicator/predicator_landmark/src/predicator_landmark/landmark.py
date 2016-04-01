@@ -27,19 +27,21 @@ class GetWaypointsService:
 
     def get_waypoints_srv(self,req):
         resp = GetWaypointsResponse()
-        poses = self.get_waypoints(req.frame_type,req.predicates,req.transforms)
+        print req
+        (poses, names) = self.get_waypoints(req.frame_type,req.predicates,req.transforms,req.names)
 
         if poses is None or len(poses) < 1:
             resp.msg = 'FAILURE -- message not found!'
             resp.success = False
         else:
             resp.waypoints.poses = poses
+            resp.names = names
             resp.msg = 'SUCCESS -- done!'
             resp.success = True
 
         return resp
 
-    def get_waypoints(self,frame_type,predicates,transforms):
+    def get_waypoints(self,frame_type,predicates,transforms,names):
         self.and_srv.wait_for_service()
 
         type_predicate = PredicateStatement()
@@ -49,6 +51,7 @@ class GetWaypointsService:
         res = self.and_srv([type_predicate]+predicates)
 
         print "Found matches: " + str(res.matching)
+        #print res
 
         if (not res.found) or len(res.matching) < 1:
           return None
@@ -57,17 +60,19 @@ class GetWaypointsService:
         for tform in transforms:
             poses.append(pm.fromMsg(tform))
 
-        print poses
+        #print poses
         new_poses = []
+        new_names = []
 
         for match in res.matching:
             try:
                 (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
-                for pose in poses:
+                for (pose, name) in zip(poses,names):
                     #resp.waypoints.poses.append(pm.toMsg(pose * pm.fromTf((trans,rot))))
-                    new_poses.append(pm.toMsg(pose * pm.fromTf((trans,rot))))
+                    new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * pose))
+                    new_names.append(match + "/" + name)
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
         
-        return new_poses
+        return (new_poses, new_names)
         
