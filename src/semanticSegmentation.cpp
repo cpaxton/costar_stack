@@ -146,7 +146,12 @@ void semanticSegmentation::initializeSemanticSegmentation()
     objectDict = fillDictionary(nh, cur_name);
 
     bool use_cuda;
-    nh.param("use_cuda", use_cuda,true);
+
+    double objectVisibility, sceneVisibility;
+
+
+    nh.param("objectVisibility",objectVisibility,0.1);
+    nh.param("sceneVisibility", sceneVisibility,0.1);
 
     objrec.resize(cur_name.size());
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
@@ -156,6 +161,8 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
         objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
 
+        /// @todo allow different visibility parameters for each object class
+        objrec[model_id]->setParams(objectVisibility,sceneVisibility);
         objrec[model_id]->setUseCUDA(use_cuda);
         objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
         model_name[model_id+1] = temp_cur;
@@ -341,7 +348,8 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
             if (bestPoseOnly)
                 objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
             else
-                objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
+                //objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
+                objrec[j-1]->GreedyRecognize(cloud_set[j], tmp_poses);
 
             #pragma omp critical
             {

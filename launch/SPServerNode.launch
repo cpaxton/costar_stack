@@ -11,6 +11,10 @@
   <arg name="pairWidth"      default="0.05" />
   <arg name="bestPoseOnly"   default="false" doc="Get best pose only or all pose above minConfidence" />
   <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
+  <arg name="sceneVisibility"  default=".1"  doc="ObjRecRANSAC: What visible proportion of an object is acceptable for a detection (0.0-1.0)."/>
+  <arg name="objectVisibility"  default=".1" doc="ObjRecRANSAC: objectVisibiltiy"/>
+  <!-- TODO: put full line back in objectVisibility -->
+
 
   <arg name="aboveTable"     default="0.01" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
   <arg name="tableTF"        default="ar_marker_2" doc="Any TF frame located in the table can be used for table segmentation" />
@@ -32,6 +36,8 @@
     <param name="cur_name"   type="str" value="$(arg object)" />
     <param name="bestPoseOnly" type="bool" value="$(arg bestPoseOnly)" />
     <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
+    <param name="sceneVisibility"  type="double" value="$(arg sceneVisibility)"/>
+    <param name="objectVisibility"  type="double" value="$(arg objectVisibility)"/>
     <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
     
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
