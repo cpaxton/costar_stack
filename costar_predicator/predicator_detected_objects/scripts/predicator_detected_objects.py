@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
 import rospy
-from predicator import DetectedObjectsPublisher
+from predicator_detected_objects import DetectedObjectsPublisher
+#from predicator_detected_objects import *
 
-rospy.init_node('predicator_detected_objects_node')
+print "Starting node..."
+rospy.init_node('predicator_detected_objects')
 
+print "Coeating publisher..."
 dop = DetectedObjectsPublisher()
 
 rospy.spin()

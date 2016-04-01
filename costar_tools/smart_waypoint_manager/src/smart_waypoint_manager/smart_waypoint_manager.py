@@ -16,3 +16,5 @@ class SmartWaypointManager:
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         pass
 
+
+
