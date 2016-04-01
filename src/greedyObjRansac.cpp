@@ -203,6 +203,7 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
     //    delete *it;
 }
 
+/// @todo make this data be loaded somewhere totally different, then just pass in the relevant objects.
 void greedyObjRansac::AddModel(std::string name, std::string label)
 {
     // Construct Object Ransac Model
@@ -222,30 +223,7 @@ void greedyObjRansac::AddModel(std::string name, std::string label)
     objrec.setNumberOfThreads(8);
     //delete userData;
     
-    // Construct Polygon Mesh
-    ModelT cur_model;
-    cur_model.model_mesh = pcl::PolygonMesh::Ptr (new pcl::PolygonMesh()); 
-    if( exists_test(name+".obj") == true )
-        pcl::io::loadPolygonFile(name+".obj", *cur_model.model_mesh); 
-    else if( exists_test(name+".stl") == true )
-        pcl::io::loadPolygonFile(name+".stl", *cur_model.model_mesh);
-    else
-    {
-        std::cerr << "No OBJ or STL file!" << std::endl;
-        exit(0);
-    }
-    
-    pcl::PointCloud<myPointXYZ>::Ptr cloud(new pcl::PointCloud<myPointXYZ>()); 
-    pcl::fromPCLPointCloud2(cur_model.model_mesh->cloud, *cloud);
-
-    cur_model.model_cloud = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>()); 
-    pcl::VoxelGrid<myPointXYZ> sor;
-    sor.setInputCloud(cloud);
-    sor.setLeafSize(0.004, 0.004, 0.004);
-    sor.filter(*cur_model.model_cloud);
-
-    cur_model.model_label = label;
-    models.push_back(cur_model);
+    models.push_back(LoadMesh(name,label));
 }
 
 void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, int color[3])
