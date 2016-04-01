@@ -54,7 +54,6 @@ We use ``bg_sample_num`` to set the number of samples drawn from each negative t
 
 
 
-
 ### handling recognizing specific objects
 
 Objects are divided into "classes" drill, hammer, cube, rod.
@@ -86,6 +85,13 @@ numObjectTrainingData*ObjSamples = numBackgroundTrainingData*NumBackgroundSample
 
 Note that there is only one foreground and one background class, so the foreground data consists of all foreground data.
 
+
+#### Feature scales
+
+CSHOT features work on a scale defined at training time. This must be kept constant from training through to the 
+runtime of your algorithm. Scale is very important because if it is too small it will see part of an object and
+not get information about larger scales, and if it is too large it will it will run slower and it won't 
+get useful information about the boundaries of objects. 
 
 #### Numbering classes
 
