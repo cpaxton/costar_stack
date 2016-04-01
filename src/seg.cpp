@@ -84,8 +84,19 @@ pcl::PointCloud<PointT>::Ptr cropCloud(const pcl::PointCloud<PointT>::Ptr cloud,
 
 ModelT LoadMesh(std::string filename, std::string label)
 {
+    // Construct Polygon Mesh
     ModelT cur_model;
     cur_model.model_mesh = pcl::PolygonMesh::Ptr (new pcl::PolygonMesh()); 
+    if( exists_test(name+".obj") == true )
+        pcl::io::loadPolygonFile(name+".obj", *cur_model.model_mesh); 
+    else if( exists_test(name+".stl") == true )
+        pcl::io::loadPolygonFile(name+".stl", *cur_model.model_mesh);
+    else
+    {
+        std::cerr << "No OBJ or STL file!" << std::endl;
+        exit(0);
+    }
+    
     pcl::io::loadPolygonFile(filename, *cur_model.model_mesh); 
     
     pcl::PointCloud<myPointXYZ>::Ptr cloud(new pcl::PointCloud<myPointXYZ>()); 
