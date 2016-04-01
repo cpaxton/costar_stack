@@ -23,14 +23,21 @@
     <param name="publish_values" value="$(arg publish_values)"/>
 
     <rosparam param="frames">
-      - gbeam_link_1/gbeam_link
-      - gbeam_node_1/gbeam_node
-      - gbeam_node_2/gbeam_node
-      - iiwa_link_0
+      - Obj::link_uniform::1
+      - Obj::link_uniform::2
+      - Obj::link_uniform::3
+      - Obj::link_uniform::4
+      - Obj::node_uniform::1
+      - Obj::node_uniform::2
+      - Obj::node_uniform::3
+      - Obj::node_uniform::4
+      - ar_marker_0
+      - ar_marker_1
+      - world
     </rosparam>
 
     <rosparam param="reference_frames">
-      - iiwa_link_0
+      - world
     </rosparam>
 
   </node>
