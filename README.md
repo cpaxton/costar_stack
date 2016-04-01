@@ -87,7 +87,21 @@ numObjectTrainingData*ObjSamples = numBackgroundTrainingData*NumBackgroundSample
 Note that there is only one foreground and one background class, so the foreground data consists of all foreground data.
 
 
+#### Numbering classes
 
+There are two occasions classification occurs. First in an optional "binary classification" 
+that separates foreground data you care about from background you aren't worrying about.
+
+After foreground and background are separated, each class of "foreground" data needs to be seaparted
+with a multi class SVM as "drill", "wood_block", or "sander" needs to be classified. Each of these 
+classes needs to be assigned a class id number.
+
+Assign class ids like the following 4 class example:
+
+1. background
+2. drill
+3. wood_block
+4. sander
 
 
 ## Training using roslaunch
