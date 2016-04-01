@@ -8,9 +8,50 @@
 
   <!-- Segmentation Parameters parameters-->
   <arg name="params"         default="" />
+
+  <!-- Pair width should be roughly half the extent of the visible object
+       part. This means, for each object point p there should be (at least) one
+       point q (from the same object) such that ||p - q|| <= 'pairwidth'.
+       TRADEOFF: Smaller values allow for detection in occluded scenes but lead
+       to more imprecise alignment.  Bigger values lead to better alignment but
+       require large visible object parts. -->
   <arg name="pairWidth"      default="0.05" />
-  <arg name="bestPoseOnly"   default="false" doc="Get best pose only or all pose above minConfidence" />
+
+
+  <!-- Voxel size is the size of the leafs of the octree, i.e., the "size" of
+       the discretization. TRADEOFF: High values lead to less computation time
+       but ignore object details, e.g., the method could not distinguish
+       between a cylinder and an Amicelli box. Small values allow to better
+       distinguish between objects, but will introduce more holes in the
+       resulting "voxel-surface" (especially for a sparsely sampled scene) and
+       thus will make normal computation unreliable. Processing time, of
+       course, will increase with smaller voxel size. -->
+  <!-- TODO: add voxel size -->
+
+  <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
+  <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
   <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
+
+
+  <!-- sceneVisibility aka Relative object size is the expected fraction of the scene points
+       which belong to an object. For example a value of 0.05 means that each
+       object represented in the scene will contain at least 5% of all scene
+       points. TRADEOFF: lower values lead to more computation time and to
+       higher success probability. -->
+       
+  <arg name="sceneVisibility"  default=".1"  doc="ObjRecRANSAC: What visible proportion of an object is acceptable for a detection (0.0-1.0)."/>
+
+  <!-- Object visibility is the expected visible object part expressed as
+       fraction of the hole object. For example 'objectVisibility = 0.1' means
+       that 10% of the object surface is visible in the scene. Note that the
+       visibility can not be more than 0.5 since a typical camera can not see
+       more than the half of the object. TRADEOFF: smaller values allow for a
+       detection in occluded scenes but also lead to more false positives since
+       object hypotheses with small alignment with the scene will be accepted.
+       -->
+
+  <arg name="objectVisibility"  default=".1" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
+
 
   <arg name="aboveTable"     default="0.01" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
   <arg name="tableTF"        default="ar_marker_2" doc="Any TF frame located in the table can be used for table segmentation" />
@@ -30,8 +71,10 @@
   <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)" launch-prefix="$(arg debug_args)">  
     <!-- SPSegmenterNode Node arg pass -->
     <param name="cur_name"   type="str" value="$(arg object)" />
-    <param name="bestPoseOnly" type="bool" value="$(arg bestPoseOnly)" />
+    <param name="objRecRANSACdetector" type="str" value="$(arg objRecRANSACdetector)" />
     <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
+    <param name="sceneVisibility"  type="double" value="$(arg sceneVisibility)"/>
+    <param name="objectVisibility"  type="double" value="$(arg objectVisibility)"/>
     <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
     
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>

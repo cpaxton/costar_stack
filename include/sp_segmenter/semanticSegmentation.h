@@ -88,7 +88,7 @@ private:
     float down_ss;
     double pairWidth;
     double voxelSize;
-    bool bestPoseOnly;
+    std::string objRecRANSACdetector;
     double minConfidence;
     
     std::vector<boost::shared_ptr<greedyObjRansac> > objrec;

@@ -71,7 +71,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
     this->nh.param("POINTS_OUT", POINTS_OUT,std::string("points_out"));
     //get only best poses (1 pose output) or multiple poses
-    this->nh.param("bestPoseOnly", bestPoseOnly, true);
+    this->nh.param("objRecRANSACdetector", objRecRANSACdetector, std::string("StandardRecognize"));
     this->nh.param("minConfidence", minConfidence, 0.0);
     this->nh.param("aboveTable", aboveTable, 0.01);
     this->haveTable = false;
@@ -107,10 +107,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         }
     }
     
-    if (bestPoseOnly)
-        std::cerr << "Node will only output the best detected poses \n";
-    else
-        std::cerr << "Node will output all detected poses \n";
+    std::cerr << "Node is running with objRecRANSACdetector: " << objRecRANSACdetector << "\n";
     
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
     nh.param("pairWidth", pairWidth, 0.05);
@@ -146,7 +143,12 @@ void semanticSegmentation::initializeSemanticSegmentation()
     objectDict = fillDictionary(nh, cur_name);
 
     bool use_cuda;
-    nh.param("use_cuda", use_cuda,true);
+
+    double objectVisibility, sceneVisibility;
+
+
+    nh.param("objectVisibility",objectVisibility,0.1);
+    nh.param("sceneVisibility", sceneVisibility,0.1);
 
     objrec.resize(cur_name.size());
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
@@ -156,6 +158,8 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
         objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
 
+        /// @todo allow different visibility parameters for each object class
+        objrec[model_id]->setParams(objectVisibility,sceneVisibility);
         objrec[model_id]->setUseCUDA(use_cuda);
         objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
         model_name[model_id+1] = temp_cur;
@@ -338,10 +342,11 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         if( cloud_set[j]->empty() == false )
         {
             std::vector<poseT> tmp_poses;
-            if (bestPoseOnly)
-                objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
-            else
-                objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
+            if      (objRecRANSACdetector == "StandardBest")      objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
+            else if (objRecRANSACdetector == "GreedyRecognize")   objrec[j-1]->GreedyRecognize(cloud_set[j], tmp_poses);
+            else if (objRecRANSACdetector == "StandardRecognize") objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
+            else ROS_ERROR("Unsupported objRecRANSACdetector!");
+
 
             #pragma omp critical
             {
@@ -549,8 +554,11 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
 bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGripper::Request & request, sp_segmenter::segmentInGripper::Response& response)
 {
     std::cerr << "Segmenting object on gripper...\n";
-    bool bestPoseOriginal = bestPoseOnly;
-    bestPoseOnly = true; // only get best pose when segmenting object in gripper;
+    std::string bestPoseOriginal = objRecRANSACdetector;
+
+     // Use the detector for objects in the gripper
+    nh.param("objRecRANSACdetectorInGripper",objRecRANSACdetector,std::string("StandardBest"));
+    
     targetTFtoUpdate = request.tfToUpdate;
     this->doingGripperSegmentation = true;
   
@@ -562,7 +570,7 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     if (full_cloud->size() < 1){
         std::cerr << "No cloud available";
         response.result = segmentFail;
-        bestPoseOnly = bestPoseOriginal;
+        objRecRANSACdetector = bestPoseOriginal;
         this->doingGripperSegmentation = false;
         return false;
     }
@@ -579,14 +587,14 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     {
         std::cerr << "Fail to get transform between: "<< gripperTF << " and "<< inputCloud.header.frame_id << std::endl;
         response.result = segmentFail;
-        bestPoseOnly = bestPoseOriginal;
+        objRecRANSACdetector = bestPoseOriginal;
         this->doingGripperSegmentation = false;
         return false;
     }
     
     if (full_cloud->size() < 1){
         std::cerr << "No cloud available around gripper. Make sure the object can be seen by the camera.\n";
-        bestPoseOnly = bestPoseOriginal;
+        objRecRANSACdetector = bestPoseOriginal;
         this->doingGripperSegmentation = false;
         return false;
     }
@@ -596,7 +604,7 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     if (all_poses.size() < 1) {
         std::cerr << "Fail to segment the object around gripper.\n";
         response.result = segmentFail;
-        bestPoseOnly = bestPoseOriginal;
+        objRecRANSACdetector = bestPoseOriginal;
         this->doingGripperSegmentation = false;
         return false;
     }
@@ -610,7 +618,7 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     this->populateTFMapFromTree();
   
     std::cerr << "Object In gripper segmentation done.\n";
-    bestPoseOnly = bestPoseOriginal;
+    objRecRANSACdetector = bestPoseOriginal;
     this->doingGripperSegmentation = false;
     hasTF = true;
     response.result = "Object In gripper segmentation done.\n";

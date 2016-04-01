@@ -17,6 +17,16 @@ public:
     greedyObjRansac(double pairWidth = 0.1, double voxelSize = 0.03, double relNumOfPairsInHashTable_ = 0.5);
     ~greedyObjRansac(){}
     
+    /// Set parameters for object detection
+    /// 
+    ///
+    /// @param vis_ What visible proportion of an object is acceptable for a detection (0.0-1.0)
+    /// @param rel_ relative size of the object with respect to the scene.
+    ///             aka what portion of the object is expected to be visible in the scene. 
+    ///             Each time we see an object we only see a partial match, 
+    ///             and the partial match portion (0.0-1.0). Note that "scene" consists
+    ///             of actual points sent to this object, not necessarily the full
+    ///             frame of a sensor.
     void setParams(double vis_, double rel_);
     
     void ICP(std::vector<poseT> &poses, const pcl::PointCloud<myPointXYZ>::Ptr scene);
