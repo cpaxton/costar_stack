@@ -789,7 +789,7 @@ void spPooler::InputSemantics(const model *cur_model, int level, bool reset, boo
         
         double *dec_values = new double[cur_model->nr_class];
         double tmp_label = predict_values(cur_model, cur_fea, dec_values);
-        int cur_label = model_num <= 2 ? floor(tmp_label+0.0001-1) : floor(tmp_label+0.0001);
+        int cur_label = model_num <= 2 ? floor(tmp_label+0.0001-1) : floor(tmp_label+0.0001-1);
         float cur_score = model_num <= 2 ? fabs(dec_values[0]) : dec_values[cur_label-1];
         
         for( std::vector<int>::iterator it = idx_set[j].begin() ; it < idx_set[j].end() ; it++ ){
