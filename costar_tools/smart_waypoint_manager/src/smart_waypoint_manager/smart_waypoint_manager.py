@@ -32,7 +32,9 @@ class SmartWaypointManager:
         self.list_service = rospy.ServiceProxy('/librarian/list', librarian_msgs.srv.List)
         self.delete_service = rospy.ServiceProxy('/librarian/delete', librarian_msgs.srv.Delete)
 
-        self.detected_objects = rospy.Subscriber(ns + '/detected_object_list', DetectedObjectList, self.detected_objects_cb)
+        self.get_assignment_service = rospy.ServiceProxy('/predicator/get_assignment', predicator_msgs.srv.GetAssignment)
+
+        #self.detected_objects = rospy.Subscriber(ns + '/detected_object_list', DetectedObjectList, self.detected_objects_cb)
 
 
         self.broadcaster = tf.TransformBroadcaster()
@@ -52,6 +54,11 @@ class SmartWaypointManager:
         self.objs = []
         self.obj_classes = []
         self.obj_class = {}
+
+        
+        self.add_type_service("smartmove_info")
+        self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
+        print "Available classes = " + str(self.available_obj_classes)
 
     def detected_objects_cb(self,msg):
         self.objs = [obj.id for obj in msg.objects]
@@ -90,6 +97,15 @@ class SmartWaypointManager:
         return self.all_moves
 
     def get_detected_objects(self):
+        #print self.available_obj_classes
+        self.objs = []
+        for oc in self.available_obj_classes:
+            resp = self.get_assignment_service(PredicateStatement(predicate=oc,params=["*","",""]))
+            oc_objs = [p.params[0] for p in resp.values]
+            for obj in oc_objs:
+                self.obj_class[obj] = oc
+            self.objs += oc_objs
+
         return self.objs
 
     def delete(self,move):

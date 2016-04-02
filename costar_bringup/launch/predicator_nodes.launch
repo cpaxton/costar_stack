@@ -53,8 +53,9 @@
       - name: obj_class
         members:
           - drill
-          - link
-          - node
+          - sander
+          - link_uniform
+          - node_uniform
     </rosparam>
 
   </node>
