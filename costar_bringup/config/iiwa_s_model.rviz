@@ -11,7 +11,6 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /PlanningScene1/Scene Robot1
-        - /Axes1
         - /ALVAR MARKERS1
       Splitter Ratio: 0.572491
     Tree Height: 745
@@ -371,13 +370,6 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /waypoint_manager_markers/update
       Value: false
-    - Class: rviz/Axes
-      Enabled: false
-      Length: 0.05
-      Name: Axes
-      Radius: 0.01
-      Reference Frame: leaning
-      Value: false
     - Class: rviz/Marker
       Enabled: false
       Marker Topic: /ARmarker_points
@@ -386,6 +378,27 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.05
+      Name: obj link 1
+      Radius: 0.01
+      Reference Frame: Obj::link_uniform::1
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.05
+      Name: obj node 1
+      Radius: 0.01
+      Reference Frame: Obj::node_uniform::1
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.05
+      Name: obj node 2
+      Radius: 0.01
+      Reference Frame: Obj::node_uniform::2
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -410,7 +423,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.73006
+      Distance: 1.62726
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -422,10 +435,10 @@ Visualization Manager:
         Z: -0.0825576
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.439794
+      Pitch: 0.559794
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.18868
+      Yaw: 1.31368
     Saved: ~
 Window Geometry:
   Displays:
