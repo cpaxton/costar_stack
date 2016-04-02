@@ -175,7 +175,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
         model_name[model_id+1] = temp_cur;
         model_name_map[temp_cur] = model_id+1;
-        ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
+        ModelT mesh_buf = LoadMesh(mesh_path + temp_cur, temp_cur);
         
         mesh_set.push_back(mesh_buf);
         objectTFIndex[temp_cur] = 0;

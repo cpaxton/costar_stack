@@ -84,6 +84,8 @@ pcl::PointCloud<PointT>::Ptr cropCloud(const pcl::PointCloud<PointT>::Ptr cloud,
 
 ModelT LoadMesh(std::string filename, std::string label)
 {
+    std::cerr << "Attempting to load \"" << filename << "\"...\n";
+    
     // Construct Polygon Mesh
     ModelT cur_model;
     cur_model.model_mesh = pcl::PolygonMesh::Ptr (new pcl::PolygonMesh()); 
