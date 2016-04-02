@@ -7,7 +7,7 @@ from predicator_detected_objects import DetectedObjectsPublisher
 print "Starting node..."
 rospy.init_node('predicator_detected_objects')
 
-print "Coeating publisher..."
+print "Creating publisher..."
 dop = DetectedObjectsPublisher()
 
 rospy.spin()
