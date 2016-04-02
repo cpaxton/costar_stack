@@ -10,6 +10,7 @@ Panels:
         - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
+        - /RobotModel1
         - /PlanningScene1/Scene Robot1
         - /ALVAR MARKERS1
       Splitter Ratio: 0.572491
@@ -95,20 +96,604 @@ Visualization Manager:
       Transport Hint: raw
       Value: false
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
+        90:
+          Value: false
         All Enabled: false
+        Obj::link_uniform::1:
+          Value: false
+        Obj::node_uniform::1:
+          Value: false
+        Obj::node_uniform::2:
+          Value: false
+        Obj::node_uniform::3:
+          Value: false
+        READY:
+          Value: false
+        READY2:
+          Value: false
+        angled_grasp_link_01:
+          Value: false
+        ar_marker_0:
+          Value: false
+        ar_marker_2:
+          Value: false
+        asdf:
+          Value: false
+        attach1:
+          Value: false
+        attach3:
+          Value: false
+        base_link:
+          Value: false
+        calib--0:
+          Value: false
+        calib--1:
+          Value: false
+        calib--10:
+          Value: false
+        calib--2:
+          Value: false
+        calib--3:
+          Value: false
+        calib--4:
+          Value: false
+        calib--5:
+          Value: false
+        calib--6:
+          Value: false
+        calib--7:
+          Value: false
+        calib--8:
+          Value: false
+        calib--9:
+          Value: false
+        camera_depth_frame:
+          Value: false
+        camera_depth_optical_frame:
+          Value: false
+        camera_link:
+          Value: false
+        camera_rgb_frame:
+          Value: false
+        camera_rgb_optical_frame:
+          Value: false
+        drop_node:
+          Value: false
+        drop_node_corner:
+          Value: false
+        endpoint:
+          Value: false
+        endpoint_marker:
+          Value: false
+        endpoint_marker_attachment:
+          Value: false
+        endpoint_pinch:
+          Value: false
+        filtered/ar_marker_0:
+          Value: false
+        filtered/ar_marker_2:
+          Value: false
+        grasp_node_01:
+          Value: false
+        grasp_node_01b:
+          Value: false
+        grasp_node_01c:
+          Value: false
+        grasp_node_02a:
+          Value: false
+        grasp_node_02b:
+          Value: false
+        grasp_node_03a:
+          Value: true
+        grasp_node_03b:
+          Value: true
+        handeye--0:
+          Value: false
+        handeye--1:
+          Value: false
+        handeye--10:
+          Value: false
+        handeye--11:
+          Value: false
+        handeye--12:
+          Value: false
+        handeye--13:
+          Value: false
+        handeye--14:
+          Value: false
+        handeye--15:
+          Value: false
+        handeye--16:
+          Value: false
+        handeye--17:
+          Value: false
+        handeye--18:
+          Value: false
+        handeye--19:
+          Value: false
+        handeye--2:
+          Value: false
+        handeye--20:
+          Value: false
+        handeye--21:
+          Value: false
+        handeye--22:
+          Value: false
+        handeye--23:
+          Value: false
+        handeye--24:
+          Value: false
+        handeye--3:
+          Value: false
+        handeye--4:
+          Value: false
+        handeye--5:
+          Value: false
+        handeye--6:
+          Value: false
+        handeye--7:
+          Value: false
+        handeye--8:
+          Value: false
+        handeye--9:
+          Value: false
+        home1:
+          Value: false
+        hook:
+          Value: false
+        iiwa_link_0:
+          Value: false
+        iiwa_link_1:
+          Value: false
+        iiwa_link_2:
+          Value: false
+        iiwa_link_3:
+          Value: false
+        iiwa_link_4:
+          Value: false
+        iiwa_link_5:
+          Value: false
+        iiwa_link_6:
+          Value: false
+        iiwa_link_7:
+          Value: false
+        iiwa_link_ee:
+          Value: true
+        iiwa_link_ee_kuka:
+          Value: false
+        landmark_0:
+          Value: false
+        landmark_2:
+          Value: false
+        leaning:
+          Value: false
+        link_offset:
+          Value: false
+        low_attach01:
+          Value: false
+        low_attach1:
+          Value: false
+        low_attach2:
+          Value: false
+        move--0:
+          Value: false
+        objects/link_uniform/1:
+          Value: false
+        objects/node_uniform/1:
+          Value: false
+        objects/node_uniform/2:
+          Value: false
+        objects/node_uniform/3:
+          Value: false
+        present_gripper_right:
+          Value: false
+        qwer:
+          Value: false
+        ready_to_calibrate:
+          Value: false
+        s_model/finger_1:
+          Value: false
+        s_model/finger_2:
+          Value: false
+        s_model/finger_3:
+          Value: false
+        s_model/palm:
+          Value: false
+        s_model_base:
+          Value: false
+        s_model_frame:
+          Value: false
+        scan01--12:
+          Value: false
+        scan01--13:
+          Value: false
+        scan01--14:
+          Value: false
+        scan01--15:
+          Value: false
+        scan01--16:
+          Value: false
+        scan01--17:
+          Value: false
+        scan01--2:
+          Value: false
+        scan01--3:
+          Value: false
+        scan01--4:
+          Value: false
+        scan01--5:
+          Value: false
+        scan01--6:
+          Value: false
+        scan01--7:
+          Value: false
+        scan01--8:
+          Value: false
+        scan01--9:
+          Value: false
+        scan02--0:
+          Value: false
+        scan02--1:
+          Value: false
+        scan02--10:
+          Value: false
+        scan02--11:
+          Value: false
+        scan02--12:
+          Value: false
+        scan02--13:
+          Value: false
+        scan02--2:
+          Value: false
+        scan02--3:
+          Value: false
+        scan02--4:
+          Value: false
+        scan02--5:
+          Value: false
+        scan02--6:
+          Value: false
+        scan02--7:
+          Value: false
+        scan02--8:
+          Value: false
+        scan02--9:
+          Value: false
+        scan03--0:
+          Value: false
+        scan03--1:
+          Value: false
+        scan03--10:
+          Value: false
+        scan03--11:
+          Value: false
+        scan03--12:
+          Value: false
+        scan03--13:
+          Value: false
+        scan03--14:
+          Value: false
+        scan03--15:
+          Value: false
+        scan03--16:
+          Value: false
+        scan03--17:
+          Value: false
+        scan03--2:
+          Value: false
+        scan03--3:
+          Value: false
+        scan03--4:
+          Value: false
+        scan03--5:
+          Value: false
+        scan03--6:
+          Value: false
+        scan03--7:
+          Value: false
+        scan03--8:
+          Value: false
+        scan03--9:
+          Value: false
+        test_waypoint:
+          Value: false
+        world:
+          Value: false
       Marker Scale: 0.5
       Name: TF
       Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          90:
+            {}
+          READY:
+            {}
+          READY2:
+            {}
+          angled_grasp_link_01:
+            {}
+          asdf:
+            {}
+          attach1:
+            {}
+          attach3:
+            {}
+          calib--0:
+            {}
+          calib--1:
+            {}
+          calib--10:
+            {}
+          calib--2:
+            {}
+          calib--3:
+            {}
+          calib--4:
+            {}
+          calib--5:
+            {}
+          calib--6:
+            {}
+          calib--7:
+            {}
+          calib--8:
+            {}
+          calib--9:
+            {}
+          drop_node:
+            {}
+          drop_node_corner:
+            {}
+          filtered/ar_marker_0:
+            {}
+          filtered/ar_marker_2:
+            {}
+          grasp_node_01:
+            {}
+          grasp_node_01b:
+            {}
+          grasp_node_01c:
+            {}
+          grasp_node_02a:
+            {}
+          grasp_node_02b:
+            {}
+          grasp_node_03a:
+            {}
+          grasp_node_03b:
+            {}
+          handeye--0:
+            {}
+          handeye--1:
+            {}
+          handeye--10:
+            {}
+          handeye--11:
+            {}
+          handeye--12:
+            {}
+          handeye--13:
+            {}
+          handeye--14:
+            {}
+          handeye--15:
+            {}
+          handeye--16:
+            {}
+          handeye--17:
+            {}
+          handeye--18:
+            {}
+          handeye--19:
+            {}
+          handeye--2:
+            {}
+          handeye--20:
+            {}
+          handeye--21:
+            {}
+          handeye--22:
+            {}
+          handeye--23:
+            {}
+          handeye--24:
+            {}
+          handeye--3:
+            {}
+          handeye--4:
+            {}
+          handeye--5:
+            {}
+          handeye--6:
+            {}
+          handeye--7:
+            {}
+          handeye--8:
+            {}
+          handeye--9:
+            {}
+          home1:
+            {}
+          hook:
+            {}
+          iiwa_link_0:
+            base_link:
+              camera_link:
+                camera_depth_frame:
+                  camera_depth_optical_frame:
+                    {}
+                camera_rgb_frame:
+                  camera_rgb_optical_frame:
+                    Obj::link_uniform::1:
+                      {}
+                    Obj::node_uniform::1:
+                      {}
+                    Obj::node_uniform::2:
+                      {}
+                    Obj::node_uniform::3:
+                      {}
+                    ar_marker_0:
+                      {}
+                    ar_marker_2:
+                      {}
+            iiwa_link_1:
+              iiwa_link_2:
+                iiwa_link_3:
+                  iiwa_link_4:
+                    iiwa_link_5:
+                      iiwa_link_6:
+                        iiwa_link_7:
+                          iiwa_link_ee:
+                            endpoint:
+                              {}
+                            s_model_frame:
+                              s_model_base:
+                                endpoint_marker_attachment:
+                                  endpoint_marker:
+                                    {}
+                                endpoint_pinch:
+                                  {}
+                                s_model/palm:
+                                  s_model/finger_1:
+                                    {}
+                                  s_model/finger_2:
+                                    {}
+                                  s_model/finger_3:
+                                    {}
+                          iiwa_link_ee_kuka:
+                            {}
+          landmark_0:
+            {}
+          landmark_2:
+            {}
+          leaning:
+            {}
+          link_offset:
+            {}
+          low_attach01:
+            {}
+          low_attach1:
+            {}
+          low_attach2:
+            {}
+          move--0:
+            {}
+          objects/link_uniform/1:
+            {}
+          objects/node_uniform/1:
+            {}
+          objects/node_uniform/2:
+            {}
+          objects/node_uniform/3:
+            {}
+          present_gripper_right:
+            {}
+          qwer:
+            {}
+          ready_to_calibrate:
+            {}
+          scan01--12:
+            {}
+          scan01--13:
+            {}
+          scan01--14:
+            {}
+          scan01--15:
+            {}
+          scan01--16:
+            {}
+          scan01--17:
+            {}
+          scan01--2:
+            {}
+          scan01--3:
+            {}
+          scan01--4:
+            {}
+          scan01--5:
+            {}
+          scan01--6:
+            {}
+          scan01--7:
+            {}
+          scan01--8:
+            {}
+          scan01--9:
+            {}
+          scan02--0:
+            {}
+          scan02--1:
+            {}
+          scan02--10:
+            {}
+          scan02--11:
+            {}
+          scan02--12:
+            {}
+          scan02--13:
+            {}
+          scan02--2:
+            {}
+          scan02--3:
+            {}
+          scan02--4:
+            {}
+          scan02--5:
+            {}
+          scan02--6:
+            {}
+          scan02--7:
+            {}
+          scan02--8:
+            {}
+          scan02--9:
+            {}
+          scan03--0:
+            {}
+          scan03--1:
+            {}
+          scan03--10:
+            {}
+          scan03--11:
+            {}
+          scan03--12:
+            {}
+          scan03--13:
+            {}
+          scan03--14:
+            {}
+          scan03--15:
+            {}
+          scan03--16:
+            {}
+          scan03--17:
+            {}
+          scan03--2:
+            {}
+          scan03--3:
+            {}
+          scan03--4:
+            {}
+          scan03--5:
+            {}
+          scan03--6:
+            {}
+          scan03--7:
+            {}
+          scan03--8:
+            {}
+          scan03--9:
+            {}
+          test_waypoint:
+            {}
       Update Interval: 0
-      Value: false
-    - Alpha: 1
+      Value: true
+    - Alpha: 0.5
       Class: rviz/RobotModel
       Collision Enabled: false
       Enabled: true
@@ -193,12 +778,12 @@ Visualization Manager:
       Value: false
       Visual Enabled: true
     - Class: rviz/Axes
-      Enabled: false
+      Enabled: true
       Length: 0.05
       Name: CALIBRATION MARKER
       Radius: 0.01
       Reference Frame: ar_marker_0
-      Value: false
+      Value: true
     - Class: rviz/Axes
       Enabled: true
       Length: 0.05
@@ -393,12 +978,12 @@ Visualization Manager:
       Reference Frame: Obj::node_uniform::1
       Value: true
     - Class: rviz/Axes
-      Enabled: true
+      Enabled: false
       Length: 0.05
       Name: obj node 2
       Radius: 0.01
       Reference Frame: Obj::node_uniform::2
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -423,22 +1008,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.62726
+      Distance: 1.4602
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.403012
-        Y: -0.0998426
-        Z: -0.0825576
+        X: 0.718807
+        Y: -0.158559
+        Z: 0.101942
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.559794
+      Pitch: 0.234792
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.31368
+      Yaw: 1.93369
     Saved: ~
 Window Geometry:
   Displays:

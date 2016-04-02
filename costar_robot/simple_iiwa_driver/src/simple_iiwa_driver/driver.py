@@ -277,4 +277,5 @@ class SimpleIIWADriver:
         if self.driver_status in mode.keys():
             self.iiwa_mode_publisher.publish(mode[self.driver_status])
         else:
-            rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
+            #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
+            pass
