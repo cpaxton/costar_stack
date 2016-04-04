@@ -35,3 +35,10 @@ xcodebuild2/*
 
 # temporary files
 *~
+*.orig
+
+# svms
+*.model
+
+# extra pcd files
+*.pcd
