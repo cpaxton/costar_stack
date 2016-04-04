@@ -58,6 +58,8 @@ class SmartWaypointManager:
         
         self.add_type_service("smartmove_info")
         self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
+        self.available_regions = yaml.load(self.load_service(type="smartmove_info",id="regions").text)
+        self.available_references = yaml.load(self.load_service(type="smartmove_info",id="references").text)
         print "Available classes = " + str(self.available_obj_classes)
 
     def detected_objects_cb(self,msg):
