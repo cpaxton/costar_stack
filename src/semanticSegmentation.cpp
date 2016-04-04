@@ -46,7 +46,8 @@ semanticSegmentation::semanticSegmentation(int argc, char** argv, const ros::Nod
 
 void semanticSegmentation::initializeSemanticSegmentation()
 {
-    maxframes = 15;
+    // maxframes = 15;
+    this->nh.param("maxFrames",maxframes,15);
     cur_frame_idx = 0;
     cloud_ready = false;
     cloud_vec.clear();
@@ -56,7 +57,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
     this->hasTF = false;
     this->radius = 0.02;
-    this->pairWidth = 0.05;
+    this->pairWidth = 0.1;
     this->voxelSize = 0.003;
     uchar color_label_tmp[11][3] =
     { {255, 255, 255},
@@ -167,7 +168,15 @@ void semanticSegmentation::initializeSemanticSegmentation()
         // add all models. model_id starts in model_name start from 1.
         std::string temp_cur = cur_name.at(model_id);
 
-        objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
+        if( temp_cur == "link_uniform")
+            objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.075, voxelSize));
+        else if( temp_cur == "node_uniform")
+            objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
+        else 
+        {
+            std::cerr << "General Class!!!" << std::endl;
+            objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.1, voxelSize));
+        }
 
         /// @todo allow different visibility parameters for each object class
         objrec[model_id]->setParams(objectVisibility,sceneVisibility);
@@ -521,6 +530,56 @@ void semanticSegmentation::populateTFMapFromTree()
   detected_object_pub.publish(object_list);
 }
 
+pcl::PointCloud<PointT>::Ptr MedianPointCloud(const std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > &cloud_vec)
+{
+    pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+    if( cloud_vec.empty() == true )
+        return full_cloud;
+    
+    full_cloud->resize(cloud_vec[0]->size());
+    full_cloud->width = cloud_vec[0]->width;
+    full_cloud->height = cloud_vec[0]->height;
+
+    #pragma omp parallel for
+    for( size_t i = 0 ; i < full_cloud->size() ; i++ )
+    {
+        int count = 0;
+        std::vector<float> x_vec, y_vec, z_vec;
+        for( size_t j = 0 ; j < cloud_vec.size() ; j++ )
+        {
+            if( pcl_isfinite(cloud_vec[j]->at(i).x) == true )
+            {
+                // full_cloud->at(i).x += cloud_vec[j]->at(i).x;
+                // full_cloud->at(i).y += cloud_vec[j]->at(i).y;
+                // full_cloud->at(i).z += cloud_vec[j]->at(i).z;
+                x_vec.push_back(cloud_vec[j]->at(i).x);
+                y_vec.push_back(cloud_vec[j]->at(i).y);
+                z_vec.push_back(cloud_vec[j]->at(i).z);
+
+                full_cloud->at(i).rgba = cloud_vec[j]->at(i).rgba;
+                count++;
+            }
+        }
+
+        if( count > cloud_vec.size() / 2.0 )
+        {
+            std::sort(x_vec.begin(), x_vec.end());
+            std::sort(y_vec.begin(), y_vec.end());
+            std::sort(z_vec.begin(), z_vec.end());
+            full_cloud->at(i).x = x_vec[x_vec.size()/2.0];
+            full_cloud->at(i).y = y_vec[y_vec.size()/2.0];
+            full_cloud->at(i).z = z_vec[z_vec.size()/2.0];
+        }
+        else
+        {
+            full_cloud->at(i).x = std::numeric_limits<float>::quiet_NaN();
+            full_cloud->at(i).y = std::numeric_limits<float>::quiet_NaN();
+            full_cloud->at(i).z = std::numeric_limits<float>::quiet_NaN();
+        }
+    }
+    return full_cloud;
+}
+
 bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     if (!classReady) {
@@ -542,7 +601,8 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     if( cloud_ready == true )
     {
         std::cerr << "Averaging point clouds" << std::endl;
-        full_cloud = AveragePointCloud(cloud_vec);
+        // full_cloud = AveragePointCloud(cloud_vec);
+        full_cloud = MedianPointCloud(cloud_vec);
         // cloud_ready = false;
         std::cerr << "Averaging point clouds Done" << std::endl;
     }

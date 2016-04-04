@@ -13,6 +13,8 @@
   <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
 
+  <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
+
   <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>
   <arg name="aboveTable"     default="0.01" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
   <arg name="tableTF"        default="camera/ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
@@ -49,8 +51,7 @@
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
     <param name="saveTable"   type="bool" value="$(arg saveTable)" />
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
-    
-
+    <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
     

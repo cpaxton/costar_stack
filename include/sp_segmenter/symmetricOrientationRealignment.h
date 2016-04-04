@@ -79,7 +79,7 @@ void realignOrientation (Eigen::Matrix3f &rotMatrix, const objectSymmetry &objec
     
     //    std::cerr << "Number of step: " << std::floor(abs(angle)/objectLimit + 0.3333) << " " << angle * 180 / pi << " " << objectLimit * 180 / pi <<std::endl;
     
-    if (std::floor(abs(angle)/objectLimit + 0.3333) < 1) {
+    if (std::floor(abs(angle)/objectLimit + 0.3) < 1) {
         //min angle = 66% of the objectLimit to be aligned
         return;
     }
