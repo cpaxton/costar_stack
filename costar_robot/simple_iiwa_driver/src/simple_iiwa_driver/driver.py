@@ -255,6 +255,7 @@ class SimpleIIWADriver:
 
     def set_teach_mode_call(self,req):
         if req.enable == True:
+
             # self.rob.set_freedrive(True)
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
@@ -265,6 +266,14 @@ class SimpleIIWADriver:
 
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
+
+            pt = JointTrajectoryPoint()
+            pt.positions = self.q0
+
+            self.pt_publisher.publish(pt)
+
+            rospy.sleep(0.5)
+
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
