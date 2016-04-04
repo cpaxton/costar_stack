@@ -138,6 +138,9 @@ class SimpleIIWADriver:
                     rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
                     msg = 'FAILED - inverse kinematics failed for %s'%name
             return msg
+        else:
+            msg = 'FAILED - no match to predicate moves'
+            return msg
 
 
     def plan_to_pose_call(self,req): 

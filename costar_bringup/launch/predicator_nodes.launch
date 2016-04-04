@@ -56,6 +56,8 @@
           - sander
           - link_uniform
           - node_uniform
+          - node
+          - link
     </rosparam>
 
   </node>
