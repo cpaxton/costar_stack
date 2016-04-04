@@ -136,6 +136,7 @@ include_directories(
 
 ## Declare a C++ executable
 add_executable(object_on_table_segmenter src/object_on_table_segmenter.cpp)
+add_executable(pcd2png_segment_gt src/pcd2png_segment_gt.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -143,6 +144,11 @@ add_executable(object_on_table_segmenter src/object_on_table_segmenter.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(object_on_table_segmenter
+   ${catkin_LIBRARIES}
+   ${Boost_LIBRARIES}
+)
+
+target_link_libraries(pcd2png_segment_gt
    ${catkin_LIBRARIES}
    ${Boost_LIBRARIES}
 )
