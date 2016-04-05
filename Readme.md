@@ -6,7 +6,7 @@ This is a project by a few members of the JHU Laboratory for Computational Sensi
 
 CoSTAR allows users to program robots to perform a wide variety of interesting tasks:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/5GBVrD8fQcc?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf" frameborder="0" allowfullscreen></iframe>
+[![Bin Example](https://img.youtube.com/vi/5GBVrD8fQcc/0.jpg)](https://youtu.be/5GBVrD8fQcc)
 
 These are the tools and utilities we created to get the CoSTAR project up and off the ground. This document describes the CoSTAR project for an LBR iiwa 14 R820 with an attahed Robotiq 3-finger adaptive gripper.
 
