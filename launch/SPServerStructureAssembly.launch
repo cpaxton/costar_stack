@@ -32,6 +32,7 @@
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
   <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
 
+  <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
 
   <!-- sceneVisibility aka Relative object size is the expected fraction of the scene points
        which belong to an object. For example a value of 0.05 means that each
@@ -83,6 +84,7 @@
     <param name="saveTable"   type="bool" value="$(arg saveTable)" />
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
     <param name="useBinarySVM"   type="bool" value="$(arg useBinarySVM)" />
+    <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
 
