@@ -308,7 +308,7 @@ class SimpleIIWADriver:
 
             self.pt_publisher.publish(pt)
 
-            rospy.sleep(0.5)
+            #rospy.sleep(0.5)
 
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'
