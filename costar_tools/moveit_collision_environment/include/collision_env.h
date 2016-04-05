@@ -34,10 +34,15 @@ class collision_environment
         std::string parentFrame; //parent of the TF frame that objects attached to
 		int objectNameFormatIndex;
         bool classReady,hasParent, hasTableTF,hasObjects;
-        bool insertTableWalls, insertBaseLinkGround;
+        bool insertTableWalls, insertBaseLinkGround, useBaseLinkWall;
         bool defineParent;
         std::string definedParent;
+        double tableSize;
+
         bool getTable();
+        void addSurroundingWalls(
+        	moveit_msgs::CollisionObject &targetCollisionObject, const tf::Transform &centerOfObject,
+        	const double &distanceToWalls,const double &wallHeights, bool flippedBackWall = false);
 		// after breaking the list of TF to several items, which item define the object name
 		// Example: with format Obj::NameOfObject::index, objectNameFormatIndex = 2. 
 		// If format Obj::index::NameOfObject = 3, objectNameFormatIndex = 3.

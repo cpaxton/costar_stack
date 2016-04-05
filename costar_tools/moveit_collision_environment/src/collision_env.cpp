@@ -65,7 +65,9 @@ void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
     nh.param("useTableWall",insertTableWalls,false);
     nh.param("useBaseLinkGround",insertBaseLinkGround,false);
     nh.param("baseLinkName",baseLinkName,std::string("base_link"));
-    
+    nh.param("useBaseLinkWall",useBaseLinkWall,true);    
+    nh.param("tableSize",tableSize,1.0);
+
     if (defineParent) {
         nh.param("parentFrameName",definedParent,std::string("base_link"));
     }
@@ -250,9 +252,62 @@ std::vector<std::string> collision_environment::getListOfTF() const
     return listOfTF;
 }
 
+void collision_environment::addSurroundingWalls(moveit_msgs::CollisionObject &targetCollisionObject, const tf::Transform &centerOfObject,const double &distanceToWalls,const double &wallHeights, bool flippedBackWall)
+{
+    tf::Transform wallTransform;
+    // std::cerr << "Make walls\n";
+
+    shape_msgs::SolidPrimitive walls;
+    walls.type = walls.BOX;
+    walls.dimensions.resize(3);
+
+    walls.dimensions[2] = wallHeights;
+    
+    for (int i = 0; i < 3; i++)
+    {
+        tf::Vector3 wall_translation;
+        wallTransform.setIdentity();
+        switch(i){
+            case 0:
+            // TODO: Tune this if the size of the wall is not optimal
+                walls.dimensions[0] = wallHeights;
+                walls.dimensions[1] = 0.02;
+                // TODO: Tune this if the position of the wall is not optimal
+                wall_translation.setX(0);
+                wall_translation.setY(distanceToWalls/2);
+                break;
+            case 1:
+                walls.dimensions[0] = wallHeights;
+                walls.dimensions[1] = 0.02;
+                wall_translation.setX(0);
+                wall_translation.setY(-distanceToWalls/2);
+                break;
+            default:
+                walls.dimensions[0] = 0.02;
+                walls.dimensions[1] = wallHeights;
+                // flip back walls
+                if (flippedBackWall)
+                    wall_translation.setX(-distanceToWalls/2);
+                else
+                    wall_translation.setX(distanceToWalls/2);
+
+                wall_translation.setY(0);
+                break;
+        }
+        wall_translation.setZ(walls.dimensions[2]/2);
+
+        wallTransform.setOrigin(wall_translation);
+        wallTransform = centerOfObject * wallTransform;
+        geometry_msgs::Pose wall_pose;
+        tf::poseTFToMsg(wallTransform,wall_pose);
+        targetCollisionObject.primitives.push_back(walls);
+        targetCollisionObject.primitive_poses.push_back(wall_pose);
+    }
+}
+
 bool collision_environment::getTable()
 {
-    // This function will read the table TF and generate box collision object with size 0.75x0.75x0.02 m located 2 cm below the table TF
+    // This function will read the table TF and generate box collision object with size tableSize x tableSize x0.02 m located 2 cm below the table TF
     
     if (!classReady)
     {
@@ -288,8 +343,8 @@ bool collision_environment::getTable()
         shape_msgs::SolidPrimitive primitive;
         primitive.type = primitive.BOX;
         primitive.dimensions.resize(3);
-        primitive.dimensions[0] = 0.75;
-        primitive.dimensions[1] = 0.75;
+        primitive.dimensions[0] = tableSize;
+        primitive.dimensions[1] = tableSize;
         primitive.dimensions[2] = 0.02;
         
         geometry_msgs::Pose box_pose;
@@ -300,51 +355,7 @@ bool collision_environment::getTable()
 
         if (insertTableWalls)
         {
-            tf::Transform boxTransform;
-
-            // std::cerr << "Make walls\n";
-
-            shape_msgs::SolidPrimitive walls;
-            walls.type = walls.BOX;
-            walls.dimensions.resize(3);
-
-            walls.dimensions[2] = 0.75;
-            
-            for (int i = 0; i < 3; i++)
-            {
-                tf::Vector3 wall_translation;
-                boxTransform.setIdentity();
-                switch(i){
-                    case 0:
-                    // TODO: Tune this if the size of the wall is not optimal
-                        walls.dimensions[0] = 0.75;
-                        walls.dimensions[1] = 0.02;
-                        // TODO: Tune this if the position of the wall is not optimal
-                        wall_translation.setX(0);
-                        wall_translation.setY(0.75/2);
-                        break;
-                    case 1:
-                        walls.dimensions[0] = 0.75;
-                        walls.dimensions[1] = 0.02;
-                        wall_translation.setX(0);
-                        wall_translation.setY(-0.75/2);
-                        break;
-                    default:
-                        walls.dimensions[0] = 0.02;
-                        walls.dimensions[1] = 0.75;
-                        wall_translation.setX(0.75/2);
-                        wall_translation.setY(0);
-                        break;
-                }
-                wall_translation.setZ(walls.dimensions[2]/2);
-
-                boxTransform.setOrigin(wall_translation);
-                boxTransform = transform * boxTransform;
-                geometry_msgs::Pose wall_pose;
-                tf::poseTFToMsg(boxTransform,wall_pose);
-                co.primitives.push_back(walls);
-                co.primitive_poses.push_back(wall_pose);
-            }
+            this->addSurroundingWalls(co,transform,tableSize,tableSize);
         }
         hasTableTF = true;
     }
@@ -376,14 +387,20 @@ bool collision_environment::getTable()
             primitive.dimensions[2] = 0.75;
             // TODO: Tune this if the position of the box is not optimal
             tf::Vector3 base_ground_translation(-0.3,0,-primitive.dimensions[2]/2-0.03);
-            tf::Transform tmp;
-            tmp.setOrigin(base_ground_translation);
-            tmp = transform * tmp;
+            tf::Transform baseLinkGround;baseLinkGround.setIdentity();
+
+            baseLinkGround.setOrigin(base_ground_translation);
+            baseLinkGround = transform * baseLinkGround;
 
             geometry_msgs::Pose box_pose;
-            tf::poseTFToMsg(tmp,box_pose);
+            tf::poseTFToMsg(baseLinkGround,box_pose);
             co.primitives.push_back(primitive);
             co.primitive_poses.push_back(box_pose);
+
+            if(useBaseLinkWall)
+            {
+                this->addSurroundingWalls(co,transform,tableSize,tableSize,true);
+            }
         }
     }
     tableObject = co;
