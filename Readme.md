@@ -4,7 +4,18 @@
 
 This is a project by a few members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. Our goal is to build a system which facilitates end-user instruction of industrial robots to performa a variety of different tasks.
 
+CoSTAR allows users to program robots to perform a wide variety of interesting tasks:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/5GBVrD8fQcc?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf" frameborder="0" allowfullscreen></iframe>
+
 These are the tools and utilities we created to get the CoSTAR project up and off the ground. This document describes the CoSTAR project for an LBR iiwa 14 R820 with an attahed Robotiq 3-finger adaptive gripper.
+
+To fully take advantage of these capabilities you will need:
+
+  - sp_segmenter: object detection and pose estimation library
+  - instructor: our custom user interface
+  - a KUKA LBR iiwa
+  - a Robotiq 3-finger gripper
 
 Note that unfortunately the CoSTAR UI is not open source, so email me at cpaxton3@jhu.edu if you are interested in it.
 
@@ -35,24 +46,6 @@ rosrun instructor_core shoulder_calibrate.py
 # object detection and moveit planning scene
 roslaunch moveit_collision_environment collision_env.launch tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world debug:=false mesh_source:='/home/cpaxton/.costar/mesh' 
 
-```
-
-## Testing things in Simulation [INCOMPLETE]
-
-You can bring many parts of the software up in simulation. This is not fully-featured yet, but it gives you a way to set waypoints and play around with the UI at least.
-
-Basic execution for a simulation:
-```
-roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
-roslaunch instructor_core instructor.launch
-roslaunch costar_bringup iiwa14_s_model.launch sim:=true
-```
-
-Otherwise:
-```
-roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
-roslaunch instructor_core instructor.launch
-roslaunch costar_bringup iiwa14_s_model.launch
 ```
 
 ## Packages
@@ -93,6 +86,23 @@ Roslaunch would look something like:
 </node>
 ```
 
+### Testing things in Simulation [INCOMPLETE]
+
+You can bring many parts of the software up in simulation. This is not fully-featured yet, but it gives you a way to set waypoints and play around with the UI at least.
+
+Basic execution for a simulation:
+```
+roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
+roslaunch instructor_core instructor.launch
+roslaunch costar_bringup iiwa14_s_model.launch sim:=true
+```
+
+Otherwise:
+```
+roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
+roslaunch instructor_core instructor.launch
+roslaunch costar_bringup iiwa14_s_model.launch
+```
 
 ## Gripper
 
