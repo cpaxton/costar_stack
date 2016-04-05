@@ -7,6 +7,7 @@ from predicator_msgs.srv import *
 
 from simple_iiwa_driver import *
 from simple_planning import *
+from smart_waypoint_manager import *
 
 rospy.init_node('test_smart_move_node')
 
@@ -15,6 +16,7 @@ right_of = PredicateStatement(predicate="right_of",params=['*','ar_marker_2','wo
 
 driver = SimpleIIWADriver()
 planner = SimplePlanning()
+swm = SmartWaypointManager()
 
 rate = rospy.Rate(60)
 

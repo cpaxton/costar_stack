@@ -52,6 +52,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/png_io.h>
 #include <pcl/conversions.h>
+//#include <pcl/common/colors.h>
 
 using namespace pcl;
 using namespace pcl::io;
