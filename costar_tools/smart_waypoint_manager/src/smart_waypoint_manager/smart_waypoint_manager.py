@@ -77,6 +77,7 @@ class SmartWaypointManager:
     def load_all(self):
 
         self.waypoints = {}
+        self.waypoint_names = {}
         self.all_moves = []
 
         waypoint_filenames = self.list_service(self.folder).entries
@@ -95,6 +96,12 @@ class SmartWaypointManager:
         print self.waypoint_names
         print self.waypoints
 
+    def lookup_waypoint(self,obj_class,name):
+      rospy.logwarn("looking for %s"%name)
+      rospy.logwarn(self.waypoints)
+      rospy.logwarn(self.waypoint_names)
+      return self.waypoints[obj_class][self.waypoint_names[obj_class].index(name)]
+
     def get_reference_frames(self):
       return self.available_references
 
@@ -107,11 +114,15 @@ class SmartWaypointManager:
     def get_detected_objects(self):
         #print self.available_obj_classes
         self.objs = []
+        self.obj_classes = []
         for oc in self.available_obj_classes:
             resp = self.get_assignment_service(PredicateStatement(predicate=oc,params=["*","",""]))
             oc_objs = [p.params[0] for p in resp.values]
+            if len(oc_objs) > 0:
+              self.obj_classes.append(oc)
             for obj in oc_objs:
                 self.obj_class[obj] = oc
+                #rospy.logwarn("%s = %s"%(obj,oc))
             self.objs += oc_objs
 
         return self.objs
@@ -120,7 +131,11 @@ class SmartWaypointManager:
         self.delete_service(id=move.strip('/'),type=self.folder)
 
     def get_detected_object_classes(self):
+        self.get_detected_objects()
         return self.obj_classes
+
+    def get_available_object_classes(self):
+        return self.available_object_classes
 
     def save_new_waypoint(self,obj,name):
         pose = self.get_new_waypoint(obj)
@@ -135,8 +150,19 @@ class SmartWaypointManager:
             rospy.logerr('Failed to lookup transform from %s to %s'%(obj,self.endpoint))
         return None
 
+    def get_moves_for_class(self,obj_class):
+        wpts = []
+        try:
+            wpts = self.waypoint_names[obj_class]
+        except KeyError:
+            wpts = []
+        return wpts
+
     def get_moves_for_object(self,obj):
-        print "obj class = %s"%self.obj_class[obj]
+        try:
+            print "obj class = %s"%self.obj_class[obj]
+        except KeyError:
+            rospy.logerr("Could not find object %s! Are you sure this is a valid object?"%obj)
         
         wpts = []
         try:
