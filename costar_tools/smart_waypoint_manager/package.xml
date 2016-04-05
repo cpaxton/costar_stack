@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>simple_iiwa_driver</name>
+  <name>smart_waypoint_manager</name>
   <version>0.0.0</version>
-  <description>The simple_iiwa_driver package</description>
+  <description>The smart_waypoint_manager package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/simple_iiwa_driver</url> -->
+  <!-- <url type="website">http://wiki.ros.org/smart_waypoint_manager</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -40,10 +40,16 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>costar_robot_msgs</build_depend>
-  <run_depend>costar_robot_msgs</run_depend>
-  <build_depend>smart_waypoint_manager</build_depend>
-  <run_depend>smart_waypoint_manager</run_depend>
+  <build_depend>librarian_core</build_depend>
+  <build_depend>librarian_msgs</build_depend>
+  <build_depend>predicator_core</build_depend>
+  <build_depend>predicator_landmark</build_depend>
+  <build_depend>predicator_msgs</build_depend>
+  <run_depend>librarian_core</run_depend>
+  <run_depend>librarian_msgs</run_depend>
+  <run_depend>predicator_core</run_depend>
+  <run_depend>predicator_landmark</run_depend>
+  <run_depend>predicator_msgs</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

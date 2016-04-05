@@ -42,6 +42,14 @@ class DetectedObjectsPublisher:
             true_msg.statements.append(ps)
 
             ps = PredicateStatement()
+            is_det_pred = 'is_detected_%s'%(obj.object_class)
+            ps.predicate = is_det_pred
+            ps.num_params = 1
+            ps.confidence = 1.0
+            ps.params[0] = obj.id
+            true_msg.statements.append(ps)
+
+            ps = PredicateStatement()
             ps.predicate = 'class_detected'
             ps.num_params = 1
             ps.confidence = 1.0
@@ -54,6 +62,11 @@ class DetectedObjectsPublisher:
                 self.valid_msg.assignments.append(obj.object_class)
             if not obj.id in self.valid_msg.assignments:
                 self.valid_msg.assignments.append(obj.id)
+            if not is_det_pred in self.valid_msg.predicates:
+                self.valid_msg.predicates.append(is_det_pred)
 
         self.pub.publish(true_msg)
         self.vpub.publish(self.valid_msg)
+
+        #print self.valid_msg
+        #print true_msg

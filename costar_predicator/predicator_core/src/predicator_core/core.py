@@ -37,11 +37,13 @@ def parse_key(key):
     ps = PredicateStatement()
 
     elems = [word for word in key[1:-1].split(',') if len(word) > 0]
-    ps.predicate = elems[0];
-    if len(elems) > 1:
-        ps.params = ['', '', '']
-        ps.params[0:(len(elems)-1)] = elems[1:len(elems)]
-        ps.num_params = len(ps.params)
+
+    if not len(elems) == 0:
+        ps.predicate = elems[0];
+        if len(elems) > 1:
+            ps.params = ['', '', '']
+            ps.params[0:(len(elems)-1)] = elems[1:len(elems)]
+            ps.num_params = len(ps.params)
 
     return ps
 
@@ -82,6 +84,8 @@ class Predicator(object):
         self._getAllBySourceService = rospy.Service('predicator/get_all_predicates_by_source', GetAllPredicates, self.get_all_by_src)
         self._getPredicatesByAssignmentService = rospy.Service('predicator/get_predicate_names_by_assignment', GetTypedList, self.get_predicates_by_assignment)
         self._lengthService = rospy.Service('predicator/get_assignment_length', GetLength, self.get_predicate_length)
+        self._andService = rospy.Service('predicator/match_AND', Query, self.match_and)
+        self._orService = rospy.Service('predicator/match_OR', Query, self.match_or)
 
         # adding in functionality from predicator_params module
         self.subscriber_ = rospy.Subscriber('predicator/update_param', UpdateParam, self.updateCallback)
@@ -90,6 +94,77 @@ class Predicator(object):
 
         self._verbosity = rospy.get_param('~verbosity',0)
 
+
+    '''
+    match AND
+    get the list of possible predicates matching an assignment * in a whole set of PredicateSet
+    '''
+    def match_and(self, req):
+        resp = QueryResponse()
+
+        vals = None
+
+        print "=== Match AND ==="
+
+        for pred in req.predicates:
+
+            try:
+                i = pred.params.index('*')
+                #print i
+            except:
+                rospy.logerr('Query with no open parameters! Include exactly one "*" field!')
+                return resp
+
+            key = get_key(pred.predicate, pred.params) 
+
+            if key in self._predicates:
+                pred_vals = [stored_params[i] for stored_params in self._predicates[key]]
+                if vals is None:
+                    vals = pred_vals
+                else:
+                    vals = [val for val in vals if (val in pred_vals)]
+
+                print "Current predicate assignments: " + str(pred_vals)
+                print "Possible AND list: " + str(vals)
+
+        if not vals is None and len(vals) > 0:
+            resp.matching = vals
+            resp.found = True
+
+        return resp
+
+    '''
+    match OR
+    get the list of possible predicates matching an assignment * in a whole set of PredicateSet
+    '''
+    def match_or(self, req):
+
+        vals = []
+
+        for pred in req.predicates:
+
+            try:
+                i = pred.params.index('*')
+                print i
+            except:
+                rospy.logerr('Query with no open parameters! Include exactly one "*" field!')
+                return resp
+
+            key = get_key(pred.predicate, pred.params) 
+
+            if key in self._predicates:
+                pred_vals = [stored_params[i] for stored_params in self._predicates[key]]
+                vals += pred_vals
+
+                print "Current predicate assignments: " + str(pred_vals)
+                print "Possible OR list: " + str(vals)
+
+        if not vals is None and len(vals) > 0:
+            resp.matching = vals
+            resp.found = True
+
+        return resp
+        return resp
 
     '''
     updateCallback()

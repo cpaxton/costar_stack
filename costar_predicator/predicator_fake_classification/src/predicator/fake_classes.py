@@ -35,8 +35,13 @@ if __name__ == '__main__':
 
     class_info = rospy.get_param('~class_info')
     print "BASIC CLASS INFO: " + str(class_info)
-    param_class_info = rospy.get_param('~param_class_info')
-    print "PARAMETERIZED CLASS INFO: " + str(param_class_info)
+    try:
+        param_class_info = rospy.get_param('~param_class_info')
+        print "PARAMETERIZED CLASS INFO: " + str(param_class_info)
+    except KeyError:
+        print "No parameterized class info!"
+        param_class_info = []
+
 
     for group in class_info:
         members = group["members"]

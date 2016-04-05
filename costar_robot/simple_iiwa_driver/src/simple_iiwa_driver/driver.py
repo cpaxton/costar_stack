@@ -1,4 +1,5 @@
 
+import tf
 import rospy
 from costar_robot_msgs.srv import *
 from std_msgs.msg import String
@@ -19,19 +20,34 @@ from simple_planning import SimplePlanning
 from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
+from predicator_landmark import GetWaypointsService
+
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm'}
 
 class SimpleIIWADriver:
 
-    def __init__(self):
+    def __init__(self,world="/world",listener=None):
         base_link = 'iiwa_link_0'
         end_link = 'iiwa_link_ee'
+
+        self.world = world
+        self.base_link = base_link
+        self.end_link = end_link
+
+        self.MAX_ACC = 1;
+        self.MAX_VEL = 1;
+
+        self.at_goal = True
         self.q0 = [0,0,0,0,0,0,0]
+        self.goal = np.array([0,0,0,0,0,0,0])
+
         self.teach_mode = rospy.Service('costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
         self.shutdown = rospy.Service('costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
         self.servo = rospy.Service('costar/ServoToPose',ServoToPose,self.servo_to_pose_call)
-        self.servo = rospy.Service('costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
+        self.plan = rospy.Service('costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
+        self.smartmove = rospy.Service('costar/SmartMove',SmartMove,self.smart_move_call)
+        self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
         self.status_publisher = rospy.Publisher('costar/DriverStatus',String,queue_size=1000)
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
@@ -40,18 +56,16 @@ class SimpleIIWADriver:
         self.js_subscriber = rospy.Subscriber('/joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
+        if listener is None:
+            self.listener = tf.TransformListener()
+        else:
+            self.listener = listener
         #print self.tree.getNrOfSegments()
         #print self.chain.getNrOfJoints()
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
         self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.planner = SimplePlanning(base_link,end_link,"manipulator")
-
-        self.MAX_ACC = 1;
-        self.MAX_VEL = 1;
-
-        self.at_goal = True
-        self.goal = np.array([0,0,0,0,0,0,0])
 
     def js_cb(self,msg):
         self.q0 = np.array(msg.position)
@@ -62,6 +76,108 @@ class SimpleIIWADriver:
         if goal_diff < 0.001:
                 self.at_goal = True
         #print self.q0
+
+
+    def check_req_speed_params(self,req):
+        if req.accel > self.MAX_ACC:
+            acceleration = self.MAX_ACC
+        else:
+            acceleration = req.accel
+        if req.vel > self.MAX_VEL:
+            velocity = self.MAX_VEL
+        else:
+            velocity = req.vel
+        return (acceleration, velocity)
+
+    def smart_move_call(self,req):
+
+
+        if False and not self.driver_status == 'SERVO':
+            rospy.logerr('DRIVER -- IK fail/not in servo mode')
+            return 'FAILED - not in servo mode'
+
+        (acceleration, velocity) = self.check_req_speed_params(req) 
+        (poses,names) = self.get_waypoints_srv.get_waypoints(
+                req.obj_class, # object class to move to
+                req.predicates, # predicates to match
+                [req.pose], # offset/transform from each member of the class
+                ["tmp"] # placeholder name
+                )
+        if not poses is None:
+            msg = 'FAILED - no valid objects found!'
+            qs = []
+            dists = []
+            for (pose,name) in zip(poses,names):
+
+                # figure out which tf frame we care about
+                tf_path = name.split('/')
+                tf_frame = ''
+                for part in tf_path:
+                    if len(part) > 0:
+                        tf_frame = part
+                        break
+
+                if len(tf_frame) == 0:
+                    continue
+
+                # try to move to the pose until one succeeds
+                T_base_world = tf_c.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
+                T = tf_c.toMatrix(T_base_world.Inverse()*tf_c.fromMsg(pose))
+
+                # Check acceleration and velocity limits
+                # Send command
+
+                pt = JointTrajectoryPoint()
+                q = self.kdl_kin.inverse(T,self.q0)
+
+                if q is None:
+                    q = self.kdl_kin.inverse(T,None)
+                
+                print "object name = %s"%tf_frame
+                print self.q0
+                print q
+
+                pt.positions = q
+
+                if not q is None:
+                    qs.append(q)
+                    dists.append((q - self.q0).sum())
+                else:
+                    rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
+
+            if len(qs) == 0:
+                msg = 'FAILED - no joint configurations found!'
+            else:
+                msg = 'FAILED - could not reach any destination!'
+
+            possible_goals = zip(dists,qs)
+            possible_goals.sort()
+            print possible_goals
+            for (dist,q) in possible_goals:
+                print "Trying to move to frame at distance %f"%(dist)
+
+                self.pt_publisher.publish(pt)
+                self.at_goal = False
+                self.goal = q
+                rate = rospy.Rate(10)
+                start_t = rospy.Time.now()
+
+                # wait until robot is at goal
+                while not self.at_goal:
+                    if (rospy.Time.now() - start_t).to_sec() > 10:
+                        msg = "FAILED - timeout"
+                        break
+                    rate.sleep()
+
+                if self.at_goal:
+                    msg = 'SUCCESS - moved to pose'
+                    break
+
+            return msg
+        else:
+            msg = 'FAILED - no match to predicate moves'
+            return msg
+
 
     def plan_to_pose_call(self,req): 
         #rospy.loginfo('Recieved servo to pose request')
@@ -74,16 +190,9 @@ class SimpleIIWADriver:
             #print T
 
             # Check acceleration and velocity limits
-            if req.accel > self.MAX_ACC:
-                acceleration = self.MAX_ACC
-            else:
-                acceleration = req.accel
-            if req.vel > self.MAX_VEL:
-                velocity = self.MAX_VEL
-            else:
-                velocity = req.vel
-            # Send command
+            (acceleration, velocity) = self.check_req_speed_params(req) 
 
+            # Send command
             pt = JointTrajectoryPoint()
             q = self.kdl_kin.inverse(T,self.q0)
 
@@ -122,7 +231,7 @@ class SimpleIIWADriver:
 
                 # wait until robot is at goal
                 while not self.at_goal:
-                    if (rospy.Time.now() - start_t).to_sec() > 30:
+                    if (rospy.Time.now() - start_t).to_sec() > 10:
                         return 'FAILED - timeout'
                     rate.sleep()
 
@@ -145,16 +254,9 @@ class SimpleIIWADriver:
             #print T
 
             # Check acceleration and velocity limits
-            if req.accel > self.MAX_ACC:
-                acceleration = self.MAX_ACC
-            else:
-                acceleration = req.accel
-            if req.vel > self.MAX_VEL:
-                velocity = self.MAX_VEL
-            else:
-                velocity = req.vel
-            # Send command
+            (acceleration, velocity) = self.check_req_speed_params(req) 
 
+            # Send command
             pt = JointTrajectoryPoint()
             q = self.kdl_kin.inverse(T,self.q0)
 
@@ -175,7 +277,7 @@ class SimpleIIWADriver:
 
                 # wait until robot is at goal
                 while not self.at_goal:
-                    if (start_t - rospy.Time.now()).to_sec() > 30:
+                    if (rospy.Time.now() - start_t).to_sec() > 10:
                         return 'FAILED - timeout'
                     rate.sleep()
 
@@ -189,6 +291,7 @@ class SimpleIIWADriver:
 
     def set_teach_mode_call(self,req):
         if req.enable == True:
+
             # self.rob.set_freedrive(True)
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
@@ -199,6 +302,14 @@ class SimpleIIWADriver:
 
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
+
+            pt = JointTrajectoryPoint()
+            pt.positions = self.q0
+
+            self.pt_publisher.publish(pt)
+
+            #rospy.sleep(0.5)
+
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
@@ -214,4 +325,5 @@ class SimpleIIWADriver:
         if self.driver_status in mode.keys():
             self.iiwa_mode_publisher.publish(mode[self.driver_status])
         else:
-            rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
+            #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
+            pass
