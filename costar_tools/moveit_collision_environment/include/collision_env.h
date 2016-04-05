@@ -28,12 +28,13 @@ class collision_environment
         std::vector<moveit_msgs::CollisionObject>* segmentedObjects;
         moveit_msgs::CollisionObject tableObject;
     
-        std::string tableTFname, parentTableTF;
+        std::string tableTFname, parentTableTF, baseLinkName;
 		std::string mesh_source, file_extension;
         std::string charToFind,breakChar;
         std::string parentFrame; //parent of the TF frame that objects attached to
 		int objectNameFormatIndex;
         bool classReady,hasParent, hasTableTF,hasObjects;
+        bool insertTableWalls, insertBaseLinkGround;
         bool defineParent;
         std::string definedParent;
         bool getTable();

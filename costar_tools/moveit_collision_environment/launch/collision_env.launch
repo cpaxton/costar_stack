@@ -17,6 +17,10 @@
     doc="Predefined collision object TF header" />
   <arg name="renewTable"          default="true" />
 
+  <arg name="useTableWall"           default="true" doc="Add a wall on back,left, and right edge of the table."/>
+  <arg name="baseLinkName"           default="base_link" doc="The name of base link used for generating robot ground"/>
+  <arg name="useBaseLinkGround"      default="true" doc="Add robot ground"/>
+  
   <!-- Enable for debugging purpose -->
   <arg name="debug"               default="false" />
 
@@ -31,8 +35,15 @@
     <param name="tableTFname"     type="str"  value="$(arg tableTFname   )" />
     <param name="renewTable"      type="bool" value="$(arg renewTable    )" />
 
+
+    <param name="useTableWall"    type="bool" value="$(arg useTableWall )" />
+    <param name="useBaseLinkGround"    type="bool" value="$(arg useBaseLinkGround  )" />
+    <param name="baseLinkName"    type="str" value="$(arg baseLinkName )" />
+
+
     <param name="defineParent"    type="bool" value="$(arg defineParent  )" />
     <param name="parentFrameName" type="str"  value="$(arg parentFrameName)" />
+
 
     <param name="debug"           type="bool" value="$(arg debug)" />
   </node>
