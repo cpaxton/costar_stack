@@ -21,6 +21,7 @@ SVM learning is done in ```main_sp_svm.cpp.```
 
 Training data is in seperate folders, one for each class. For example:
 
+```
 .
 ├── costar_link
 ├── costar_node
@@ -32,6 +33,7 @@ Training data is in seperate folders, one for each class. For example:
 ├── sander
 ├── svm_pool
 └── UR5
+```
 
 10 directories
 
