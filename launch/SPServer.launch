@@ -10,7 +10,7 @@
   <arg name="params"         default="" />
   <arg name="pairWidth"      default="0.05" />
   <arg name="bestPoseOnly"   default="false" doc="Get best pose only or all pose above minConfidence" />
-  <arg name="minConfidence"  default="0.18" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
+  <arg name="minConfidence"  default="0.1" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
 
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>

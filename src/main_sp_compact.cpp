@@ -183,6 +183,11 @@ int main(int argc, char** argv)
     nh.param("sift_path",sift_path,std::string("data/UW_sift_dict/"));
     nh.param("fpfh_path",fpfh_path,std::string("data/UW_fpfh_dict/"));
 
+    bool train_bg_flag = true;
+    bool train_multi_flag = true;
+
+    nh.param("train_bg_flag",train_bg_flag, true);
+
     bool skip_fea;
     nh.param("skip_fea",skip_fea,false);
     
@@ -193,6 +198,7 @@ int main(int argc, char** argv)
     if (!skip_fea) extractFea(root_path,out_fea_path,obj_names,bg_names,object_ext,background_ext);
 
     // binary classification
+    if( train_bg_flag == true )
     {
         int cur_order_max = 3;
         // Reading features to train svm
@@ -242,7 +248,7 @@ int main(int argc, char** argv)
         }
     }
       
-    if (obj_names.size() > 1) // multi classification
+    if (obj_names.size() > 1 && train_multi_flag == true ) // multi classification
     {
         int cur_order_max = 3;
         // Reading features to train svm
