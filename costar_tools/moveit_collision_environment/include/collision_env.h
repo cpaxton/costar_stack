@@ -37,7 +37,7 @@ class collision_environment
         bool insertTableWalls, insertBaseLinkGround, useBaseLinkWall;
         bool defineParent;
         std::string definedParent;
-        double tableSize;
+        double tableSize, baseLinkWallDistance;
 
         bool getTable();
         void addSurroundingWalls(

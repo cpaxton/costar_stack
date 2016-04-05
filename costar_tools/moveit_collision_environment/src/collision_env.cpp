@@ -67,6 +67,7 @@ void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
     nh.param("baseLinkName",baseLinkName,std::string("base_link"));
     nh.param("useBaseLinkWall",useBaseLinkWall,true);    
     nh.param("tableSize",tableSize,1.0);
+    nh.param("baseLinkWallDistance",baseLinkWallDistance,1.0);
 
     if (defineParent) {
         nh.param("parentFrameName",definedParent,std::string("base_link"));
@@ -399,7 +400,7 @@ bool collision_environment::getTable()
 
             if(useBaseLinkWall)
             {
-                this->addSurroundingWalls(co,transform,tableSize,tableSize,true);
+                this->addSurroundingWalls(co,transform,baseLinkWallDistance,baseLinkWallDistance,true);
             }
         }
     }
