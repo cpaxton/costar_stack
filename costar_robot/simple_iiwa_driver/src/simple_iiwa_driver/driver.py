@@ -266,6 +266,15 @@ class SimpleIIWADriver:
             print self.q0
             print q
 
+
+            for i in range(20):
+                if q is None:
+                    q0 = np.random.random(7) * 2 * np.pi - np.pi
+                    q = self.kdl_kin.inverse(T,q0)
+                    print "trying new ik search from " + str(q0) + " returned " + str(q)
+                else:
+                    break
+
             pt.positions = q
 
             if not q is None:
