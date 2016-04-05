@@ -61,6 +61,11 @@ void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
     nh.param("file_extension",file_extension,std::string("stl"));
     nh.param("tableTFname",tableTFname,std::string("tableTF"));
     nh.param("defineParent",defineParent,false);
+
+    nh.param("useTableWall",insertTableWalls,false);
+    nh.param("useBaseLinkGround",insertBaseLinkGround,false);
+    nh.param("baseLinkName",baseLinkName,std::string("base_link"));
+    
     if (defineParent) {
         nh.param("parentFrameName",definedParent,std::string("base_link"));
     }
@@ -279,8 +284,7 @@ bool collision_environment::getTable()
             std::cerr << "parentFrame of: " << tableTFname << "-> " << parentTableTF << std::endl;
         tf::StampedTransform transform;
         listener.lookupTransform(parentTableTF,tableTFname,ros::Time(0),transform);
-        geometry_msgs::TransformStamped msg;
-        transformStampedTFToMsg(transform, msg);
+
         shape_msgs::SolidPrimitive primitive;
         primitive.type = primitive.BOX;
         primitive.dimensions.resize(3);
@@ -293,7 +297,94 @@ bool collision_environment::getTable()
         box_pose.position.z -= primitive.dimensions[2];
         co.primitives.push_back(primitive);
         co.primitive_poses.push_back(box_pose);
+
+        if (insertTableWalls)
+        {
+            tf::Transform boxTransform;
+
+            // std::cerr << "Make walls\n";
+
+            shape_msgs::SolidPrimitive walls;
+            walls.type = walls.BOX;
+            walls.dimensions.resize(3);
+
+            walls.dimensions[2] = 0.75;
+            
+            for (int i = 0; i < 3; i++)
+            {
+                tf::Vector3 wall_translation;
+                boxTransform.setIdentity();
+                switch(i){
+                    case 0:
+                    // TODO: Tune this if the size of the wall is not optimal
+                        walls.dimensions[0] = 0.75;
+                        walls.dimensions[1] = 0.02;
+                        // TODO: Tune this if the position of the wall is not optimal
+                        wall_translation.setX(0);
+                        wall_translation.setY(0.75/2);
+                        break;
+                    case 1:
+                        walls.dimensions[0] = 0.75;
+                        walls.dimensions[1] = 0.02;
+                        wall_translation.setX(0);
+                        wall_translation.setY(-0.75/2);
+                        break;
+                    default:
+                        walls.dimensions[0] = 0.02;
+                        walls.dimensions[1] = 0.75;
+                        wall_translation.setX(0.75/2);
+                        wall_translation.setY(0);
+                        break;
+                }
+                wall_translation.setZ(walls.dimensions[2]/2);
+
+                boxTransform.setOrigin(wall_translation);
+                boxTransform = transform * boxTransform;
+                geometry_msgs::Pose wall_pose;
+                tf::poseTFToMsg(boxTransform,wall_pose);
+                co.primitives.push_back(walls);
+                co.primitive_poses.push_back(wall_pose);
+            }
+        }
         hasTableTF = true;
+    }
+
+    if (insertBaseLinkGround)
+    {       
+        std::cerr << "Make ground\n";
+        std::string parentBaseLink;
+        
+        if (!defineParent) {
+            listener.getParent(baseLinkName,ros::Time(0),parentBaseLink);
+        }
+        else parentBaseLink = definedParent;
+
+        if (!listener.waitForTransform(baseLinkName,parentBaseLink,ros::Time::now(),ros::Duration(0.5)))
+        {
+            std::cerr << "Fail to get tf for: " << baseLinkName << std::endl;
+        }
+        else
+        {
+            tf::StampedTransform transform;
+            listener.lookupTransform(parentBaseLink,baseLinkName,ros::Time(0),transform);
+            shape_msgs::SolidPrimitive primitive;
+            primitive.type = primitive.BOX;
+            primitive.dimensions.resize(3);
+            // TODO: Tune this if the size of the box is not optimal
+            primitive.dimensions[0] = 1;
+            primitive.dimensions[1] = 0.75;
+            primitive.dimensions[2] = 0.75;
+            // TODO: Tune this if the position of the box is not optimal
+            tf::Vector3 base_ground_translation(-0.3,0,-primitive.dimensions[2]/2-0.03);
+            tf::Transform tmp;
+            tmp.setOrigin(base_ground_translation);
+            tmp = transform * tmp;
+
+            geometry_msgs::Pose box_pose;
+            tf::poseTFToMsg(tmp,box_pose);
+            co.primitives.push_back(primitive);
+            co.primitive_poses.push_back(box_pose);
+        }
     }
     tableObject = co;
     return hasTableTF;
