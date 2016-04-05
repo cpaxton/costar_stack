@@ -75,42 +75,42 @@ class SimpleSModelServer:
         #command = getDefaultMsg();
         self.command.rPRA = 0
         self.pub.publish(self.command)
-        rospy.sleep(2.0)
+        rospy.sleep(0.5)
         return []
 
     def close_gripper(self,msg=None):
         #command = getDefaultMsg();
         self.command.rPRA = 255
         self.pub.publish(self.command)
-        rospy.sleep(2.0)
+        rospy.sleep(0.5)
         return []
 
     def wide_mode(self,msg=None):
         #command = getDefaultMsg();
         self.command.rMOD = 2
         self.pub.publish(self.command)
-        rospy.sleep(2.0)
+        rospy.sleep(0.5)
         return []
 
     def pinch_mode(self,msg=None):
         #command = getDefaultMsg();
         self.command.rMOD = 1
         self.pub.publish(self.command)
-        rospy.sleep(2.0)
+        rospy.sleep(0.5)
         return []
 
     def basic_mode(self,msg=None):
         #command = getDefaultMsg();
         self.command.rMOD = 0
         self.pub.publish(self.command)
-        rospy.sleep(2.0)
+        rospy.sleep(0.5)
         return []
 
     def scissor_mode(self,msg=None):
         #command = getDefaultMsg();
         self.command.rMOD = 3
         self.pub.publish(self.command)
-        rospy.sleep(2.0)
+        rospy.sleep(0.5)
         return []
 
     def status_cb(self,msg):
