@@ -4,7 +4,7 @@
   <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM." />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data/primesense" doc="SP segmenter data folder" />
-  <arg name="svm_path"       default="UR5_link_node_svm" doc="Object svm folder name located in data path" />
+  <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
   <arg name="debug_args"     default=""/>
 
   <!-- Segmentation Parameters parameters-->
@@ -17,7 +17,6 @@
        to more imprecise alignment.  Bigger values lead to better alignment but
        require large visible object parts. -->
   <arg name="pairWidth"      default="0.05" />
-
 
   <!-- Voxel size is the size of the leafs of the octree, i.e., the "size" of
        the discretization. TRADEOFF: High values lead to less computation time
@@ -60,7 +59,7 @@
   <arg name="saveTabledir"   default="$(arg data_path)" doc="Save/Load folder for segmenting table" />
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
-  <arg name="useBinarySVM"   default="true" doc="This will do binary classification before multi class SVM."/>
+  <arg name="useBinarySVM"   default="false" doc="This will do binary classification before multi class SVM."/>
 
   <arg name="gripperTF"      default="endpoint_marker" doc="The gripper tf where target object would be attached" />
 
