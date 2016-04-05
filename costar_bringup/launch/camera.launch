@@ -23,4 +23,7 @@
     <arg name="output_frame2" value="/$(arg camera_name)_rgb_optical_frame" />
     <node if="$(arg start_alvar)" name="ar_track_alvar_$(arg camera_name)" pkg="ar_track_alvar" type="individualMarkers" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic2) $(arg cam_info_topic2) $(arg output_frame2)" />
   </group>
+
+  <!-- publish preferred orientation -->
+  <node name="preferred_orientation_publisher" type="static_transform_publisher" pkg="tf" args=" 0 0 0 0 0 -1.5708 base_link preferred_orientation 200"/>
 </launch>

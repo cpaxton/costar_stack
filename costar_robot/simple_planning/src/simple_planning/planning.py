@@ -101,7 +101,7 @@ class SimplePlanning:
         motion_req.goal_constraints.append(goal)
         motion_req.group_name = self.group
         motion_req.num_planning_attempts = 10
-        motion_req.allowed_planning_time = 5.0
+        motion_req.allowed_planning_time = 2.0
         motion_req.planner_id = "RRTstarkConfigDefault"
         
         if len(motion_req.goal_constraints[0].joint_constraints) == 0:

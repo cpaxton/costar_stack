@@ -58,6 +58,8 @@ class SmartWaypointManager:
         
         self.add_type_service("smartmove_info")
         self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
+        self.available_regions = yaml.load(self.load_service(type="smartmove_info",id="regions").text)
+        self.available_references = yaml.load(self.load_service(type="smartmove_info",id="references").text)
         print "Available classes = " + str(self.available_obj_classes)
 
     def detected_objects_cb(self,msg):
@@ -80,18 +82,24 @@ class SmartWaypointManager:
         waypoint_filenames = self.list_service(self.folder).entries
     
         for name in waypoint_filenames:
-            data = yaml.load(self.load_service(id=name,type=self.folder).text)
-            if not data[1] in self.waypoints.keys():
-                self.waypoints[data[1]] = []
-                self.waypoint_names[data[1]] = []
+          data = yaml.load(self.load_service(id=name,type=self.folder).text)
+          if not data[1] in self.waypoints.keys():
+            self.waypoints[data[1]] = []
+            self.waypoint_names[data[1]] = []
 
-            self.waypoints[data[1]].append(data[0])
-            self.waypoint_names[data[1]].append(name)
-            self.all_moves.append(data[1] + "/" + name)
+          self.waypoints[data[1]].append(data[0])
+          self.waypoint_names[data[1]].append(name)
+          self.all_moves.append(data[1] + "/" + name)
 
         print " === LOADING === "
         print self.waypoint_names
         print self.waypoints
+
+    def get_reference_frames(self):
+      return self.available_references
+
+    def get_available_predicates(self):
+      return self.available_regions
 
     def get_all_moves(self):
         return self.all_moves

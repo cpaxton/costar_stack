@@ -22,7 +22,8 @@ class GetWaypointsService:
         #self.sub = rospy.Subscriber('/landmark_definitions', LandmarkDefinition, self.callback)
         self.world = world
         self.and_srv = rospy.ServiceProxy('/predicator/match_AND',Query)
-        self.service = rospy.Service('/predicator/get_waypoints',GetWaypoints,self.get_waypoints_srv)
+        if service:
+            self.service = rospy.Service('/predicator/get_waypoints',GetWaypoints,self.get_waypoints_srv)
         self.listener = tf.TransformListener()
 
     def get_waypoints_srv(self,req):
