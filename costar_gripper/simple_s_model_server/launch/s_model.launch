@@ -1,0 +1,18 @@
+<launch>
+
+  <!--<param name="s_model_description" command="cat $(find robotiq_s_model_visualization)/cfg/s-model_articulated.urdf"/>-->
+  <param name="s_model_description" command="cat $(find robotiq_s_model_visualization)/cfg/s-model_articulated.urdf" output="screen"/>
+  <node pkg="robot_state_publisher" name="s_model_visualization_publisher" type="robot_state_publisher">
+    <remap from="robot_description" to="s_model_description"/>
+    <param name="use_tf_static" value="false"/>
+    <param name="tf_prefix" value="s_model"/>
+    <remap from="joint_states" to="s_model/joint_states"/>
+  </node>
+
+  <node name="s_model_joints" pkg="joint_state_publisher" type="joint_state_publisher">
+    <remap from="robot_description" to="s_model_description"/>
+    <remap from="joint_states" to="s_model/joint_states"/>
+    <param name="use_gui" value="true"/>
+  </node>
+
+</launch>

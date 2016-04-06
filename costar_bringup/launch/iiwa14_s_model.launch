@@ -42,4 +42,6 @@
     <param name="start_alvar" value="$(arg start_alvar)"/>
   </include>
 
+  <indlue file="$(find simple_s_model_server)/launch/s_model.launch"/>
+
 </launch>
