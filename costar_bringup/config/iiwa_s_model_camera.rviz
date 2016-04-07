@@ -8,12 +8,12 @@ Panels:
         - /Status1
         - /PointCloud21
         - /TF1
-        - /TF1/Frames1
-        - /TF1/Frames1/camera_link1
         - /TF1/Tree1
+        - /PlanningScene1
+        - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /camera plane1
-      Splitter Ratio: 0.412081
+      Splitter Ratio: 0.413174
     Tree Height: 717
   - Class: rviz/Selection
     Name: Selection
@@ -99,12 +99,114 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
+        90:
+          Value: false
+        90 - left:
+          Value: false
         All Enabled: false
+        Obj::node_uniform::1:
+          Value: true
+        Obj::node_uniform::10:
+          Value: false
+        Obj::node_uniform::11:
+          Value: false
+        Obj::node_uniform::12:
+          Value: false
+        Obj::node_uniform::13:
+          Value: false
+        Obj::node_uniform::14:
+          Value: false
+        Obj::node_uniform::15:
+          Value: false
+        Obj::node_uniform::16:
+          Value: false
+        Obj::node_uniform::17:
+          Value: false
+        Obj::node_uniform::18:
+          Value: false
+        Obj::node_uniform::19:
+          Value: false
+        Obj::node_uniform::2:
+          Value: true
+        Obj::node_uniform::20:
+          Value: false
+        Obj::node_uniform::21:
+          Value: false
+        Obj::node_uniform::22:
+          Value: false
+        Obj::node_uniform::23:
+          Value: false
+        Obj::node_uniform::24:
+          Value: false
+        Obj::node_uniform::25:
+          Value: false
+        Obj::node_uniform::26:
+          Value: false
+        Obj::node_uniform::27:
+          Value: false
+        Obj::node_uniform::28:
+          Value: false
+        Obj::node_uniform::29:
+          Value: false
+        Obj::node_uniform::3:
+          Value: true
+        Obj::node_uniform::30:
+          Value: false
+        Obj::node_uniform::4:
+          Value: true
+        Obj::node_uniform::5:
+          Value: true
+        Obj::node_uniform::6:
+          Value: false
+        Obj::node_uniform::7:
+          Value: false
+        Obj::node_uniform::8:
+          Value: false
+        Obj::node_uniform::9:
+          Value: false
+        READY:
+          Value: false
+        READY2:
+          Value: false
+        angled_grasp_link_01:
+          Value: false
         ar_marker_0:
-          Value: true
+          Value: false
+        ar_marker_2:
+          Value: false
         ar_marker_240:
-          Value: true
+          Value: false
+        asdf:
+          Value: false
+        attach1:
+          Value: false
+        attach3:
+          Value: false
         base_link:
+          Value: false
+        calib--0:
+          Value: false
+        calib--1:
+          Value: false
+        calib--10:
+          Value: false
+        calib--2:
+          Value: false
+        calib--3:
+          Value: false
+        calib--4:
+          Value: false
+        calib--5:
+          Value: false
+        calib--6:
+          Value: false
+        calib--7:
+          Value: false
+        calib--8:
+          Value: false
+        calib--9:
+          Value: false
+        calib--test--0:
           Value: false
         camera_depth_frame:
           Value: false
@@ -116,8 +218,102 @@ Visualization Manager:
           Value: false
         camera_rgb_optical_frame:
           Value: false
+        camodocal--1:
+          Value: false
+        camodocal--10:
+          Value: false
+        camodocal--11:
+          Value: false
+        camodocal--12:
+          Value: false
+        camodocal--13:
+          Value: false
+        camodocal--14:
+          Value: false
+        camodocal--15:
+          Value: false
+        camodocal--16:
+          Value: false
+        camodocal--17:
+          Value: false
+        camodocal--18:
+          Value: false
+        camodocal--19:
+          Value: false
+        camodocal--2:
+          Value: false
+        camodocal--20:
+          Value: false
+        camodocal--21:
+          Value: false
+        camodocal--22:
+          Value: false
+        camodocal--23:
+          Value: false
+        camodocal--24:
+          Value: false
+        camodocal--25:
+          Value: false
+        camodocal--26:
+          Value: false
+        camodocal--27:
+          Value: false
+        camodocal--28:
+          Value: false
+        camodocal--29:
+          Value: false
+        camodocal--3:
+          Value: false
+        camodocal--30:
+          Value: false
+        camodocal--31:
+          Value: false
+        camodocal--32:
+          Value: false
+        camodocal--33:
+          Value: false
+        camodocal--34:
+          Value: false
+        camodocal--35:
+          Value: false
+        camodocal--36:
+          Value: false
+        camodocal--4:
+          Value: false
+        camodocal--5:
+          Value: false
+        camodocal--6:
+          Value: false
+        camodocal--7:
+          Value: false
+        camodocal--8:
+          Value: false
+        camodocal--9:
+          Value: false
+        demo-grab-1:
+          Value: false
+        demo-grab-2:
+          Value: false
+        demo-place-0:
+          Value: false
+        demo-place-1:
+          Value: false
+        demo-place-2:
+          Value: false
+        demo-place-3:
+          Value: false
+        drop far left:
+          Value: false
+        drop_bottom_right:
+          Value: false
+        drop_node:
+          Value: false
+        drop_node_corner:
+          Value: false
+        drop_top_center:
+          Value: false
         ee_align:
-          Value: true
+          Value: false
         endpoint:
           Value: false
         endpoint_marker:
@@ -126,10 +322,32 @@ Visualization Manager:
           Value: false
         filtered/ar_marker_0:
           Value: false
+        filtered/ar_marker_2:
+          Value: false
         filtered/ar_marker_240:
-          Value: true
+          Value: false
+        grasp_node_01:
+          Value: false
+        grasp_node_01b:
+          Value: false
+        grasp_node_01c:
+          Value: false
+        grasp_node_02a:
+          Value: false
+        grasp_node_02b:
+          Value: false
+        grasp_node_03a:
+          Value: false
+        grasp_node_03b:
+          Value: false
         hec_test:
-          Value: true
+          Value: false
+        home:
+          Value: false
+        home1:
+          Value: false
+        hook:
+          Value: false
         iiwa_link_0:
           Value: false
         iiwa_link_1:
@@ -147,10 +365,94 @@ Visualization Manager:
         iiwa_link_7:
           Value: false
         iiwa_link_ee:
-          Value: true
+          Value: false
         iiwa_link_ee_kuka:
           Value: false
+        landmark_0:
+          Value: false
+        landmark_2:
+          Value: false
+        leaning:
+          Value: false
+        link_offset:
+          Value: false
+        low_attach01:
+          Value: false
+        low_attach1:
+          Value: false
+        low_attach2:
+          Value: false
+        move--0:
+          Value: false
+        objects/node_uniform/1:
+          Value: false
+        objects/node_uniform/10:
+          Value: false
+        objects/node_uniform/11:
+          Value: false
+        objects/node_uniform/12:
+          Value: false
+        objects/node_uniform/13:
+          Value: false
+        objects/node_uniform/14:
+          Value: false
+        objects/node_uniform/15:
+          Value: false
+        objects/node_uniform/16:
+          Value: false
+        objects/node_uniform/17:
+          Value: false
+        objects/node_uniform/18:
+          Value: false
+        objects/node_uniform/19:
+          Value: false
+        objects/node_uniform/2:
+          Value: false
+        objects/node_uniform/20:
+          Value: false
+        objects/node_uniform/21:
+          Value: false
+        objects/node_uniform/22:
+          Value: false
+        objects/node_uniform/23:
+          Value: false
+        objects/node_uniform/24:
+          Value: false
+        objects/node_uniform/25:
+          Value: false
+        objects/node_uniform/26:
+          Value: false
+        objects/node_uniform/27:
+          Value: false
+        objects/node_uniform/28:
+          Value: false
+        objects/node_uniform/29:
+          Value: false
+        objects/node_uniform/3:
+          Value: false
+        objects/node_uniform/30:
+          Value: false
+        objects/node_uniform/4:
+          Value: false
+        objects/node_uniform/5:
+          Value: false
+        objects/node_uniform/6:
+          Value: false
+        objects/node_uniform/7:
+          Value: false
+        objects/node_uniform/8:
+          Value: false
+        objects/node_uniform/9:
+          Value: false
         preferred_orientation:
+          Value: false
+        present_gripper_right:
+          Value: false
+        qwer:
+          Value: false
+        ready_to_calibrate:
+          Value: false
+        right ee up:
           Value: false
         s_model/finger_1_link_0:
           Value: false
@@ -184,20 +486,188 @@ Visualization Manager:
           Value: false
         s_model_palm_align:
           Value: false
+        sander--0:
+          Value: false
+        sander--1:
+          Value: false
+        sander--2:
+          Value: false
+        sander--3:
+          Value: false
+        sander--4:
+          Value: false
+        sander--5:
+          Value: false
         test_endpoint:
+          Value: false
+        test_waypoint:
           Value: false
         world:
           Value: false
       Marker Scale: 0.25
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
         world:
+          90:
+            {}
+          90 - left:
+            {}
+          READY:
+            {}
+          READY2:
+            {}
+          angled_grasp_link_01:
+            {}
+          asdf:
+            {}
+          attach1:
+            {}
+          attach3:
+            {}
+          calib--0:
+            {}
+          calib--1:
+            {}
+          calib--10:
+            {}
+          calib--2:
+            {}
+          calib--3:
+            {}
+          calib--4:
+            {}
+          calib--5:
+            {}
+          calib--6:
+            {}
+          calib--7:
+            {}
+          calib--8:
+            {}
+          calib--9:
+            {}
+          calib--test--0:
+            {}
+          camodocal--1:
+            {}
+          camodocal--10:
+            {}
+          camodocal--11:
+            {}
+          camodocal--12:
+            {}
+          camodocal--13:
+            {}
+          camodocal--14:
+            {}
+          camodocal--15:
+            {}
+          camodocal--16:
+            {}
+          camodocal--17:
+            {}
+          camodocal--18:
+            {}
+          camodocal--19:
+            {}
+          camodocal--2:
+            {}
+          camodocal--20:
+            {}
+          camodocal--21:
+            {}
+          camodocal--22:
+            {}
+          camodocal--23:
+            {}
+          camodocal--24:
+            {}
+          camodocal--25:
+            {}
+          camodocal--26:
+            {}
+          camodocal--27:
+            {}
+          camodocal--28:
+            {}
+          camodocal--29:
+            {}
+          camodocal--3:
+            {}
+          camodocal--30:
+            {}
+          camodocal--31:
+            {}
+          camodocal--32:
+            {}
+          camodocal--33:
+            {}
+          camodocal--34:
+            {}
+          camodocal--35:
+            {}
+          camodocal--36:
+            {}
+          camodocal--4:
+            {}
+          camodocal--5:
+            {}
+          camodocal--6:
+            {}
+          camodocal--7:
+            {}
+          camodocal--8:
+            {}
+          camodocal--9:
+            {}
+          demo-grab-1:
+            {}
+          demo-grab-2:
+            {}
+          demo-place-0:
+            {}
+          demo-place-1:
+            {}
+          demo-place-2:
+            {}
+          demo-place-3:
+            {}
+          drop far left:
+            {}
+          drop_bottom_right:
+            {}
+          drop_node:
+            {}
+          drop_node_corner:
+            {}
+          drop_top_center:
+            {}
           filtered/ar_marker_0:
             {}
-          filtered/ar_marker_240:
+          filtered/ar_marker_2:
+            {}
+          grasp_node_01:
+            {}
+          grasp_node_01b:
+            {}
+          grasp_node_01c:
+            {}
+          grasp_node_02a:
+            {}
+          grasp_node_02b:
+            {}
+          grasp_node_03a:
+            {}
+          grasp_node_03b:
+            {}
+          home:
+            {}
+          home1:
+            {}
+          hook:
             {}
           iiwa_link_0:
             base_link:
@@ -207,9 +677,21 @@ Visualization Manager:
                     {}
                 camera_rgb_frame:
                   camera_rgb_optical_frame:
+                    Obj::node_uniform::1:
+                      {}
+                    Obj::node_uniform::2:
+                      {}
+                    Obj::node_uniform::3:
+                      {}
+                    Obj::node_uniform::4:
+                      {}
+                    Obj::node_uniform::5:
+                      {}
+                    Obj::node_uniform::6:
+                      {}
                     ar_marker_0:
                       {}
-                    ar_marker_240:
+                    ar_marker_2:
                       {}
               preferred_orientation:
                 {}
@@ -228,31 +710,60 @@ Visualization Manager:
                               {}
                             hec_test:
                               {}
-                            s_model_align:
-                              s_model_base:
-                                endpoint_marker_attachment:
-                                  {}
-                                s_model_palm_align:
-                                  s_model/palm:
-                                    s_model/finger_1_link_0:
-                                      s_model/finger_1_link_1:
-                                        s_model/finger_1_link_2:
-                                          s_model/finger_1_link_3:
-                                            {}
-                                    s_model/finger_2_link_0:
-                                      s_model/finger_2_link_1:
-                                        s_model/finger_2_link_2:
-                                          s_model/finger_2_link_3:
-                                            {}
-                                    s_model/finger_middle_link_0:
-                                      s_model/finger_middle_link_1:
-                                        s_model/finger_middle_link_2:
-                                          s_model/finger_middle_link_3:
-                                            {}
                             test_endpoint:
                               {}
                           iiwa_link_ee_kuka:
                             {}
+          landmark_0:
+            {}
+          landmark_2:
+            {}
+          leaning:
+            {}
+          link_offset:
+            {}
+          low_attach01:
+            {}
+          low_attach1:
+            {}
+          low_attach2:
+            {}
+          move--0:
+            {}
+          objects/node_uniform/1:
+            {}
+          objects/node_uniform/2:
+            {}
+          objects/node_uniform/3:
+            {}
+          objects/node_uniform/4:
+            {}
+          objects/node_uniform/5:
+            {}
+          objects/node_uniform/6:
+            {}
+          present_gripper_right:
+            {}
+          qwer:
+            {}
+          ready_to_calibrate:
+            {}
+          right ee up:
+            {}
+          sander--0:
+            {}
+          sander--1:
+            {}
+          sander--2:
+            {}
+          sander--3:
+            {}
+          sander--4:
+            {}
+          sander--5:
+            {}
+          test_waypoint:
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 0.4
@@ -361,14 +872,14 @@ Visualization Manager:
       Reference Frame: endpoint_marker
       Value: false
     - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: false
+      Enabled: true
       Move Group Namespace: ""
       Name: PlanningScene
       Planning Scene Topic: planning_scene
       Robot Description: robot_description
       Scene Geometry:
-        Scene Alpha: 0.9
-        Scene Color: 50; 230; 50
+        Scene Alpha: 0.05
+        Scene Color: 170; 170; 127
         Scene Display Time: 0.2
         Show Scene Geometry: true
         Voxel Coloring: Z-Axis
@@ -381,10 +892,62 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
+          iiwa_link_0:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_1:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_2:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_3:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_4:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_5:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_6:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_7:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          iiwa_link_ee:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          iiwa_link_ee_kuka:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          world:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
         Robot Alpha: 1
         Show Robot Collision: false
         Show Robot Visual: false
-      Value: false
+      Value: true
     - Class: moveit_rviz_plugin/Trajectory
       Enabled: true
       Interrupt Display: false
@@ -522,22 +1085,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.50643
+      Distance: 1.6868
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.765181
-        Y: -0.124497
-        Z: 0.09818
+        X: 0.500806
+        Y: -0.286853
+        Z: 0.109869
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.354796
+      Pitch: 0.554797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.316954
+      Yaw: 6.27333
     Saved: ~
 Window Geometry:
   Displays:
