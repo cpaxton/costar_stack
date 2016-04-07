@@ -37,7 +37,7 @@ class SimplePlanning:
         ik_req = moveit_msgs.msg.PositionIKRequest()
         ik_req.robot_state.joint_state.position = q
         ik_req.avoid_collisions = True
-        ik_req.timeout = rospy.Duration(3.0)
+        ik_req.timeout = rospy.Duration(1.0)
         ik_req.attempts = 5
         ik_req.group_name = self.group
         ik_req.pose_stamped = p
