@@ -11,12 +11,26 @@ import actionlib
 
 class SimplePlanning:
     
-    def __init__(self,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns=""):
+    def __init__(self,robot,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns=""):
+        self.robot = robot
+        self.tree = kdl_tree_from_urdf_model(self.robot)
+        self.chain = self.tree.getChain(base_link, end_link)
         self.base_link = base_link
         self.end_link = end_link
         self.group = group
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
+
+    '''
+    TODO: finish this
+    '''
+    def getCartesianMove(self, frame, q0, steps=10):
+
+      # interpolate between start and goal
+
+      # compute IK
+      for i in range(1,10):
+        pass
 
     def getGoalConstraints(self, frame, q, timeout=1.0):
 

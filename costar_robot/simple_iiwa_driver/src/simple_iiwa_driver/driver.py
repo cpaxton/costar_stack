@@ -68,7 +68,7 @@ class SimpleIIWADriver:
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
         self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
-        self.planner = SimplePlanning(base_link,end_link,self.planning_group)
+        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group)
 
     def js_cb(self,msg):
         self.q0 = np.array(msg.position)
