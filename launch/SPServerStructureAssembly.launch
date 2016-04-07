@@ -32,7 +32,9 @@
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
   <arg name="minConfidence"  default="0.10" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
 
+  <arg name="useMedianFilter" default="true" doc="Apply median filter to point cloud input before processing it" />
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
+
 
   <!-- sceneVisibility aka Relative object size is the expected fraction of the scene points
        which belong to an object. For example a value of 0.05 means that each
@@ -85,6 +87,7 @@
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
     <param name="useBinarySVM"   type="bool" value="$(arg useBinarySVM)" />
     <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />
+    <param name="useMedianFilter"   type="bool"  value="$(arg useMedianFilter)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
 

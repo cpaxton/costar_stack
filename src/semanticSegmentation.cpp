@@ -90,6 +90,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("setObjectOrientation",setObjectOrientationTarget,false);
     this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
     this->nh.param("useBinarySVM",useBinarySVM,false);
+    this->nh.param("useMedianFilter",use_median_filter,true);
   
   
     tableConvexHull = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
@@ -471,17 +472,21 @@ void semanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &pc)
         haveTable = getAndSaveTable(pc);
     }
 
-    pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
-    
-    fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
-    cloud_vec[cur_frame_idx] = full_cloud;
-    cur_frame_idx++;
-    // std::cerr << "PointCloud --- " << cur_frame_idx << "----" << full_cloud->size() << std::endl;
-    if( cur_frame_idx >= maxframes )
+    if (use_median_filter)
     {
-        cloud_ready = true;
-        cur_frame_idx = 0; 
+        pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+    
+        fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
+        cloud_vec[cur_frame_idx] = full_cloud;
+        cur_frame_idx++;
+        // std::cerr << "PointCloud --- " << cur_frame_idx << "----" << full_cloud->size() << std::endl;
+        if( cur_frame_idx >= maxframes )
+        {
+            cloud_ready = true;
+            cur_frame_idx = 0; 
+        }
     }
+    
 }
 
 void semanticSegmentation::populateTFMapFromTree()
@@ -598,7 +603,9 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     
     // fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
     // fromROSMsg(inputCloud,*full_cloud); // convert to PCL format
-    if( cloud_ready == true )
+    if (!use_median_filter)  // not using median filter
+        fromROSMsg(inputCloud,*full_cloud);
+    else if(cloud_ready == true )
     {
         std::cerr << "Averaging point clouds" << std::endl;
         // full_cloud = AveragePointCloud(cloud_vec);
