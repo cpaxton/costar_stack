@@ -102,7 +102,7 @@ private:
     std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > cloud_vec;
     int maxframes;
     int cur_frame_idx;
-    bool cloud_ready;
+    bool cloud_ready, use_median_filter;
 
    
 protected:
