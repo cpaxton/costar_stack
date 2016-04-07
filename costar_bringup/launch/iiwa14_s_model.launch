@@ -31,7 +31,6 @@
   </include>
 
   <!-- motion planning -->
-No update done since there is no object TF detected
   <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
     <param name="allow_trajectory_execution" value="false"/>
   </include>
