@@ -25,6 +25,10 @@
   <arg name="tableSize"              default="1.0" doc="Table and wall size in meters" />
   <arg name="baseLinkWallDistance"   default="1.0" doc="Baselink to  wall distance in meters" />
 
+
+  <arg name="useDetectedObjectMsgs"   default="true" doc="Use the published costar_objrec_msgs DetectedObjectList msgs to get the tf name and type of the object" />
+  <arg name="detectedObjectTopic"   default="/SPServer/detected_object_list" doc="The name of detected object msgs topic. Oonly used if useDetectedObjectMsgs == true" />
+
   <!-- Enable for debugging purpose -->
   <arg name="debug"               default="false" />
 
@@ -50,7 +54,9 @@
     <param name="defineParent"    type="bool" value="$(arg defineParent  )" />
     <param name="parentFrameName" type="str"  value="$(arg parentFrameName)" />
 
-
+    <param name="useDetectedObjectMsgs"    type="bool" value="$(arg useDetectedObjectMsgs  )" />
+    <param name="detectedObjectTopic" type="str"  value="$(arg detectedObjectTopic)" />
+ 
     <param name="debug"           type="bool" value="$(arg debug)" />
   </node>
 

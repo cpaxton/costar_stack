@@ -68,7 +68,7 @@ void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
     nh.param("useBaseLinkWall",useBaseLinkWall,true);    
     nh.param("tableSize",tableSize,1.0);
     nh.param("baseLinkWallDistance",baseLinkWallDistance,1.0);
-
+    
     if (defineParent) {
         nh.param("parentFrameName",definedParent,std::string("base_link"));
     }
@@ -119,8 +119,8 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
             std::cerr << "No Object TF available.\n";
             return;
         }
+        else hasObjects = true;
     }
-    else hasObjects = true;
     
     // Add the collision objects based on available object TF
     for (int i = 0; i < detectedObjectsTF.size(); i++) {
@@ -150,6 +150,57 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
         std::cerr << "Collision Object Published\n";
     }
 };
+
+void collision_environment::getAllObjectTFfromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detectedObjectList)
+{
+    std::cerr << "Number of detected objects: " << detectedObjectList.objects.size() << std::endl;
+    detectedObjectsTF.clear();
+    listOfTF.clear();
+    
+    ros::Time now = ros::Time::now();
+    if (!hasParent) {
+        if (!defineParent) {
+        // read the TF parent of objectTF
+            parentFrame = detectedObjectList.header.frame_id;
+            if (debug)
+                std::cerr << "parentFrame of ObjectTF ->" << parentFrame << std::endl;
+        }
+        else
+            // use predefined parent name if we set param defineParent = true
+            parentFrame = definedParent;
+
+        hasParent = true;
+    }
+
+    // get and save the TF name and pose in the class variable
+    for (unsigned int i = 0; i < detectedObjectList.objects.size(); i++) {
+        std::string currentObjectFrameId = detectedObjectList.objects.at(i).id;
+        if (listener.waitForTransform(currentObjectFrameId,parentFrame,now,ros::Duration(0.5)))
+        {
+            objectTF detectedObject;
+            detectedObject.name = detectedObjectList.objects.at(i).object_class;
+            detectedObject.frame_id = currentObjectFrameId;
+            listOfTF.push_back(detectedObject.frame_id);
+            tf::StampedTransform transform;
+            listener.lookupTransform(parentFrame,currentObjectFrameId,ros::Time(0),transform);
+            tf::poseTFToMsg(transform,detectedObject.pose);
+            detectedObjectsTF.push_back(detectedObject);
+        }
+        else std::cerr << "Fail to get: " << currentObjectFrameId << " transform to " << parentFrame << std::endl;
+    }
+    
+    // update the list of TF to contain only newest set of object TF frames
+    
+    // Print out the object tf list
+    if (debug) {
+        std::cerr <<"Num of Objects: " << detectedObjectsTF.size() <<std::endl;
+        for (unsigned int i = 0; i < detectedObjectsTF.size(); i++)
+            std::cerr << "name: " << detectedObjectsTF.at(i).name << ", frame id: " << detectedObjectsTF.at(i).frame_id << std::endl;
+    }
+    if (detectedObjectsTF.size() > 0) hasObjects = true;
+}
+
+
 
 void collision_environment::getAllObjectTF()
 {
