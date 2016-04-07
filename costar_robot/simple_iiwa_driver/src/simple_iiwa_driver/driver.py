@@ -29,6 +29,7 @@ class SimpleIIWADriver:
     def __init__(self,world="/world",listener=None):
         base_link = 'iiwa_link_0'
         end_link = 'iiwa_link_ee'
+        self.planning_group = 'manipulator'
 
         self.world = world
         self.base_link = base_link
@@ -56,16 +57,18 @@ class SimpleIIWADriver:
         self.js_subscriber = rospy.Subscriber('/joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
+
         if listener is None:
             self.listener = tf.TransformListener()
         else:
             self.listener = listener
+
         #print self.tree.getNrOfSegments()
         #print self.chain.getNrOfJoints()
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
         self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
-        self.planner = SimplePlanning(base_link,end_link,"manipulator")
+        self.planner = SimplePlanning(base_link,end_link,self.planning_group)
 
     def js_cb(self,msg):
         self.q0 = np.array(msg.position)
@@ -76,7 +79,6 @@ class SimpleIIWADriver:
         if goal_diff < 0.001:
                 self.at_goal = True
         #print self.q0
-
 
     def check_req_speed_params(self,req):
         if req.accel > self.MAX_ACC:
@@ -91,7 +93,6 @@ class SimpleIIWADriver:
 
     def smart_move_call(self,req):
 
-
         if False and not self.driver_status == 'SERVO':
             rospy.logerr('DRIVER -- IK fail/not in servo mode')
             return 'FAILED - not in servo mode'
@@ -103,6 +104,12 @@ class SimpleIIWADriver:
                 [req.pose], # offset/transform from each member of the class
                 ["tmp"] # placeholder name
                 )
+
+        print req.obj_class
+        print req.predicates
+        print names
+        print poses
+
         if not poses is None:
             msg = 'FAILED - no valid objects found!'
             qs = []
@@ -132,14 +139,14 @@ class SimpleIIWADriver:
 
                 if q is None:
                     q = self.kdl_kin.inverse(T,None)
+                    #(resp,goal) = self.planner.getGoalConstraints(tf_c.toMsg(tf_c.fromMatrix(T)),self.q0)
+                    #print resp
+                    #q = [joint for joint in resp.solution.joint_state.position]
+                    #print "using " + str(q)
                 
-                print "object name = %s"%tf_frame
-                print self.q0
-                print q
+                print "Moving to object with name = %s"%tf_frame
 
-                pt.positions = q
-
-                if not q is None:
+                if not q is None and len(q) > 0:
                     qs.append(q)
                     dists.append((q - self.q0).sum())
                 else:
@@ -154,8 +161,9 @@ class SimpleIIWADriver:
             possible_goals.sort()
             print possible_goals
             for (dist,q) in possible_goals:
-                print "Trying to move to frame at distance %f"%(dist)
+                rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
+                pt.positions = q
                 self.pt_publisher.publish(pt)
                 self.at_goal = False
                 self.goal = q
@@ -166,12 +174,15 @@ class SimpleIIWADriver:
                 while not self.at_goal:
                     if (rospy.Time.now() - start_t).to_sec() > 10:
                         msg = "FAILED - timeout"
-                        break
+                        #break
                     rate.sleep()
 
                 if self.at_goal:
                     msg = 'SUCCESS - moved to pose'
-                    break
+                    #break
+
+                # for now...
+                break;
 
             return msg
         else:
@@ -199,14 +210,14 @@ class SimpleIIWADriver:
             if q is None:
                 q = self.kdl_kin.inverse(T,None)
             
+            print req.target
             (code,res) = self.planner.getPlan(req.target,self.q0)
 
             #pt.positions = q
             if code > 0:
               self.at_goal = True
               return 'SUCCESS - at goal'
-            if not res is None and len(res.planned_trajectory.joint_trajectory.points) > 0:
-
+            if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
 
                 disp = DisplayTrajectory()
                 disp.trajectory.append(res.planned_trajectory)
@@ -237,6 +248,7 @@ class SimpleIIWADriver:
 
                 return 'SUCCESS - moved to pose'
             else:
+                rospy.logerr(res)
                 rospy.logerr('DRIVER -- PLANNING failed')
                 return 'FAILED - not in servo mode'
         else:
@@ -262,19 +274,16 @@ class SimpleIIWADriver:
 
             if q is None:
                 q = self.kdl_kin.inverse(T,None)
-            
-            print self.q0
-            print q
-
 
             for i in range(20):
                 if q is None:
                     q0 = np.random.random(7) * 2 * np.pi - np.pi
                     q = self.kdl_kin.inverse(T,q0)
-                    print "trying new ik search from " + str(q0) + " returned " + str(q)
+                    #print "trying new ik search from " + str(q0) + " returned " + str(q)
                 else:
                     break
 
+            rospy.logwarn("moving to" + str(q))
             pt.positions = q
 
             if not q is None:

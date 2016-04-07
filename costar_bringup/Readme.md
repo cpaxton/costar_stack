@@ -10,8 +10,8 @@ We used the Robotiq kit for adapting a 3-finger gripper to a touch IO flange.
 
 Image of marker placement in the robot:
 
-<img src="https://git.lcsr.jhu.edu/cpaxton3/costar_stack/raw/master/costar_bringup/doc/marker_in_hand_robot.jpg" width="200">
+[Robot image](https://git.lcsr.jhu.edu/cpaxton3/costar_stack/raw/master/costar_bringup/doc/marker_in_hand_robot.jpg)
 
 Image of marker placement in rviz:
 
-<img src="https://git.lcsr.jhu.edu/cpaxton3/costar_stack/raw/master/costar_bringup/doc/marker_in_hand_rviz.png" width="200">
+[RVIZ image](https://git.lcsr.jhu.edu/cpaxton3/costar_stack/raw/master/costar_bringup/doc/marker_in_hand_rviz.png)

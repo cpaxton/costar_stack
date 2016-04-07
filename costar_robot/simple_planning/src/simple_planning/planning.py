@@ -18,11 +18,9 @@ class SimplePlanning:
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
 
-    def getConstraints(self, frame, q):
+    def getGoalConstraints(self, frame, q, timeout=1.0):
 
         srv = rospy.ServiceProxy(self.robot_ns + "/compute_ik", moveit_msgs.srv.GetPositionIK)
-
-        print frame
 
         p = geometry_msgs.msg.PoseStamped()
         p.pose.position.x = frame.position.x
@@ -37,17 +35,15 @@ class SimplePlanning:
         ik_req = moveit_msgs.msg.PositionIKRequest()
         ik_req.robot_state.joint_state.position = q
         ik_req.avoid_collisions = True
-        ik_req.timeout = rospy.Duration(1.0)
+        ik_req.timeout = rospy.Duration(timeout)
         ik_req.attempts = 5
         ik_req.group_name = self.group
         ik_req.pose_stamped = p
 
-        print "Getting IK position..."
-        #print p
-        #print ik_req
+        rospy.logwarn("Getting IK position...")
         ik_resp = srv(ik_req)
 
-        print "IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val)
+        rospy.logwarn("IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val))
 
         #if ik_resp.error_code.val > 0:
         #  return (ik_resp, None)
@@ -59,8 +55,8 @@ class SimplePlanning:
         goal = Constraints()
 
         for i in range(0,len(ik_resp.solution.joint_state.name)):
-            print ik_resp.solution.joint_state.name[i]
-            print ik_resp.solution.joint_state.position[i]
+            #print ik_resp.solution.joint_state.name[i]
+            #print ik_resp.solution.joint_state.position[i]
             joint = JointConstraint()
             joint.joint_name = ik_resp.solution.joint_state.name[i]
             joint.position = ik_resp.solution.joint_state.position[i] 
@@ -85,15 +81,15 @@ class SimplePlanning:
 
         motion_req.start_state.joint_state.position = q
         motion_req.workspace_parameters.header.frame_id = self.base_link
-        motion_req.workspace_parameters.max_corner.x = 2.0
-        motion_req.workspace_parameters.max_corner.y = 2.0
-        motion_req.workspace_parameters.max_corner.z = 2.0
-        motion_req.workspace_parameters.min_corner.x = -2.0
-        motion_req.workspace_parameters.min_corner.y = -2.0
-        motion_req.workspace_parameters.min_corner.z = -2.0
+        motion_req.workspace_parameters.max_corner.x = 1.0
+        motion_req.workspace_parameters.max_corner.y = 1.0
+        motion_req.workspace_parameters.max_corner.z = 1.0
+        motion_req.workspace_parameters.min_corner.x = -1.0
+        motion_req.workspace_parameters.min_corner.y = -1.0
+        motion_req.workspace_parameters.min_corner.z = -1.0
 
         # create the goal constraints
-        (ik_resp, goal) = self.getConstraints(frame,q)
+        (ik_resp, goal) = self.getGoalConstraints(frame,q)
 
         #if (ik_resp.error_code.val > 0):
         #  return (1,None)
