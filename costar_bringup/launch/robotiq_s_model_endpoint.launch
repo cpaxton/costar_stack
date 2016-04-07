@@ -25,7 +25,7 @@
       +86 degrees around z = 1.50098
   -->
   <!--<node pkg="tf" type="static_transform_publisher" name="base_to_endpoint_marker_attachment" args="-0.0744 0.030 0.04650 0.18936822 -1.22103234 1.50098 /s_model_base /endpoint_marker_attachment 1000"/>-->
-  <node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker_attachment" args="0 0 .185 -1.8324 0 0 /ee_align /endpoint_marker 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker_attachment" args="0 0 .15 -1.8324 0 0 /ee_align /endpoint_marker 1000"/>
    <!--<node pkg="tf" type="static_transform_publisher" name="base_to_endpoint_marker_attachment" args="-0.0744 0.030 0.04650 0.18936822 -1.22103234 1.50098 /s_model_base /endpoint_marker_attachment 1000"/>-->
    <!--<node pkg="tf" type="static_transform_publisher" name="endpoint_attachment_to_marker" args="0 0 0 0 -1.57079632679 -1.57079632679 /endpoint_marker_attachment /endpoint_marker 1000"/>-->
   <!--<node pkg="tf" type="static_transform_publisher" name="endpoint_attachment_to_marker" args=".0947663 0.00768662 0.0762554 0.707189 -0.0547587 0.204445 -0.0547587 iiwa_link_ee endpoint_marker 100"/>-->
