@@ -14,7 +14,10 @@ void moveitPlanningSceneGenerator::addCollisionObjects(const std::vector<moveit_
 bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     // This service function will update the planning scene collision objects
-    
+
+    // Keep the node from updating collision object with autoUpdate if the service call is running first
+    mtx.lock();
+
     // remove old collision objects
     planning_scene.world.collision_objects.clear();
     std::cerr << "Number of old object to remove: ";
@@ -22,7 +25,14 @@ bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Reque
     
     // add new collision objects
     std::cerr << "Updating objects.\n";
-    collisionObjectGenerator.updateCollisionObjects();
+    if(useDetectedObjectMsgs)
+    {
+
+        collisionObjectGenerator.getAllObjectTFfromDetectedObjectMsgs(detectedObjectList);
+        collisionObjectGenerator.updateCollisionObjects(false);
+    }
+    else
+        collisionObjectGenerator.updateCollisionObjects();
     
     std::cerr << "Number of new object to add: ";
     this->addCollisionObjects(collisionObjectGenerator.getCollisionObjects());
@@ -36,6 +46,7 @@ bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Reque
     else
         std::cerr << "No update done since there is no object TF detected\n";
     std::cerr << std::endl;
+    mtx.unlock();
     return anyUpdate;
 }
 
@@ -43,13 +54,18 @@ void moveitPlanningSceneGenerator::autoUpdateScene(const costar_objrec_msgs::Det
 {
     // this function will automatically update scene when it got detectedObject msgs
     // remove old collision objects
+
+    // Keep the node from updating collision object with service call if the autoupdate is running first
+    mtx.lock();
+    this->detectedObjectList = detectedObject;
+
     planning_scene.world.collision_objects.clear();
     std::cerr << "Number of old object to remove: ";
     this->addCollisionObjects(collisionObjectGenerator.generateOldObjectToRemove());
 
     // Get update of tf names from detected object msgs
     std::cerr << "Updating objects.\n";
-    collisionObjectGenerator.getAllObjectTFfromDetectedObjectMsgs(detectedObject);
+    collisionObjectGenerator.getAllObjectTFfromDetectedObjectMsgs(detectedObjectList);
 
     // Update collision objects without updating frame (because we already update it from the msgs)
     collisionObjectGenerator.updateCollisionObjects(false);
@@ -63,6 +79,7 @@ void moveitPlanningSceneGenerator::autoUpdateScene(const costar_objrec_msgs::Det
     else
         std::cerr << "No update done since there is no object TF detected\n";
     std::cerr << std::endl;
+    mtx.unlock();
 }
 
 moveitPlanningSceneGenerator::moveitPlanningSceneGenerator(const ros::NodeHandle &nh)

@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS thread)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -118,6 +118,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
   include
 )
 
@@ -132,7 +133,7 @@ add_library(planning_scene_generator
   src/planning_scene_generator.cpp
   include/planning_scene_generator.h
 )
-target_link_libraries(planning_scene_generator collision_env ${catkin_LIBRARIES})
+target_link_libraries(planning_scene_generator collision_env ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

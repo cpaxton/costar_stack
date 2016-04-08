@@ -14,6 +14,8 @@
 #include <costar_objrec_msgs/DetectedObject.h>
 #include <costar_objrec_msgs/DetectedObjectList.h>
 
+#include <boost/thread/mutex.hpp>
+
 class moveitPlanningSceneGenerator
 {
 protected:
@@ -25,6 +27,8 @@ private:
     collision_environment collisionObjectGenerator;
     bool useDetectedObjectMsgs;
     ros::Subscriber getDetectedObject; 
+    boost::mutex mtx; // for locking detectedObjectList
+    costar_objrec_msgs::DetectedObjectList detectedObjectList;
     ;
     
 public:
