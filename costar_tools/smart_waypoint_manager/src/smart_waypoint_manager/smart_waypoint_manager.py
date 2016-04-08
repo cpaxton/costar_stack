@@ -55,6 +55,9 @@ class SmartWaypointManager:
         self.obj_classes = []
         self.obj_class = {}
 
+        self.available_object_classes = None
+        self.available_regions = None
+        self.available_references = None
         
         self.add_type_service("smartmove_info")
         self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
@@ -115,15 +118,16 @@ class SmartWaypointManager:
         #print self.available_obj_classes
         self.objs = []
         self.obj_classes = []
-        for oc in self.available_obj_classes:
-            resp = self.get_assignment_service(PredicateStatement(predicate=oc,params=["*","",""]))
-            oc_objs = [p.params[0] for p in resp.values]
-            if len(oc_objs) > 0:
-              self.obj_classes.append(oc)
-            for obj in oc_objs:
-                self.obj_class[obj] = oc
-                #rospy.logwarn("%s = %s"%(obj,oc))
-            self.objs += oc_objs
+        if self.available_object_classes is not None:
+            for oc in self.available_obj_classes:
+                resp = self.get_assignment_service(PredicateStatement(predicate=oc,params=["*","",""]))
+                oc_objs = [p.params[0] for p in resp.values]
+                if len(oc_objs) > 0:
+                  self.obj_classes.append(oc)
+                for obj in oc_objs:
+                    self.obj_class[obj] = oc
+                    #rospy.logwarn("%s = %s"%(obj,oc))
+                self.objs += oc_objs
 
         return self.objs
 
