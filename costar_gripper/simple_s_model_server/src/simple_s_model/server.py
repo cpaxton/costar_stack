@@ -55,11 +55,12 @@ class SimpleSModelServer:
         self.pub = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output)
         self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
         self.close = rospy.Service(join(ns,"close"), Empty, self.close_gripper)
-        self.wide_mode = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)
-        self.pinch_mode = rospy.Service(join(ns,"pinch_mode"), Empty, self.pinch_mode)
-        self.basic_mode = rospy.Service(join(ns,"basic_mode"), Empty, self.basic_mode)
-        self.scissor_mode = rospy.Service(join(ns,"scissor_mode"), Empty, self.scissor_mode)
-        self.reactivate = rospy.Service(join(ns,"activate"), Empty, self.activate)
+        self.wide_mode_srv = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)
+        self.pinch_mode_srv = rospy.Service(join(ns,"pinch_mode"), Empty, self.pinch_mode)
+        self.basic_mode_srv = rospy.Service(join(ns,"basic_mode"), Empty, self.basic_mode)
+        self.scissor_mode_srv = rospy.Service(join(ns,"scissor_mode"), Empty, self.scissor_mode)
+        self.reactivate_srv = rospy.Service(join(ns,"activate"), Empty, self.activate)
+        self.reset_srv = rospy.Service(join(ns,"reset"), Empty, self.reset)
         self.command = getDefaultMsg()
 
         self.activated = True;
@@ -68,6 +69,13 @@ class SimpleSModelServer:
 
     def activate(self,msg=None):
         self.command = getDefaultMsg()
+        self.pub.publish(self.command)
+        return []
+
+    def reset(self, msg=None):
+        self.command = outputMsg.SModel_robot_output();
+        self.command = outputMsg.SModel_robot_output();
+        self.command.rACT = 0
         self.pub.publish(self.command)
         return []
 
