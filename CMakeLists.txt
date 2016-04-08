@@ -125,8 +125,11 @@ target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES
 add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
-add_library(semanticSegmentation include/sp_segmenter/semanticSegmentation.h src/semanticSegmentation.cpp)
-target_link_libraries(semanticSegmentation Utility DataParser PoolLib #${Boost_LIBRARIES} 
+add_library(tracking src/tracker.cpp src/klttracker.cpp src/PnPUtil.cpp)
+target_link_libraries(tracking ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
+
+add_library(semanticSegmentation include/sp_segmenter/semanticSegmentation.h src/semanticSegmentation.cpp) 
+target_link_libraries(semanticSegmentation Utility DataParser PoolLib tracking #${Boost_LIBRARIES} 
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 
 #add_executable(spTraining src/main_sp_training.cpp) 

@@ -9,6 +9,7 @@
 #include "sp_segmenter/common.h"
 #include "sp_segmenter/stringVectorArgsReader.h"
 #include "sp_segmenter/seg.h"
+#include "sp_segmenter/tracker.h"
 
 // ros stuff
 #include <ros/ros.h>
@@ -103,6 +104,9 @@ private:
     int maxframes;
     int cur_frame_idx;
     bool cloud_ready, use_median_filter;
+
+    boost::shared_ptr<Tracker> tracker;
+    bool enableTracking;
 
    
 protected:

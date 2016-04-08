@@ -147,11 +147,11 @@ int main(int argc, char** argv)
     ros::NodeHandle nh("~");
     
     std::string root_path;
-    float foregroundBackgroundCC;
-    float multiclassCC;
+    double foregroundBackgroundCC;
+    double multiclassCC;
     nh.param("root_path", root_path, std::string("data/training/"));
-    nh.param("foreground_cc", foregroundBackgroundCC, 0.001f);
-    nh.param("multiclass_cc", multiclassCC, 0.001f);
+    nh.param("foreground_cc", foregroundBackgroundCC, 0.001);
+    nh.param("multiclass_cc", multiclassCC, 0.001);
     nh.param("bg_sample_num", bgSampleNum, 66); //NUM_OBJECT_TRAINING_DATA*OBJ_SAMPLES = NUM_BACKGROUND_TRAINING_DATA*NUM_BG_SAMPLES
     nh.param("obj_sample_num", objSampleNum, 100); // these should be chosen so the number of samples is the same for each
     

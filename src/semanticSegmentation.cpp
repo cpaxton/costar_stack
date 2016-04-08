@@ -91,6 +91,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
     this->nh.param("useBinarySVM",useBinarySVM,false);
     this->nh.param("useMedianFilter",use_median_filter,true);
+    this->nh.param("enableTracking",enableTracking,false);
   
   
     tableConvexHull = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
@@ -227,6 +228,19 @@ void semanticSegmentation::initializeSemanticSegmentation()
         viewer->addCoordinateSystem(0.1);
         viewer->setCameraPosition(0, 0, 0.1, 0, 0, 1, 0, -1, 0);
         viewer->setSize(1280, 960);
+    }
+
+    if(enableTracking)
+    {
+      tracker = boost::shared_ptr<Tracker>(new Tracker());
+      for(ModelT& model : mesh_set)
+      {
+         
+        if(!tracker->addTracker(model))
+        {
+          std::cout << "Warning: tried to add duplicate model name to tracker" << std::endl;
+       }
+      }
     }
 }
 
@@ -637,6 +651,11 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
     ROS_INFO("Found %u objects",all_poses.size());
     // std::cerr << "found: " << all_poses.size() << "\n";
+
+    if(enableTracking)
+    {
+      tracker->generateTrackingPoints(inputCloud.header.stamp, all_poses);
+    }
     
     //publishing the segmented point cloud
     sensor_msgs::PointCloud2 output_msg;
