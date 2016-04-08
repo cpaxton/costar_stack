@@ -4,6 +4,11 @@
 
 import rospy
 
+import PyKDL as kdl
+import numpy as np
+
+import tf_conversions.posemath as pm
+
 # import moveit messages
 from moveit_msgs.msg import *
 from moveit_msgs.srv import *
@@ -12,9 +17,12 @@ import actionlib
 from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
 from pykdl_utils.kdl_kinematics import KDLKinematics
 
+from trajectory_msgs.msg import JointTrajectory
+from trajectory_msgs.msg import JointTrajectoryPoint
+
 class SimplePlanning:
     
-    def __init__(self,robot,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns=""):
+    def __init__(self,robot,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns="",verbose=False):
         self.robot = robot
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
@@ -24,12 +32,15 @@ class SimplePlanning:
         self.group = group
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
+        self.verbose = verbose
 
     
     '''
     ik: handles calls to KDL inverse kinematics
     '''
-    def ik(self, T, q0):
+    def ik(self, F, q0):
+
+      T = pm.toMatrix(F)
       q = self.kdl_kin.inverse(T,q0)
 
       if q is None:
@@ -44,14 +55,39 @@ class SimplePlanning:
     '''
     TODO: finish this
     '''
-    def getCartesianMove(self, frame, q0, steps=10):
+    def getCartesianMove(self, frame, q0, steps=10, vel=1):
 
       # interpolate between start and goal
-      pose = self.kdl_kin.forward(q0)
+      pose = pm.fromMatrix(self.kdl_kin.forward(q0))
+
+      cur_rpy = np.array(pose.M.GetRPY())
+      cur_xyz = np.array(pose.p)
+      
+      goal_rpy = np.array(frame.M.GetRPY())
+      goal_xyz = np.array(frame.p)
+
+      ts = (pose.p - frame.p).Norm() / steps
+
+      traj = JointTrajectory()
 
       # compute IK
-      for i in range(1,10):
-        pass
+      for i in range(1,steps+1):
+        xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
+        rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
+
+        frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
+        q = self.kdl_kin.inverse(frame,q0)
+
+        if self.verbose:
+          print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
+
+        if not q is None:
+          pt = JointTrajectoryPoint(positions=q)
+          pt.time_from_start = rospy.Duration(i * ts)
+          traj.points.append(pt)
+          q0 = q
+
+      return traj
 
     def getGoalConstraints(self, frame, q, timeout=1.0):
 
