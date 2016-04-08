@@ -1,0 +1,19 @@
+# This ROSINSTALL file should hold the dependencies for getting this project up and running.
+
+# main
+- git: {version: master, local-name: costar_stack, uri: 'git@github.com:cpaxton/costar_stack.git'}
+- git: {version: master, local-name: sp_segmenter, uri: 'git@github.com:jhu-lcsr/sp_segmenter.git'}
+
+# user interface
+- git: {version: working, local-name: beetree, uri: 'git@github.com:futureneer/beetree.git'}
+- git: {version: working, local-name: robotiq, uri: 'https://github.com/ros-industrial/robotiq.git'}
+
+# object detection
+- git: {version: master, local-name: ObjRecRANSAC, uri: 'git@github.com:tum-mvp/ObjRecRANSAC.git'}
+
+# motion
+- git: {version: master, local-name: dmp, uri: 'git@github.com:cpaxton/dmp.git'}
+
+# proprietary
+- git: {version: ui-improvements, local-name: instructor, uri: 'git@git.lcsr.jhu.edu:snap/snap_instructor.git'}
+- git: {version: master, local-name: instructor, uri: 'git@git.lcsr.jhu.edu:nri/instructor.git'}
