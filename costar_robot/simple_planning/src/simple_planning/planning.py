@@ -9,17 +9,37 @@ from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 import actionlib
 
+from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
+from pykdl_utils.kdl_kinematics import KDLKinematics
+
 class SimplePlanning:
     
     def __init__(self,robot,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns=""):
         self.robot = robot
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
+        self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
         self.base_link = base_link
         self.end_link = end_link
         self.group = group
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
+
+    
+    '''
+    ik: handles calls to KDL inverse kinematics
+    '''
+    def ik(self, T, q0):
+      q = self.kdl_kin.inverse(T,q0)
+
+      if q is None:
+          q = self.kdl_kin.inverse(T,None)
+          #(resp,goal) = self.planner.getGoalConstraints(tf_c.toMsg(tf_c.fromMatrix(T)),self.q0)
+          #print resp
+          #q = [joint for joint in resp.solution.joint_state.position]
+          #print "using " + str(q)
+
+      return q
 
     '''
     TODO: finish this
@@ -27,6 +47,7 @@ class SimplePlanning:
     def getCartesianMove(self, frame, q0, steps=10):
 
       # interpolate between start and goal
+      pose = self.kdl_kin.forward(q0)
 
       # compute IK
       for i in range(1,10):

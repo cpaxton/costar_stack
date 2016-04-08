@@ -135,15 +135,9 @@ class SimpleIIWADriver:
                 # Send command
 
                 pt = JointTrajectoryPoint()
-                q = self.kdl_kin.inverse(T,self.q0)
 
-                if q is None:
-                    q = self.kdl_kin.inverse(T,None)
-                    #(resp,goal) = self.planner.getGoalConstraints(tf_c.toMsg(tf_c.fromMatrix(T)),self.q0)
-                    #print resp
-                    #q = [joint for joint in resp.solution.joint_state.position]
-                    #print "using " + str(q)
-                
+                self.planner.ik(T, self.q0)
+
                 print "Moving to object with name = %s"%tf_frame
 
                 if not q is None and len(q) > 0:
@@ -205,10 +199,7 @@ class SimpleIIWADriver:
 
             # Send command
             pt = JointTrajectoryPoint()
-            q = self.kdl_kin.inverse(T,self.q0)
-
-            if q is None:
-                q = self.kdl_kin.inverse(T,None)
+            q = self.planner.ik(T, self.q0)
             
             print req.target
             (code,res) = self.planner.getPlan(req.target,self.q0)
@@ -270,10 +261,7 @@ class SimpleIIWADriver:
 
             # Send command
             pt = JointTrajectoryPoint()
-            q = self.kdl_kin.inverse(T,self.q0)
-
-            if q is None:
-                q = self.kdl_kin.inverse(T,None)
+            q = self.planner.ik(T,self.q0)
 
             for i in range(20):
                 if q is None:
