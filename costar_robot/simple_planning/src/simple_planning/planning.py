@@ -45,6 +45,7 @@ class SimplePlanning:
 
       if q is None:
           q = self.kdl_kin.inverse(T,None)
+
           #(resp,goal) = self.planner.getGoalConstraints(tf_c.toMsg(tf_c.fromMatrix(T)),self.q0)
           #print resp
           #q = [joint for joint in resp.solution.joint_state.position]
@@ -55,7 +56,7 @@ class SimplePlanning:
     '''
     TODO: finish this
     '''
-    def getCartesianMove(self, frame, q0, steps=10, vel=1):
+    def getCartesianMove(self, frame, q0, steps=10, steps_per_meter=10, vel=1):
 
       # interpolate between start and goal
       pose = pm.fromMatrix(self.kdl_kin.forward(q0))
@@ -67,6 +68,8 @@ class SimplePlanning:
       goal_xyz = np.array(frame.p)
 
       ts = (pose.p - frame.p).Norm() / steps
+
+      steps += int((pose.p - frame.p).Norm()) / steps_per_meter
 
       traj = JointTrajectory()
 
@@ -86,6 +89,8 @@ class SimplePlanning:
           pt.time_from_start = rospy.Duration(i * ts)
           traj.points.append(pt)
           q0 = q
+        elif i == steps:
+          return JointTrajectory()
 
       return traj
 
