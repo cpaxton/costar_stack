@@ -80,7 +80,7 @@ class SimpleIIWADriver:
     def js_cb(self,msg):
         self.q0 = np.array(msg.position)
         goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
-        #print goal_diff
+        print goal_diff
         #if self.at_goal:
         #    self.goal = self.q0
         if goal_diff < 0.001:
@@ -98,10 +98,14 @@ class SimpleIIWADriver:
             velocity = req.vel
         return (acceleration, velocity)
 
+    '''
+    Find any valid object that meets the requirements.
+    Find a cartesian path or possibly longer path through joint space.
+    '''
     def smart_move_call(self,req):
 
         if False and not self.driver_status == 'SERVO':
-            rospy.logerr('DRIVER -- IK fail/not in servo mode')
+            rospy.logerr('DRIVER -- Not in servo mode!')
             return 'FAILED - not in servo mode'
 
         (acceleration, velocity) = self.check_req_speed_params(req) 
@@ -143,54 +147,41 @@ class SimpleIIWADriver:
 
                 pt = JointTrajectoryPoint()
 
-                self.planner.ik(T, self.q0)
+                #q = self.planner.ik(T, self.q0)
+                traj = self.planner.getCartesianMove(T,self.q0)
+                if len(traj.points) == 0:
+                    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
+                    traj = res.planned_trajectory.joint_trajectory
 
-                print "Moving to object with name = %s"%tf_frame
+                print "Considering object with name = %s"%tf_frame
 
-                if not q is None and len(q) > 0:
-                    qs.append(q)
-                    dists.append((q - self.q0).sum())
+                if len(traj.points) > 0:
+                    qs.append(traj)
+                    dists.append((traj.points[-1].positions - self.q0).sum())
                 else:
                     rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
 
             if len(qs) == 0:
                 msg = 'FAILED - no joint configurations found!'
-            else:
-                msg = 'FAILED - could not reach any destination!'
 
             possible_goals = zip(dists,qs)
             possible_goals.sort()
             print possible_goals
-            for (dist,q) in possible_goals:
-                rospy.logwarn("Trying to move to frame at distance %f"%(dist))
+            
+            (dist,traj) = possible_goals[0]
+            rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-                pt.positions = q
-                self.pt_publisher.publish(pt)
-                self.at_goal = False
-                self.goal = q
-                rate = rospy.Rate(10)
-                start_t = rospy.Time.now()
-
-                # wait until robot is at goal
-                while not self.at_goal:
-                    if (rospy.Time.now() - start_t).to_sec() > 10:
-                        msg = "FAILED - timeout"
-                        #break
-                    rate.sleep()
-
-                if self.at_goal:
-                    msg = 'SUCCESS - moved to pose'
-                    #break
-
-                # for now...
-                break;
+            msg = self.send_trajectory(traj)
 
             return msg
+
         else:
             msg = 'FAILED - no match to predicate moves'
             return msg
 
-
+    '''
+    Definitely do a planned motion.
+    '''
     def plan_to_pose_call(self,req): 
         #rospy.loginfo('Recieved servo to pose request')
         #print req
@@ -221,35 +212,38 @@ class SimpleIIWADriver:
 
                 traj = res.planned_trajectory.joint_trajectory
                 
-                self.send_trajectory(traj)
+                return self.send_trajectory(traj)
 
             else:
                 rospy.logerr(res)
                 rospy.logerr('DRIVER -- PLANNING failed')
                 return 'FAILED - not in servo mode'
         else:
-            rospy.logerr('DRIVER -- IK fail/not in servo mode')
+            rospy.logerr('DRIVER -- not in servo mode!')
             return 'FAILED - not in servo mode'
 
 
     '''
-    send a whole joint trajectory message to a robot
-    that is listening to individual joint states
+    Send a whole joint trajectory message to a robot...
+    that is listening to individual joint states.
     '''
     def send_trajectory(self,traj):
         t = rospy.Time(0)
 
-        for pt in traj.points:
+        for pt in traj.points[:-1]:
           self.pt_publisher.publish(pt)
+
+          print " -- %s"%(str(pt.positions))
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
 
-        pt = traj.points[-1]
+        print " -- GOAL: %s"%(str(traj.points[-1].positions))
         self.at_goal = False
-        self.goal = pt.positions
-        rate = rospy.Rate(10)
+        self.goal = traj.points[-1].positions
         start_t = rospy.Time.now()
+
+        rate = rospy.Rate(30)
 
         # wait until robot is at goal
         while not self.at_goal:
@@ -260,8 +254,8 @@ class SimpleIIWADriver:
         return 'SUCCESS - moved to pose'
 
     '''
-    send a whole sequence of points to a robot
-    that is listening to individual joint states
+    Send a whole sequence of points to a robot...
+    that is listening to individual joint states.
     '''
     def send_sequence(self,traj):
         q0 = self.q0
@@ -288,6 +282,10 @@ class SimpleIIWADriver:
 
             return 'SUCCESS - moved to pose'
 
+    '''
+    Standard movement call.
+    Tries a cartesian move, then if that fails goes into a joint-space move.
+    '''
     def servo_to_pose_call(self,req): 
         #rospy.loginfo('Recieved servo to pose request')
         #print req
@@ -299,13 +297,17 @@ class SimpleIIWADriver:
 
             # inverse kinematics
             traj = self.planner.getCartesianMove(T,self.q0)
+            if len(traj.points) == 0:
+                (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
+                traj = res.planned_trajectory.joint_trajectory
+
             #if len(traj) == 0:
             #    traj.append(self.planner.ik(T,self.q0))
 
             # Send command
             if len(traj.points) > 0:
                 rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
-                self.send_trajectory(traj)
+                return self.send_trajectory(traj)
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
                 return 'FAILED - not in servo mode'

@@ -94,7 +94,7 @@ class SimplePlanning:
 
       return traj
 
-    def getGoalConstraints(self, frame, q, timeout=1.0):
+    def getGoalConstraints(self, frame, q, timeout=2.0):
 
         srv = rospy.ServiceProxy(self.robot_ns + "/compute_ik", moveit_msgs.srv.GetPositionIK)
 
@@ -144,7 +144,7 @@ class SimplePlanning:
         return (ik_resp, goal)
 
 
-    def getPlan(self,frame,q):
+    def getPlan(self,frame,q,compute_ik=True):
         planning_options = PlanningOptions()
         planning_options.plan_only = False
         planning_options.replan = False
@@ -165,7 +165,8 @@ class SimplePlanning:
         motion_req.workspace_parameters.min_corner.z = -1.0
 
         # create the goal constraints
-        (ik_resp, goal) = self.getGoalConstraints(frame,q)
+        if compute_ik:
+          (ik_resp, goal) = self.getGoalConstraints(frame,q)
 
         #if (ik_resp.error_code.val > 0):
         #  return (1,None)
@@ -173,7 +174,7 @@ class SimplePlanning:
         motion_req.goal_constraints.append(goal)
         motion_req.group_name = self.group
         motion_req.num_planning_attempts = 10
-        motion_req.allowed_planning_time = 2.0
+        motion_req.allowed_planning_time = 4.0
         motion_req.planner_id = "RRTstarkConfigDefault"
         
         if len(motion_req.goal_constraints[0].joint_constraints) == 0:

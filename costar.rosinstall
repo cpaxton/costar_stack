@@ -1,4 +1,6 @@
 # This ROSINSTALL file should hold the dependencies for getting this project up and running.
+# There might still be some issues.
+# Some code is covered by patents.
 
 # main
 - git: {version: master, local-name: costar_stack, uri: 'git@github.com:cpaxton/costar_stack.git'}
