@@ -263,6 +263,8 @@ class SimpleIIWADriver:
             pt = JointTrajectoryPoint()
             q = self.planner.ik(T,self.q0)
 
+            self.planner.getCartesianMove(T)
+
             for i in range(20):
                 if q is None:
                     q0 = np.random.random(7) * 2 * np.pi - np.pi
