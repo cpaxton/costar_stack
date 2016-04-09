@@ -30,8 +30,11 @@
   <!-- includes -15 degree rotation from end of robot to Robotiq 3-finger -->
   <!--<node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker_attachment" args="0 0 .15 -1.8324 0 0 /ee_align /endpoint_marker 1000"/>-->
 
-  <node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="0.103 -0.071 0.022 0.575 0.157 0.081 0.799 /iiwa_link_ee /endpoint_marker 1000"/>
-  <!--<node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="-0.0713113 -0.00254882 -0.105139 -0.5740418213670584 -0.15601136608582078 -0.08100590162148387 0.7999417166269052 /iiwa_link_ee_kuka /endpoint_marker 1000"/>-->
+  <!-- marker reverse engineered from Kel's guesswork -->
+  <!--<node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="0.103 -0.071 0.022 0.575 0.157 0.081 0.799 /iiwa_link_ee /endpoint_marker 1000"/>-->
+
+  <!-- marker position determined by CamOdoCal -->
+  <node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="0.100466 -0.0749848 0.0199956 0.5782515618009793 0.14597756788320312 0.09221622196677907 0.7973781094034416 /iiwa_link_ee /endpoint_marker 1000"/>
 
 
 </launch>
