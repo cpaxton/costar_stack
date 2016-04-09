@@ -6,6 +6,7 @@ import yaml
 import tf_conversions.posemath as pm
 
 from std_srvs.srv import Empty
+from std_srvs.srv import EmptyResponse
 from librarian_msgs.srv import *
 
 '''
@@ -55,7 +56,11 @@ class SimpleHandeyeCalibration:
 
         self.add_type_service(type="handeye_calibration")
 
-        print self.load_service(type="handeye_calibration", id=self.id)
+        resp = self.load_service(type="handeye_calibration", id=self.id)
+        print resp
+        if resp.status.result > 0:
+          (self.trans, self.rot) = pm.toTf(pm.fromMsg(yaml.load(resp.text)))
+
 
     def lookup(self,parent,child):
         return self.listener.lookupTransform(parent,child,rospy.Time(0))
@@ -73,7 +78,7 @@ class SimpleHandeyeCalibration:
         print T_cm
         print T_be
         
-        T = T_be * T_cm.Inverse()
+        T = T_cm * T_be.Inverse()
         (self.trans, self.rot) = pm.toTf(T)
 
         print (self.trans, self.rot)
@@ -83,6 +88,8 @@ class SimpleHandeyeCalibration:
             type="handeye_calibration",
             id=self.id,
             text=yaml.dump(pm.toMsg(T)))
+
+        return EmptyResponse()
 
     '''
     broadcast static transform from base to camera

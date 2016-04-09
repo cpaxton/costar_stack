@@ -91,7 +91,8 @@ class SimpleIIWADriver:
 
         if goal_diff < 0.01:
                 self.at_goal = True
-        print self.at_goal
+
+        #print self.at_goal
         #print self.q0
 
     def check_req_speed_params(self,req):

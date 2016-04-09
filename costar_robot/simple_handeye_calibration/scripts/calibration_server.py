@@ -16,4 +16,4 @@ srv = SimpleHandeyeCalibration(
     ee_marker=ee_marker,
     base_link=base_link)
 
-srv.spin(rospy.Rate(1))
+srv.spin(rospy.Rate(10))
