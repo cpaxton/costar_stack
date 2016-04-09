@@ -47,7 +47,6 @@ class SimpleIIWADriver:
 
         self.at_goal = True
         self.q0 = [0,0,0,0,0,0,0]
-        self.goal = np.array([0,0,0,0,0,0,0])
 
         self.teach_mode = rospy.Service('costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
@@ -75,15 +74,22 @@ class SimpleIIWADriver:
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
         self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
+        self.set_goal(self.q0)
+        self.ee_pose = None
+
         self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group)
 
     def js_cb(self,msg):
         self.q0 = np.array(msg.position)
-        goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
-        print goal_diff
-        #if self.at_goal:
-        #    self.goal = self.q0
-        if goal_diff < 0.001:
+        self.ee_pose = pm.fromMatrix(self.kdl_kin.forward(self.q0))
+
+        #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
+        cart_diff = (self.ee_pose.p - self.goal.p).Norm()
+        rot_diff = 0.01 * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
+        goal_diff = cart_diff + rot_diff
+        print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
+
+        if goal_diff < 0.01:
                 self.at_goal = True
         #print self.q0
 
@@ -179,6 +185,9 @@ class SimpleIIWADriver:
             msg = 'FAILED - no match to predicate moves'
             return msg
 
+    def set_goal(self,q):
+        self.goal = pm.fromMatrix(self.kdl_kin.forward(q))
+
     '''
     Definitely do a planned motion.
     '''
@@ -239,8 +248,9 @@ class SimpleIIWADriver:
           t = pt.time_from_start
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
+        self.pt_publisher.publish(traj.points[-1])
         self.at_goal = False
-        self.goal = traj.points[-1].positions
+        self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
 
         rate = rospy.Rate(30)
@@ -263,14 +273,14 @@ class SimpleIIWADriver:
             pt = JointTrajectoryPoint(positions=q)
             self.pt_publisher.publish(pt)
             self.at_goal = False
-            self.goal = q
+            self.set_goal(q)
 
             #rospy.sleep(0.9*np.sqrt(np.sum((q-q0)**2)))
 
         if len(traj) > 0:
             self.pt_publisher.publish(pt)
             self.at_goal = False
-            self.goal = traj[-1]
+            self.set_goal(traj[-1])
             rate = rospy.Rate(10)
             start_t = rospy.Time.now()
 
@@ -315,6 +325,9 @@ class SimpleIIWADriver:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILED - not in servo mode'
 
+    '''
+    set teach mode
+    '''
     def set_teach_mode_call(self,req):
         if req.enable == True:
 
@@ -326,6 +339,9 @@ class SimpleIIWADriver:
             self.driver_status = 'IDLE'
             return 'SUCCESS - teach mode disabled'
 
+    '''
+    activate servo mode
+    '''
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
 

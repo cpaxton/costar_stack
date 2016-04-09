@@ -6,7 +6,6 @@ project(simple_handeye_calibration)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   ar_track_alvar
-  orocos_kdl
   tf
 )
 
