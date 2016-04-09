@@ -87,10 +87,11 @@ class SimpleIIWADriver:
         cart_diff = (self.ee_pose.p - self.goal.p).Norm()
         rot_diff = 0.01 * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
         goal_diff = cart_diff + rot_diff
-        print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
+        #print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
 
         if goal_diff < 0.01:
                 self.at_goal = True
+        print self.at_goal
         #print self.q0
 
     def check_req_speed_params(self,req):
