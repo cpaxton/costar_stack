@@ -41,17 +41,33 @@ roslaunch sp_segmenter SPServerStructureAssembly.launch
 
 You also need to launch the GRL KUKA ROS Driver. GRL is the [Generic Robot Library](https://github.com/ahundt/grl), which provides a low-level control interface for the KUKA LBR.
 
-In particular, `costar_bringup` will launch the robot command driver, the 
+In particular, `costar_bringup` will launch the robot command driver, the gripper command services, the MoveIt services, Predicator, and Librarian.
 
-## Packages
+To bring up the tool attachments run:
 
-  * Bringup: launch tools
+```
+roslaunch ready_air stomper_tool.launch
+```
+
+## Included CoSTAR Components
+
+  * Bringup: launch files, RVIZ configurations, et cetera
   * Librarian: file management
   * Predicator: robot knowledge management
   * Gripper: utilities for integrating different grippers into UI
-  * Tools: packages used for different aspects of the UI
+  * Robot: utilities and services allowing high-level control of the robot and integrating these behaviors into the UI
+  * Tools: packages used for data collection, maintaining MoveIt planning scene, and other purposes
 
-## Bringup
+### Other Requirements
+
+  * [SP Segmenter](https://github.com/jhu-lcsr/sp_segmenter)
+
+### Proprietary Code
+
+  * Instructor: Behavior Tree-based user interface (built on [Beetree](https://github.com/futureneer/beetree/))
+  * Ready Air: drives the current tool attachment and provides services
+
+  Due to licensing issues these cannot be made open source.
 
 ## CoSTAR Tools
 

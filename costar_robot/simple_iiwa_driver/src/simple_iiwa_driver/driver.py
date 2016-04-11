@@ -157,9 +157,10 @@ class SimpleIIWADriver:
 
                 #q = self.planner.ik(T, self.q0)
                 traj = self.planner.getCartesianMove(T,self.q0)
-                if len(traj.points) == 0:
-                    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
-                    traj = res.planned_trajectory.joint_trajectory
+                #if len(traj.points) == 0:
+                #    print T
+                #    (code,res) = self.planner.getPlan(pm.toMsg(T),self.q0) # find a non-local movement
+                #    traj = res.planned_trajectory.joint_trajectory
 
                 print "Considering object with name = %s"%tf_frame
 
@@ -174,6 +175,8 @@ class SimpleIIWADriver:
 
             possible_goals = zip(dists,qs)
             possible_goals.sort()
+
+            print "POSSIBLE GOALS"
             print possible_goals
             
             (dist,traj) = possible_goals[0]
