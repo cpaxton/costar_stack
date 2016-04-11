@@ -170,11 +170,12 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 
 void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input, std::string dir, std::string additional_text = std::string(""))
 {
+    std::stringstream ss;
+    
     try{
       using namespace boost::posix_time;
       using namespace std;
 
-      std::stringstream ss;
       boost::shared_ptr<time_facet>facet(new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_"));
       ss.imbue(std::locale(ss.getloc(), facet.get()));
       ss << dir << boost::posix_time::second_clock::local_time() << object_name << "_" << cloud_save_index << additional_text << ".pcd";
