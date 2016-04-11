@@ -170,16 +170,20 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 
 void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input, std::string dir, std::string additional_text = std::string(""))
 {
-    using namespace boost::posix_time;
-    using namespace std;
+    try{
+      using namespace boost::posix_time;
+      using namespace std;
 
-  std::stringstream ss;
-  boost::shared_ptr<time_facet>facet(new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_"));
-  ss.imbue(std::locale(ss.getloc(), facet.get()));
-  ss << dir << boost::posix_time::second_clock::local_time() << object_name << "_" << cloud_save_index << additional_text << ".pcd";
-  writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
-  std::cerr << "Saved " << ss.str();
-  cloud_save_index++;
+      std::stringstream ss;
+      boost::shared_ptr<time_facet>facet(new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_"));
+      ss.imbue(std::locale(ss.getloc(), facet.get()));
+      ss << dir << boost::posix_time::second_clock::local_time() << object_name << "_" << cloud_save_index << additional_text << ".pcd";
+      writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
+      std::cerr << "Saved: " << ss.str() << "\n";
+      cloud_save_index++;
+    } catch (pcl::IOException e) {
+      ROS_ERROR("could not write to %s!",ss.str().c_str());
+    }
 }
 
 void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_filtered)
@@ -307,14 +311,7 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   pcl::fromROSMsg(pc, *cloud);
   if (haveTable and keyPress)
   {
-    std::stringstream ss;
-    ss << original_directory << object_name << cloud_save_index << "_original_cloud.pcd";
-    std::cout << "original saved to :" << ss.str() << "\n";
-    try {
-      saveCloud(*cloud,original_directory,"_original");
-    } catch (pcl::IOException e) {
-      ROS_ERROR("could not write to %s!",ss.str().c_str());
-    }
+    saveCloud(*cloud,original_directory,"_original");
     segmentCloudAboveTable(cloud,tableHull);
     if (doCluster)
 	    cloud_segmenter_and_save(cloud);
