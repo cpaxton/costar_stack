@@ -35,7 +35,7 @@
 
 bool dist_viewer ,haveTable,update_table;
 std::string POINTS_IN;
-std::string save_directory, object_name, load_directory, original_directory;
+std::string save_directory, object_name, load_directory, original_directory, ground_truth_directory;
 std::string tableTFname;
 int cloud_save_index;
 ros::Subscriber pc_sub;
@@ -166,12 +166,12 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   return convexHull;
 }
 
-void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input)
+void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input, std::string dir, std::string additional_text = std::string(""))
 {
   std::stringstream ss;
-  ss << save_directory << object_name << cloud_save_index << ".pcd";
+  ss << dir << object_name << cloud_save_index << additional_text << ".pcd";
   writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
-  std::cerr << "Saved " << save_directory << object_name << cloud_save_index << ".pcd";
+  std::cerr << "Saved " << ss.str();
   cloud_save_index++;
 }
 
@@ -256,7 +256,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
       extract.setKeepOrganized(true);
       extract.filter(*cloud_cluster);
 
-      saveCloud(*cloud_cluster);
+      saveCloud(*cloud_cluster,ground_truth_directory, "_ground_truth");
       std::cerr << "\tcluster size: "<< euclidean_label_indices[i].indices.size () << std::endl;
     }
   }
@@ -304,15 +304,14 @@ void callback(const sensor_msgs::PointCloud2 &pc)
     ss << original_directory << object_name << cloud_save_index << "_original_cloud.pcd";
     std::cout << "original saved to :" << ss.str() << "\n";
     try {
-      std::cerr << "cloud of size " << cloud->size() << " read in from topic!\n";
-      writer.write<pcl::PointXYZRGBA> (ss.str (), *cloud, true);
+      saveCloud(*cloud,original_directory,"_original");
     } catch (pcl::IOException e) {
       ROS_ERROR("could not write to %s!",ss.str().c_str());
     }
     segmentCloudAboveTable(cloud,tableHull);
     if (doCluster)
 	    cloud_segmenter_and_save(cloud);
-	else saveCloud(*cloud);
+	else saveCloud(*cloud,ground_truth_directory,"_ground_truth");
   }
   else
   {
@@ -375,8 +374,9 @@ int main (int argc, char** argv)
   nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
 
   //getting save parameters
-  nh.param("save_directory",save_directory,std::string("result/"));
+  nh.param("save_directory",save_directory,std::string("./"));
   nh.param("original_directory",original_directory,std::string("original/"));
+  nh.param("ground_truth_directory",ground_truth_directory,std::string("ground_truth/"));
   nh.param("object",object_name,std::string("cloud_cluster_"));
   nh.param("pcl_viewer",dist_viewer,false);
   nh.param("save_index",cloud_save_index,0);
@@ -401,8 +401,9 @@ int main (int argc, char** argv)
   bool justCaptureEnvironment;
   nh.param("environment_only",justCaptureEnvironment,false);
   boost::filesystem::create_directories(load_directory);
-  boost::filesystem::create_directories(original_directory);
   boost::filesystem::create_directories(save_directory);
+  boost::filesystem::create_directories(original_directory);
+  boost::filesystem::create_directories(ground_truth_directory);
 
   if (justCaptureEnvironment)
   { 
