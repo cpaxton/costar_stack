@@ -65,7 +65,7 @@ private:
     tf::TransformBroadcaster br;
     ros::ServiceServer spSegmenter;
     ros::ServiceServer segmentGripper;
-    bool useBinarySVM;
+    bool useBinarySVM, useMultiClassSVM;
     
     // Point cloud related
     sensor_msgs::PointCloud2 inputCloud; // cache the point cloud
@@ -94,6 +94,7 @@ private:
     double minConfidence;
     
     std::vector<boost::shared_ptr<greedyObjRansac> > objrec;
+    boost::shared_ptr<greedyObjRansac> combinedObjRec;
     std::vector<std::string> model_name;
     std::vector<ModelT> mesh_set;
     

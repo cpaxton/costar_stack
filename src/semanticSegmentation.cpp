@@ -90,6 +90,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("setObjectOrientation",setObjectOrientationTarget,false);
     this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
     this->nh.param("useBinarySVM",useBinarySVM,false);
+    this->nh.param("useMultiClassSVM",useMultiClassSVM,true);
     this->nh.param("useMedianFilter",use_median_filter,true);
     this->nh.param("enableTracking",enableTracking,false);
   
@@ -165,26 +166,36 @@ void semanticSegmentation::initializeSemanticSegmentation()
     nh.param("objectVisibility",objectVisibility,0.1);
     nh.param("sceneVisibility", sceneVisibility,0.1);
 
-    objrec.resize(cur_name.size());
+    if (!useMultiClassSVM || cur_name.size() == 1){
+        // initialize combinedObjRecRansac
+        combinedObjRec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
+        combinedObjRec->setParams(objectVisibility,sceneVisibility);
+        combinedObjRec->setUseCUDA(use_cuda);
+    }
+    else objrec.resize(cur_name.size());
+
     for (int model_id = 0; model_id < cur_name.size(); model_id++)
     {
         // add all models. model_id starts in model_name start from 1.
         std::string temp_cur = cur_name.at(model_id);
-
-        if( temp_cur == "link_uniform")
-            objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.075, voxelSize));
-        else if( temp_cur == "node_uniform")
-            objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
-        else 
+        if (useMultiClassSVM && cur_name.size() > 1)
         {
-            std::cerr << "General Class!!!" << std::endl;
-            objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.1, voxelSize));
-        }
+            if( temp_cur == "link_uniform")
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.075, voxelSize));
+            else if( temp_cur == "node_uniform")
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
+            else 
+            {
+                std::cerr << "General Class!!!" << std::endl;
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.1, voxelSize));
+            }
 
-        /// @todo allow different visibility parameters for each object class
-        objrec[model_id]->setParams(objectVisibility,sceneVisibility);
-        objrec[model_id]->setUseCUDA(use_cuda);
-        objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
+            /// @todo allow different visibility parameters for each object class
+            objrec[model_id]->setParams(objectVisibility,sceneVisibility);
+            objrec[model_id]->setUseCUDA(use_cuda);
+            objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
+        }
+        else combinedObjRec->AddModel(mesh_path + temp_cur, temp_cur);
         model_name[model_id+1] = temp_cur;
         model_name_map[temp_cur] = model_id+1;
         ModelT mesh_buf = LoadMesh(mesh_path + temp_cur, temp_cur);
@@ -350,53 +361,60 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         triple_pooler.extractForeground(true);
     }
 
-    if (mesh_set.size() > 1) // more than one objects, do multi object classification
+    std::vector<poseT> all_poses1;
+    pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
+    // if has useMultiSVM flag and has more than one objects, do multi object classification
+    if (useMultiClassSVM && mesh_set.size() > 1)
     {
-        pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
         for( int ll = 0 ; ll <= 0 ; ll++ )
         {
            bool reset_flag = ll == 0 ? true : false;
            triple_pooler.InputSemantics(multi_models[ll], ll, reset_flag, false);
         }
-    }
-    pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
-    label_cloud = triple_pooler.getSemanticLabels();
-    triple_pooler.reset();
-    
-    if( viewer )
-    {
-        std::cerr<<"Visualize after segmentation"<<std::endl;
-        visualizeLabels(label_cloud, viewer, color_label);
-    }
-
-    std::vector< pcl::PointCloud<myPointXYZ>::Ptr > cloud_set(mesh_set.size()+1); // separate the clouds
-    for( size_t j = 0 ; j < cloud_set.size() ; j++ )
-        cloud_set[j] = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>()); // object cloud starts from 1
-    std::cerr<<"Split cloud after segmentation"<<std::endl;
-    splitCloud(label_cloud, cloud_set);
-
-    std::vector<poseT> all_poses1;
-    std::cerr<<"Calculate poses"<<std::endl;
-    #pragma omp parallel for schedule(dynamic, 1)
-    for(size_t j = 1 ; j <= mesh_set.size(); j++ ){ // loop over all objects
-        if( cloud_set[j]->empty() == false )
+        pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
+        label_cloud = triple_pooler.getSemanticLabels();
+        pcl::copyPointCloud(*label_cloud, *scene_xyz);
+        triple_pooler.reset();
+        
+        if( viewer )
         {
-            std::vector<poseT> tmp_poses;
-            if      (objRecRANSACdetector == "StandardBest")      objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
-            else if (objRecRANSACdetector == "GreedyRecognize")   objrec[j-1]->GreedyRecognize(cloud_set[j], tmp_poses);
-            else if (objRecRANSACdetector == "StandardRecognize") objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
-            else ROS_ERROR("Unsupported objRecRANSACdetector!");
+            std::cerr<<"Visualize after segmentation"<<std::endl;
+            visualizeLabels(label_cloud, viewer, color_label);
+        }
+        std::vector< pcl::PointCloud<myPointXYZ>::Ptr > cloud_set(mesh_set.size()+1); // separate the clouds
+        for( size_t j = 0 ; j < cloud_set.size() ; j++ )
+            cloud_set[j] = pcl::PointCloud<myPointXYZ>::Ptr (new pcl::PointCloud<myPointXYZ>()); // object cloud starts from 1
+        std::cerr<<"Split cloud after segmentation"<<std::endl;
+        splitCloud(label_cloud, cloud_set);
 
-
-            #pragma omp critical
+        std::cerr<<"Calculate poses"<<std::endl;
+        #pragma omp parallel for schedule(dynamic, 1)
+        for(size_t j = 1 ; j <= mesh_set.size(); j++ ){ // loop over all objects
+            if( cloud_set[j]->empty() == false )
             {
-                all_poses1.insert(all_poses1.end(), tmp_poses.begin(), tmp_poses.end());
+                std::vector<poseT> tmp_poses;
+                if      (objRecRANSACdetector == "StandardBest")      objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
+                else if (objRecRANSACdetector == "GreedyRecognize")   objrec[j-1]->GreedyRecognize(cloud_set[j], tmp_poses);
+                else if (objRecRANSACdetector == "StandardRecognize") objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
+                else ROS_ERROR("Unsupported objRecRANSACdetector!");
+
+
+                #pragma omp critical
+                {
+                    all_poses1.insert(all_poses1.end(), tmp_poses.begin(), tmp_poses.end());
+                }
             }
         }
     }
-
-    pcl::PointCloud<myPointXYZ>::Ptr scene_xyz(new pcl::PointCloud<myPointXYZ>());
-    pcl::copyPointCloud(*label_cloud, *scene_xyz);
+    else
+    {
+        pcl::copyPointCloud(*scene_f,*scene_xyz);
+        std::vector<poseT> tmp_poses;
+        if      (objRecRANSACdetector == "StandardBest")      combinedObjRec->StandardBest(scene_xyz, all_poses1);
+        else if (objRecRANSACdetector == "GreedyRecognize")   combinedObjRec->GreedyRecognize(scene_xyz, all_poses1);
+        else if (objRecRANSACdetector == "StandardRecognize") combinedObjRec->StandardRecognize(scene_xyz, all_poses1, minConfidence);
+        else ROS_ERROR("Unsupported objRecRANSACdetector!");
+    }
 
     std::vector<poseT> all_poses = all_poses1;
     // RefinePoses(scene_xyz, mesh_set, all_poses1);

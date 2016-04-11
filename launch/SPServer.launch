@@ -23,6 +23,7 @@
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
   <arg name="useBinarySVM"   default="true" doc="This will do binary classification before multi class SVM."/>
+  <arg name="useMultiClassSVM"   default="true" doc="This will do multiclass classification before Object Ransac."/>
 
   <arg name="setObjectOrientation" default="true" doc="use specified TF as Object preferred orientation" />
   <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
@@ -47,6 +48,7 @@
     <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
     <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
     <param name="useBinarySVM"   type="bool" value="$(arg useBinarySVM)" />
+    <param name="useMultiClassSVM"   type="bool" value="$(arg useMultiClassSVM)" />
     
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
