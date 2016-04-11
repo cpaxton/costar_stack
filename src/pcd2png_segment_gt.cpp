@@ -45,6 +45,7 @@
  */
 
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem/convenience.hpp>
 
 #include <pcl/pcl_config.h>
 #include <pcl/console/time.h>
@@ -53,7 +54,6 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/png_io.h>
 #include <pcl/conversions.h>
-//#include <pcl/common/colors.h>
 
 using namespace pcl;
 using namespace pcl::io;
@@ -658,7 +658,7 @@ printHelp (int, char **argv)
   std::cout << "*                                                                          *" << std::endl;
   std::cout << "****************************************************************************" << std::endl;
   std::cout << std::endl;
-  std::cout << "Usage: " << argv[0] << " [Options] input.pcd input_ground_truth.pcd output_source_data.png output_ground_truth_data.png" << std::endl;
+  std::cout << "Usage: " << argv[0] << " [Options] input.pcd input_ground_truth.pcd [output_source_data.png output_ground_truth_data.png]" << std::endl;
   std::cout << std::endl;
   std::cout << "Options:" << std::endl;
   std::cout << std::endl;
@@ -709,13 +709,13 @@ printHelp (int, char **argv)
 }
 
 bool
-loadCloud (const std::string &filename, pcl::PCLPointCloud2 &cloud)
+loadCloud (const std::string &filename, pcl::PCLPointCloud2 &cloud, Eigen::Vector4f& blob_origin, Eigen::Quaternionf& blob_orientation)
 {
   TicToc tt;
   print_highlight ("Loading "); print_value ("%s ", filename.c_str ());
 
   tt.tic ();
-  if (loadPCDFile (filename, cloud) < 0)
+  if (loadPCDFile (filename, cloud,blob_origin,blob_orientation) < 0)
     return (false);
   print_info ("[done, "); print_value ("%g", tt.toc ()); print_info (" ms : "); print_value ("%d", cloud.width * cloud.height); print_info (" points]\n");
   print_info ("Available dimensions: "); print_value ("%s\n", pcl::getFieldsList (cloud).c_str ());
@@ -809,27 +809,48 @@ main (int argc, char** argv)
   std::vector<int> pcd_file_index = parse_file_extension_argument (argc, argv, ".pcd");
   std::vector<int> png_file_index = parse_file_extension_argument (argc, argv, ".png");
 
-  if (pcd_file_index.size () != 2 || png_file_index.size () != 2)
+  if (pcd_file_index.size () != 2 || (png_file_index.size () != 2 && png_file_index.size() != 0))
   {
     print_error ("Need two input PCD files and two output PNG files.\n");
     return (-1);
   }
-
+  
+  std::string png_filename;
+  std::string png_gt_filename;
   std::string pcd_filename = argv[pcd_file_index[0]];
   std::string pcd_gt_filename = argv[pcd_file_index[1]];
-  std::string png_filename = argv[png_file_index[0]];
-  std::string png_gt_filename = argv[png_file_index[1]];
+  if(png_file_index.size() == 0)
+  {
+    png_filename = pcd_filename;
+    png_gt_filename = pcd_gt_filename;
+    boost::filesystem::change_extension(png_filename, "png").string();
+    boost::filesystem::change_extension(png_gt_filename, "png").string();
+  
+  } else {
+    png_filename = argv[png_file_index[0]];
+    png_gt_filename = argv[png_file_index[1]];
+  }
+  
+  int background_class = 0;
+  int foreground_class = 1;
+  
+  parse(argc, argv, "--foreground-class", foreground_class);
+  parse(argc, argv, "--background-class", background_class);
+
 
   // Load the input file
   pcl::PCLPointCloud2::Ptr blob (new pcl::PCLPointCloud2());
   pcl::PCLPointCloud2::Ptr blob_gt (new pcl::PCLPointCloud2());
-  if (!loadCloud (pcd_filename, *blob))
+  Eigen::Vector4f blob_origin, blob_gt_origin;
+  Eigen::Quaternionf blob_orientation, blob_gt_orientation;
+  
+  if (!loadCloud (pcd_filename, *blob,blob_origin,blob_orientation))
   {
     print_error ("Unable to load PCD input file 1.\n");
     return (-1);
   }
 
-  if (!loadCloud (pcd_gt_filename, *blob_gt))
+  if (!loadCloud (pcd_gt_filename, *blob_gt,blob_gt_origin,blob_gt_orientation))
   {
     print_error ("Unable to load PCD ground truth input file 1.\n");
     return (-1);
@@ -921,27 +942,40 @@ main (int argc, char** argv)
     return (-1);
   }
   
+  int ret = 0;
+  
+  if (!extracted)
+  {
+    print_error ("Failed to extract original image from field \"%s\".\n", field_name.c_str());
+    ret |=1;
+  }
+  else
+  {
+    saveImage (png_filename, image);
+  }
+  
+  
   // Ground Truth image is always extracted from RGB
   pcl::PCLImage gt_image;
   
   {
 
-      PointCloud<PointXYZL> gt_cloud;
+      PointCloud<PointXYZRGB> gt_cloud;
       fromPCLPointCloud2 (*blob_gt, gt_cloud);
-      PointCloudImageExtractorGTLabelFromRGBField<PointXYZL> pcie;
+      PointCloudImageExtractorGTLabelFromRGBField<PointXYZRGB> pcie(foreground_class,background_class);
       pcie.setPaintNaNsWithBlack (paint_nans_with_black);
       if (!parseColorsOption(argc, argv, pcie))
         return (-1);
       extracted = pcie.extract(gt_cloud, gt_image);
   }
-
+  
   if (!extracted)
   {
-    print_error ("Failed to extract an image from field \"%s\".\n", field_name.c_str());
-    return (-1);
+    print_error ("Failed to extract ground truth image from field \"%s\".\n", field_name.c_str());
+    ret |=3;
   }
-  saveImage (png_filename, image);
+
   saveImage (png_gt_filename, gt_image);
 
-  return (0);
+  return (ret);
 }
