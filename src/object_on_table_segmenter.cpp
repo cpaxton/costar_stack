@@ -53,7 +53,8 @@ int num_to_capture = 0;
 bool useTFsurface;
 bool useRosbag;
 bool doCluster;
-
+boost::posix_time::ptime time_to_save;
+    
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
 {
@@ -168,7 +169,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   return convexHull;
 }
 
-void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input, std::string dir, std::string additional_text = std::string(""))
+void saveCloud(const pcl::PointCloud<pcl::PointXYZRGBA>& cloud_input, std::string dir, std::string additional_text = std::string(""))
 {
     std::stringstream ss;
     
@@ -178,10 +179,9 @@ void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input, std::string dir, 
 
       boost::shared_ptr<time_facet>facet(new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_"));
       ss.imbue(std::locale(ss.getloc(), facet.get()));
-      ss << dir << boost::posix_time::second_clock::local_time() << object_name << "_" << cloud_save_index << additional_text << ".pcd";
+      ss << dir << time_to_save << object_name << "_" << cloud_save_index << additional_text << ".pcd";
       writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
       std::cerr << "Saved: " << ss.str() << "\n";
-      cloud_save_index++;
     } catch (pcl::IOException e) {
       ROS_ERROR("could not write to %s!",ss.str().c_str());
     }
@@ -309,6 +309,9 @@ void callback(const sensor_msgs::PointCloud2 &pc)
 {
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
   // convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA
+  // update the time which will become the leading string of collected data
+  time_to_save = boost::posix_time::second_clock::local_time();
+  cloud_save_index++;
   pcl::fromROSMsg(pc, *cloud);
   if (haveTable and keyPress)
   {
