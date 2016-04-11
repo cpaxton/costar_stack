@@ -32,6 +32,8 @@
 
 // for creating directory automatically
 #include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 bool dist_viewer ,haveTable,update_table;
 std::string POINTS_IN;
@@ -168,8 +170,11 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 
 void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input, std::string dir, std::string additional_text = std::string(""))
 {
+
   std::stringstream ss;
-  ss << dir << object_name << cloud_save_index << additional_text << ".pcd";
+  boost::shared_ptr<boost::posix_time::time_facet>facet(new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_"));
+  ss.imbue(std::locale(ss.getloc(), facet));
+  ss << dir << current_date << object_name << "_" << cloud_save_index << additional_text << ".pcd";
   writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
   std::cerr << "Saved " << ss.str();
   cloud_save_index++;
