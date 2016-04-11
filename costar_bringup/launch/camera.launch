@@ -1,4 +1,7 @@
 <launch>
+
+  <arg name="handeye_output" default="screen"/>
+
   <!-- setup for two optional cameras -->
   <arg name="camera_id" default="#1" /> <!-- Use device_id such as 1d27/0601@4/14 for multiple primesense--> 
   <arg name="depth_registration" default="true" />
@@ -26,4 +29,13 @@
 
   <!-- publish preferred orientation -->
   <node name="preferred_orientation_publisher" type="static_transform_publisher" pkg="tf" args=" 0 0 0 0 0 -1.5708 base_link preferred_orientation 200"/>
+
+
+  <!-- handeye calibration -->
+  <node name="handeye_calibration_server" type="calibration_server.py" pkg="simple_handeye_calibration" output="$(arg handeye_output)">
+    <param name="camera_marker" value="ar_marker_0"/>
+    <param name="ee_marker" value="endpoint_marker"/>
+    <param name="base_link" value="world"/>
+    <param name="camera_link" value="camera_link"/>
+  </node>
 </launch>

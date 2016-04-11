@@ -2,10 +2,12 @@
 
   <arg name="gripper_ip_address" default="172.31.1.146"/>
   <arg name="sim" default="false"/>
+
   <arg name="start_semi_static" default="false"/>
   <arg name="start_camera" default="true"/>
   <arg name="start_move_group" default="true"/>
   <arg name="start_alvar" default="true" />
+
   <arg name="table_frame" default="ar_marker_2"/>
 
   <param name="ee_frame" value="iiwa_link_ee"/>
@@ -30,7 +32,12 @@
     <param name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 
-  <!-- motion planning -->
+  <!-- motion planning -->  <node name="handeye_calibration_server" type="calibration_server.py" pkg="simple_handeye_calibration" output="screen">
+    <param name="camera_marker" value="ar_marker_0"/>
+    <param name="ee_marker" value="endpoint_marker"/>
+    <param name="base_link" value="world"/>
+    <param name="camera_link" value="camera_link"/>
+  </node>
   <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
     <param name="allow_trajectory_execution" value="false"/>
   </include>
