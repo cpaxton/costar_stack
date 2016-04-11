@@ -525,6 +525,7 @@ class PointCloudImageExtractorGTLabelFromRGBField : public PointCloudImageExtrac
 template <typename PointT> bool
 PointCloudImageExtractorGTLabelFromRGBField<PointT>::extractImpl (const PointCloud& cloud, pcl::PCLImage& img) const
 {
+  char black[3] = {0,0,0};
   std::vector<pcl::PCLPointField> fields;
   int field_idx = pcl::getFieldIndex (cloud, "rgb", fields);
   if (field_idx == -1)
@@ -555,10 +556,10 @@ PointCloudImageExtractorGTLabelFromRGBField<PointT>::extractImpl (const PointClo
       {
         
         if(!pcl::isFinite (cloud.points[i])){
-            
+            data[i] = static_cast<unsigned short>(background_label_);
         } else {
             uint32_t val;
-            pcl::getFieldValue<PointT, uint32_t> (cloud.points[i], offset, val);
+            pcl::getFieldValue<PointT, uint32_t> (cloud.points[i], z_offset, val);
             // data[i] = static_cast<unsigned short>(val);
             data[i] = static_cast<unsigned short>(foreground_label_);
             
@@ -573,14 +574,15 @@ PointCloudImageExtractorGTLabelFromRGBField<PointT>::extractImpl (const PointClo
       img.height = cloud.height;
       img.step = img.width * sizeof (unsigned char) * 3;
       img.data.resize (img.step * img.height);
+    
 
       std::srand(std::time(0));
       std::map<uint32_t, size_t> colormap;
 
       for (size_t i = 0; i < cloud.points.size (); ++i)
       {
-        uint32_t val;
-        pcl::getFieldValue<PointT, uint32_t> (cloud.points[i], offset, val);
+        float_t val;
+        pcl::getFieldValue<PointT, float_t> (cloud.points[i], z_offset, val);
         if (colormap.count (val) == 0)
         {
           colormap[val] = i * 3;
@@ -634,10 +636,17 @@ PointCloudImageExtractorGTLabelFromRGBField<PointT>::extractImpl (const PointClo
       // Second pass: copy colors from the LUT
       for (size_t i = 0; i < cloud.points.size (); ++i)
       {
-          /// @todo should we be continuing when it is not finite?
-        uint32_t val;
-        pcl::getFieldValue<PointT, uint32_t> (cloud.points[i], offset, val);
-        memcpy (&img.data[i * 3], GlasbeyLUT::data () + colormap[val] * 3, 3);
+        
+        if (paint_nans_with_black_ && !pcl::isFinite (cloud.points[i]))
+        {
+            // copy the color 3 channel black memory addresses into the image
+            memcpy (&img.data[i * 3], black, 3);        }
+        else
+        {
+            std::size_t offset_into_colormap = colormap[foreground_label_];
+            // copy the color 3 channel memory addresses into the image
+            memcpy (&img.data[i * 3], GlasbeyLUT::data () + offset_into_colormap * 3, 3);
+        }
       }
 
       break;
