@@ -2,6 +2,7 @@
   <!-- Objects file Name and save directory-->
   <arg name="object"              default="cloud_cluster_" doc="The name of the point cloud"/>
   <arg name="save_directory"      default="$(find object_on_table_segmenter)/result/$(arg object)" />
+  <arg name="ground_truth_directory"  default="$(arg save_directory)/ground_truth" />
   <arg name="original_directory"  default="$(arg save_directory)/original" />
   <arg name="pcl_in"              default="/camera/depth_registered/points" />
   <arg name="save_index"	        default="0" doc="Starting index for point cloud"/>
@@ -26,6 +27,7 @@
   <!-- object_on_table_segmenter_Node arg pass -->
     <param name="save_directory"  type="str"  value="$(arg save_directory)/" />
     <param name="original_directory"  type="str"  value="$(arg original_directory)/" />
+    <param name="ground_truth_directory"  type="str"  value="$(arg ground_truth_directory)/" />
     <param name="object"          type="str"  value="$(arg object)" />
     <param name="POINTS_IN"       type="str"  value="$(arg pcl_in)" />
     <param name="save_index"      type="int"  value="$(arg save_index)" />
