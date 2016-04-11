@@ -404,7 +404,7 @@ int main (int argc, char** argv)
   nh.param("aboveTableMin",aboveTableMin,0.135);
   nh.param("aboveTableMax",aboveTableMax,0.50);
 
-  listener = new (tf::TransformListener());
+  listener = new (tf::TransformListener);
 
   bool justCaptureEnvironment;
   nh.param("environment_only",justCaptureEnvironment,false);
