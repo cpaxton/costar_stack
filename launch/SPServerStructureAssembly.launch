@@ -5,13 +5,11 @@
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data/primesense" doc="SP segmenter data folder" />
   <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
-
-  
   <arg name="debug_args"     default=""/>
 
   <!-- Segmentation Parameters parameters-->
   <arg name="params"         default="" />
-  <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
+
   <!-- Pair width should be roughly half the extent of the visible object
        part. This means, for each object point p there should be (at least) one
        point q (from the same object) such that ||p - q|| <= 'pairwidth'.
@@ -33,10 +31,12 @@
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
   <arg name="minConfidence"  default="0.10" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
+  <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
 
   <arg name="useMedianFilter" default="true" doc="Apply median filter to point cloud input before processing it" />
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
 
+  <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>
 
   <!-- sceneVisibility aka Relative object size is the expected fraction of the scene points
        which belong to an object. For example a value of 0.05 means that each
@@ -65,6 +65,8 @@
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
   <arg name="useBinarySVM"   default="false" doc="This will do binary classification before multi class SVM."/>
 
+  <arg name="setObjectOrientation" default="true" doc="use specified TF as Object preferred orientation" />
+  <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
   <arg name="gripperTF"      default="endpoint_marker" doc="The gripper tf where target object would be attached" />
 
   <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
@@ -84,6 +86,7 @@
     <param name="objectVisibility"  type="double" value="$(arg objectVisibility)"/>
     <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
     <param name="use_cuda"   type="bool"   value="$(arg use_cuda)"/>
+    <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
     
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
@@ -95,11 +98,15 @@
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
 
+    <param name="setObjectOrientation"   type="bool" value="$(arg setObjectOrientation)" />
+    <param name="preferredOrientation" type="str" value="$(arg preferredOrientation)" />
+    
     <!-- SPSegmenterNode subscriber/publisher args pass -->
     <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
     <param name="POINTS_OUT" type="str" value="$(arg pcl_out)"/>
     <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
     <param name="pairWidth"  type="double" value="$(arg pairWidth)"/>
+
     <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
     <param name="useTF"      type="bool" value="$(arg useTF)" />
 
