@@ -157,6 +157,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     objectDict = fillDictionary(nh, cur_name);
 
     bool use_cuda;
+    nh.param("use_cuda", use_cuda,true);
 
     double objectVisibility, sceneVisibility;
 
