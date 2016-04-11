@@ -34,17 +34,14 @@ How to bring this robot up on our own platform:
 roslaunch costar_bringup iiwa14_s_model.launch
 roslaunch instructor_core instructor.launch
 
-# bring up the semi static transformer
-roslaunch costar_bringup semi_static.launch
-roslaunch instructor_core shoulder_smooth.launch
-
-# hand-eye calibration
-rosrun instructor_core shoulder_calibrate.py
-
 # object detection and moveit planning scene
-roslaunch moveit_collision_environment collision_env.launch tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world debug:=false mesh_source:='/home/cpaxton/.costar/mesh' 
+roslaunch sp_segmenter SPServerStructureAssembly.launch
 
 ```
+
+You also need to launch the GRL KUKA ROS Driver. GRL is the [Generic Robot Library](https://github.com/ahundt/grl), which provides a low-level control interface for the KUKA LBR.
+
+In particular, `costar_bringup` will launch the robot command driver, the 
 
 ## Packages
 
@@ -108,16 +105,10 @@ roslaunch costar_bringup iiwa14_s_model.launch
 
 ## Librarian
 
-Provide simple interface for managing files used by CoSTAR programs.
-
-### File System
+Provide simple interface for managing files used by CoSTAR programs. This is a very simple file system that works well for distributed ROS projects using multiple computers.
 
 - **Types:** high level categories; use these to group definitions of different items/variables used in a CoSTAR workspace.
 - **Items:** items are represented as files, and can be saved/loaded as ROS parameters.
-
-### Using Librarian
-
-#### Launch Files
 
 The `librarian_bringup` package contains launch files for Librarian. As such, you can launch the librarian core easily with:
 
@@ -131,17 +122,9 @@ To change the location of the folder Librarian stores and reads files from, simp
 roslaunch librarian_bringup core.launch librarian_root:=~/.costar/
 ```
 
-#### Running Librarian
-
-Start `librarian_core` with the directory you want to use for saving/loading files.
-
-#### Provided Services
-
-### Troubleshooting
-
+Start `librarian_core` with the directory you want to use for saving/loading files, on the machine which files should be saved on. Librarian is started automatically by the main `costar_bringup` launch files and is initialized to the `~/.costar` directory.
 
 ## Predicator
-
 
 Predicator is the CoSTAR package for logical statements.
 
@@ -154,15 +137,9 @@ This software is further described and used in these papers:
            Standards for Grounding Symbols for Robotic Task Ontologies.
            At IROS 2014 workshop on Standardized Knowledge Representation and Ontologies for Robotics and Automation.
 
-So please cite if you find it useful!
-
 ### Starting Predicator
 
-#### Using Launch Files
-
-There is a package called `predicator_bringup` that will start different predicator modules and the predicator core.
-
-##### Launch the Core Only
+There is a package called `predicator_bringup` that will start different predicator modules and the predicator core. You can launch the core only with:
 
 ```
 roslaunch predicator_bringup core.launch
@@ -170,26 +147,13 @@ roslaunch predicator_bringup core.launch
 
 This will launch the `predicator_params` module as well if `params:=true` is set (it is set by default). This is the service which lets other programs manually configure predicator parameters.
 
-**UPDATE 2014-08-11:** As of today, `predicator_params` has been folded into `predicator_core` and this is no longer necessary.
-
-##### Launch the Peg Simulation Example
-
-This launch file uses the configuration included to test predicator in the simulation.
-It depends on having `lcsr_collab` and optionally `lcsr_spacenav` running, so that there is a Gazebo world containing two Barrett WAM arms, two pegs, a stage, and a ring.
-
-```
-roslaunch predicator_bringup pegs_sim_test.launch
-```
-
-#### Starting Predicator from Rosrun
-
-Start `predicator_core` to listen to predicate statements from modules:
+You can optionally start different components directly from `rosrun`. First start `predicator_core` to listen to predicate statements from modules:
 
 ```
 rosrun predicator_core core.py
 ```
 
-Once the core is up and running, you can launch different modules to produce predicates. Keep in mind that for our purposes, predicates are always true statements about the world.
+Once the core is up and running, you can launch different modules to produce predicates. Keep in mind that for our purposes, predicates are always true statements about the world. If a predicate is not published it is presumed false.
 
 It may be best to build custom launch files for the different predicator modules instead of launching with `rosrun` since each module needs to be carefully configured.
 
@@ -214,7 +178,7 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/update_param**: manually set a predicator or remove a predicate; these are intended to be parameters that can be fixed and updated dynamically.
 - **predicator/get_sources**: list the possible sources, the ROS nodes that Predicator has heard from
 - **predicator/get_predicate_names_by_source**: list the names of predicates from each source ROS node
-- **predicator/get_all_predicates_by_source**: return a list of all predicates that might be valid, and a truth assignment, for a given source (BY REQUEST FROM KEL)
+- **predicator/get_all_predicates_by_source**: return a list of all predicates that might be valid, and a truth assignment, for a given source
 - **predicator/get_assignment_names_by_source**: list the assignments to the predicate produced by a given source
 - **predicator/get_predicate_names_by_assignment**: list the possible predicates for a given assignment, based on ValidPredicates messages received. Will only report predicates reported from one source.
 - **predicator/get_assignment_length** returns the number of parameter assignments for a given predicate, if available. Returns -1 if no length has been reported.
@@ -389,8 +353,6 @@ Fill out the following fields:
 - `assignments`: the possible parameter arguments to your predicates (a union of any predicates you publish)
 - `predicates`: the normal, boolean predicates you send out
 - `valid_predicates`: floating point valued features such as distance, etc. that your module may compute.
-
-##### Example Module
 
 Look at **predicator_dummy_module** for an example of how a module should publish predicate statements.
 
