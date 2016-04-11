@@ -115,18 +115,20 @@ class SmartWaypointManager:
         return self.all_moves
 
     def get_detected_objects(self):
-        #print self.available_obj_classes
         self.objs = []
         self.obj_classes = []
-        if self.available_object_classes is not None:
+        rospy.logwarn(str(self.available_obj_classes))
+        if not self.available_obj_classes is None:
+            rospy.logwarn("- not none")
             for oc in self.available_obj_classes:
+                rospy.logwarn("-- %s"%oc)
                 resp = self.get_assignment_service(PredicateStatement(predicate=oc,params=["*","",""]))
                 oc_objs = [p.params[0] for p in resp.values]
                 if len(oc_objs) > 0:
                   self.obj_classes.append(oc)
                 for obj in oc_objs:
                     self.obj_class[obj] = oc
-                    #rospy.logwarn("%s = %s"%(obj,oc))
+                    rospy.logwarn("%s = %s"%(obj,oc))
                 self.objs += oc_objs
 
         return self.objs
