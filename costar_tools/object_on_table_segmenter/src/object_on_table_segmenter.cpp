@@ -42,7 +42,7 @@ std::string tableTFname;
 int cloud_save_index;
 ros::Subscriber pc_sub;
 pcl::PCDWriter writer;
-pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableHull(new pcl::PointCloud<pcl::PointXYZRGBA>());
 tf::TransformListener * listener;
 double aboveTableMin;
 double aboveTableMax;
@@ -118,11 +118,11 @@ void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_input
   // from 1 cm above table to 50 cm above table
   //prism.setHeightLimits(0.135f, 0.5f);
   prism.setHeightLimits(aboveTableMin,aboveTableMax);
-  pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices);
+  pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices());
 
   prism.segment(*objectIndices);
   // Get and show all points retrieved by the hull.
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr objects(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr objects(new pcl::PointCloud<pcl::PointXYZRGBA>());
   pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
   extract.setInputCloud(cloud_input);
   extract.setIndices(objectIndices);
@@ -136,7 +136,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 {
 
   // Get Normal Cloud
-  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>());
   pcl::IntegralImageNormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setNormalEstimationMethod (ne.AVERAGE_3D_GRADIENT);
   ne.setMaxDepthChangeFactor(0.02f);
@@ -155,11 +155,11 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
   mps.segmentAndRefine (regions);
 
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>());
   boundary->points = regions[0].getContour();
 
   // Retrieve the convex hull.
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>());
 
   pcl::ConvexHull<pcl::PointXYZRGBA> hull;
   hull.setInputCloud(boundary);
@@ -203,7 +203,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   }
 
   // Get Normal Cloud
-  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>());
   pcl::IntegralImageNormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setNormalEstimationMethod (ne.AVERAGE_3D_GRADIENT);
   ne.setMaxDepthChangeFactor(0.03f);
@@ -215,7 +215,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   pcl::OrganizedMultiPlaneSegmentation< pcl::PointXYZRGBA, pcl::Normal, pcl::Label > mps;
   std::vector<pcl::ModelCoefficients> model_coefficients;
   std::vector<pcl::PointIndices> inlier_indices;  
-  pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
+  pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>());
   std::vector<pcl::PointIndices> label_indices;
   std::vector<pcl::PointIndices> boundary_indices;
 
@@ -258,10 +258,10 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   {
     if (euclidean_label_indices[i].indices.size () > 500)
     {
-      pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
+      pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>());
       pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
 
-      pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices);
+      pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices());
       *object_cloud_indices = euclidean_label_indices[i];
       extract.setInputCloud(cloud_filtered);
       extract.setIndices(object_cloud_indices);
@@ -280,7 +280,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform transform, double distance = 0.5)
 {
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableTmp(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableTmp(new pcl::PointCloud<pcl::PointXYZRGBA>());
   for (int i = -1; i < 2; i+=2)
     for (int j = -1; j < 2; j+=2)
     {
@@ -290,11 +290,11 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform tra
       tmp.z = 0;
       tableTmp->push_back(tmp);
     }
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tfTable(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tfTable(new pcl::PointCloud<pcl::PointXYZRGBA>());
   pcl_ros::transformPointCloud (*tableTmp, *tfTable, transform);
   writer.write<pcl::PointXYZRGBA> (load_directory+"TF_boundary.pcd", *tfTable, true);
 
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>());
 
   pcl::ConvexHull<pcl::PointXYZRGBA> hull;
   hull.setInputCloud(tfTable);
@@ -307,7 +307,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform tra
 
 void callback(const sensor_msgs::PointCloud2 &pc)
 {
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
   // convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA
   // update the time which will become the leading string of collected data
   time_to_save = boost::posix_time::second_clock::local_time();
@@ -323,7 +323,7 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   }
   else
   {
-    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>());
     std::string tableTFparent;
     tf::StampedTransform transform;
     listener->getParent(tableTFname,ros::Time(0),tableTFparent);
@@ -364,7 +364,7 @@ void callback(const sensor_msgs::PointCloud2 &pc)
 
 void callbackCaptureEnvironment(const sensor_msgs::PointCloud2 &pc)
 {
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
   // convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA
   pcl::fromROSMsg(pc, *cloud);
   std::stringstream ss;
@@ -404,7 +404,7 @@ int main (int argc, char** argv)
   nh.param("aboveTableMin",aboveTableMin,0.135);
   nh.param("aboveTableMax",aboveTableMax,0.50);
 
-  listener = new (tf::TransformListener);
+  listener = new (tf::TransformListener());
 
   bool justCaptureEnvironment;
   nh.param("environment_only",justCaptureEnvironment,false);
