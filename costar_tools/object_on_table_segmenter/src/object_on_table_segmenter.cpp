@@ -435,11 +435,11 @@ int main (int argc, char** argv)
 
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     if (!haveTable)
-      std::cerr << "Remove all object on table and press 's' key" << std::endl;
+      std::cerr << "1) Remove all object from the table\n2) make sure the AR tag you specified is visible\n3) press the 's' key to save the segmentation plane." << std::endl;
     else
     {
       std::cerr << "Press 'q' key to exit \n";
-      std::cerr << "Press 's' key to do object on table segmentation \n";
+      std::cerr << "Press 's' key to start object on table segmentation \n";
     }
 
     ros::Rate r(10); // 10 hz
