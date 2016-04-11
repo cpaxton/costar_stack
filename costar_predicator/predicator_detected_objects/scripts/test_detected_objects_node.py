@@ -9,9 +9,10 @@ ls = DetectedObjectList()
 #obj1 = DetectedObject(id="gbeam_link_1/gbeam_link",object_class="link")
 #obj2 = DetectedObject(id="gbeam_node_1/gbeam_node",object_class="node")
 #obj3 = DetectedObject(id="gbeam_node_2/gbeam_node",object_class="node")
-obj1 = DetectedObject(id="Obj::link_uniform::1",object_class="link_uniform")
-obj2 = DetectedObject(id="Obj::node_uniform::1",object_class="node_uniform")
-obj3 = DetectedObject(id="Obj::node_uniform::2",object_class="node_uniform")
+obj1 = DetectedObject(id="Obj/link_uniform/1",object_class="link_uniform")
+obj2 = DetectedObject(id="Obj/node_uniform/1",object_class="node_uniform")
+obj3 = DetectedObject(id="Obj/node_uniform/2",object_class="node_uniform")
+obj1.symmetry.x_symmetries = 4
 
 ls.objects = [obj1,obj2,obj3]
 
