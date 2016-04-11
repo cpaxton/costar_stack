@@ -30,7 +30,9 @@ class SimpleIIWADriver:
             listener=None,
             traj_step_t=0.1,
             max_acc=1,
-            max_vel=1):
+            max_vel=1,
+            max_goal_diff = 0.02,
+            goal_rotation_weight = 0.1):
 
         base_link = 'iiwa_link_0'
         end_link = 'iiwa_link_ee'
@@ -44,6 +46,9 @@ class SimpleIIWADriver:
         self.MAX_VEL = max_vel
 
         self.traj_step_t = traj_step_t
+
+        self.max_goal_diff = max_goal_diff
+        self.goal_rotation_weight = goal_rotation_weight
 
         self.at_goal = True
         self.q0 = [0,0,0,0,0,0,0]
@@ -85,12 +90,15 @@ class SimpleIIWADriver:
 
         #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
         cart_diff = (self.ee_pose.p - self.goal.p).Norm()
-        rot_diff = 0.01 * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
+        rot_diff = self.goal_rotation_weight * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
         goal_diff = cart_diff + rot_diff
-        #print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
 
-        if goal_diff < 0.01:
-                self.at_goal = True
+        if goal_diff < self.max_goal_diff:
+            self.at_goal = True
+
+        if not self.at_goal:
+            print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
+
 
         #print self.at_goal
         #print self.q0

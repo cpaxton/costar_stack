@@ -22,18 +22,20 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 class SimplePlanning:
     
-    def __init__(self,robot,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns="",verbose=False):
+    def __init__(self,robot,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns="",verbose=False, kdl_kin=None):
         self.robot = robot
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
-        self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
+        if kdl_kin is None:
+          self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
+        else:
+          self.kdl_kin = kdl_kin
         self.base_link = base_link
         self.end_link = end_link
         self.group = group
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
         self.verbose = verbose
-
     
     '''
     ik: handles calls to KDL inverse kinematics
