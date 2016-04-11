@@ -30,7 +30,6 @@
   <!-- publish preferred orientation -->
   <node name="preferred_orientation_publisher" type="static_transform_publisher" pkg="tf" args=" 0 0 0 0 0 -1.5708 base_link preferred_orientation 200"/>
 
-
   <!-- handeye calibration -->
   <node name="handeye_calibration_server" type="calibration_server.py" pkg="simple_handeye_calibration" output="$(arg handeye_output)">
     <param name="camera_marker" value="ar_marker_0"/>

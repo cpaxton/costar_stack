@@ -54,6 +54,7 @@ class SimpleHandeyeCalibration:
         self.save_service = rospy.ServiceProxy('/librarian/save', librarian_msgs.srv.Save)
         self.load_service = rospy.ServiceProxy('/librarian/load', librarian_msgs.srv.Load)
 
+        rospy.wait_for_service('/librarian/add_type')
         self.add_type_service(type="handeye_calibration")
 
         resp = self.load_service(type="handeye_calibration", id=self.id)

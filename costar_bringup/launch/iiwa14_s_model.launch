@@ -32,12 +32,7 @@
     <param name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 
-  <!-- motion planning -->  <node name="handeye_calibration_server" type="calibration_server.py" pkg="simple_handeye_calibration" output="screen">
-    <param name="camera_marker" value="ar_marker_0"/>
-    <param name="ee_marker" value="endpoint_marker"/>
-    <param name="base_link" value="world"/>
-    <param name="camera_link" value="camera_link"/>
-  </node>
+  <!-- motion planning --> 
   <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
     <param name="allow_trajectory_execution" value="false"/>
   </include>
