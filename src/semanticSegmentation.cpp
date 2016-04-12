@@ -180,18 +180,26 @@ void semanticSegmentation::initializeSemanticSegmentation()
         std::string temp_cur = cur_name.at(model_id);
         if (useMultiClassSVM && cur_name.size() > 1)
         {
+            
             if( temp_cur == "link_uniform")
+            {
                 objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.075, voxelSize));
+                objrec[model_id]->setParams(objectVisibility,sceneVisibility);
+            }
             else if( temp_cur == "node_uniform")
+            {
                 objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
+                objrec[model_id]->setParams(objectVisibility,sceneVisibility);
+            }
             else 
             {
                 std::cerr << "General Class!!!" << std::endl;
                 objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.1, voxelSize));
+                objrec[model_id]->setParams(0.2,0.2);
             }
 
             /// @todo allow different visibility parameters for each object class
-            objrec[model_id]->setParams(objectVisibility,sceneVisibility);
+            
             objrec[model_id]->setUseCUDA(use_cuda);
             objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
         }
