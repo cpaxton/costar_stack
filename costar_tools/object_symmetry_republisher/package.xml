@@ -48,6 +48,8 @@
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>
   <run_depend>orocos_kdl</run_depend>
+  <run_depend>predicator_msgs</run_depend>
+  <run_depend>predicator_core</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
