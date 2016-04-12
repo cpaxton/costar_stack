@@ -32,6 +32,8 @@
 
 // for creating directory automatically
 #include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 bool dist_viewer ,haveTable,update_table;
 std::string POINTS_IN;
@@ -40,7 +42,7 @@ std::string tableTFname;
 int cloud_save_index;
 ros::Subscriber pc_sub;
 pcl::PCDWriter writer;
-pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableHull(new pcl::PointCloud<pcl::PointXYZRGBA>());
 tf::TransformListener * listener;
 double aboveTableMin;
 double aboveTableMax;
@@ -51,7 +53,8 @@ int num_to_capture = 0;
 bool useTFsurface;
 bool useRosbag;
 bool doCluster;
-
+boost::posix_time::ptime time_to_save;
+    
 // function getch is from http://answers.ros.org/question/63491/keyboard-key-pressed/
 int getch()
 {
@@ -115,11 +118,11 @@ void segmentCloudAboveTable(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_input
   // from 1 cm above table to 50 cm above table
   //prism.setHeightLimits(0.135f, 0.5f);
   prism.setHeightLimits(aboveTableMin,aboveTableMax);
-  pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices);
+  pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices());
 
   prism.segment(*objectIndices);
   // Get and show all points retrieved by the hull.
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr objects(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr objects(new pcl::PointCloud<pcl::PointXYZRGBA>());
   pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
   extract.setInputCloud(cloud_input);
   extract.setIndices(objectIndices);
@@ -133,7 +136,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 {
 
   // Get Normal Cloud
-  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>());
   pcl::IntegralImageNormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setNormalEstimationMethod (ne.AVERAGE_3D_GRADIENT);
   ne.setMaxDepthChangeFactor(0.02f);
@@ -152,11 +155,11 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
   mps.segmentAndRefine (regions);
 
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>());
   boundary->points = regions[0].getContour();
 
   // Retrieve the convex hull.
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>());
 
   pcl::ConvexHull<pcl::PointXYZRGBA> hull;
   hull.setInputCloud(boundary);
@@ -166,13 +169,21 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
   return convexHull;
 }
 
-void saveCloud(pcl::PointCloud<pcl::PointXYZRGBA> cloud_input, std::string dir, std::string additional_text = std::string(""))
+void saveCloud(const pcl::PointCloud<pcl::PointXYZRGBA>& cloud_input, std::string dir, std::string additional_text = std::string(""))
 {
-  std::stringstream ss;
-  ss << dir << object_name << cloud_save_index << additional_text << ".pcd";
-  writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
-  std::cerr << "Saved " << ss.str();
-  cloud_save_index++;
+    std::stringstream ss;
+    
+    try{
+      using namespace boost::posix_time;
+      using namespace std;
+
+      ss.imbue(std::locale(ss.getloc(), new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_")));
+      ss << dir << time_to_save << object_name << "_" << cloud_save_index << additional_text << ".pcd";
+      writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
+      std::cerr << "Saved: " << ss.str() << "\n";
+    } catch (pcl::IOException e) {
+      ROS_ERROR("could not write to %s!",ss.str().c_str());
+    }
 }
 
 void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_filtered)
@@ -191,7 +202,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   }
 
   // Get Normal Cloud
-  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>());
   pcl::IntegralImageNormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setNormalEstimationMethod (ne.AVERAGE_3D_GRADIENT);
   ne.setMaxDepthChangeFactor(0.03f);
@@ -203,7 +214,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   pcl::OrganizedMultiPlaneSegmentation< pcl::PointXYZRGBA, pcl::Normal, pcl::Label > mps;
   std::vector<pcl::ModelCoefficients> model_coefficients;
   std::vector<pcl::PointIndices> inlier_indices;  
-  pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
+  pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>());
   std::vector<pcl::PointIndices> label_indices;
   std::vector<pcl::PointIndices> boundary_indices;
 
@@ -246,10 +257,10 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
   {
     if (euclidean_label_indices[i].indices.size () > 500)
     {
-      pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
+      pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>());
       pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
 
-      pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices);
+      pcl::PointIndices::Ptr object_cloud_indices (new pcl::PointIndices());
       *object_cloud_indices = euclidean_label_indices[i];
       extract.setInputCloud(cloud_filtered);
       extract.setIndices(object_cloud_indices);
@@ -268,7 +279,7 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform transform, double distance = 0.5)
 {
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableTmp(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tableTmp(new pcl::PointCloud<pcl::PointXYZRGBA>());
   for (int i = -1; i < 2; i+=2)
     for (int j = -1; j < 2; j+=2)
     {
@@ -278,11 +289,11 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform tra
       tmp.z = 0;
       tableTmp->push_back(tmp);
     }
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tfTable(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tfTable(new pcl::PointCloud<pcl::PointXYZRGBA>());
   pcl_ros::transformPointCloud (*tableTmp, *tfTable, transform);
   writer.write<pcl::PointXYZRGBA> (load_directory+"TF_boundary.pcd", *tfTable, true);
 
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>());
 
   pcl::ConvexHull<pcl::PointXYZRGBA> hull;
   hull.setInputCloud(tfTable);
@@ -295,19 +306,15 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr useTFConvexHull(tf::StampedTransform tra
 
 void callback(const sensor_msgs::PointCloud2 &pc)
 {
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
   // convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA
+  // update the time which will become the leading string of collected data
+  time_to_save = boost::posix_time::second_clock::local_time();
+  cloud_save_index++;
   pcl::fromROSMsg(pc, *cloud);
   if (haveTable and keyPress)
   {
-    std::stringstream ss;
-    ss << original_directory << object_name << cloud_save_index << "_original_cloud.pcd";
-    std::cout << "original saved to :" << ss.str() << "\n";
-    try {
-      saveCloud(*cloud,original_directory,"_original");
-    } catch (pcl::IOException e) {
-      ROS_ERROR("could not write to %s!",ss.str().c_str());
-    }
+    saveCloud(*cloud,original_directory,"_original");
     segmentCloudAboveTable(cloud,tableHull);
     if (doCluster)
 	    cloud_segmenter_and_save(cloud);
@@ -315,7 +322,7 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   }
   else
   {
-    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>());
     std::string tableTFparent;
     tf::StampedTransform transform;
     listener->getParent(tableTFname,ros::Time(0),tableTFparent);
@@ -356,7 +363,7 @@ void callback(const sensor_msgs::PointCloud2 &pc)
 
 void callbackCaptureEnvironment(const sensor_msgs::PointCloud2 &pc)
 {
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
   // convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA
   pcl::fromROSMsg(pc, *cloud);
   std::stringstream ss;
@@ -427,11 +434,11 @@ int main (int argc, char** argv)
 
     pc_sub = nh.subscribe(POINTS_IN,1,callback);
     if (!haveTable)
-      std::cerr << "Remove all object on table and press 's' key" << std::endl;
+      std::cerr << "1) Remove all object from the table\n2) make sure the AR tag you specified is visible\n3) press the 's' key to save the segmentation plane." << std::endl;
     else
     {
       std::cerr << "Press 'q' key to exit \n";
-      std::cerr << "Press 's' key to do object on table segmentation \n";
+      std::cerr << "Press 's' key to start object on table segmentation \n";
     }
 
     ros::Rate r(10); // 10 hz

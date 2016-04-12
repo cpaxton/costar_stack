@@ -149,10 +149,10 @@ target_link_libraries(object_on_table_segmenter
    ${Boost_LIBRARIES}
 )
 
-target_link_libraries(pcd2png_segment_gt
-   ${PCL_LIBRARIES}
-   ${Boost_LIBRARIES}
-)
+#target_link_libraries(pcd2png_segment_gt
+#   ${PCL_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#)
 
 #############
 ## Install ##
