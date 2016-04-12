@@ -267,7 +267,10 @@ void cloud_segmenter_and_save(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_fil
       extract.setKeepOrganized(true);
       extract.filter(*cloud_cluster);
 
-      saveCloud(*cloud_cluster,ground_truth_directory, "_ground_truth");
+      std::stringstream ss;
+      ss << "_cluster_" << i+1 << "_ground_truth";
+
+      saveCloud(*cloud_cluster,ground_truth_directory, ss.str());
       std::cerr << "\tcluster size: "<< euclidean_label_indices[i].indices.size () << std::endl;
     }
   }
