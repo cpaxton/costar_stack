@@ -3,6 +3,6 @@
   <arg name="hardware_interface" default="PositionJointInterface"/> 
   <arg name="robot_name" default="iiwa2"/>
   
-  <param name="new_robot_description" command="$(find xacro)/xacro.py '$(find iiwa_s_model)/urdf/iiwa14_touch_s_model.urdf.xacro' hardware_interface:=$(arg hardware_interface) robot_name:=$(arg robot_name)" />
+  <param name="new_robot_description" command="$(find xacro)/xacro.py '$(find iiwa14_s_model)/urdf/iiwa14_touch_s_model.urdf.xacro' hardware_interface:=$(arg hardware_interface) robot_name:=$(arg robot_name)" />
 
 </launch>

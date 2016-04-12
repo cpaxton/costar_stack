@@ -157,7 +157,7 @@ void collision_environment::getAllObjectTFfromDetectedObjectMsgs(const costar_ob
     detectedObjectsTF.clear();
     listOfTF.clear();
     
-    ros::Time now = detectedObjectList.header.stamp;
+    ros::Time now = ros::Time::now();
     if (!hasParent) {
         if (!defineParent) {
         // read the TF parent of objectTF
@@ -175,7 +175,7 @@ void collision_environment::getAllObjectTFfromDetectedObjectMsgs(const costar_ob
     // get and save the TF name and pose in the class variable
     for (unsigned int i = 0; i < detectedObjectList.objects.size(); i++) {
         std::string currentObjectFrameId = detectedObjectList.objects.at(i).id;
-        if (listener.waitForTransform(currentObjectFrameId,parentFrame,now,ros::Duration(5.0)))
+        if (listener.waitForTransform(currentObjectFrameId,parentFrame,now,ros::Duration(1.0)))
         {
             objectTF detectedObject;
             detectedObject.name = detectedObjectList.objects.at(i).object_class;

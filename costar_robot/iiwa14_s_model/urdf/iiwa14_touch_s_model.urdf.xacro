@@ -5,8 +5,9 @@
   <!--Import the lbr iiwa macro -->
   <xacro:include filename="$(find iiwa_description)/urdf/iiwa14.xacro"/>
 
-  <xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_articulated.urdf"/>
-  <xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_mesh.urdf"/>
+  <!--<xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_mesh.urdf"/>-->
+	<xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_articulated_macro.xacro" />
+	<xacro:s-model_articulated prefix="s_model_"/>
 
   <!-- Fix to world just for testing -->
   <link name="world"/>
@@ -16,5 +17,11 @@
   <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="world">
     <origin xyz="0 0 0.0" rpy="0 0 0" />
   </xacro:iiwa14>
+
+  <joint name="iiwa_link_ee_to_connector"  type="fixed">
+    <parent link="$(arg robot_name)_link_ee"/>
+    <child link="s_model_palm"/>
+    <origin xyz="0 0 .05" rpy="0.2618 0 0"/>
+  </joint>
 
 </robot>
