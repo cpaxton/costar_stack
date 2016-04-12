@@ -6,8 +6,9 @@
   <xacro:include filename="$(find iiwa_description)/urdf/iiwa14.xacro"/>
 
   <!--<xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_mesh.urdf"/>-->
-  <xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_articulated_macro.xacro" />
-  <xacro:s-model_articulated prefix="$(arg robot_name)_s_model_"/>
+  <!--<xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_articulated_macro.xacro" />-->
+  <xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_mesh_macro.xacro" />
+  <xacro:s-model_mesh prefix="$(arg robot_name)_s_model_"/>
 
   <!-- Fix to world just for testing -->
   <link name="world"/>
@@ -41,10 +42,19 @@
     </collision>
   </link>
 
-  <joint name="$(arg robot_name)_connector_to_palm"  type="fixed">
-    <parent link="$(arg robot_name)_s_model_connector"/>
-    <child link="$(arg robot_name)_s_model_palm"/>
-    <origin xyz="0 0 0.08" rpy="1.5707 0 0"/>
-  </joint>
+  <xacro:if value="false">
+    <joint name="$(arg robot_name)_connector_to_palm"  type="fixed">
+      <parent link="$(arg robot_name)_s_model_connector"/>
+      <child link="$(arg robot_name)_s_model_palm"/>
+      <origin xyz="0 0 0.08" rpy="1.5707 0 0"/>
+    </joint>
+  </xacro:if>
+  <xacro:unless value="false">
+    <joint name="$(arg robot_name)_connector_to_palm"  type="fixed">
+      <parent link="$(arg robot_name)_s_model_connector"/>
+      <child link="$(arg robot_name)_s_model_palm"/>
+      <origin xyz="0 0 0.18" rpy="0 0 3.14159"/>
+    </joint>
+  </xacro:unless>
 
 </robot>
