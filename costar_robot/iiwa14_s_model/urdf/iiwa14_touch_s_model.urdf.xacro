@@ -53,7 +53,7 @@
     <joint name="$(arg robot_name)_connector_to_palm"  type="fixed">
       <parent link="$(arg robot_name)_s_model_connector"/>
       <child link="$(arg robot_name)_s_model_palm"/>
-      <origin xyz="0 0 0.18" rpy="0 0 3.14159"/>
+      <origin xyz="0 0 0.18" rpy="0 0 ${3.14159+0.2618}"/>
     </joint>
   </xacro:unless>
 
