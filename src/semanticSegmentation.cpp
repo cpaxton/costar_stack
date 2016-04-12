@@ -566,9 +566,9 @@ void semanticSegmentation::populateTFMapFromTree()
   	object_tmp.symmetry.x_rotation = objectDict[ p.model_name ].roll;
   	object_tmp.symmetry.y_rotation = objectDict[ p.model_name ].pitch;
   	object_tmp.symmetry.z_rotation = objectDict[ p.model_name ].yaw;
-  	object_tmp.symmetry.x_symmetries = std::floor(360.0 / objectDict[ p.model_name ].roll);
-  	object_tmp.symmetry.y_symmetries = std::floor(360.0 / objectDict[ p.model_name ].pitch);
-  	object_tmp.symmetry.z_symmetries = std::floor(360.0 / objectDict[ p.model_name ].yaw);
+  	object_tmp.symmetry.x_symmetries = std::floor(2 * M_PI / objectDict[ p.model_name ].roll);
+  	object_tmp.symmetry.y_symmetries = std::floor(2 * M_PI / objectDict[ p.model_name ].pitch);
+  	object_tmp.symmetry.z_symmetries = std::floor(2 * M_PI / objectDict[ p.model_name ].yaw);
   	object_tmp.object_class = p.model_name;
   	object_list.objects.push_back(object_tmp);
   }
