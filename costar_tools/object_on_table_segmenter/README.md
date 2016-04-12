@@ -33,7 +33,69 @@ tableTF    : marker we are going to use
 
 ## Examples
 
+We use aruco markers that are 90mm across the black part 100mm total width on white outline.
+
+Before starting make sure your sensor has a full and accurate view of the target region free of clutter.
+
+
 ```
-roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_vert_ tableTF:=ar_marker_2 loadTable:=false num_to_capture:=200
-roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_horizontal_ tableTF:=ar_marker_2 loadTable:=false num_to_capture:=200
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch tableTF:=ar_marker_2 useTFsurface:=true aboveTableMin:=0.01 object:=blue_bin load_table:=true num_to_capture:=200
+```
+
+1. Here on the first run you put the marker on the table/turntable. 
+2. press 's' to get the pose of the marker, this is saved to disk
+3. remove the marker, place your detection object on the table where the marker was
+4. press 's' again to begin collecting data
+
+```
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_vert tableTF:=ar_marker_2 load_table:=false num_to_capture:=200
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_horizontal tableTF:=ar_marker_2 load_table:=false num_to_capture:=200
+```
+
+Results will be placed in the local directory with the following structure
+
+```
+~/catkin_ws/src/costar_stack/costar_tools/object_on_table_segmenter
+├── data
+├── launch
+├── link_uniform
+├── node_uniform
+├── original
+├── res
+├── result
+│   ├── red_bin
+│   │   ├── ground_truth
+│   │   └── original
+│   ├── blue_bin
+│   │   ├── ground_truth
+│   │   └── original
+│   └── red_link
+│       ├── ground_truth
+│       └── original
+├── result_vert_01
+├── sander
+│   └── original
+└── src
+
+```
+
+"original" will contain the full source pcd (pcl point cloud format) files.
+"ground_truth" will contain only segmented object data.
+
+Files are written as follows:
+```
+<date>_<name>_<entry#>_ground_truth.pcd
+2016_04_12_11_51_30_blue_bin_400_ground_truth.pcd
+
+<date>_<name>_<entry#>_original.pcd
+2016_04_12_11_51_30_blue_bin_400_original.pcd
+```
+
+If clustering is enabled each ground truth may have multiple entries. For example,
+if you want to collect separate data for multiple objects on the table simultaneously.
+Then the gorund truth format will be:
+
+```
+<date>_<name>_<entry#>_cluster_<cluster#>_ground_truth.pcd
+2016_04_12_11_51_30_blue_bin_400_ground_truth.pcd
 ```
