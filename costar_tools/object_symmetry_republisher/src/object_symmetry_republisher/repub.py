@@ -27,7 +27,7 @@ class ObjectSymmetryRepublisher:
             angle = rotation
             if angle == 0 and num_symmetries > 0:
                 angle = 2*np.pi / float(num_symmetries)
-            for i in range(1,num_symmetries):
+            for i in range(2,num_symmetries):
                 # rotate the object
                 R = kdl.Frame(kdlRot(angle*(i)))
                 (trans,rot) = pm.toTf(R)
