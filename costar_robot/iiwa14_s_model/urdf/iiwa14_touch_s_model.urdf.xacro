@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<robot name="iiwa14" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="$(arg robot_name)" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Import Rviz colors -->
   <xacro:include filename="$(find iiwa_description)/urdf/materials.xacro" />
   <!--Import the lbr iiwa macro -->
   <xacro:include filename="$(find iiwa_description)/urdf/iiwa14.xacro"/>
 
   <!--<xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_mesh.urdf"/>-->
-	<xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_articulated_macro.xacro" />
-	<xacro:s-model_articulated prefix="s_model_"/>
+  <xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_articulated_macro.xacro" />
+  <xacro:s-model_articulated prefix="$(arg robot_name)_s_model_"/>
 
   <!-- Fix to world just for testing -->
   <link name="world"/>
@@ -18,10 +18,33 @@
     <origin xyz="0 0 0.0" rpy="0 0 0" />
   </xacro:iiwa14>
 
-  <joint name="iiwa_link_ee_to_connector"  type="fixed">
-    <parent link="$(arg robot_name)_link_ee"/>
-    <child link="s_model_palm"/>
-    <origin xyz="0 0 .05" rpy="0.2618 0 0"/>
+  <joint name="$(arg robot_name)_link_ee_to_connector"  type="fixed">
+    <parent link="$(arg robot_name)_link_ee_kuka"/>
+    <child link="$(arg robot_name)_s_model_connector"/>
+    <origin xyz="0 0 0.02" rpy="0 0 0"/>
+  </joint>
+
+  <link name="$(arg robot_name)_s_model_connector">
+    <origin xyz="0 0 0.1" rpy="0 0 0.2618"/>
+    <visual>
+      <geometry>
+        <cylinder length="0.06" radius="0.04"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 .8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.06" radius="0.04"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="$(arg robot_name)_connector_to_palm"  type="fixed">
+    <parent link="$(arg robot_name)_s_model_connector"/>
+    <child link="$(arg robot_name)_s_model_palm"/>
+    <origin xyz="0 0 0.08" rpy="1.5707 0 0"/>
   </joint>
 
 </robot>
