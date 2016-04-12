@@ -177,8 +177,7 @@ void saveCloud(const pcl::PointCloud<pcl::PointXYZRGBA>& cloud_input, std::strin
       using namespace boost::posix_time;
       using namespace std;
 
-      boost::shared_ptr<time_facet>facet(new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_"));
-      ss.imbue(std::locale(ss.getloc(), facet.get()));
+      ss.imbue(std::locale(ss.getloc(), new boost::posix_time::time_facet("%Y_%m_%d_%H_%M_%S_")));
       ss << dir << time_to_save << object_name << "_" << cloud_save_index << additional_text << ".pcd";
       writer.write<pcl::PointXYZRGBA> (ss.str (), cloud_input, true);
       std::cerr << "Saved: " << ss.str() << "\n";
