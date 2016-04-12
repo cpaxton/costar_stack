@@ -43,8 +43,14 @@ roslaunch object_on_table_segmenter object_on_table_segmenter.launch tableTF:=ar
 ```
 
 1. Here on the first run you put the marker on the table/turntable. 
+
+![Use the AR tag and a vertical area above it to define the object region](ar_tag_sets_plane.jpg)
+
 2. press 's' to get the pose of the marker, this is saved to disk
 3. remove the marker, place your detection object on the table where the marker was
+
+![place the object where the tag was](scanning_blue_bin_on_turntable.jpg)
+
 4. press 's' again to begin collecting data
 
 ```
@@ -99,3 +105,20 @@ Then the gorund truth format will be:
 <date>_<name>_<entry#>_cluster_<cluster#>_ground_truth.pcd
 2016_04_12_11_51_30_blue_bin_400_ground_truth.pcd
 ```
+
+#### Verify your data
+
+Be sure to verify your data and make sure no incorrect data is present!
+
+`pcl viewer path/to/file.pcd`
+
+You can load everything at once to make your life easier and check for outliers:
+
+`pcl viewer path/to/folder/with/pcds/*`
+
+
+#### image extraction and segmentation
+
+You can run `pcl_pcd2png` to convert your pcds into images
+
+You can run `pcd2png_segment_gt.cpp` to perform semantic segmentation of your ground truth data and your image data.
