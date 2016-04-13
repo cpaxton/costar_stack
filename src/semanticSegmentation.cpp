@@ -125,7 +125,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     std::cerr << "Node is running with objRecRANSACdetector: " << objRecRANSACdetector << "\n";
     
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
-    nh.param("pairWidth", pairWidth, 0.05);
+    //nh.param("pairWidth", pairWidth, 0.05);
     if (!useTFinsteadOfPoses) {
         std::cerr << "Node publish pose array.\n";
         pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
@@ -162,10 +162,15 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
     double objectVisibility, sceneVisibility;
 
-
     nh.param("objectVisibility",objectVisibility,0.1);
     nh.param("sceneVisibility", sceneVisibility,0.1);
-
+    
+    double link_width, node_width, sander_width;
+    
+    nh.param("link_width", link_width, 0.075);
+    nh.param("node_width", node_width, 0.05);
+    nh.param("sander_width", sander_width, 0.16);
+    
     if (!useMultiClassSVM || cur_name.size() == 1){
         // initialize combinedObjRecRansac
         combinedObjRec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
@@ -181,17 +186,23 @@ void semanticSegmentation::initializeSemanticSegmentation()
         if (useMultiClassSVM && cur_name.size() > 1)
         {
             if( temp_cur == "link_uniform")
+	    {
                 objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.075, voxelSize));
-            else if( temp_cur == "node_uniform")
+            	objrec[model_id]->setParams(objectVisibility,sceneVisibility);
+            }
+	    else if( temp_cur == "node_uniform")
+	    {
                 objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
+            	objrec[model_id]->setParams(objectVisibility,sceneVisibility);
+	    }
             else 
             {
                 std::cerr << "General Class!!!" << std::endl;
-                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.1, voxelSize));
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.16, voxelSize));
+            	objrec[model_id]->setParams(0.2, 0.2);
             }
 
             /// @todo allow different visibility parameters for each object class
-            objrec[model_id]->setParams(objectVisibility,sceneVisibility);
             objrec[model_id]->setUseCUDA(use_cuda);
             objrec[model_id]->AddModel(mesh_path + temp_cur, temp_cur);
         }
@@ -366,9 +377,10 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     // if has useMultiSVM flag and has more than one objects, do multi object classification
     if (useMultiClassSVM && mesh_set.size() > 1)
     {
-        for( int ll = 0 ; ll <= 0 ; ll++ )
+        int sll = 1, ell = 1;
+        for( int ll = sll ; ll <= ell ; ll++ )
         {
-           bool reset_flag = ll == 0 ? true : false;
+           bool reset_flag = ll == sll ? true : false;
            triple_pooler.InputSemantics(multi_models[ll], ll, reset_flag, false);
         }
         pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
