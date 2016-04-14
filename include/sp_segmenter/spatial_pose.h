@@ -155,6 +155,8 @@ void createTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
     const double &timestamp, std::map<std::string, unsigned int> &objectTFindex, 
     const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0))
 {
+    // clear all elements
+    rtree.clear();
     Eigen::Quaternion<float> baseRotation(baseRotationInput.w(),baseRotationInput.x(),baseRotationInput.y(),baseRotationInput.z());
     normalizeAllModelOrientation<float>(all_poses, baseRotation, objectDict);
     treeInsert(rtree, all_poses, timestamp, objectTFindex);
