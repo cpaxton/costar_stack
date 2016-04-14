@@ -46,11 +46,11 @@ class SModelPredicator:
 
     def __init__(self, independent_node=True,gripper_name='s_model'):
 
-        self.valid_predicates = ValidPredicates()
-        self.predicate_msg = PredicateList(assignments=[gripper_name],predicates=['gripper_open','gripper_closed','gripper_moving',
+        self.valid_predicates = ValidPredicates(assignments=[gripper_name],predicates=['gripper_open','gripper_closed','gripper_moving',
             'gripper_basic_mode','gripper_pinch_mode','gripper_wide_mode','gripper_scissor_mode','gripper_activated',
-            'finger_a_contact','finger_b_contact','finger_c_contact'])
-        
+            'finger_a_contact','finger_b_contact','finger_c_contact','any_finger_contact'])
+        self.predicate_msg = PredicateList()
+        self.gripper_name = gripper_name
 
         if independent_node:
             # create predicator things
@@ -60,6 +60,56 @@ class SModelPredicator:
 
     def callback(self, msg):
         self.handle(msg)
+
+    def handle(self,status):
+        self.predicate_msg = PredicateList()
+        if(status.gACT == 0):
+            # gripper reset
+            pass
+        if(status.gACT == 1):
+            self.addPredicate('gripper_activated')
+
+        if(status.gMOD == 0):
+            self.addPredicate('gripper_basic_mode')
+        elif(status.gMOD == 1):
+            self.addPredicate('gripper_pinch_mode')
+        elif(status.gMOD == 2):
+            self.addPredicate('gripper_wide_mode')
+        elif(status.gMOD == 3):
+            self.addPredicate('gripper_scissor_mode')
+
+        if (status.gGTO == 1) "going to position (GOTO command)"
+        or (status.gIMC == 2) "mode change in progress"
+        or (status.gSTA == 0) "in motion towards position" :
+            self.addPredicate('gripper_moving')
+        
+        contact = False
+        if (status.gDTA == 1 or status.gDTA == 2):
+            self.addPredicate('finger_a_contact')
+            contact = True
+        if (status.gDTB == 1 or status.gDTB == 2):
+            self.addPredicate('finger_b_contact')
+            contact = True
+        if (status.gDTC == 1 or status.gDTC == 2):
+            self.addPredicate('finger_c_contact')
+            contact = True
+
+        if contact:
+            self.addPredicate('any_finger_contact')
+
+        if (status.gDTA >= 2 and status.gDTB >= 2 and status.gDTC >= 2 and status.gPRA >= 250) "fingers closed or stopped closing"
+        or (status.gDTS >=2 and status.gPRA >= 250) "scissor closing":
+            self.addPredicate('gripper_closed')
+
+        
+
+    '''
+    add a single message
+    '''
+    def addPredicate(self,predicate)
+        p = PredicateStatement(predicate=predicate,params=[self.gripper_name,'',''])
+        self.predicate_msg.predicates.append(p)
+        
 
     '''
     publish current predicate messages
