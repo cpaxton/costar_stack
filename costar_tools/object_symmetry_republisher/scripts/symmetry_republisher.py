@@ -7,4 +7,4 @@ rospy.init_node('object_symmetry_republisher_node')
 
 osr = ObjectSymmetryRepublisher()
 
-rospy.spin()
+osr.spin()

@@ -27,7 +27,6 @@ bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Reque
     std::cerr << "Updating objects.\n";
     if(useDetectedObjectMsgs)
     {
-
         collisionObjectGenerator.getAllObjectTFfromDetectedObjectMsgs(detectedObjectList);
         collisionObjectGenerator.updateCollisionObjects(false);
     }
@@ -57,6 +56,7 @@ void moveitPlanningSceneGenerator::autoUpdateScene(const costar_objrec_msgs::Det
 
     // Keep the node from updating collision object with service call if the autoupdate is running first
     mtx.lock();
+    std::cerr << "Received DetectedObjectList, automatically update planning scene now. \n";
     this->detectedObjectList = detectedObject;
 
     planning_scene.world.collision_objects.clear();
@@ -70,6 +70,9 @@ void moveitPlanningSceneGenerator::autoUpdateScene(const costar_objrec_msgs::Det
     // Update collision objects without updating frame (because we already update it from the msgs)
     collisionObjectGenerator.updateCollisionObjects(false);
 
+    std::cerr << "Number of new object to add: ";
+    this->addCollisionObjects(collisionObjectGenerator.getCollisionObjects());
+    
     bool anyUpdate = planning_scene.world.collision_objects.size() > 0;
     if (anyUpdate) {
         planning_scene.is_diff = true;
