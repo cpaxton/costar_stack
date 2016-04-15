@@ -71,7 +71,9 @@ class SimplePlanning:
 
       ts = (pose.p - frame.p).Norm() / steps
 
-      steps += int((pose.p - frame.p).Norm()) / steps_per_meter
+      print steps
+      steps += int((pose.p - frame.p).Norm() * steps_per_meter)
+      print steps
 
       traj = JointTrajectory()
 
@@ -184,7 +186,7 @@ class SimplePlanning:
         motion_req.planner_id = "RRTstarkConfigDefault"
         
         if len(motion_req.goal_constraints[0].joint_constraints) == 0 or ik_resp.error_code.val < 0:
-            return None
+            return (-31, None)
 
         goal = MoveGroupGoal()
         goal.planning_options = planning_options

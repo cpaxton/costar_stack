@@ -322,7 +322,8 @@ class SimpleIIWADriver:
             traj = self.planner.getCartesianMove(T,self.q0)
             if len(traj.points) == 0:
                 (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
-                traj = res.planned_trajectory.joint_trajectory
+                if not res is None:
+                    traj = res.planned_trajectory.joint_trajectory
 
             #if len(traj) == 0:
             #    traj.append(self.planner.ik(T,self.q0))
