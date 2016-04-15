@@ -36,16 +36,14 @@
   </group>
 
   <group unless="$(arg sim)">
-    <!-- process high level motion commands -->
-    <include file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch"/>
 
     <!-- motion planning --> 
     <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
       <param name="allow_trajectory_execution" value="false"/>
     </include>
-  </group>
 
-  <group unless="$(arg sim)">
+    <!-- process high level motion commands -->
+    <include file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch"/>
 
     <!-- start up the camera -->
     <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
