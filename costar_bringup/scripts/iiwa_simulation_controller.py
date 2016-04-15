@@ -11,7 +11,7 @@ publishers = []
 def joint_traj_pt_cb(msg):
     global publishers
     #print publishers
-    print msg.positions
+    #print msg.positions
 
     length = min(len(msg.positions),7)
     #print length
