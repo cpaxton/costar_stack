@@ -53,15 +53,15 @@ class SimpleIIWADriver:
         self.at_goal = True
         self.q0 = [0,0,0,0,0,0,0]
 
-        self.teach_mode = rospy.Service('costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
-        self.servo_mode = rospy.Service('costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
-        self.shutdown = rospy.Service('costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
-        self.servo = rospy.Service('costar/ServoToPose',ServoToPose,self.servo_to_pose_call)
-        self.plan = rospy.Service('costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
-        self.smartmove = rospy.Service('costar/SmartMove',SmartMove,self.smart_move_call)
+        self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
+        self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
+        self.shutdown = rospy.Service('/costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
+        self.servo = rospy.Service('/costar/ServoToPose',ServoToPose,self.servo_to_pose_call)
+        self.plan = rospy.Service('/costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
+        self.smartmove = rospy.Service('/costar/SmartMove',SmartMove,self.smart_move_call)
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
-        self.status_publisher = rospy.Publisher('costar/DriverStatus',String,queue_size=1000)
+        self.status_publisher = rospy.Publisher('/costar/DriverStatus',String,queue_size=1000)
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.robot = URDF.from_parameter_server()

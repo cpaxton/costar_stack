@@ -10,14 +10,14 @@ publishers = []
 
 def joint_traj_pt_cb(msg):
     global publishers
-    print publishers
-    print msg.positions
+    #print publishers
+    #print msg.positions
 
     length = min(len(msg.positions),7)
-    print length
+    #print length
 
     for i in range(0,length):
-        print i
+        #print i
         publishers[i].publish(msg.positions[i])
 
 for i in range(1,8):
