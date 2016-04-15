@@ -19,7 +19,7 @@ These messages are used when reasoning about the environment.
 if __name__ == '__main__':
     rospy.init_node('predicator_fake_class_node')
 
-    spin_rate = rospy.get_param('rate',10)
+    spin_rate = rospy.get_param('rate',1)
     rate = rospy.Rate(spin_rate)
 
     print "starting fake classification node"

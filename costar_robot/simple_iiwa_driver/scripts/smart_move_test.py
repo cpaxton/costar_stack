@@ -12,8 +12,8 @@ from geometry_msgs.msg import Pose
 
 rospy.init_node('test_smart_move_node')
 
-obj_class = "node_uniform" # based on object detection output
-right_of = PredicateStatement(predicate="right_of",params=['*','ar_marker_2','world'])
+obj_class = "node" # based on object detection output
+right_of = PredicateStatement(predicate="left_of",params=['*','world','world'])
 pose = Pose()
 pose.position.x = 0.05
 pose.position.y = -0.35

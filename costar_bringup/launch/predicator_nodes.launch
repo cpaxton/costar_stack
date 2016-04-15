@@ -31,6 +31,9 @@
       - Obj::node_uniform::2
       - Obj::node_uniform::3
       - Obj::node_uniform::4
+      - gbeam_link1/gbeam_link
+      - gbeam_node1/gbeam_node
+      - gbeam_node2/gbeam_node
       - ar_marker_0
       - ar_marker_2
       - world
@@ -58,6 +61,16 @@
           - node_uniform
           - node
           - link
+
+      - name: node_uniform
+        members:
+          - gbeam_node1/gbeam_node
+          - gbeam_node2/gbeam_node
+
+      - name: link_uniform
+        members:
+         - gbeam_link1/gbeam_link
+
     </rosparam>
 
   </node>
