@@ -18,4 +18,23 @@ Image of marker placement in rviz:
 
 ## Simulation
 
+You can easily run the simulation with:
 
+```
+roslaunch costar_bringup iiwa_s_model.launch sim:=true
+```
+
+It may be helpful to launch different components separately:
+```
+roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false # simulation
+roslaunch costar_bringup sim:=true start_sim:=false
+```
+
+## RVIZ
+
+To show a visualization:
+```
+roslaunch costar_bringup rviz.launch
+```
+
+The yellow grid is offset from the camera frame.

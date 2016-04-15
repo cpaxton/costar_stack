@@ -96,8 +96,8 @@ class SimpleIIWADriver:
         if goal_diff < self.max_goal_diff:
             self.at_goal = True
 
-        if not self.at_goal:
-            print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
+        #if not self.at_goal:
+        #    print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
 
 
         #print self.at_goal

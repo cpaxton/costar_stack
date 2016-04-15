@@ -11,7 +11,7 @@ publishers = []
 def joint_traj_pt_cb(msg):
     global publishers
     #print publishers
-    #print msg.positions
+    print msg.positions
 
     length = min(len(msg.positions),7)
     #print length
@@ -25,6 +25,6 @@ for i in range(1,8):
     print 'Adding publisher with name "%s"...'%(pub_name)
     publishers.append(rospy.Publisher(pub_name,Float64,queue_size=1000))
 
-sub = rospy.Subscriber("joint_traj_pt_cmd",JointTrajectoryPoint,joint_traj_pt_cb)
+sub = rospy.Subscriber("/joint_traj_pt_cmd",JointTrajectoryPoint,joint_traj_pt_cb)
 
 rospy.spin()
