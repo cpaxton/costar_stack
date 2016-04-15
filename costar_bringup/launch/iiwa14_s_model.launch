@@ -2,6 +2,7 @@
 
   <arg name="gripper_ip_address" default="172.31.1.146"/>
   <arg name="sim" default="false"/>
+  <arg name="start_sim" default="false"/>
 
   <arg name="start_semi_static" default="false"/>
   <arg name="start_camera" default="true"/>
@@ -16,36 +17,56 @@
   <include file="$(find costar_bringup)/launch/utilities.launch"/>
   <include file="$(find costar_bringup)/launch/predicator_nodes.launch"/>
 
-  <!--<include if="$(arg sim)" file="$(find iiwa_moveit)/-->
-
-  <include if="$(arg sim)" file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch">
-    <remap from="/joint_states" to="/iiwa/joint_states"/>
-  </include>
-  <include unless="$(arg sim)" file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch">
+  <include if="$(arg start_sim)" file="$(find iiwa_gazebo)/launch/iiwa_gazebo.launch">
+    <param name="trajectory" value="false"/>
   </include>
 
-  <!-- Gripper stuff -->
-  <node name="robotiq_s_model_interface" pkg="robotiq_s_model_control" type="SModelTcpNode.py" args="$(arg gripper_ip_address)"/>
-  <node name="simple_s_model_server" pkg="simple_s_model_server" type="simple_server.py"/>
 
-  <include file="$(find costar_bringup)/launch/robotiq_s_model_endpoint.launch">
-    <param name="ee_frame" value="$(arg ee_frame)"/>
-  </include>
+  <group if="$(arg sim)" ns="iiwa">
+    <!-- process high level motion commands -->
+    <include file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch"/>
 
-  <!-- motion planning --> 
-  <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
-    <param name="allow_trajectory_execution" value="false"/>
-  </include>
+    <!-- motion planning --> 
+    <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
+      <param name="allow_trajectory_execution" value="false"/>
+    </include>
+  </group>
 
-  <!-- semi static transform for calibration -->
-  <include if="$(arg start_semi_static)" file="$(find costar_bringup)/launch/semi_static.launch"/>
+  <group unless="$(arg sim)">
+    <!-- process high level motion commands -->
+    <include file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch"/>
 
-  <!-- camera stuff -->
-  <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
-    <param name="start_alvar" value="$(arg start_alvar)"/>
-    <param name="table_frame" value="$(arg table_frame)"/>
-  </include>
+    <!-- motion planning --> 
+    <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
+      <param name="allow_trajectory_execution" value="false"/>
+    </include>
+  </group>
 
-  <include file="$(find simple_s_model_server)/launch/s_model.launch"/>
+  <group unless="$(arg sim)">
+
+    <!-- start up the camera -->
+    <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
+      <param name="start_alvar" value="$(arg start_alvar)"/>
+      <param name="table_frame" value="$(arg table_frame)"/>
+    </include>
+
+    <!-- gripper bringup: connect to s model via TCP/IP -->
+    <node name="robotiq_s_model_interface" pkg="robotiq_s_model_control" type="SModelTcpNode.py" args="$(arg gripper_ip_address)"/>
+    <include file="$(find costar_bringup)/launch/robotiq_s_model_endpoint.launch">
+      <param name="ee_frame" value="$(arg ee_frame)"/>
+    </include>
+    <node name="simple_s_model_server" pkg="simple_s_model_server" type="simple_server.py"/>
+    <include file="$(find simple_s_model_server)/launch/s_model.launch"/>
+
+  </group>
+  <group if="$(arg sim)">
+
+    <!-- start gripper server anyway, just don't connect it -->
+    <node name="simple_s_model_server" pkg="simple_s_model_server" type="simple_server.py"/>
+    <include file="$(find simple_s_model_server)/launch/s_model.launch"/>
+
+
+  </group>
+
 
 </launch>

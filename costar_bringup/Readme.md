@@ -15,3 +15,7 @@ Image of marker placement in the robot:
 Image of marker placement in rviz:
 
 [RVIZ image](https://git.lcsr.jhu.edu/cpaxton3/costar_stack/raw/master/costar_bringup/doc/marker_in_hand_rviz.png)
+
+## Simulation
+
+

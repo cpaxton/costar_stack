@@ -65,7 +65,7 @@ class SimpleIIWADriver:
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.robot = URDF.from_parameter_server()
-        self.js_subscriber = rospy.Subscriber('/joint_states',JointState,self.js_cb)
+        self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
 
