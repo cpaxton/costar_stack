@@ -26,6 +26,9 @@
     <!-- process high level motion commands -->
     <include file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch"/>
 
+    <!-- listen to joints and send them to simulation -->
+    <node name="iiwa_simulation_publisher" type="iiwa_simulation_controller.py" pkg="costar_bringup"/>
+
     <!-- motion planning --> 
     <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
       <param name="allow_trajectory_execution" value="false"/>

@@ -21,7 +21,7 @@ def joint_traj_pt_cb(msg):
         publishers[i].publish(msg.positions[i])
 
 for i in range(1,8):
-    pub_name = "/iiwa/PositionJointInterface_J%d_controller/command"%(i)
+    pub_name = "PositionJointInterface_J%d_controller/command"%(i)
     print 'Adding publisher with name "%s"...'%(pub_name)
     publishers.append(rospy.Publisher(pub_name,Float64,queue_size=1000))
 
