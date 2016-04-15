@@ -37,4 +37,22 @@
 # Copyright (c) 2012, Robotiq, Inc.
 # Revision $Id$
 
+import rospy
+from robotiq_c_model_control.msg import _CModel_robot_input as inputMsg
+from predicator_msgs.msg import *
 
+class CModelPredicator:
+
+    def __init__(self, independent_node=True,gripper_name='c_model'):
+
+        self.valid_predicates = ValidPredicates(assignments=[gripper_name],predicates=['gripper_open','gripper_closed','gripper_moving','contact'])
+        self.predicate_msg = PredicateList()
+        self.gripper_name = gripper_name
+
+        if independent_node:
+            # create predicator things
+            self.sub = rospy.Subscriber("CModelRobotInput",inputMsg,self.callback)
+            self.pub = rospy.Publisher("predicator/input",PredicateList,queue_size=1000)
+            self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
+
+        self.name = rospy.get_name()

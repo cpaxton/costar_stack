@@ -38,8 +38,7 @@
 # Revision $Id$
 
 import rospy
-from robotiq_s_model_control.msg import _SModel_robot_ouput as outputMsg
-from robotiq_s_model_control.msg import _SModel_robot_input as inputMsg
+from robotiq_s_model_control.msg import SModel_robot_input  as inputMsg
 from predicator_msgs.msg import *
 
 class SModelPredicator:
@@ -58,11 +57,14 @@ class SModelPredicator:
             self.pub = rospy.Publisher("predicator/input",PredicateList,queue_size=1000)
             self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
 
+        self.name = rospy.get_name()
+
     def callback(self, msg):
         self.handle(msg)
 
     def handle(self,status):
         self.predicate_msg = PredicateList()
+        self.predicate_msg.pheader.source = self.name
         if(status.gACT == 0):
             # gripper reset
             pass
@@ -78,9 +80,11 @@ class SModelPredicator:
         elif(status.gMOD == 3):
             self.addPredicate('gripper_scissor_mode')
 
-        if (status.gGTO == 1) "going to position (GOTO command)"
-        or (status.gIMC == 2) "mode change in progress"
-        or (status.gSTA == 0) "in motion towards position" :
+        if ((status.gGTO == 1) # going to position (GOTO command)
+            or (status.gIMC == 2) # mode change in progress
+            or (status.gSTA == 0) # in motion towards position
+            ):
+
             self.addPredicate('gripper_moving')
         
         contact = False
@@ -91,22 +95,23 @@ class SModelPredicator:
             self.addPredicate('finger_b_contact')
             contact = True
         if (status.gDTC == 1 or status.gDTC == 2):
+
             self.addPredicate('finger_c_contact')
             contact = True
 
         if contact:
             self.addPredicate('any_finger_contact')
 
-        if (status.gDTA >= 2 and status.gDTB >= 2 and status.gDTC >= 2 and status.gPRA >= 250) "fingers closed or stopped closing"
-        or (status.gDTS >=2 and status.gPRA >= 250) "scissor closing":
-            self.addPredicate('gripper_closed')
+        if ((status.gDTA >= 2 and status.gDTB >= 2 and status.gDTC >= 2 and status.gPRA >= 250) # fingers closed or stopped closing
+            or (status.gDTS >=2 and status.gPRA >= 250) #scissor closing
+            ):
 
-        
+            self.addPredicate('gripper_closed')   
 
     '''
     add a single message
     '''
-    def addPredicate(self,predicate)
+    def addPredicate(self,predicate):
         p = PredicateStatement(predicate=predicate,params=[self.gripper_name,'',''])
         self.predicate_msg.predicates.append(p)
         

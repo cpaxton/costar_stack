@@ -12,7 +12,7 @@ from geometry_msgs.msg import Pose
 
 rospy.init_node('test_smart_move_node')
 
-obj_class = "node" # based on object detection output
+obj_class = "node_uniform" # based on object detection output
 right_of = PredicateStatement(predicate="left_of",params=['*','world','world'])
 pose = Pose()
 pose.position.x = 0.05
@@ -38,3 +38,8 @@ req.pose = pose
 print req
 
 print driver.smart_move_call(req)
+
+rate = rospy.Rate(10)
+while not rospy.is_shutdown():
+    swm.update_tf()
+    rate.sleep()
