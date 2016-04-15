@@ -22,7 +22,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 class SimplePlanning:
     
-    def __init__(self,robot,base_link,end_link,group,move_group_ns="/move_group",planning_scene_topic="/planning_scene",robot_ns="",verbose=False, kdl_kin=None):
+    def __init__(self,robot,base_link,end_link,group,move_group_ns="move_group",planning_scene_topic="planning_scene",robot_ns="",verbose=False, kdl_kin=None):
         self.robot = robot
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
@@ -98,7 +98,10 @@ class SimplePlanning:
 
     def getGoalConstraints(self, frame, q, timeout=2.0):
 
-        srv = rospy.ServiceProxy(self.robot_ns + "/compute_ik", moveit_msgs.srv.GetPositionIK)
+        if len(self.robot_ns) > 0:
+            srv = rospy.ServiceProxy(self.robot_ns + "/compute_ik", moveit_msgs.srv.GetPositionIK)
+        else:
+            srv = rospy.ServiceProxy("compute_ik", moveit_msgs.srv.GetPositionIK)
 
         p = geometry_msgs.msg.PoseStamped()
         p.pose.position.x = frame.position.x
