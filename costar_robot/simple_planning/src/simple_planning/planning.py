@@ -135,16 +135,17 @@ class SimplePlanning:
 
         goal = Constraints()
 
-        for i in range(0,len(ik_resp.solution.joint_state.name)):
-            #print ik_resp.solution.joint_state.name[i]
-            #print ik_resp.solution.joint_state.position[i]
-            joint = JointConstraint()
-            joint.joint_name = ik_resp.solution.joint_state.name[i]
-            joint.position = ik_resp.solution.joint_state.position[i] 
-            joint.tolerance_below = 0.005
-            joint.tolerance_above = 0.005
-            joint.weight = 1.0
-            goal.joint_constraints.append(joint)
+        if not ik_resp.error_code.val < 0:
+            for i in range(0,len(ik_resp.solution.joint_state.name)):
+                #print ik_resp.solution.joint_state.name[i]
+                #print ik_resp.solution.joint_state.position[i]
+                joint = JointConstraint()
+                joint.joint_name = ik_resp.solution.joint_state.name[i]
+                joint.position = ik_resp.solution.joint_state.position[i] 
+                joint.tolerance_below = 0.005
+                joint.tolerance_above = 0.005
+                joint.weight = 1.0
+                goal.joint_constraints.append(joint)
 
         return (ik_resp, goal)
 
@@ -154,7 +155,7 @@ class SimplePlanning:
         planning_options.plan_only = False
         planning_options.replan = False
         planning_options.replan_attempts = 0
-        planning_options.replan_delay = 2.0
+        planning_options.replan_delay = 0.1
         planning_options.planning_scene_diff.is_diff = True
         planning_options.planning_scene_diff.robot_state.is_diff = True
 
@@ -182,8 +183,7 @@ class SimplePlanning:
         motion_req.allowed_planning_time = 4.0
         motion_req.planner_id = "RRTstarkConfigDefault"
         
-        if len(motion_req.goal_constraints[0].joint_constraints) == 0
-        or ik_resp.error_code.val < 0:
+        if len(motion_req.goal_constraints[0].joint_constraints) == 0 or ik_resp.error_code.val < 0:
             return None
 
         goal = MoveGroupGoal()
