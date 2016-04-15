@@ -38,7 +38,7 @@
 # Revision $Id$
 
 import rospy
-from robotiq_c_model_control.msg import _CModel_robot_input as inputMsg
+from robotiq_c_model_control.msg import CModel_robot_input as inputMsg
 from predicator_msgs.msg import *
 
 class CModelPredicator:
