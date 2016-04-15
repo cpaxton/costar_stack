@@ -58,7 +58,7 @@ class SimplePlanning:
     '''
     TODO: finish this
     '''
-    def getCartesianMove(self, frame, q0, steps=10, steps_per_meter=10, vel=1):
+    def getCartesianMove(self, frame, q0, base_steps=10, steps_per_meter=10, vel=1):
 
       # interpolate between start and goal
       pose = pm.fromMatrix(self.kdl_kin.forward(q0))
@@ -69,12 +69,11 @@ class SimplePlanning:
       goal_rpy = np.array(frame.M.GetRPY())
       goal_xyz = np.array(frame.p)
 
+
+      steps = base_steps + int((pose.p - frame.p).Norm() * steps_per_meter)
+      print steps
+
       ts = (pose.p - frame.p).Norm() / steps
-
-      print steps
-      steps += int((pose.p - frame.p).Norm() * steps_per_meter)
-      print steps
-
       traj = JointTrajectory()
 
       # compute IK
@@ -94,6 +93,9 @@ class SimplePlanning:
           traj.points.append(pt)
           q0 = q
         elif i == steps:
+          return JointTrajectory()
+
+      if len(traj.points) < base_steps:
           return JointTrajectory()
 
       return traj
