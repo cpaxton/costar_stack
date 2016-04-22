@@ -269,10 +269,10 @@ class SimpleIIWADriver:
         rate = rospy.Rate(30)
 
         # wait until robot is at goal
-        while not self.at_goal:
-            if (rospy.Time.now() - start_t).to_sec() > 10:
-                return 'FAILED - timeout'
-            rate.sleep()
+        #while not self.at_goal:
+        #    if (rospy.Time.now() - start_t).to_sec() > 10:
+        #        return 'FAILED - timeout'
+        #    rate.sleep()
 
         return 'SUCCESS - moved to pose'
 
