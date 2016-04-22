@@ -58,7 +58,7 @@ class SimplePlanning:
     '''
     TODO: finish this
     '''
-    def getCartesianMove(self, frame, q0, base_steps=10, steps_per_meter=10, vel=1):
+    def getCartesianMove(self, frame, q0, base_steps=100, steps_per_meter=100, vel=1):
 
       # interpolate between start and goal
       pose = pm.fromMatrix(self.kdl_kin.forward(q0))
@@ -92,7 +92,7 @@ class SimplePlanning:
           pt.time_from_start = rospy.Duration(i * ts)
           traj.points.append(pt)
           q0 = q
-        elif i == steps:
+        else: # i == steps:
           return JointTrajectory()
 
       if len(traj.points) < base_steps:
