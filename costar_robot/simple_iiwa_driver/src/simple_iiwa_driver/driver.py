@@ -53,6 +53,7 @@ class SimpleIIWADriver:
         self.goal_rotation_weight = goal_rotation_weight
 
         self.at_goal = True
+        self.near_goal = True
         self.moving = False
         self.q0 = [0,0,0,0,0,0,0]
         self.old_q0 = [0,0,0,0,0,0,0]
@@ -101,6 +102,9 @@ class SimpleIIWADriver:
         if goal_diff < self.max_goal_diff:
             self.at_goal = True
 
+        if goal_diff < 10*self.max_goal_diff:
+            self.near_goal = True
+
         q_diff = np.abs(self.old_q0 - self.q0).sum()
 
         if q_diff < self.max_q_diff:
@@ -108,7 +112,7 @@ class SimpleIIWADriver:
         else:
             self.moving = True
 
-        print "moving=%s, at goal=%s, diff=%s"%(str(self.moving),str(self.at_goal),str(q_diff))
+        #print "moving=%s, at goal=%s, diff=%s"%(str(self.moving),str(self.at_goal),str(q_diff))
 
 
         #if not self.at_goal:
@@ -214,6 +218,8 @@ class SimpleIIWADriver:
             return msg
 
     def set_goal(self,q):
+        self.at_goal = False
+        self.near_goal = False
         self.goal = pm.fromMatrix(self.kdl_kin.forward(q))
 
     '''
@@ -265,23 +271,29 @@ class SimpleIIWADriver:
     that is listening to individual joint states.
     '''
     def send_trajectory(self,traj):
+
+        rate = rospy.Rate(30)
         t = rospy.Time(0)
 
         for pt in traj.points[:-1]:
           self.pt_publisher.publish(pt)
+          self.set_goal(pt.positions)
 
           print " -- %s"%(str(pt.positions))
+          start_t = rospy.Time.now()
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
 
+          while not self.near_goal:
+            if True or (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
+                break
+            rate.sleep()
+
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
         self.pt_publisher.publish(traj.points[-1])
-        self.at_goal = False
         self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
-
-        rate = rospy.Rate(30)
 
         # wait until robot is at goal
         while self.moving:
@@ -303,14 +315,12 @@ class SimpleIIWADriver:
         for q in traj:
             pt = JointTrajectoryPoint(positions=q)
             self.pt_publisher.publish(pt)
-            self.at_goal = False
             self.set_goal(q)
 
             #rospy.sleep(0.9*np.sqrt(np.sum((q-q0)**2)))
 
         if len(traj) > 0:
             self.pt_publisher.publish(pt)
-            self.at_goal = False
             self.set_goal(traj[-1])
             rate = rospy.Rate(10)
             start_t = rospy.Time.now()
