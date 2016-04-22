@@ -32,7 +32,8 @@ class SimpleIIWADriver:
             max_acc=1,
             max_vel=1,
             max_goal_diff = 0.02,
-            goal_rotation_weight = 0.1):
+            goal_rotation_weight = 0.1,
+            max_q_diff = 1e-6):
 
         base_link = 'iiwa_link_0'
         end_link = 'iiwa_link_ee'
@@ -48,10 +49,13 @@ class SimpleIIWADriver:
         self.traj_step_t = traj_step_t
 
         self.max_goal_diff = max_goal_diff
+        self.max_q_diff = max_q_diff
         self.goal_rotation_weight = goal_rotation_weight
 
         self.at_goal = True
+        self.moving = False
         self.q0 = [0,0,0,0,0,0,0]
+        self.old_q0 = [0,0,0,0,0,0,0]
 
         self.teach_mode = rospy.Service('costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
@@ -85,6 +89,7 @@ class SimpleIIWADriver:
         self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group)
 
     def js_cb(self,msg):
+        self.old_q0 = self.q0
         self.q0 = np.array(msg.position)
         self.ee_pose = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
@@ -96,8 +101,18 @@ class SimpleIIWADriver:
         if goal_diff < self.max_goal_diff:
             self.at_goal = True
 
-        if not self.at_goal:
-            print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
+        q_diff = np.abs(self.old_q0 - self.q0).sum()
+
+        if q_diff < self.max_q_diff:
+            self.moving = False
+        else:
+            self.moving = True
+
+        print "moving=%s, at goal=%s, diff=%s"%(str(self.moving),str(self.at_goal),str(q_diff))
+
+
+        #if not self.at_goal:
+        #    print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
 
 
         #print self.at_goal
@@ -122,7 +137,7 @@ class SimpleIIWADriver:
 
         if False and not self.driver_status == 'SERVO':
             rospy.logerr('DRIVER -- Not in servo mode!')
-            return 'FAILED - not in servo mode'
+            return 'FAILURE - not in servo mode'
 
         (acceleration, velocity) = self.check_req_speed_params(req) 
         (poses,names) = self.get_waypoints_srv.get_waypoints(
@@ -138,7 +153,7 @@ class SimpleIIWADriver:
         print poses
 
         if not poses is None:
-            msg = 'FAILED - no valid objects found!'
+            msg = 'FAILURE - no valid objects found!'
             qs = []
             dists = []
             for (pose,name) in zip(poses,names):
@@ -179,7 +194,7 @@ class SimpleIIWADriver:
                     rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
 
             if len(qs) == 0:
-                msg = 'FAILED - no joint configurations found!'
+                msg = 'FAILURE - no joint configurations found!'
 
             possible_goals = zip(dists,qs)
             possible_goals.sort()
@@ -195,7 +210,7 @@ class SimpleIIWADriver:
             return msg
 
         else:
-            msg = 'FAILED - no match to predicate moves'
+            msg = 'FAILURE - no match to predicate moves'
             return msg
 
     def set_goal(self,q):
@@ -239,10 +254,10 @@ class SimpleIIWADriver:
             else:
                 rospy.logerr(res)
                 rospy.logerr('DRIVER -- PLANNING failed')
-                return 'FAILED - not in servo mode'
+                return 'FAILURE - not in servo mode'
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
-            return 'FAILED - not in servo mode'
+            return 'FAILURE - not in servo mode'
 
 
     '''
@@ -269,12 +284,15 @@ class SimpleIIWADriver:
         rate = rospy.Rate(30)
 
         # wait until robot is at goal
-        #while not self.at_goal:
-        #    if (rospy.Time.now() - start_t).to_sec() > 10:
-        #        return 'FAILED - timeout'
-        #    rate.sleep()
+        while self.moving:
+            if (rospy.Time.now() - start_t).to_sec() > 10:
+                return 'FAILURE - timeout'
+            rate.sleep()
 
-        return 'SUCCESS - moved to pose'
+        if self.at_goal:
+            return 'SUCCESS - moved to pose'
+        else:
+            return 'FAILURE - did not reach destination'
 
     '''
     Send a whole sequence of points to a robot...
@@ -300,7 +318,7 @@ class SimpleIIWADriver:
             # wait until robot is at goal
             while not self.at_goal:
                 if (rospy.Time.now() - start_t).to_sec() > 10:
-                    return 'FAILED - timeout'
+                    return 'FAILURE - timeout'
                 rate.sleep()
 
             return 'SUCCESS - moved to pose'
@@ -333,10 +351,10 @@ class SimpleIIWADriver:
                 return self.send_trajectory(traj)
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
-                return 'FAILED - not in servo mode'
+                return 'FAILURE - not in servo mode'
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
-            return 'FAILED - not in servo mode'
+            return 'FAILURE - not in servo mode'
 
     '''
     set teach mode
