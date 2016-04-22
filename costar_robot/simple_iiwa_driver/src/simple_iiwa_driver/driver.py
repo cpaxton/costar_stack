@@ -32,7 +32,7 @@ class SimpleIIWADriver:
             max_acc=1,
             max_vel=1,
             max_goal_diff = 0.02,
-            goal_rotation_weight = 0.1,
+            goal_rotation_weight = 0.01,
             max_q_diff = 1e-6):
 
         base_link = 'iiwa_link_0'
@@ -286,7 +286,7 @@ class SimpleIIWADriver:
           t = pt.time_from_start
 
           while not self.near_goal:
-            if True or (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
+            if (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
                 break
             rate.sleep()
 
@@ -296,8 +296,9 @@ class SimpleIIWADriver:
         start_t = rospy.Time.now()
 
         # wait until robot is at goal
-        while self.moving:
-            if (rospy.Time.now() - start_t).to_sec() > 10:
+        #while self.moving:
+        while not self.at_goal:
+            if (rospy.Time.now() - start_t).to_sec() > 3:
                 return 'FAILURE - timeout'
             rate.sleep()
 
