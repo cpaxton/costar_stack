@@ -125,7 +125,15 @@ void semanticSegmentation::initializeSemanticSegmentation()
     std::cerr << "Node is running with objRecRANSACdetector: " << objRecRANSACdetector << "\n";
     
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
-    nh.param("pairWidth", pairWidth, 0.05);
+    // nh.param("pairWidth", pairWidth, 0.05);
+
+    double link_width = 0.075;
+    double node_width = 0.05;
+    double sander_width = 0.16;
+    nh.param("link_width", link_width,  0.075);
+    nh.param("node_width", node_width,  0.05);
+    nh.param("sander_width", sander_width, 0.16);
+
     if (!useTFinsteadOfPoses) {
         std::cerr << "Node publish pose array.\n";
         pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
@@ -194,7 +202,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
             else 
             {
                 std::cerr << "General Class!!!" << std::endl;
-                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.1, voxelSize));
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.16, voxelSize));
                 objrec[model_id]->setParams(0.2,0.2);
             }
 
@@ -361,7 +369,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         for( int ll = 0 ; ll <= 1 ; ll++ )
         {
             bool reset_flag = ll == 0 ? true : false;
-            if( ll >= 1 )
+            if( ll >= 0 )
                 triple_pooler.extractForeground(false);
             triple_pooler.InputSemantics(binary_models[ll], ll, reset_flag, false);
         }
@@ -374,9 +382,16 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     // if has useMultiSVM flag and has more than one objects, do multi object classification
     if (useMultiClassSVM && mesh_set.size() > 1)
     {
-        for( int ll = 0 ; ll <= 0 ; ll++ )
+        // ll means order of superpixels for classification
+        // right now I only provide ll=0,1,2 for classification, 
+        // specify the starting order by sll and ending order by ell
+        // the larger order you use will increase the running time of semantic segmentation
+        // recommend to use 1 by default for link-node-sander classification
+        // recommend to use 0 by default for link-node classification
+        int sll = 1, ell = 1;
+        for( int ll = sll ; ll <= ell ; ll++ )
         {
-           bool reset_flag = ll == 0 ? true : false;
+           bool reset_flag = ll == sll ? true : false;
            triple_pooler.InputSemantics(multi_models[ll], ll, reset_flag, false);
         }
         pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
@@ -468,7 +483,8 @@ bool semanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
     std::string tableTFname, tableTFparent;
     nh.param("tableTF", tableTFname,std::string("/tableTF"));
     
-    listener->getParent(tableTFname,ros::Time(0),tableTFparent);
+    //listener->getParent(tableTFname,ros::Time(0),tableTFparent);
+    tableTFparent = pc.header.frame_id;
     if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
     {
         std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;

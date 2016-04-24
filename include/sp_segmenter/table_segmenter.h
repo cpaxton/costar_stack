@@ -103,7 +103,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
         hull.setDimension(2);
         hull.reconstruct(*convexHull);
     }
-    else std::cerr << "Fail to segment Table.\n";
+    else std::cerr << "Failed to segment Table.\n";
     return convexHull;
 }
 

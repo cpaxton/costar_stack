@@ -16,7 +16,10 @@
        TRADEOFF: Smaller values allow for detection in occluded scenes but lead
        to more imprecise alignment.  Bigger values lead to better alignment but
        require large visible object parts. -->
-  <arg name="pairWidth"      default="0.05" />
+  <!-- <arg name="pairWidth"      default="0.05" /> -->
+  <arg name="link_width"        default="0.075" />
+  <arg name="node_width"        default="0.05" />
+  <arg name="sander_width"      default="0.16" />
 
   <!-- Voxel size is the size of the leafs of the octree, i.e., the "size" of
        the discretization. TRADEOFF: High values lead to less computation time
@@ -107,7 +110,10 @@
     <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
     <param name="POINTS_OUT" type="str" value="$(arg pcl_out)"/>
     <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
-    <param name="pairWidth"  type="double" value="$(arg pairWidth)"/>
+    <!-- <param name="pairWidth"  type="double" value="$(arg pairWidth)"/> -->
+    <param name="link_width"  type="double" value="$(arg link_width)"/>
+    <param name="node_width"  type="double" value="$(arg node_width)"/>
+    <param name="sander_width"  type="double" value="$(arg sander_width)"/>
 
     <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
     <param name="useTF"      type="bool" value="$(arg useTF)" />
