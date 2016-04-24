@@ -288,6 +288,7 @@ class SimpleIIWADriver:
           start_t = rospy.Time.now()
 
 	  if self.cur_stamp > stamp:
+            rospy.logerr('preemption')
             return 'FAILURE - preempted'
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
