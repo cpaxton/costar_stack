@@ -1,4 +1,6 @@
 #include "sp_segmenter/semanticSegmentation.h"
+#include <pcl/filters/crop_box.h>
+#include <tf_conversions/tf_eigen.h>
 
 semanticSegmentation::semanticSegmentation(int argc, char** argv) : useTableSegmentation(true)
 {
@@ -73,6 +75,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         {128, 0, 255},
     };
     std::copy(&color_label_tmp[0][0], &color_label_tmp[0][0]+11*3,&color_label[0][0]);
+    double cropBoxX, cropBoxY, cropBoxZ;
     
     this->nh.param("useTF",useTFinsteadOfPoses,true);
     this->nh.param("GripperTF",gripperTF,std::string("endpoint_marker"));
@@ -87,6 +90,10 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->haveTable = false;
     this->nh.param("loadTable",loadTable, true);
     this->nh.param("useTableSegmentation",useTableSegmentation,true);
+    this->nh.param("useCropBox",useCropBox,true);
+    this->nh.param("cropBoxX",cropBoxX,1.0);
+    this->nh.param("cropBoxY",cropBoxY,1.0);
+    this->nh.param("cropBoxZ",cropBoxZ,1.0);
     this->nh.param("setObjectOrientation",setObjectOrientationTarget,false);
     this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
     this->nh.param("useBinarySVM",useBinarySVM,false);
@@ -94,7 +101,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("useMedianFilter",use_median_filter,true);
     this->nh.param("enableTracking",enableTracking,false);
   
-  
+    crop_box_size = Eigen::Vector3f(cropBoxX, cropBoxY, cropBoxZ);
     tableConvexHull = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
     
     lab_pooler_set.resize(6);
@@ -281,6 +288,21 @@ semanticSegmentation::~semanticSegmentation(){
     }
 }
 
+void semanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
+  const Eigen::Affine3f& camera_tf_in_table, 
+  const Eigen::Vector3f& box_size)
+{
+  pcl::PointCloud<PointT>::Ptr  cropped_cloud(new pcl::PointCloud<PointT>());
+  pcl::CropBox<PointT> crop_box;
+
+  crop_box.setInputCloud(cloud_input);
+  crop_box.setMax(box_size.homogeneous());
+  crop_box.setMin((-box_size).homogeneous());
+  crop_box.setTransform(camera_tf_in_table);
+  crop_box.filter(*cropped_cloud);
+  cloud_input = cropped_cloud;
+}
+
 void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
 {
     if (!classReady) return;
@@ -303,9 +325,20 @@ void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCl
     if (useTableSegmentation) {
       segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
     }
-    
+
     if (full_cloud->size() < 1){
         std::cerr << "No cloud available after removing all object outside the table.\nPut some object above the table.\n";
+        return;
+    }
+
+    if(useCropBox) {
+      Eigen::Affine3d cam_tf_in_table;
+      tf::transformTFToEigen(table_transform.inverse(), cam_tf_in_table);
+      cropPointCloud(full_cloud, cam_tf_in_table.cast<float>(), crop_box_size);
+    }
+    
+    if (full_cloud->size() < 1){
+        std::cerr << "No cloud available after cropping.\n";
         return;
     }
     
@@ -488,13 +521,12 @@ bool semanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
     if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
     {
         std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
-        tf::StampedTransform transform;
-        listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),transform);
+        listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),table_transform);
         pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
         
         fromROSMsg(inputCloud,*full_cloud);
         std::cerr << "PCL organized: " << full_cloud->isOrganized() << std::endl;
-        volumeSegmentation(full_cloud,transform,0.5);
+        volumeSegmentation(full_cloud,table_transform,0.5);
         tableConvexHull = getTableConvexHull(full_cloud);
         if (tableConvexHull->size() < 10) {
             std::cerr << "Retrying table segmentation...\n";
@@ -687,6 +719,17 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     
     if (full_cloud->size() < 1){
         ROS_ERROR("No cloud available after removing all object outside the table. Put objects above the table.");
+        return false;
+    }
+
+    if(useCropBox) {
+      Eigen::Affine3d cam_tf_in_table;
+      tf::transformTFToEigen(table_transform.inverse(), cam_tf_in_table);
+      cropPointCloud(full_cloud, cam_tf_in_table.cast<float>(), crop_box_size);
+    }
+
+    if (full_cloud->size() < 1){
+        ROS_ERROR("No cloud available after cropping.");
         return false;
     }
     

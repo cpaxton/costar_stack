@@ -40,6 +40,7 @@
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
 
   <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>
+  <arg name="useCropBox" default="true" doc="use crop box based on table center."/>
 
   <!-- sceneVisibility aka Relative object size is the expected fraction of the scene points
        which belong to an object. For example a value of 0.05 means that each
@@ -91,6 +92,10 @@
     <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
     <param name="use_cuda"   type="bool"   value="$(arg use_cuda)"/>
     <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
+    <param name="useCropBox" type="bool" value="$(arg useCropBox)"/>
+    <param name="cropBoxX" type="double" value="1"/>
+    <param name="cropBoxY" type="double" value="1"/>
+    <param name="cropBoxZ" type="double" value="1"/>
     
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />

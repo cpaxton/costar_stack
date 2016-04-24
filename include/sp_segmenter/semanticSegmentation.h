@@ -108,6 +108,10 @@ private:
 
     boost::shared_ptr<Tracker> tracker;
     bool enableTracking;
+    
+    bool useCropBox;
+    tf::StampedTransform table_transform;
+    Eigen::Vector3f crop_box_size;
 
    
 protected:
@@ -117,6 +121,9 @@ protected:
     void updateCloudData (const sensor_msgs::PointCloud2 &pc);
     void initializeSemanticSegmentation();
     void populateTFMapFromTree();
+    void cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
+      const Eigen::Affine3f& camera_tf_in_table, 
+      const Eigen::Vector3f& box_size);
 public:
     semanticSegmentation(int argc, char** argv);
     semanticSegmentation(int argc, char** argv, const ros::NodeHandle &nh);
