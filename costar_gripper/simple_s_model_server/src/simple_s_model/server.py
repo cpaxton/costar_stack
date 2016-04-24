@@ -66,6 +66,8 @@ class SimpleSModelServer:
         self.activated = True;
 
         self.activate()
+	self.open_gripper()
+	self.basic_mode()
 
     def activate(self,msg=None):
         self.command = getDefaultMsg()
