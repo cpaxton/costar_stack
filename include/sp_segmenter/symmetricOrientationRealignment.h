@@ -89,18 +89,51 @@ void realignOrientation (Eigen::Matrix3f &rotMatrix, const objectSymmetry &objec
     //    std::cerr << "Rotate axis" << axisToRotate << " : " << angle * 180 / pi << " -> " << std::round(angle/objectLimit) * objectLimit * 180 / pi <<std::endl;
 }
 
+
 template <typename numericType>
 Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion<numericType> &q_from_pose, const objectSymmetry &object)
 {
+    const double pi = boost::math::constants::pi<double>();
+    Eigen::Matrix3f symmetricOffset;
+    Eigen::Quaternion<numericType> minQuaternion;
+    // std::cout << ceil(2*pi / object.roll) << ", " << 
+    //     ceil(2*pi / object.yaw) << ", " << 
+    //     ceil(2*pi / object.roll) << ", ";
+    double minAngle = 100;
+    for (unsigned int i = 0; i < ceil(2*pi / object.roll); i++)
+        for (unsigned int j = 0; j < ceil(2*pi / object.pitch); j++)
+            for (unsigned int k = 0; k < ceil(2*pi / object.yaw); k++)
+            {
+                symmetricOffset =  Eigen::Matrix3f::Identity()
+                    * Eigen::AngleAxisf(i * object.yaw, Eigen::Vector3f::UnitZ())
+                    * Eigen::AngleAxisf(j * object.pitch, Eigen::Vector3f::UnitY())
+                    * Eigen::AngleAxisf(k * object.roll, Eigen::Vector3f::UnitX());
+                Eigen::Quaternion<numericType> rotatedInputQuaternion = q_from_pose * Eigen::Quaternion<float>(symmetricOffset);
+                if (minAngle > rotatedInputQuaternion.angularDistance(Eigen::Quaternion<float>::Identity())) 
+                {
+                    minAngle = rotatedInputQuaternion.angularDistance(Eigen::Quaternion<float>::Identity ());
+                    minQuaternion = rotatedInputQuaternion;
+                    // std::cout << "Found better matrix with angular distance: " << minAngle * 180 / pi << std::endl;
+                }
+            }
+    std::cout << "Best rotation matrix: \n" << minQuaternion.matrix() << std::endl;
+    // std::cout << "Best angular Distance:" << minQuaternion.angularDistance(Eigen::Quaternion<float>::Identity()) << std::endl;
+    
+    return minQuaternion;
+}
+
+template <typename numericType>
+Eigen::Quaternion<numericType> normalizeModelOrientationRPY(const Eigen::Quaternion<numericType> &q_from_pose, const objectSymmetry &object)
+{
     float yaw,pitch,roll;
     Eigen::Matrix3f rotMatrix = q_from_pose.toRotationMatrix();
-    // std::cerr << "Initial Rot Matrix: \n" << rotMatrix << std::endl;
+    std::cerr << "Initial Rot Matrix: \n" << rotMatrix << std::endl;
   
-    // double pi = boost::math::constants::pi<double>();
+    double pi = boost::math::constants::pi<double>();
   
     //convert to euler angle
     Eigen::Vector3f ea = rotMatrix.eulerAngles(2,1,0);
-    // std::cerr << "RPY: "<< ea * 180/pi << std::endl;
+    std::cerr << "RPY: "<< ea * 180/pi << std::endl;
     roll = std::round(ea[2]/object.roll) * object.roll;
     pitch = std::round(ea[1]/object.pitch) * object.pitch;
     yaw = std::round(ea[0]/object.yaw) * object.yaw;
@@ -108,15 +141,15 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
     rotMatrix = rotMatrix * Eigen::AngleAxisf(- roll, Eigen::Vector3f::UnitX())
     * Eigen::AngleAxisf(- pitch, Eigen::Vector3f::UnitY())
     * Eigen::AngleAxisf(- yaw, Eigen::Vector3f::UnitZ());
-    // std::cerr << "Undo RPY Rot Matrix: \n" << rotMatrix << std::endl;
+    std::cerr << "Corrected RPY Rot Matrix: \n" << rotMatrix << std::endl;
   
     ea = rotMatrix.eulerAngles(2,1,0);
-    // std::cerr << "Final RPY: "<< ea * 180/pi << std::endl;
+    std::cerr << "Final RPY: "<< ea * 180/pi << std::endl;
   
     //  realign again with different method to remove the effect of euler angle singularity
-    realignOrientation(rotMatrix, object, 2);
+    // realignOrientation(rotMatrix, object, 2);
     //    std::cerr << "Realign z Rot Matrix: \n" << rotMatrix << std::endl;
-    realignOrientation(rotMatrix, object, 1);
+    // realignOrientation(rotMatrix, object, 1);
     //    std::cerr << "Realign y Rot Matrix: \n" << rotMatrix << std::endl;
     return Eigen::Quaternion<numericType>(rotMatrix);
 }
@@ -154,6 +187,7 @@ void normalizeAllModelOrientation (std::vector<poseT> &all_poses, const Eigen::Q
   for (unsigned int i = 0; i < all_poses.size(); i++)
   {
     // std::cerr << "Rot"<< i <<" before normalization: \n" << all_poses[i].rotation.toRotationMatrix() << std::endl;
+    std::cerr << "Object name: " << all_poses[i].model_name << std::endl;
     all_poses[i].rotation = normalizeModelOrientation(all_poses[i].rotation, normalOrientation, objectDict.find(all_poses[i].model_name)->second);
     // std::cerr << "Rot"<< i <<" after normalization: \n" << all_poses[i].rotation.toRotationMatrix() << std::endl;
   }

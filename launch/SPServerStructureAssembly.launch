@@ -115,7 +115,7 @@
     <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
     <param name="POINTS_OUT" type="str" value="$(arg pcl_out)"/>
     <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
-    <!-- <param name="pairWidth"  type="double" value="$(arg pairWidth)"/> -->
+    <!-- param name="pairWidth"  type="double" value="$(arg pairWidth)"/ -->
     <param name="link_width"  type="double" value="$(arg link_width)"/>
     <param name="node_width"  type="double" value="$(arg node_width)"/>
     <param name="sander_width"  type="double" value="$(arg sander_width)"/>

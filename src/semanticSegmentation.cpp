@@ -134,9 +134,10 @@ void semanticSegmentation::initializeSemanticSegmentation()
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
     // nh.param("pairWidth", pairWidth, 0.05);
 
-    double link_width = 0.075;
-    double node_width = 0.05;
-    double sander_width = 0.16;
+    //double link_width = 0.075;
+    //double node_width = 0.05;
+    //double sander_width = 0.16;
+    double link_width, node_width, sander_width;
     nh.param("link_width", link_width,  0.075);
     nh.param("node_width", node_width,  0.05);
     nh.param("sander_width", sander_width, 0.16);
@@ -177,10 +178,10 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
     double objectVisibility, sceneVisibility;
 
-
     nh.param("objectVisibility",objectVisibility,0.1);
     nh.param("sceneVisibility", sceneVisibility,0.1);
-
+    
+    
     if (!useMultiClassSVM || cur_name.size() == 1){
         // initialize combinedObjRecRansac
         combinedObjRec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
