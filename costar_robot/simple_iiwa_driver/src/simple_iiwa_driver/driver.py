@@ -58,6 +58,7 @@ class SimpleIIWADriver:
         self.moving = False
         self.q0 = [0,0,0,0,0,0,0]
         self.old_q0 = [0,0,0,0,0,0,0]
+	self.cur_stamp = 0
 
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
@@ -276,12 +277,18 @@ class SimpleIIWADriver:
         rate = rospy.Rate(30)
         t = rospy.Time(0)
 
+	stamp = rospy.Time.now().to_sec()
+	self.cur_stamp = stamp
+
         for pt in traj.points[:-1]:
           self.pt_publisher.publish(pt)
           self.set_goal(pt.positions)
 
           print " -- %s"%(str(pt.positions))
           start_t = rospy.Time.now()
+
+	  if self.cur_stamp > stamp:
+            return 'FAILURE - preempted'
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
