@@ -163,11 +163,12 @@ void createTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
 }
 
 void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> &objectDict, const std::vector<poseT> &all_poses,
-    const double &timestamp, std::map<std::string, unsigned int> &objectTFindex)
+    const double &timestamp, std::map<std::string, unsigned int> &objectTFindex, 
+    const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0))
 {
     objectRtree tmpRtree;
     std::cerr << "Old rtree size: " << rtree.size() << std::endl;
-    
+    Eigen::Quaternion<float> baseRotation(baseRotationInput.w(),baseRotationInput.x(),baseRotationInput.y(),baseRotationInput.z());
     //get closest point that belongs to same object
     int knnNumber = 2;
     double distance = 0.025; // Limit search area to 2.5 cm around the point
@@ -206,7 +207,7 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
         }
         else // new pose
         {
-            tmpObject.pose.rotation = normalizeModelOrientation<float>(p.rotation, objectDict.find(p.model_name)->second);
+            tmpObject.pose.rotation = normalizeModelOrientation<float>(p.rotation, baseRotation, objectDict.find(p.model_name)->second);
             std::stringstream child;
             tmpObject.index = ++objectTFindex[p.model_name];
             // Does not have tracking yet, can not keep the label on object.

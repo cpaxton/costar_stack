@@ -478,20 +478,20 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
 
     std::map<std::string, unsigned int> tmpTFIndex = objectTFIndex;
     
+    Eigen::Quaternion<double> baseRotation;
+    if (setObjectOrientationTarget){
+        if (listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(1.5)))
+        {
+          tf::StampedTransform transform;
+          listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),transform);
+          tf::quaternionTFToEigen(transform.getRotation(),baseRotation);
+        }
+    }
+    else
+        baseRotation.setIdentity();
+    
     if (doingGripperSegmentation || !hasTF){
       // normalize symmetric object Orientation
-        Eigen::Quaternion<double> baseRotation;
-        if (setObjectOrientationTarget){
-            if (listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(1.5)))
-            {
-              tf::StampedTransform transform;
-              listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),transform);
-              tf::quaternionTFToEigen(transform.getRotation(),baseRotation);
-            }
-        }
-        else
-            baseRotation.setIdentity();
-        
         if (!doingGripperSegmentation)
         {
             std::cerr << "create tree\n";
@@ -507,7 +507,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     else
     {
         std::cerr << "update tree\n";
-        updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex);
+        updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
     }
     return getAllPoses(segmentedObjectTree);
 }
