@@ -143,7 +143,7 @@ class SimpleIIWADriver:
 
         if False and not self.driver_status == 'SERVO':
             rospy.logerr('DRIVER -- Not in servo mode!')
-            return 'FAILURE - not in servo mode'
+            return 'FAILED - not in servo mode'
 
         (acceleration, velocity) = self.check_req_speed_params(req) 
         (poses,names) = self.get_waypoints_srv.get_waypoints(
@@ -159,7 +159,7 @@ class SimpleIIWADriver:
         print poses
 
         if not poses is None:
-            msg = 'FAILURE - no valid objects found!'
+            msg = 'FAILED - no valid objects found!'
             qs = []
             dists = []
             for (pose,name) in zip(poses,names):
@@ -200,7 +200,7 @@ class SimpleIIWADriver:
                     rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
 
             if len(qs) == 0:
-                msg = 'FAILURE - no joint configurations found!'
+                msg = 'FAILED - no joint configurations found!'
 
             possible_goals = zip(dists,qs)
             possible_goals.sort()
@@ -216,7 +216,7 @@ class SimpleIIWADriver:
             return msg
 
         else:
-            msg = 'FAILURE - no match to predicate moves'
+            msg = 'FAILED - no match to predicate moves'
             return msg
 
     def set_goal(self,q):
@@ -262,10 +262,10 @@ class SimpleIIWADriver:
             else:
                 rospy.logerr(res)
                 rospy.logerr('DRIVER -- PLANNING failed')
-                return 'FAILURE - not in servo mode'
+                return 'FAILED - not in servo mode'
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
-            return 'FAILURE - not in servo mode'
+            return 'FAILED - not in servo mode'
 
 
     '''
@@ -289,7 +289,7 @@ class SimpleIIWADriver:
 
 	  if self.cur_stamp > stamp:
             rospy.logerr('preemption')
-            return 'FAILURE - preempted'
+            return 'FAILED - preempted'
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
@@ -308,13 +308,13 @@ class SimpleIIWADriver:
         #while self.moving:
         while not self.at_goal:
             if (rospy.Time.now() - start_t).to_sec() > 3:
-                return 'FAILURE - timeout'
+                return 'FAILED - timeout'
             rate.sleep()
 
         if self.at_goal:
             return 'SUCCESS - moved to pose'
         else:
-            return 'FAILURE - did not reach destination'
+            return 'FAILED - did not reach destination'
 
     '''
     Send a whole sequence of points to a robot...
@@ -338,7 +338,7 @@ class SimpleIIWADriver:
             # wait until robot is at goal
             while not self.at_goal:
                 if (rospy.Time.now() - start_t).to_sec() > 10:
-                    return 'FAILURE - timeout'
+                    return 'FAILED - timeout'
                 rate.sleep()
 
             return 'SUCCESS - moved to pose'
@@ -372,10 +372,10 @@ class SimpleIIWADriver:
                 return self.send_trajectory(traj)
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
-                return 'FAILURE - not in servo mode'
+                return 'FAILED - not in servo mode'
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
-            return 'FAILURE - not in servo mode'
+            return 'FAILED - not in servo mode'
 
     '''
     set teach mode
