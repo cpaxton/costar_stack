@@ -9,7 +9,7 @@ from sensor_msgs.msg import JointState
 import tf_conversions.posemath as pm
 import numpy as np
 
-import PyKDL
+import PyKDL as kdl
 import urdf_parser_py
 from urdf_parser_py.urdf import URDF
 from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
@@ -158,6 +158,8 @@ class SimpleIIWADriver:
         print names
         print poses
 
+        T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
+
         if not poses is None:
             msg = 'FAILED - no valid objects found!'
             qs = []
@@ -195,7 +197,8 @@ class SimpleIIWADriver:
 
                 if len(traj.points) > 0:
                     qs.append(traj)
-                    dists.append((traj.points[-1].positions - self.q0).sum())
+                    dists.append((T.p - T_fwd.p).Norm())
+                    #dists.append((traj.points[-1].positions - self.q0).sum())
                 else:
                     rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
 
