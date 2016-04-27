@@ -339,10 +339,12 @@ class SimpleIIWADriver:
             start_t = rospy.Time.now()
 
             # wait until robot is at goal
+            '''
             while not self.at_goal:
                 if (rospy.Time.now() - start_t).to_sec() > 10:
                     return 'FAILED - timeout'
                 rate.sleep()
+            '''
 
             return 'SUCCESS - moved to pose'
 
@@ -361,10 +363,12 @@ class SimpleIIWADriver:
 
             # inverse kinematics
             traj = self.planner.getCartesianMove(T,self.q0)
+            '''
             if len(traj.points) == 0:
                 (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
                 if not res is None:
                     traj = res.planned_trajectory.joint_trajectory
+            '''
 
             #if len(traj) == 0:
             #    traj.append(self.planner.ik(T,self.q0))
