@@ -49,6 +49,24 @@ To bring up the tool attachments run:
 roslaunch ready_air stomper_tool.launch
 ```
 
+
+## Starting CoSTAR in a Simulation
+
+You can test CoSTAR in a simulation now. The basic launch procedure for a simulation is to run these commands:
+
+```
+roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false
+roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=false
+roslaunch instructor_core instructor.launch
+```
+
+You can then use the Instructor UI to move the robot around in simulation. If you want to bring up Gazebo and all the drivers at once instead of separately, launch as:
+
+```
+roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=true
+roslaunch instructor_core instructor.launch
+```
+
 ## Included CoSTAR Components
 
   * Bringup: launch files, RVIZ configurations, et cetera
@@ -95,24 +113,6 @@ Roslaunch would look something like:
   <param name="id" value="NameOfMyObject"/>
   <param name="camera" value="kinect2"/>
 </node>
-```
-
-### Testing things in Simulation [INCOMPLETE]
-
-You can bring many parts of the software up in simulation. This is not fully-featured yet, but it gives you a way to set waypoints and play around with the UI at least.
-
-Basic execution for a simulation:
-```
-roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
-roslaunch instructor_core instructor.launch
-roslaunch costar_bringup iiwa14_s_model.launch sim:=true
-```
-
-Otherwise:
-```
-roslaunch iiwa_moveit moveit_planning_execution.launch sim:=true
-roslaunch instructor_core instructor.launch
-roslaunch costar_bringup iiwa14_s_model.launch
 ```
 
 ## Gripper
