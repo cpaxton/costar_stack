@@ -93,7 +93,12 @@ class SimpleIIWADriver:
 
         self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group)
 
+    '''
+    js_cb
+    listen to robot joint state information
+    '''
     def js_cb(self,msg):
+
         self.old_q0 = self.q0
         self.q0 = np.array(msg.position)
         self.ee_pose = pm.fromMatrix(self.kdl_kin.forward(self.q0))
