@@ -4,7 +4,7 @@ project(costar_robot_msgs)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED std_msgs geometry_msgs predicator_msgs message_generation message_runtime)
+find_package(catkin REQUIRED std_msgs geometry_msgs predicator_msgs sensor_msgs message_generation message_runtime)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -49,6 +49,7 @@ add_service_files(
   SetTeachMode.srv
   SetServoMode.srv
   ServoToPose.srv
+  ServoToJointState.srv
   SmartMove.srv
 )
 
@@ -65,6 +66,7 @@ generate_messages(
   std_msgs
   geometry_msgs  # Or other packages containing msgs
   predicator_msgs
+  sensor_msgs
 )
 
 ###################################

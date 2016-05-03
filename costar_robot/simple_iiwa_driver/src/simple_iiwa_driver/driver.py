@@ -58,7 +58,8 @@ class SimpleIIWADriver:
         self.moving = False
         self.q0 = [0,0,0,0,0,0,0]
         self.old_q0 = [0,0,0,0,0,0,0]
-	self.cur_stamp = 0
+
+        self.cur_stamp = 0
 
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
@@ -66,6 +67,7 @@ class SimpleIIWADriver:
         self.servo = rospy.Service('/costar/ServoToPose',ServoToPose,self.servo_to_pose_call)
         self.plan = rospy.Service('/costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
         self.smartmove = rospy.Service('/costar/SmartMove',SmartMove,self.smart_move_call)
+        self.js_servo = rospy.Service('/costar/ServoToJointState',ServoToJointState,self.servo_to_joints_call)
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
         self.status_publisher = rospy.Publisher('/costar/DriverStatus',String,queue_size=1000)
@@ -277,8 +279,8 @@ class SimpleIIWADriver:
         rate = rospy.Rate(30)
         t = rospy.Time(0)
 
-	stamp = rospy.Time.now().to_sec()
-	self.cur_stamp = stamp
+        stamp = rospy.Time.now().to_sec()
+        self.cur_stamp = stamp
 
         for pt in traj.points[:-1]:
           self.pt_publisher.publish(pt)
@@ -287,16 +289,16 @@ class SimpleIIWADriver:
           print " -- %s"%(str(pt.positions))
           start_t = rospy.Time.now()
 
-	  if self.cur_stamp > stamp:
+          if self.cur_stamp > stamp:
             return 'FAILURE - preempted'
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
 
-          while not self.near_goal:
-            if (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
-                break
-            rate.sleep()
+          #while not self.near_goal:
+          #  if (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
+          #      break
+          #  rate.sleep()
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
         self.pt_publisher.publish(traj.points[-1])
@@ -375,6 +377,22 @@ class SimpleIIWADriver:
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILURE - not in servo mode'
+
+    '''
+    Standard move call.
+    Make a joint space move to a destination.
+    '''
+    def servo_to_joints_call(self,req):
+
+        if self.driver_status == 'SERVO':
+            # Check acceleration and velocity limits
+            (acceleration, velocity) = self.check_req_speed_params(req) 
+            return 'FAILURE - not yet implemented!'
+
+        else:
+            rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
+            return 'FAILURE - not in servo mode'
+        
 
     '''
     set teach mode

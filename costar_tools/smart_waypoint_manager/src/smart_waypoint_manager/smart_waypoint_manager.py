@@ -36,29 +36,28 @@ class SmartWaypointManager:
 
         self.detected_objects = rospy.Subscriber(ns + '/detected_object_list', DetectedObjectList, self.detected_objects_cb)
 
-
         self.broadcaster = tf.TransformBroadcaster()
-	if not listener is None:
+        if not listener is None:
           self.listener = listener
-	else:
+        else:
           self.listener = tf.TransformListener()
 
         self.world = world
         self.endpoint = endpoint
 
         self.folder = 'smartmove_waypoint'
-	self.js_folder = 'joint_states'
-	self.info_folder = 'smartmove_info'
+        self.js_folder = 'joint_states'
+        self.info_folder = 'smartmove_info'
 
         self.add_type_service(self.folder)
 
         self.waypoints = {}
         self.waypoint_names = {}
-	self.js_waypoints = {}
-	self.js_waypoint_names = {}
+        self.js_waypoints = {}
+        self.js_waypoint_names = {}
 
         self.all_moves = []
-	self.all_js_moves = []
+        self.all_js_moves = []
 
         self.objs = []
         self.obj_classes = []
@@ -69,7 +68,7 @@ class SmartWaypointManager:
         self.available_references = None
         
         self.add_type_service(self.info_folder)
-	self.add_type_service(self.js_folder)
+        self.add_type_service(self.js_folder)
         self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
         self.available_regions = yaml.load(self.load_service(type="smartmove_info",id="regions").text)
         self.available_references = yaml.load(self.load_service(type="smartmove_info",id="references").text)
@@ -106,9 +105,9 @@ class SmartWaypointManager:
         self.waypoint_names = {}
         self.all_moves = []
 
-	'''
-	this section loads class and pose information for computing smartmoves
-	'''
+        '''
+        this section loads class and pose information for computing smartmoves
+        '''
 
         waypoint_filenames = self.list_service(self.folder).entries
     
@@ -122,27 +121,27 @@ class SmartWaypointManager:
           self.waypoint_names[data[1]].append(name)
           self.all_moves.append(data[1] + "/" + name)
 
-	'''
-	this section loads joint space waypoints
-	'''
+        '''
+        this section loads joint space waypoints
+        '''
 
-	js_filenames = self.list_service(self.js_folder).entries
+        js_filenames = self.list_service(self.js_folder).entries
 
-	for name in js_filenames:
+        for name in js_filenames:
           data = yaml.load(self.load_service(id=name,type=self.js_folder).text)
-	  if not data[1] in self.waypoints.keys():
+          if not data[1] in self.waypoints.keys():
             self.js_waypoints[data[1]] = []
-	    self.js_waypoint_names[data[1]] = []
+            self.js_waypoint_names[data[1]] = []
 
-          self.js_waypoints[data[1]].append(data[0])
-          self.js_waypoint_names[data[1]].append(name)
-          self.all_js_moves.append(data[1] + "/" + name)
+            self.js_waypoints[data[1]].append(data[0])
+            self.js_waypoint_names[data[1]].append(name)
+            self.all_js_moves.append(data[1] + "/" + name)
 
         print " === LOADING === "
         print self.waypoint_names
         print self.waypoints
-	print self.js_waypoint_names
-	print self.js_waypoints
+        print self.js_waypoint_names
+        print self.js_waypoints
 
     def lookup_waypoint(self,obj_class,name):
       rospy.logwarn("looking for %s"%name)
@@ -193,7 +192,7 @@ class SmartWaypointManager:
         if not pose is None:
             self.save_service(id=name.strip('/'),type=self.folder,text=yaml.dump([pose,self.obj_class[obj]]))
 
-   def save_joint_states(self,q,name):
+    def save_joint_states(self,q,name):
         self.save_service(id=name.strip('/'),type=self.js_folder,text=yaml.dump(q))
 
     def get_new_waypoint(self,obj):
