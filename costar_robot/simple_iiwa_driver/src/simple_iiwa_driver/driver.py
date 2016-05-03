@@ -15,7 +15,7 @@ from urdf_parser_py.urdf import URDF
 from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
 from pykdl_utils.kdl_kinematics import KDLKinematics
 
-from simple_planning import SimplePlanning
+from simple_robot import SimplePlanning
 
 from moveit_msgs.msg import *
 from moveit_msgs.srv import *
