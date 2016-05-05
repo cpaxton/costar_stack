@@ -39,6 +39,7 @@ from robotiq_s_model_control.msg import _SModel_robot_output  as outputMsg
 from robotiq_s_model_control.msg import _SModel_robot_input  as inputMsg
 from os.path import join
 from std_srvs.srv import Empty
+from predicator_robotiq import SModelPredicator
 
 def getDefaultMsg():
     command = outputMsg.SModel_robot_output();
@@ -62,6 +63,8 @@ class SimpleSModelServer:
         self.reactivate_srv = rospy.Service(join(ns,"activate"), Empty, self.activate)
         self.reset_srv = rospy.Service(join(ns,"reset"), Empty, self.reset)
         self.command = getDefaultMsg()
+
+        self.predicator = SModelPredicator(start_subscriber=False,publish_predicates=True)
 
         self.activated = True;
 
@@ -123,6 +126,7 @@ class SimpleSModelServer:
 
     def status_cb(self,msg):
         rospy.loginfo(self.statusInterpreter(msg))
+        self.predicator.handle(msg)
 
     def statusInterpreter(self,status):
         """Generate a string according to the current value of the status variables."""

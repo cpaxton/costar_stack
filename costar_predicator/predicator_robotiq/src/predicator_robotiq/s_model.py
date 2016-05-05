@@ -43,7 +43,7 @@ from predicator_msgs.msg import *
 
 class SModelPredicator:
 
-    def __init__(self, independent_node=True,gripper_name='s_model'):
+    def __init__(self,publish_predicates=True,start_subscriber=True,gripper_name='s_model'):
 
         self.valid_predicates = ValidPredicates(assignments=[gripper_name],predicates=['gripper_open','gripper_closed','gripper_moving',
             'gripper_basic_mode','gripper_pinch_mode','gripper_wide_mode','gripper_scissor_mode','gripper_activated',
@@ -57,11 +57,13 @@ class SModelPredicator:
         self.closed = False
         self.moving = False
 
-        if independent_node:
+        if publish_predicates:
             # create predicator things
-            self.sub = rospy.Subscriber("SModelRobotInput",inputMsg,self.callback)
             self.pub = rospy.Publisher("predicator/input",PredicateList,queue_size=1000)
             self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
+
+        if start_subscriber:
+            self.sub = rospy.Subscriber("SModelRobotInput",inputMsg,self.callback)
 
         self.name = rospy.get_name()
 
