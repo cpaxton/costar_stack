@@ -1,6 +1,6 @@
 # predicator (c) 2014-2016, Chris Paxton
 #
-# some code taken from Robotiq's s_model_control package:
+# based on some code taken from Robotiq's s_model_control package:
 
 # Software License Agreement (BSD License)
 #
@@ -51,6 +51,12 @@ class SModelPredicator:
         self.predicate_msg = PredicateList()
         self.gripper_name = gripper_name
 
+        self.gripper_mode = ''
+        self.activated = False
+        self.contact = False
+        self.closed = False
+        self.moving = False
+
         if independent_node:
             # create predicator things
             self.sub = rospy.Subscriber("SModelRobotInput",inputMsg,self.callback)
@@ -70,15 +76,22 @@ class SModelPredicator:
             pass
         if(status.gACT == 1):
             self.addPredicate('gripper_activated')
+            self.activated = False
+        else:
+            self.activated = True
 
         if(status.gMOD == 0):
             self.addPredicate('gripper_basic_mode')
+            self.gripper_mode = 'basic'
         elif(status.gMOD == 1):
             self.addPredicate('gripper_pinch_mode')
+            self.gripper_mode = 'pinch'
         elif(status.gMOD == 2):
             self.addPredicate('gripper_wide_mode')
+            self.gripper_mode = 'wide'
         elif(status.gMOD == 3):
             self.addPredicate('gripper_scissor_mode')
+            self.gripper_mode = 'scissor'
 
         if ((status.gGTO == 1) # going to position (GOTO command)
             or (status.gIMC == 2) # mode change in progress
@@ -86,6 +99,9 @@ class SModelPredicator:
             ):
 
             self.addPredicate('gripper_moving')
+            self.moving = True
+        else:
+            self.moving = False
         
         contact = False
         if (status.gDTA == 1 or status.gDTA == 2):
@@ -95,18 +111,21 @@ class SModelPredicator:
             self.addPredicate('finger_b_contact')
             contact = True
         if (status.gDTC == 1 or status.gDTC == 2):
-
             self.addPredicate('finger_c_contact')
-            contact = True
+            contact = True 
 
+        self.contact = contact
         if contact:
             self.addPredicate('any_finger_contact')
 
         if ((status.gDTA >= 2 and status.gDTB >= 2 and status.gDTC >= 2 and status.gPRA >= 250) # fingers closed or stopped closing
-            or (status.gDTS >=2 and status.gPRA >= 250) #scissor closing
+            or (status.gDTS >=2 and status.gPRA >= 250) # scissor closing
             ):
 
-            self.addPredicate('gripper_closed')   
+            self.addPredicate('gripper_closed')
+            self.closed = True
+        else:
+            self.closed = False
 
     '''
     add a single message
@@ -114,13 +133,13 @@ class SModelPredicator:
     def addPredicate(self,predicate):
         p = PredicateStatement(predicate=predicate,params=[self.gripper_name,'',''])
         self.predicate_msg.predicates.append(p)
-        
 
     '''
     publish current predicate messages
     '''
     def tick(self):
-        pass
+        self.pub.publish(self.predicate_msg)
+        self.vpub.publish(self.valid_predicates)
 
     '''
     update and spin

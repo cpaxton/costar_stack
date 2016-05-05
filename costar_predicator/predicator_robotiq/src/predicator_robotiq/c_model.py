@@ -1,6 +1,6 @@
 # predicator (c) 2014-2016, Chris Paxton
 #
-# some code taken from Robotiq's c_model_control package
+# based on some code taken from Robotiq's c_model_control package
 
 # Software License Agreement (BSD License)
 #
