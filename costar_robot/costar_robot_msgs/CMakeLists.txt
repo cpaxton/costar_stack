@@ -51,6 +51,7 @@ add_service_files(
   ServoToPose.srv
   ServoToJointState.srv
   SmartMove.srv
+  EmptyCommand.srv
 )
 
 ## Generate actions in the 'action' folder

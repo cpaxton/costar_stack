@@ -1,7 +1,7 @@
 <launch>
 
     <arg name="namespace" default="volume_1" />
-    <arg name="camera_name" default="camera_2" />
+    <arg name="camera_name" default="camera" />
 
     <group ns="$(arg namespace)">
         <node pkg="predicator_occupancy_module" 
