@@ -4,7 +4,9 @@
 
 This is a project by a few members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. Our goal is to build a system which facilitates end-user instruction of industrial robots to performa a variety of different tasks. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more:
 
-[![Bin Example](https://img.youtube.com/vi/5GBVrD8fQcc/0.jpg)](https://youtu.be/5GBVrD8fQcc)
+[![Bin Example](https://img.youtube.com/vi/WBwLLSVXGOQ/0.jpg)](https://youtu.be/WBwLLSVXGOQ)
+
+For more videos you can check out the [CoSTAR YouTube Channel](https://www.youtube.com/playlist?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf).
 
 These are the tools and utilities we created to get the CoSTAR project up and off the ground. This document describes the CoSTAR project for an LBR iiwa 14 R820 with an attahed Robotiq 3-finger adaptive gripper.
 
