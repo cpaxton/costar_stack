@@ -65,6 +65,7 @@ class CostarArm(object):
         self.plan = rospy.Service('/costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
         self.smartmove = rospy.Service('/costar/SmartMove',SmartMove,self.smart_move_call)
         self.js_servo = rospy.Service('/costar/ServoToJointState',ServoToJointState,self.servo_to_joints_call)
+        self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
         self.status_publisher = rospy.Publisher('/costar/DriverStatus',String,queue_size=1000)
@@ -358,17 +359,20 @@ class CostarArm(object):
             return 'SUCCESS - teach mode disabled'
 
     '''
+    send a single point
+    '''
+    def send_q(self,pt):
+        pt = JointTrajectoryPoint()
+        pt.positions = self.q0
+
+        self.pt_publisher.publish(pt)
+
+    '''
     activate servo mode
     '''
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
-
-            pt = JointTrajectoryPoint()
-            pt.positions = self.q0
-
-            self.pt_publisher.publish(pt)
-
-            #rospy.sleep(0.5)
+            self.send_q(self.q0)
 
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'

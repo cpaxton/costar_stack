@@ -4,9 +4,12 @@ import urx
 
 from simple_robot import CostarArm
 
+mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
+
 class CostarUR5Driver(CostarArm):
 
-    def __init__(self,world="/world",
+    def __init__(self,ip_address,simulation=False,
+            world="/world",
             listener=None,
             traj_step_t=0.1,
             max_acc=1,
@@ -15,8 +18,14 @@ class CostarUR5Driver(CostarArm):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6):
 
-        rospy.logerr("Not yet implemented!")
-        super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group)
+        if not simulation:
+            self.ur = urx.Robot(ip_address, logLevel=logging.INFO)
+        self.simulation = simulation
+
+        base_link = "base_link"
+        end_link = "ee_link"
+        planning_group = "manipulator"
+        super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group)
 
 
     '''
@@ -32,7 +41,7 @@ class CostarUR5Driver(CostarArm):
         self.cur_stamp = stamp
 
         for pt in traj.points[:-1]:
-          self.pt_publisher.publish(pt)
+          #self.ur.movel()
           self.set_goal(pt.positions)
 
           print " -- %s"%(str(pt.positions))
@@ -43,11 +52,6 @@ class CostarUR5Driver(CostarArm):
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
-
-          #while not self.near_goal:
-          #  if (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
-          #      break
-          #  rate.sleep()
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
         self.pt_publisher.publish(traj.points[-1])
@@ -65,6 +69,32 @@ class CostarUR5Driver(CostarArm):
             return 'SUCCESS - moved to pose'
         else:
             return 'FAILURE - did not reach destination'
+
+    '''
+    set teach mode
+    '''
+    def set_teach_mode_call(self,req):
+        if req.enable == True:
+
+            self.rob.set_freedrive(True)
+            self.driver_status = 'TEACH'
+            return 'SUCCESS - teach mode enabled'
+        else:
+            self.rob.set_freedrive(False)
+            self.driver_status = 'IDLE'
+            return 'SUCCESS - teach mode disabled'
+
+    '''
+    send a single point
+    '''
+    def send_q(self,pt):
+        if self.simulation:
+            pt = JointTrajectoryPoint()
+            pt.positions = self.q0
+
+            self.pt_publisher.publish(pt)
+        else:
+            pass
 
     '''
     Send a whole sequence of points to a robot...
@@ -96,6 +126,16 @@ class CostarUR5Driver(CostarArm):
     def handle_mode_tick(self):
         if self.driver_status in mode.keys():
             self.iiwa_mode_publisher.publish(mode[self.driver_status])
+
+            if self.driver_status == 'SHUTDOWN':
+                pass
+            elif self.driver_status == 'SERVO':
+                pass
+            elif self.driver_status == 'IDLE':
+                pass
+            elif self.driver_status == 'TEACH':
+                pass
+
         else:
             #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
             pass

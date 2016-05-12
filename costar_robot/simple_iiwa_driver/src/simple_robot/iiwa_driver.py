@@ -44,7 +44,6 @@ class CostarIIWADriver(CostarArm):
         super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group)
 
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
-        self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
 
     '''
     Send a whole joint trajectory message to a robot...
