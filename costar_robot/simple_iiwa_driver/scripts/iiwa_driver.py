@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 import rospy
-from simple_iiwa_driver import *
+from simple_robot import CostarIIWADriver
 
 rospy.init_node('simple_iiwa_driver')
-driver = SimpleIIWADriver()
+driver = CostarIIWADriver()
 
 rate = rospy.Rate(60)
 

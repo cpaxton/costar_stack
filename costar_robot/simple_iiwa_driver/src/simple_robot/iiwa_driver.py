@@ -1,10 +1,32 @@
 
+import tf
 import rospy
-import urx
+from costar_robot_msgs.srv import *
+from std_msgs.msg import String
+from trajectory_msgs.msg import JointTrajectoryPoint
+from std_srvs.srv import Empty as EmptyService
+from sensor_msgs.msg import JointState
+import tf_conversions.posemath as pm
+import numpy as np
 
+import PyKDL
+import urdf_parser_py
+from urdf_parser_py.urdf import URDF
+from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
+from pykdl_utils.kdl_kinematics import KDLKinematics
+
+from simple_robot import SimplePlanning
 from simple_robot import CostarArm
 
-class CostarUR5Driver(CostarArm):
+from moveit_msgs.msg import *
+from moveit_msgs.srv import *
+
+from predicator_landmark import GetWaypointsService
+
+mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
+#mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm'}
+
+class CostarIIWADriver(CostarArm):
 
     def __init__(self,world="/world",
             listener=None,
@@ -15,9 +37,14 @@ class CostarUR5Driver(CostarArm):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6):
 
-        rospy.logerr("Not yet implemented!")
+        base_link = 'iiwa_link_0'
+        end_link = 'iiwa_link_ee'
+        planning_group = 'manipulator'
+
         super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group)
 
+        self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
+        self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
 
     '''
     Send a whole joint trajectory message to a robot...

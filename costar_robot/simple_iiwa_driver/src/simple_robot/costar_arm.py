@@ -23,10 +23,10 @@ from moveit_msgs.srv import *
 from predicator_landmark import GetWaypointsService
 
 
-class CostarArm(Object):
+class CostarArm(object):
 
     def __init__(self,
-            base_link, end_link, planning_group
+            base_link, end_link, planning_group,
             world="/world",
             listener=None,
             traj_step_t=0.1,
@@ -36,13 +36,10 @@ class CostarArm(Object):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6):
 
-        base_link = 'iiwa_link_0'
-        end_link = 'iiwa_link_ee'
-        self.planning_group = 'manipulator'
-
         self.world = world
         self.base_link = base_link
         self.end_link = end_link
+        self.planning_group = planning_group
 
         self.MAX_ACC = max_acc
         self.MAX_VEL = max_vel
@@ -71,8 +68,6 @@ class CostarArm(Object):
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
         self.status_publisher = rospy.Publisher('/costar/DriverStatus',String,queue_size=1000)
-        self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
-        self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.robot = URDF.from_parameter_server()
         self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
@@ -280,74 +275,23 @@ class CostarArm(Object):
     that is listening to individual joint states.
     '''
     def send_trajectory(self,traj):
-
-        rate = rospy.Rate(30)
-        t = rospy.Time(0)
-
-        stamp = rospy.Time.now().to_sec()
-        self.cur_stamp = stamp
-
-        for pt in traj.points[:-1]:
-          self.pt_publisher.publish(pt)
-          self.set_goal(pt.positions)
-
-          print " -- %s"%(str(pt.positions))
-          start_t = rospy.Time.now()
-
-          if self.cur_stamp > stamp:
-            return 'FAILURE - preempted'
-
-          rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
-          t = pt.time_from_start
-
-          #while not self.near_goal:
-          #  if (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
-          #      break
-          #  rate.sleep()
-
-        print " -- GOAL: %s"%(str(traj.points[-1].positions))
-        self.pt_publisher.publish(traj.points[-1])
-        self.set_goal(traj.points[-1].positions)
-        start_t = rospy.Time.now()
-
-        # wait until robot is at goal
-        #while self.moving:
-        while not self.at_goal:
-            if (rospy.Time.now() - start_t).to_sec() > 3:
-                return 'FAILURE - timeout'
-            rate.sleep()
-
-        if self.at_goal:
-            return 'SUCCESS - moved to pose'
-        else:
-            return 'FAILURE - did not reach destination'
+        rospy.logerr("Function 'send_trajectory' not implemented for base class!")
+        return "FAILURE - running base class!"
 
     '''
     Send a whole sequence of points to a robot...
     that is listening to individual joint states.
     '''
     def send_sequence(self,traj):
-        q0 = self.q0
-        for q in traj:
-            pt = JointTrajectoryPoint(positions=q)
-            self.pt_publisher.publish(pt)
-            self.set_goal(q)
+        rospy.logerr("Function 'send_sequence' not implemented for base class!")
+        return "FAILURE - running base class!"
 
-            #rospy.sleep(0.9*np.sqrt(np.sum((q-q0)**2)))
-
-        if len(traj) > 0:
-            self.pt_publisher.publish(pt)
-            self.set_goal(traj[-1])
-            rate = rospy.Rate(10)
-            start_t = rospy.Time.now()
-
-            # wait until robot is at goal
-            while not self.at_goal:
-                if (rospy.Time.now() - start_t).to_sec() > 10:
-                    return 'FAILURE - timeout'
-                rate.sleep()
-
-            return 'SUCCESS - moved to pose'
+    '''
+    handle changes in driver mode
+    '''
+    def handle_mode_tick(self):
+        rospy.logerr("Function 'handle_mode_tick' not implemented for base class!")
+        return "FAILURE - running base class!"
 
     '''
     Standard movement call.
@@ -438,8 +382,5 @@ class CostarArm(Object):
 
     def tick(self):
         self.status_publisher.publish(self.driver_status)
-        if self.driver_status in mode.keys():
-            self.iiwa_mode_publisher.publish(mode[self.driver_status])
-        else:
-            #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
-            pass
+        self.handle_mode_tick()
+
