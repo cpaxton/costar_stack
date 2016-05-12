@@ -34,7 +34,8 @@ class CostarArm(object):
             max_vel=1,
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6):
+            max_q_diff = 1e-6,
+            start_js_cb=True):
 
         self.world = world
         self.base_link = base_link
@@ -70,7 +71,8 @@ class CostarArm(object):
         self.driver_status = 'IDLE'
         self.status_publisher = rospy.Publisher('/costar/DriverStatus',String,queue_size=1000)
         self.robot = URDF.from_parameter_server()
-        self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
+        if start_js_cb:
+            self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
 
@@ -97,6 +99,12 @@ class CostarArm(object):
 
         self.old_q0 = self.q0
         self.q0 = np.array(msg.position)
+        self.update_position()
+
+    '''
+    update current position information
+    '''
+    def update_position(self):
         self.ee_pose = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
         #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]

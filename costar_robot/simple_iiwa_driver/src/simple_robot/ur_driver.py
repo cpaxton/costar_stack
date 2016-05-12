@@ -122,7 +122,13 @@ class CostarUR5Driver(CostarArm):
 
             return 'SUCCESS - moved to pose'
 
-    def handle_mode_tick(self):
+    def handle_tick(self):
+
+        # send out the joint states
+        self.q0 = self.ur.getj()
+        self.js_publisher.publish(sensor_msgs.msg.JointState(position=self.q0))
+        self.update_position()
+
         if self.driver_status in mode.keys():
 
             if self.driver_status == 'SHUTDOWN':
