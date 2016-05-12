@@ -119,7 +119,7 @@ class CostarIIWADriver(CostarArm):
 
             return 'SUCCESS - moved to pose'
 
-    def handle_mode_tick(self):
+    def handle_tick(self):
         if self.driver_status in mode.keys():
             self.iiwa_mode_publisher.publish(mode[self.driver_status])
         else:

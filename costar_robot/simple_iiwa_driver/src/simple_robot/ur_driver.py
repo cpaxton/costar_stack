@@ -41,7 +41,7 @@ class CostarUR5Driver(CostarArm):
         self.cur_stamp = stamp
 
         for pt in traj.points[:-1]:
-          #self.ur.movel()
+          self.send_q(pt.positions)
           self.set_goal(pt.positions)
 
           print " -- %s"%(str(pt.positions))
@@ -54,7 +54,7 @@ class CostarUR5Driver(CostarArm):
           t = pt.time_from_start
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
-        self.pt_publisher.publish(traj.points[-1])
+        self.send_q(traj.points[-1].positions)
         self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
 
@@ -85,16 +85,16 @@ class CostarUR5Driver(CostarArm):
             return 'SUCCESS - teach mode disabled'
 
     '''
-    send a single point
+    send a single joint space position
     '''
-    def send_q(self,pt):
+    def send_q(self,q):
         if self.simulation:
             pt = JointTrajectoryPoint()
-            pt.positions = self.q0
+            pt.positions = q
 
             self.pt_publisher.publish(pt)
         else:
-            pass
+            self.ur.movej(q)
 
     '''
     Send a whole sequence of points to a robot...
@@ -103,14 +103,13 @@ class CostarUR5Driver(CostarArm):
     def send_sequence(self,traj):
         q0 = self.q0
         for q in traj:
-            pt = JointTrajectoryPoint(positions=q)
-            self.pt_publisher.publish(pt)
+            self.send_q(q)
             self.set_goal(q)
 
             #rospy.sleep(0.9*np.sqrt(np.sum((q-q0)**2)))
 
         if len(traj) > 0:
-            self.pt_publisher.publish(pt)
+            self.send_q(traj[-1])
             self.set_goal(traj[-1])
             rate = rospy.Rate(10)
             start_t = rospy.Time.now()
@@ -125,10 +124,10 @@ class CostarUR5Driver(CostarArm):
 
     def handle_mode_tick(self):
         if self.driver_status in mode.keys():
-            self.iiwa_mode_publisher.publish(mode[self.driver_status])
 
             if self.driver_status == 'SHUTDOWN':
-                pass
+                self.ur.cleanup()
+                self.ur.shutdown()
             elif self.driver_status == 'SERVO':
                 pass
             elif self.driver_status == 'IDLE':

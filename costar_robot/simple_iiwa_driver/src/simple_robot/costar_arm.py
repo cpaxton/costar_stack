@@ -384,7 +384,16 @@ class CostarArm(object):
         self.driver_status = 'SHUTDOWN'
         pass
 
+    '''
+    robot-specific logic to update state every "tick"
+    '''
+    def handle_tick(self):
+        rospy.logerr("Function 'handle_tick' not implemented for base class!")
+
+    '''
+    call this when "spinning" to keep updating things
+    '''
     def tick(self):
         self.status_publisher.publish(self.driver_status)
-        self.handle_mode_tick()
+        self.handle_tick()
 
