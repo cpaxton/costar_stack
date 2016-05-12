@@ -19,7 +19,7 @@ class CostarUR5Driver(CostarArm):
             max_q_diff = 1e-6):
 
         if not simulation:
-            self.ur = urx.Robot(ip_address, logLevel=logging.INFO)
+            self.ur = urx.Robot(ip_address)
         self.simulation = simulation
 
         base_link = "base_link"

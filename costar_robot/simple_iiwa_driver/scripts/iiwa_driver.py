@@ -3,7 +3,7 @@
 import rospy
 from simple_robot import CostarIIWADriver
 
-rospy.init_node('simple_iiwa_driver')
+rospy.init_node('costar_iiwa_driver')
 driver = CostarIIWADriver()
 
 rate = rospy.Rate(60)
