@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>simple_s_model_server</name>
+  <name>costar_gripper_manager</name>
   <version>0.0.0</version>
-  <description>The simple_s_model_server package</description>
+  <description>The costar_gripper_manager package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
