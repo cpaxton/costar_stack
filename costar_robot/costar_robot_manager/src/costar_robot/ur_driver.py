@@ -34,6 +34,7 @@ class CostarUR5Driver(CostarArm):
         self.old_q0 = self.q0
         self.set_goal(self.q0)
 
+        self.joint_names = [joint.name for joint in self.robot.joints[:6]]
 
     '''
     Send a whole joint trajectory message to a robot...
@@ -83,11 +84,11 @@ class CostarUR5Driver(CostarArm):
     def set_teach_mode_call(self,req):
         if req.enable == True:
 
-            self.rob.set_freedrive(True)
+            self.ur.set_freedrive(True)
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
         else:
-            self.rob.set_freedrive(False)
+            self.ur.set_freedrive(False)
             self.driver_status = 'IDLE'
             return 'SUCCESS - teach mode disabled'
 
@@ -133,7 +134,7 @@ class CostarUR5Driver(CostarArm):
 
         # send out the joint states
         self.q0 = np.array(self.ur.getj())
-        self.js_publisher.publish(JointState(position=self.q0))
+        self.js_publisher.publish(JointState(name=self.joint_names,position=self.q0))
         self.update_position()
 
         if self.driver_status in mode.keys():
