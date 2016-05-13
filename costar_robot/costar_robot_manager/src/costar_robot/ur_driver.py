@@ -1,8 +1,9 @@
 
 import rospy
 import urx
-
+import numpy as np
 from costar_robot import CostarArm
+from sensor_msgs.msg import JointState
 
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
 
@@ -26,6 +27,12 @@ class CostarUR5Driver(CostarArm):
         end_link = "ee_link"
         planning_group = "manipulator"
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group)
+
+        self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
+
+        self.q0 = np.array(self.ur.getj())
+        self.old_q0 = self.q0
+        self.set_goal(self.q0)
 
 
     '''
@@ -125,8 +132,8 @@ class CostarUR5Driver(CostarArm):
     def handle_tick(self):
 
         # send out the joint states
-        self.q0 = self.ur.getj()
-        self.js_publisher.publish(sensor_msgs.msg.JointState(position=self.q0))
+        self.q0 = np.array(self.ur.getj())
+        self.js_publisher.publish(JointState(position=self.q0))
         self.update_position()
 
         if self.driver_status in mode.keys():

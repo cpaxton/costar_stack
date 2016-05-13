@@ -84,9 +84,10 @@ class CostarArm(object):
         #print self.tree.getNrOfSegments()
         #print self.chain.getNrOfJoints()
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
+
         self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
-        self.set_goal(self.q0)
+        #self.set_goal(self.q0)
         self.ee_pose = None
 
         self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group)
