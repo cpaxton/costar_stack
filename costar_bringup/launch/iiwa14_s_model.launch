@@ -58,15 +58,15 @@
     <include file="$(find costar_bringup)/launch/robotiq_s_model_endpoint.launch">
       <param name="ee_frame" value="$(arg ee_frame)"/>
     </include>
-    <node name="simple_s_model_server" pkg="simple_s_model_server" type="simple_server.py"/>
-    <include file="$(find simple_s_model_server)/launch/s_model.launch"/>
+    <node name="simple_s_model_server" pkg="costar_gripper_manager" type="simple_server.py"/>
+    <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
 
   </group>
   <group if="$(arg sim)">
 
     <!-- start gripper server anyway, just don't connect it -->
-    <node name="simple_s_model_server" pkg="simple_s_model_server" type="simple_server.py"/>
-    <include file="$(find simple_s_model_server)/launch/s_model.launch"/>
+    <node name="simple_s_model_server" pkg="costar_gripper_manager" type="simple_server.py"/>
+    <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
 
 
   </group>
