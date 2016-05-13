@@ -24,7 +24,7 @@
 
   <group if="$(arg sim)" ns="iiwa">
     <!-- process high level motion commands -->
-    <include file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch"/>
+    <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/>
 
     <!-- listen to joints and send them to simulation -->
     <node name="iiwa_simulation_publisher" type="iiwa_simulation_controller.py" pkg="costar_bringup" output="screen"/>
@@ -45,7 +45,7 @@
     </include>
 
     <!-- process high level motion commands -->
-    <include file="$(find simple_iiwa_driver)/launch/simple_iiwa_driver.launch"/>
+    <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/>
 
     <!-- start up the camera -->
     <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">

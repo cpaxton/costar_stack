@@ -7,7 +7,7 @@
   <!--<node pkg="tf" type="static_transform_publisher" name="world_to_base_link" args=" 0 0 0 0 0 0 /world /base_link 1000"/>-->
   <node pkg="tf" type="static_transform_publisher" name="ee_link_to_endpoint" args=" 0 0 0 0 0 0 1 /ee_link /endpoint 1000"/>
 
-  <node pkg="simple_iiwa_driver" name="simple_ur5_driver_node" type="ur5_driver.py" output="screen"/>
+  <node pkg="costar_robot_manager" name="simple_ur5_driver_node" type="ur5_driver.py" output="screen"/>
   
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
 

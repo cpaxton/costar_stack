@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>simple_iiwa_driver</name>
+  <name>costar_robot_manager</name>
   <version>0.0.0</version>
-  <description>The simple_iiwa_driver package</description>
+  <description>The costar_robot_manager package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

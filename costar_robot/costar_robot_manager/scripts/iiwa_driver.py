@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from simple_robot import CostarIIWADriver
+from costar_robot import CostarIIWADriver
 
 rospy.init_node('costar_iiwa_driver')
 driver = CostarIIWADriver()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from simple_robot import CostarUR5Driver
+from costar_robot import CostarUR5Driver
 
 rospy.init_node('costar_ur5_driver')
 
