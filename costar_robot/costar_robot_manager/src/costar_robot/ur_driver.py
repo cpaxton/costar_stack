@@ -41,7 +41,7 @@ class CostarUR5Driver(CostarArm):
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj):
+    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
@@ -50,7 +50,7 @@ class CostarUR5Driver(CostarArm):
         self.cur_stamp = stamp
 
         for pt in traj.points[:-1]:
-          self.send_q(pt.positions)
+          self.send_q(pt.positions,acceleration,velocity)
           self.set_goal(pt.positions)
 
           print " -- %s"%(str(pt.positions))
@@ -63,7 +63,7 @@ class CostarUR5Driver(CostarArm):
           t = pt.time_from_start
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
-        self.send_q(traj.points[-1].positions)
+        self.send_q(traj.points[-1].positions,acceleration,velocity)
         self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
 
@@ -96,29 +96,29 @@ class CostarUR5Driver(CostarArm):
     '''
     send a single joint space position
     '''
-    def send_q(self,q):
+    def send_q(self,q,acceleration,velocity):
         if self.simulation:
             pt = JointTrajectoryPoint()
             pt.positions = q
 
             self.pt_publisher.publish(pt)
         else:
-            self.ur.movej(q)
+            self.ur.movej(q,wait=False,acc=acceleration,vel=velocity)
 
     '''
     Send a whole sequence of points to a robot...
     that is listening to individual joint states.
     '''
-    def send_sequence(self,traj):
+    def send_sequence(self,traj,acceleration=0.5,velocity=0.5):
         q0 = self.q0
         for q in traj:
-            self.send_q(q)
+            self.send_q(q,acceleration,velocity)
             self.set_goal(q)
 
             #rospy.sleep(0.9*np.sqrt(np.sum((q-q0)**2)))
 
         if len(traj) > 0:
-            self.send_q(traj[-1])
+            self.send_q(traj[-1],acceleration,velocity)
             self.set_goal(traj[-1])
             rate = rospy.Rate(10)
             start_t = rospy.Time.now()

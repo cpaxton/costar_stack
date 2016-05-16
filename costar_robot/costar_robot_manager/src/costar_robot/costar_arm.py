@@ -223,7 +223,7 @@ class CostarArm(object):
             (dist,traj) = possible_goals[0]
             rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-            msg = self.send_trajectory(traj)
+            msg = self.send_trajectory(traj,acceleration,velocity)
 
             return msg
 
@@ -269,7 +269,7 @@ class CostarArm(object):
 
                 traj = res.planned_trajectory.joint_trajectory
                 
-                return self.send_trajectory(traj)
+                return self.send_trajectory(traj,acceleration,velocity)
 
             else:
                 rospy.logerr(res)
@@ -284,7 +284,7 @@ class CostarArm(object):
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj):
+    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5):
         rospy.logerr("Function 'send_trajectory' not implemented for base class!")
         return "FAILURE - running base class!"
 
@@ -292,7 +292,7 @@ class CostarArm(object):
     Send a whole sequence of points to a robot...
     that is listening to individual joint states.
     '''
-    def send_sequence(self,traj):
+    def send_sequence(self,traj,acceleration=0.5,velocity=0.5):
         rospy.logerr("Function 'send_sequence' not implemented for base class!")
         return "FAILURE - running base class!"
 
@@ -329,7 +329,7 @@ class CostarArm(object):
             # Send command
             if len(traj.points) > 0:
                 rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
-                return self.send_trajectory(traj)
+                return self.send_trajectory(traj,acceleration,velocity)
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
                 return 'FAILURE - not in servo mode'
@@ -370,7 +370,7 @@ class CostarArm(object):
     '''
     send a single point
     '''
-    def send_q(self,pt):
+    def send_q(self,pt,acceleration,velocity):
         pt = JointTrajectoryPoint()
         pt.positions = self.q0
 
@@ -381,7 +381,7 @@ class CostarArm(object):
     '''
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
-            self.send_q(self.q0)
+            self.send_q(self.q0,0.1,0.1)
 
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'
