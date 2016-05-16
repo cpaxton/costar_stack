@@ -88,6 +88,7 @@ class CostarArm(object):
         self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
         #self.set_goal(self.q0)
+        self.goal = None
         self.ee_pose = None
 
         self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group)
@@ -108,16 +109,18 @@ class CostarArm(object):
     def update_position(self):
         self.ee_pose = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
-        #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
-        cart_diff = (self.ee_pose.p - self.goal.p).Norm()
-        rot_diff = self.goal_rotation_weight * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
-        goal_diff = cart_diff + rot_diff
+        if self.goal is not None:
 
-        if goal_diff < self.max_goal_diff:
-            self.at_goal = True
+            #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
+            cart_diff = (self.ee_pose.p - self.goal.p).Norm()
+            rot_diff = self.goal_rotation_weight * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
+            goal_diff = cart_diff + rot_diff
 
-        if goal_diff < 10*self.max_goal_diff:
-            self.near_goal = True
+            if goal_diff < self.max_goal_diff:
+                self.at_goal = True
+
+            if goal_diff < 10*self.max_goal_diff:
+                self.near_goal = True
 
         q_diff = np.abs(self.old_q0 - self.q0).sum()
 
@@ -125,16 +128,6 @@ class CostarArm(object):
             self.moving = False
         else:
             self.moving = True
-
-        #print "moving=%s, at goal=%s, diff=%s"%(str(self.moving),str(self.at_goal),str(q_diff))
-
-
-        #if not self.at_goal:
-        #    print "%f + %f = %f"%(cart_diff,rot_diff,goal_diff)
-
-
-        #print self.at_goal
-        #print self.q0
 
     def check_req_speed_params(self,req):
         if req.accel > self.MAX_ACC:
