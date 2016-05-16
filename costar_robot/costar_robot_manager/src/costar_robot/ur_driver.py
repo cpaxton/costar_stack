@@ -1,8 +1,9 @@
 
 import rospy
 import urx
-
+import numpy as np
 from costar_robot import CostarArm
+from sensor_msgs.msg import JointState
 
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
 
@@ -27,6 +28,13 @@ class CostarUR5Driver(CostarArm):
         planning_group = "manipulator"
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group)
 
+        self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
+
+        self.q0 = np.array(self.ur.getj())
+        self.old_q0 = self.q0
+        self.set_goal(self.q0)
+
+        self.joint_names = [joint.name for joint in self.robot.joints[:6]]
 
     '''
     Send a whole joint trajectory message to a robot...
@@ -76,11 +84,11 @@ class CostarUR5Driver(CostarArm):
     def set_teach_mode_call(self,req):
         if req.enable == True:
 
-            self.rob.set_freedrive(True)
+            self.ur.set_freedrive(True)
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
         else:
-            self.rob.set_freedrive(False)
+            self.ur.set_freedrive(False)
             self.driver_status = 'IDLE'
             return 'SUCCESS - teach mode disabled'
 
@@ -125,8 +133,8 @@ class CostarUR5Driver(CostarArm):
     def handle_tick(self):
 
         # send out the joint states
-        self.q0 = self.ur.getj()
-        self.js_publisher.publish(sensor_msgs.msg.JointState(position=self.q0))
+        self.q0 = np.array(self.ur.getj())
+        self.js_publisher.publish(JointState(name=self.joint_names,position=self.q0))
         self.update_position()
 
         if self.driver_status in mode.keys():
