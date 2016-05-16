@@ -4,6 +4,7 @@ import urx
 import numpy as np
 from costar_robot import CostarArm
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Header
 
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
 
@@ -134,7 +135,12 @@ class CostarUR5Driver(CostarArm):
 
         # send out the joint states
         self.q0 = np.array(self.ur.getj())
-        self.js_publisher.publish(JointState(name=self.joint_names,position=self.q0))
+        self.js_publisher.publish(JointState(
+          header=Header(stamp=rospy.Time.now()),
+          name=self.joint_names,
+          position=self.q0,
+          velocity=[0,0,0,0,0,0],
+          effort=[0,0,0,0,0,0]))
         self.update_position()
 
         if self.driver_status in mode.keys():
