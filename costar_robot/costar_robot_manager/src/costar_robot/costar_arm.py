@@ -35,12 +35,17 @@ class CostarArm(object):
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
-            start_js_cb=True):
+            start_js_cb=True,
+            base_steps=10,
+            steps_per_meter=100):
 
         self.world = world
         self.base_link = base_link
         self.end_link = end_link
         self.planning_group = planning_group
+
+        self.base_steps = base_steps
+        self.steps_per_meter = steps_per_meter
 
         self.MAX_ACC = max_acc
         self.MAX_VEL = max_vel
@@ -190,7 +195,7 @@ class CostarArm(object):
                 pt = JointTrajectoryPoint()
 
                 #q = self.planner.ik(T, self.q0)
-                traj = self.planner.getCartesianMove(T,self.q0)
+                traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
                 #if len(traj.points) == 0:
                 #    print T
                 #    (code,res) = self.planner.getPlan(pm.toMsg(T),self.q0) # find a non-local movement
@@ -216,7 +221,7 @@ class CostarArm(object):
             (dist,traj) = possible_goals[0]
             rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-            msg = self.send_trajectory(traj,acceleration,velocity)
+            msg = self.send_trajectory(traj,acceleration,velocity,cartesian=True)
 
             return msg
 
@@ -243,7 +248,7 @@ class CostarArm(object):
 
             # Send command
             pt = JointTrajectoryPoint()
-            traj = self.planner.getCartesianMove(T,self.q0)
+            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.base_steps,self.steps_per_meter)
             if len(traj.points) > 0:
                 (code,res) = self.planner.getPlan(req.target,traj.points[-1].positions)
             else:
@@ -262,7 +267,7 @@ class CostarArm(object):
 
                 traj = res.planned_trajectory.joint_trajectory
                 
-                return self.send_trajectory(traj,acceleration,velocity)
+                return self.send_trajectory(traj,acceleration,velocity,cartesian=True)
 
             else:
                 rospy.logerr(res)
@@ -277,7 +282,7 @@ class CostarArm(object):
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5):
+    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False):
         rospy.logerr("Function 'send_trajectory' not implemented for base class!")
         return "FAILURE - running base class!"
 
@@ -285,7 +290,7 @@ class CostarArm(object):
     Send a whole sequence of points to a robot...
     that is listening to individual joint states.
     '''
-    def send_sequence(self,traj,acceleration=0.5,velocity=0.5):
+    def send_sequence(self,traj,acceleration=0.5,velocity=0.5,cartesian=False):
         rospy.logerr("Function 'send_sequence' not implemented for base class!")
         return "FAILURE - running base class!"
 
@@ -310,7 +315,7 @@ class CostarArm(object):
             (acceleration, velocity) = self.check_req_speed_params(req) 
 
             # inverse kinematics
-            traj = self.planner.getCartesianMove(T,self.q0)
+            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
             if len(traj.points) == 0:
                 (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
                 if not res is None:

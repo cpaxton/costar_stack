@@ -27,7 +27,9 @@ class CostarUR5Driver(CostarArm):
         base_link = "base_link"
         end_link = "ee_link"
         planning_group = "manipulator"
-        super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group)
+        super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
+            steps_per_meter=10,
+            base_steps=1)
 
         self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
 
@@ -41,7 +43,7 @@ class CostarUR5Driver(CostarArm):
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5):
+    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
@@ -50,7 +52,10 @@ class CostarUR5Driver(CostarArm):
         self.cur_stamp = stamp
 
         for pt in traj.points[:-1]:
-          self.send_q(pt.positions,acceleration,velocity)
+          if not cartesian:
+            self.send_q(pt.positions,acceleration,velocity)
+          else:
+            self.send_cart(pt.positions,acceleration,velocity) ##
           self.set_goal(pt.positions)
 
           print " -- %s"%(str(pt.positions))
@@ -63,7 +68,10 @@ class CostarUR5Driver(CostarArm):
           t = pt.time_from_start
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
-        self.send_q(traj.points[-1].positions,acceleration,velocity)
+        if not cartesian:
+          self.send_q(traj.points[-1].positions,acceleration,velocity)
+        else:
+          self.send_cart(pt.positions,acceleration,velocity) ##
         self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
 
@@ -82,7 +90,7 @@ class CostarUR5Driver(CostarArm):
     '''
     set teach mode
     '''
-    def set_teach_mode_call(self,req):
+    def set_teach_mode_call(self,req,cartesian=False):
         if req.enable == True:
 
             self.ur.set_freedrive(True)
@@ -104,6 +112,20 @@ class CostarUR5Driver(CostarArm):
             self.pt_publisher.publish(pt)
         else:
             self.ur.movej(q,wait=False,acc=acceleration,vel=velocity)
+
+    '''
+    '''
+    def send_cart(self,q,acceleration,velocity):
+        if self.simulation:
+            pt = JointTrajectoryPoint()
+            pt.positions = q
+
+            self.pt_publisher.publish(pt)
+        else:
+          T = self.kdl_kin.forward(q)
+          (angle,axis) = T.M.GetRotAngle()
+          cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
+          self.ur.movel(cmd,acc=acceleration,vel=velocity)
 
     '''
     Send a whole sequence of points to a robot...
