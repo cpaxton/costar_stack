@@ -11,6 +11,8 @@
 
   <arg name="table_frame" default="ar_marker_2"/>
 
+  <arg name="use_new_model" default="true"/>
+
   <param name="ee_frame" value="iiwa_link_ee"/>
   <param name="base_frame" value="iiwa_link_0"/>
 
@@ -21,6 +23,7 @@
     <param name="trajectory" value="false"/>
   </include>
 
+  <include if="$(arg use_new_model)" file="$(find iiwa14_s_model)/launch/iiwa14_s_model_upload.launch"/>
 
   <group if="$(arg sim)" ns="iiwa">
     <!-- process high level motion commands -->
