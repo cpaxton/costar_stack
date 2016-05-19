@@ -117,7 +117,7 @@ class CModelPredicator:
             self.moving = False
             #output += 'Fingers are at requested position\n'
 
-        if status.gFLT > 0:
+        if status.gFLT > 5:
           rospy.logerr("Fault!")
           self.moving = False
 

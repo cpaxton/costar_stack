@@ -22,7 +22,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 class SimplePlanning:
     
-    def __init__(self,robot,base_link,end_link,group,move_group_ns="move_group",planning_scene_topic="planning_scene",robot_ns="",verbose=False, kdl_kin=None):
+    def __init__(self,robot,base_link,end_link,group,move_group_ns="move_group",planning_scene_topic="planning_scene",robot_ns="",verbose=False, kdl_kin=None ,joint_names=[]):
         self.robot = robot
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
@@ -31,6 +31,7 @@ class SimplePlanning:
         else:
           self.kdl_kin = kdl_kin
         self.base_link = base_link
+        self.joint_names = joint_names
         self.end_link = end_link
         self.group = group
         self.robot_ns = robot_ns
@@ -107,51 +108,71 @@ class SimplePlanning:
         else:
             srv = rospy.ServiceProxy("compute_ik", moveit_msgs.srv.GetPositionIK)
 
-        p = geometry_msgs.msg.PoseStamped()
-        p.pose.position.x = frame.position.x
-        p.pose.position.y = frame.position.y
-        p.pose.position.z = frame.position.z
-        p.pose.orientation.x = frame.orientation.x
-        p.pose.orientation.y = frame.orientation.y
-        p.pose.orientation.z = frame.orientation.z
-        p.pose.orientation.w = frame.orientation.w
-        p.header.frame_id = "/world"
-
-        ik_req = moveit_msgs.msg.PositionIKRequest()
-        ik_req.robot_state.joint_state.position = q
-        ik_req.avoid_collisions = True
-        ik_req.timeout = rospy.Duration(timeout)
-        ik_req.attempts = 5
-        ik_req.group_name = self.group
-        ik_req.pose_stamped = p
-
-        rospy.logwarn("Getting IK position...")
-        ik_resp = srv(ik_req)
-
-        rospy.logwarn("IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val))
-
-        #if ik_resp.error_code.val > 0:
-        #  return (ik_resp, None)
-        #print ik_resp.solution
-
-        ###############################
-        # now create the goal based on inverse kinematics
-
         goal = Constraints()
+        joints = self.kdl_kin.inverse(frame,q)
 
-        if not ik_resp.error_code.val < 0:
-            for i in range(0,len(ik_resp.solution.joint_state.name)):
-                #print ik_resp.solution.joint_state.name[i]
-                #print ik_resp.solution.joint_state.position[i]
+        if joints is None:
+
+          p = geometry_msgs.msg.PoseStamped()
+          p.pose.position.x = frame.position.x
+          p.pose.position.y = frame.position.y
+          p.pose.position.z = frame.position.z
+          p.pose.orientation.x = frame.orientation.x
+          p.pose.orientation.y = frame.orientation.y
+          p.pose.orientation.z = frame.orientation.z
+          p.pose.orientation.w = frame.orientation.w
+          p.header.frame_id = "/world"
+
+          print p
+
+          ik_req = moveit_msgs.msg.PositionIKRequest()
+          ik_req.robot_state.joint_state.name = self.joint_names
+          ik_req.robot_state.joint_state.position = q
+          ik_req.avoid_collisions = True
+          ik_req.timeout = rospy.Duration(timeout)
+          ik_req.attempts = 5
+          ik_req.group_name = self.group
+          ik_req.pose_stamped = p
+
+          rospy.logwarn("Getting IK position...")
+          ik_resp = srv(ik_req)
+
+          rospy.logwarn("IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val))
+
+          #if ik_resp.error_code.val > 0:
+          #  return (ik_resp, None)
+          #print ik_resp.solution
+
+          ###############################
+          # now create the goal based on inverse kinematics
+
+          if not ik_resp.error_code.val < 0:
+              for i in range(0,len(ik_resp.solution.joint_state.name)):
+                  print ik_resp.solution.joint_state.name[i]
+                  print ik_resp.solution.joint_state.position[i]
+                  joint = JointConstraint()
+                  joint.joint_name = ik_resp.solution.joint_state.name[i]
+                  joint.position = ik_resp.solution.joint_state.position[i] 
+                  joint.tolerance_below = 0.005
+                  joint.tolerance_above = 0.005
+                  joint.weight = 1.0
+                  goal.joint_constraints.append(joint)
+
+          return (ik_resp, goal)
+        else:
+          for i in range(0,len(self.joint_names)):
+                print self.joint_names[i]
+                print joints[i]
                 joint = JointConstraint()
-                joint.joint_name = ik_resp.solution.joint_state.name[i]
-                joint.position = ik_resp.solution.joint_state.position[i] 
+                joint.joint_name = self.joint_names[i]
+                joint.position = joints[i] 
                 joint.tolerance_below = 0.005
                 joint.tolerance_above = 0.005
                 joint.weight = 1.0
                 goal.joint_constraints.append(joint)
 
-        return (ik_resp, goal)
+          return (None, goal)
+
 
 
     def getPlan(self,frame,q,compute_ik=True):
@@ -187,7 +208,7 @@ class SimplePlanning:
         motion_req.allowed_planning_time = 4.0
         motion_req.planner_id = "RRTstarkConfigDefault"
         
-        if len(motion_req.goal_constraints[0].joint_constraints) == 0 or ik_resp.error_code.val < 0:
+        if len(motion_req.goal_constraints[0].joint_constraints) == 0 or (not ik_resp is None and ik_resp.error_code.val < 0):
             return (-31, None)
 
         goal = MoveGroupGoal()
