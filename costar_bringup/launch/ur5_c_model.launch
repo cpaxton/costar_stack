@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="gripper_ip_address" default="172.31.1.146"/>
+  <arg name="gripper_ip_address" default="192.168.1.11"/>
   <arg name="sim" default="false"/>
   <arg name="start_sim" default="false"/>
 
@@ -54,12 +54,12 @@
     </include>
 
     <!-- gripper bringup: connect to s model via TCP/IP -->
-    <!--<node name="robotiq_s_model_interface" pkg="robotiq_s_model_control" type="SModelTcpNode.py" args="$(arg gripper_ip_address)"/>
+    <node name="robotiq_c_model_interface" pkg="robotiq_s_model_control" type="CModelTcpNode.py" args="$(arg gripper_ip_address)"/>
     <include file="$(find costar_bringup)/launch/robotiq_s_model_endpoint.launch">
       <param name="ee_frame" value="$(arg ee_frame)"/>
     </include>
-    <node name="simple_s_model_server" pkg="costar_gripper_manager" type="simple_server.py"/>
-    <include file="$(find simple_s_model_server)/launch/s_model.launch"/>-->
+    <node name="simple_c_model_server" pkg="costar_gripper_manager" type="c_model_server.py"/>
+    <!--<include file="$(find simple_c_model_server)/launch/s_model.launch"/>-->
 
   </group>
   <group if="$(arg sim)">

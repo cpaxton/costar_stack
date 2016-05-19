@@ -134,7 +134,7 @@ class SModelPredicator:
     '''
     def addPredicate(self,predicate):
         p = PredicateStatement(predicate=predicate,params=[self.gripper_name,'',''])
-        self.predicate_msg.predicates.append(p)
+        self.predicate_msg.statements.append(p)
 
     '''
     publish current predicate messages
