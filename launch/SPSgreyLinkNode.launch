@@ -1,0 +1,135 @@
+<launch>
+  <!-- This is for running detection of nodes and links without setting all the parameters. Unstable launch file, will change often. -->
+  <!-- Object file Name without extension-->
+  <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM." />
+  <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
+  <arg name="data_path"      default="$(env HOME)/data/primesense" doc="SP segmenter data folder" />
+  <arg name="svm_path"       default="UR5_link_node_svm" doc="Object svm folder name located in data path" />
+  <arg name="debug_args"     default=""/>
+
+  <!-- Segmentation Parameters parameters-->
+  <arg name="params"         default="" />
+
+  <!-- Pair width should be roughly half the extent of the visible object
+       part. This means, for each object point p there should be (at least) one
+       point q (from the same object) such that ||p - q|| <= 'pairwidth'.
+       TRADEOFF: Smaller values allow for detection in occluded scenes but lead
+       to more imprecise alignment.  Bigger values lead to better alignment but
+       require large visible object parts. -->
+  <!-- <arg name="pairWidth"      default="0.05" /> -->
+  <arg name="link_width"        default="0.075" />
+  <arg name="node_width"        default="0.05" />
+  <arg name="sander_width"      default="0.16" />
+
+  <!-- Voxel size is the size of the leafs of the octree, i.e., the "size" of
+       the discretization. TRADEOFF: High values lead to less computation time
+       but ignore object details, e.g., the method could not distinguish
+       between a cylinder and an Amicelli box. Small values allow to better
+       distinguish between objects, but will introduce more holes in the
+       resulting "voxel-surface" (especially for a sparsely sampled scene) and
+       thus will make normal computation unreliable. Processing time, of
+       course, will increase with smaller voxel size. -->
+  <!-- TODO: add voxel size -->
+
+  <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
+  <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
+  <arg name="minConfidence"  default="0.10" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
+  <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
+
+  <arg name="useMedianFilter" default="true" doc="Apply median filter to point cloud input before processing it" />
+  <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
+
+  <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>
+  <arg name="useCropBox" default="true" doc="use crop box based on table center."/>
+
+  <!-- sceneVisibility aka Relative object size is the expected fraction of the scene points
+       which belong to an object. For example a value of 0.05 means that each
+       object represented in the scene will contain at least 5% of all scene
+       points. TRADEOFF: lower values lead to more computation time and to
+       higher success probability. -->
+
+  <arg name="sceneVisibility"  default=".1"  doc="ObjRecRANSAC: What visible proportion of an object is acceptable for a detection (0.0-1.0)."/>
+
+  <!-- Object visibility is the expected visible object part expressed as
+       fraction of the hole object. For example 'objectVisibility = 0.1' means
+       that 10% of the object surface is visible in the scene. Note that the
+       visibility can not be more than 0.5 since a typical camera can not see
+       more than the half of the object. TRADEOFF: smaller values allow for a
+       detection in occluded scenes but also lead to more false positives since
+       object hypotheses with small alignment with the scene will be accepted.
+       -->
+
+  <arg name="objectVisibility"  default=".1" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
+
+
+  <arg name="aboveTable"     default="0.02" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
+  <arg name="tableTF"        default="ar_marker_2" doc="Any TF frame located in the table can be used for table segmentation" />
+  <arg name="saveTabledir"   default="$(arg data_path)" doc="Save/Load folder for segmenting table" />
+  <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
+  <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
+  <arg name="useBinarySVM"   default="false" doc="This will do binary classification before multi class SVM."/>
+  <arg name="useMultiClassSVM"   default="true" doc="This will do multiclass classification before Object Ransac."/>
+
+  <arg name="setObjectOrientation" default="true" doc="use specified TF as Object preferred orientation" />
+  <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
+  <arg name="gripperTF"      default="endpoint_marker" doc="The gripper tf where target object would be attached" />
+
+  <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
+
+  <!-- SPSegmenterNode subscriber/publisher args -->
+  <arg name="pcl_in"         default="/camera/depth_registered/points" />
+  <arg name="pcl_out"        default="points_out"/>
+  <arg name="poses_out"      default="poses_out"/>
+  <arg name="useTF"          default="true" doc="Whether use TF frames instead of pose array for object pose representation" />
+  <!--<node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)" launch-prefix="valgrind - -log-file=$(env HOME)/valgrind.log">  -->
+  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)">  
+    <!-- SPSegmenterNode Node arg pass -->
+    <param name="cur_name"   type="str" value="$(arg object)" />
+    <param name="objRecRANSACdetector" type="str" value="$(arg objRecRANSACdetector)" />
+    <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
+    <param name="sceneVisibility"  type="double" value="$(arg sceneVisibility)"/>
+    <param name="objectVisibility"  type="double" value="$(arg objectVisibility)"/>
+    <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
+    <param name="use_cuda"   type="bool"   value="$(arg use_cuda)"/>
+    <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
+    <param name="useCropBox" type="bool" value="$(arg useCropBox)"/>
+    <param name="cropBoxX" type="double" value="1"/>
+    <param name="cropBoxY" type="double" value="1"/>
+    <param name="cropBoxZ" type="double" value="1"/>
+    
+    <param name="tableTF"        type="str" value="$(arg tableTF)"/>
+    <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
+    <param name="saveTable"   type="bool" value="$(arg saveTable)" />
+    <param name="loadTable"   type="bool" value="$(arg loadTable)" />
+    <param name="useBinarySVM"   type="bool" value="$(arg useBinarySVM)" />
+    <param name="useMultiClassSVM"   type="bool" value="$(arg useMultiClassSVM)" />
+    <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />
+    <param name="useMedianFilter"   type="bool"  value="$(arg useMedianFilter)" />
+    
+    <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
+
+    <param name="setObjectOrientation"   type="bool" value="$(arg setObjectOrientation)" />
+    <param name="preferredOrientation" type="str" value="$(arg preferredOrientation)" />
+    
+    <!-- SPSegmenterNode subscriber/publisher args pass -->
+    <param name="POINTS_IN"  type="str" value="$(arg pcl_in)"/>
+    <param name="POINTS_OUT" type="str" value="$(arg pcl_out)"/>
+    <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
+    <!-- param name="pairWidth"  type="double" value="$(arg pairWidth)"/ -->
+    <param name="link_width"  type="double" value="$(arg link_width)"/>
+    <param name="node_width"  type="double" value="$(arg node_width)"/>
+    <param name="sander_width"  type="double" value="$(arg sander_width)"/>
+
+    <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
+    <param name="useTF"      type="bool" value="$(arg useTF)" />
+
+    <!-- objectDatabase -->
+    <rosparam command="load" file="$(find sp_segmenter)/launch/objectDatabase.yaml" />
+  </node>
+
+  <group ns="$(arg NodeName)">
+    <include file="$(find sp_segmenter)/launch/parameters.launch">
+        <arg name="data_path" value ="$(arg data_path)"/>
+    </include>
+  </group>
+</launch>
