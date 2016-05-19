@@ -124,12 +124,15 @@ void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visua
     {
         if( pcl_isfinite(it->z) == false )
             continue;
-        
+
         PointT pt;
         pt.x = it->x;
         pt.y = it->y;
         pt.z = it->z;
-        pt.rgba = colors[it->label][0] << 16 | colors[it->label][1] << 8 | colors[it->label][2];
+        pt.r = colors[it->label][0];
+        pt.g = colors[it->label][1];
+        pt.b = colors[it->label][2];
+        pt.a = 255;
         view_cloud->push_back(pt);
     }
     

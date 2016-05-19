@@ -62,7 +62,8 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->pairWidth = 0.1;
     this->voxelSize = 0.003;
     uchar color_label_tmp[11][3] =
-    { {255, 255, 255},
+    { 
+        {255, 255, 255},
         {255, 0, 0},
         {0, 255, 0},
         {0, 0, 255},
@@ -72,7 +73,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         {255, 128, 0},
         {255, 0, 128},
         {0, 128, 255},
-        {128, 0, 255},
+        {128, 0, 255}
     };
     std::copy(&color_label_tmp[0][0], &color_label_tmp[0][0]+11*3,&color_label[0][0]);
     double cropBoxX, cropBoxY, cropBoxZ;
@@ -264,6 +265,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         viewer->addCoordinateSystem(0.1);
         viewer->setCameraPosition(0, 0, 0.1, 0, 0, 1, 0, -1, 0);
         viewer->setSize(1280, 960);
+        // viewer->setBackgroundColor (255, 255, 255);
     }
 
     if(enableTracking)
