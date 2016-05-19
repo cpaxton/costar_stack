@@ -11,7 +11,8 @@
 
   <arg name="table_frame" default="ar_marker_2"/>
 
-  <arg name="use_new_model" default="true"/>
+  <!-- not currently functional -->
+  <arg name="use_new_model" default="false"/>
 
   <param name="ee_frame" value="iiwa_link_ee"/>
   <param name="base_frame" value="iiwa_link_0"/>
