@@ -38,6 +38,7 @@ class CostarUR5Driver(CostarArm):
         self.set_goal(self.q0)
 
         self.joint_names = [joint.name for joint in self.robot.joints[:6]]
+        self.planner.joint_names = self.joint_names
 
     '''
     Send a whole joint trajectory message to a robot...

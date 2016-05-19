@@ -1,0 +1,7 @@
+<launch>
+
+  <arg name="ee_frame" default="/ee_link"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args=" -0.022 -0.005 0.093 3.14159 -1.5707 3.14159  $(arg ee_frame) /endpoint_marker 10"/>
+
+</launch>
