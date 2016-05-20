@@ -1,6 +1,7 @@
 <launch>
 
-  <arg name="ee_frame" default="/iiwa_link_ee"/>
+  <!--<arg name="ee_frame" default="/iiwa_link_ee"/>-->
+  <arg name="ee_frame" default="/endpoint"/>
 
 
   <!--<param name="s_model_description" command="cat $(find robotiq_s_model_visualization)/cfg/s-model_articulated.urdf"/>-->
