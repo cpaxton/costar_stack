@@ -493,14 +493,13 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     std::map<std::string, unsigned int> tmpTFIndex = objectTFIndex;
     
     Eigen::Quaternion<double> baseRotation;
-    if (setObjectOrientationTarget){
-        if (listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(1.5)))
-        {
+    if (setObjectOrientationTarget && 
+        listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(1.5)) 
+       ){
           tf::StampedTransform transform;
           listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),transform);
           tf::quaternionTFToEigen(transform.getRotation(),baseRotation);
         }
-    }
     else
         baseRotation.setIdentity();
     

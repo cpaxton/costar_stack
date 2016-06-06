@@ -4,6 +4,15 @@ The file "main_ros.cpp" is what you run if you want to use this as a ROS node.
 
 ## Prerequisites
 
+Code has all been developed and tested with Ubuntu 14.04 and ROS Indigo. You will need OpenCV 2.4 and OpenCV nonfree.
+
+You can add and install this with:
+```
+sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
+sudo apt-get update 
+sudo apt-get install libopencv-nonfree-dev
+```
+
 To run this code you need:
   - Sequence of object partial views in the correct lighting conditions
   - Mesh of the object (for ObjRecRANSAC)
