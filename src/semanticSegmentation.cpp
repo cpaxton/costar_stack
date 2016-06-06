@@ -75,6 +75,8 @@ void semanticSegmentation::initializeSemanticSegmentation()
         {0, 128, 255},
         {128, 0, 255}
     };
+    table_corner_published = false;
+
     std::copy(&color_label_tmp[0][0], &color_label_tmp[0][0]+11*3,&color_label[0][0]);
     double cropBoxX, cropBoxY, cropBoxZ;
     
@@ -114,6 +116,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     if (!useTableSegmentation) {
       std::cerr << "WARNING: not using table segmentation!\n";
     }
+    else table_corner_pub = nh.advertise<sensor_msgs::PointCloud2>("table_corner",3);
 
     if(loadTable && useTableSegmentation)
     {
@@ -309,10 +312,19 @@ void semanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_in
 void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
 {
     if (!classReady) return;
-    if (!haveTable && useTableSegmentation)
+    if (useTableSegmentation && !table_corner_published)
     {
-        haveTable = getAndSaveTable(inputCloud);
-        if (!haveTable) return; // still does not have table
+        if (!haveTable) haveTable = getAndSaveTable(inputCloud);
+        
+        if (haveTable) { // publish the table corner
+            table_corner_published = true;
+            sensor_msgs::PointCloud2 output_msg;
+            toROSMsg(*tableConvexHull,output_msg);
+            output_msg.header.frame_id = inputCloud.header.frame_id;
+            std::cerr << "Published table corner point cloud\n";
+            table_corner_pub.publish(output_msg);
+        }
+        else return; // still does not have table
     }
     
     // Service call will run SPSegmenter
@@ -531,7 +543,7 @@ bool semanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
         std::cerr << "PCL organized: " << full_cloud->isOrganized() << std::endl;
         volumeSegmentation(full_cloud,table_transform,0.5);
         tableConvexHull = getTableConvexHull(full_cloud);
-        if (tableConvexHull->size() < 10) {
+        if (tableConvexHull->size() < 3) {
             std::cerr << "Retrying table segmentation...\n";
             return false;
         }
@@ -559,9 +571,20 @@ void semanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &pc)
     if (!classReady) return;
     // The callback from main only update the cloud data
     inputCloud = pc;
-    if (!haveTable && useTableSegmentation)
+    
+    if (useTableSegmentation && !table_corner_published)
     {
-        haveTable = getAndSaveTable(pc);
+        if (!haveTable) haveTable = getAndSaveTable(inputCloud);
+        
+        if (haveTable) { // publish the table corner
+            table_corner_published = true;
+            sensor_msgs::PointCloud2 output_msg;
+            toROSMsg(*tableConvexHull,output_msg);
+            output_msg.header.frame_id = inputCloud.header.frame_id;
+            std::cerr << "Published table corner point cloud\n";
+            table_corner_pub.publish(output_msg);
+        }
+        else return; // still does not have table
     }
 
     if (use_median_filter)

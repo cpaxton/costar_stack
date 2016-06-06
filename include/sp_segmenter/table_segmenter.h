@@ -83,7 +83,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 	// Segment planes
 	pcl::OrganizedMultiPlaneSegmentation< pcl::PointXYZRGBA, pcl::Normal, pcl::Label > mps;
 
-	mps.setMinInliers (15000);
+	mps.setMinInliers (8000);
 	mps.setAngularThreshold (0.017453 * 2.0); // 2 degrees
 	mps.setDistanceThreshold (0.02); // 2cm
 	mps.setInputNormals (normals);
