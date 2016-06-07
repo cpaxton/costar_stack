@@ -115,6 +115,8 @@ class CostarUR5Driver(CostarArm):
             self.ur.movej(q,wait=False,acc=acceleration,vel=velocity)
 
     '''
+    URX supports Cartesian moves, so we will recover our forward kinematics
+    and send a Cartesian pose.
     '''
     def send_cart(self,q,acceleration,velocity):
         if self.simulation:
@@ -126,7 +128,7 @@ class CostarUR5Driver(CostarArm):
           T = self.kdl_kin.forward(q)
           (angle,axis) = T.M.GetRotAngle()
           cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
-          self.ur.movel(cmd,acc=acceleration,vel=velocity)
+          self.ur.movel(cmd,wait=False,acc=acceleration,vel=velocity)
 
     '''
     Send a whole sequence of points to a robot...
