@@ -29,7 +29,7 @@ class CostarUR5Driver(CostarArm):
         end_link = "ee_link"
         planning_group = "manipulator"
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
-            steps_per_meter=10,
+            steps_per_meter=100,
             base_steps=1)
 
         self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
@@ -114,7 +114,7 @@ class CostarUR5Driver(CostarArm):
 
             self.pt_publisher.publish(pt)
         else:
-            self.ur.movej(q,wait=False,acc=acceleration,vel=velocity)
+            self.ur.movej(q,wait=True,acc=acceleration,vel=velocity)
 
     '''
     URX supports Cartesian moves, so we will recover our forward kinematics
@@ -130,7 +130,7 @@ class CostarUR5Driver(CostarArm):
           T = pm.fromMatrix(self.kdl_kin.forward(q))
           (angle,axis) = T.M.GetRotAngle()
           cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
-          self.ur.movel(cmd,wait=False,acc=acceleration,vel=velocity)
+          self.ur.movel(cmd,wait=True,acc=acceleration,vel=velocity)
 
     '''
     Send a whole sequence of points to a robot...
