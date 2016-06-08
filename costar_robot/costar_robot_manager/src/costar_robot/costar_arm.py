@@ -215,8 +215,8 @@ class CostarArm(object):
             possible_goals = zip(dists,qs)
             possible_goals.sort()
 
-            print "POSSIBLE GOALS"
-            print possible_goals
+            #print "POSSIBLE GOALS"
+            #print possible_goals
             
             (dist,traj) = possible_goals[0]
             rospy.logwarn("Trying to move to frame at distance %f"%(dist))
