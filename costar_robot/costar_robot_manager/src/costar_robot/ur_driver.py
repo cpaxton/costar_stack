@@ -53,21 +53,22 @@ class CostarUR5Driver(CostarArm):
         stamp = rospy.Time.now().to_sec()
         self.cur_stamp = stamp
 
-        for pt in traj.points[:-1]:
-          if not cartesian:
-            self.send_q(pt.positions,acceleration,velocity)
-          else:
-            self.send_cart(pt.positions,acceleration,velocity) ##
-          self.set_goal(pt.positions)
+	if self.simulation:
+          for pt in traj.points[:-1]:
+            if not cartesian:
+              self.send_q(pt.positions,acceleration,velocity)
+            else:
+              self.send_cart(pt.positions,acceleration,velocity) ##
+            self.set_goal(pt.positions)
 
-          print " -- %s"%(str(pt.positions))
-          start_t = rospy.Time.now()
+            print " -- %s"%(str(pt.positions))
+            start_t = rospy.Time.now()
 
-          if self.cur_stamp > stamp:
-            return 'FAILURE - preempted'
+            if self.cur_stamp > stamp:
+              return 'FAILURE - preempted'
 
-          rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
-          t = pt.time_from_start
+            rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
+            t = pt.time_from_start
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
         if not cartesian:

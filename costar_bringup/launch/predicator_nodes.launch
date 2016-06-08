@@ -14,10 +14,10 @@
     pkg="predicator_geometry"
     output="$(arg output)">
 
-    <param name="height_threshold" value="0.1"/>
-    <param name="rel_x_threshold" value="0.1"/>
-    <param name="rel_y_threshold" value="0.1"/>
-    <param name="rel_z_threshold" value="0.1"/>
+    <param name="height_threshold" value="0.01"/>
+    <param name="rel_x_threshold" value="0.01"/>
+    <param name="rel_y_threshold" value="0.01"/>
+    <param name="rel_z_threshold" value="0.01"/>
     <param name="near_2D_threshold" value="0.2"/>
     <param name="near_3D_threshold" value="0.25"/>
     <param name="publish_values" value="$(arg publish_values)"/>
