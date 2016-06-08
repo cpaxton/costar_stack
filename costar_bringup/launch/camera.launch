@@ -46,6 +46,6 @@
     <param name="file_extension" value="stl"/>
   </include>
 
-  <node pkg="tf" type="static_transform_publisher" name="fake_ar_marker_2_publisher" args="0.5 0.1 0.01 0 0 0 /world /ar_marker_2 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="fake_ar_marker_2_publisher" args="0.5 0.0 0.0 0 0 0 /world /ar_marker_2 1000"/>
 
 </launch>

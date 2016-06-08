@@ -28,7 +28,7 @@ class CostarUR5Driver(CostarArm):
         end_link = "ee_link"
         planning_group = "manipulator"
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
-            steps_per_meter=0,
+            steps_per_meter=10,
             base_steps=1)
 
         self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
