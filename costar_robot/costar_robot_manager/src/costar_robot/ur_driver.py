@@ -2,6 +2,7 @@
 import rospy
 import urx
 import numpy as np
+import tf_conversions.posemath as pm
 from costar_robot import CostarArm
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
@@ -72,7 +73,7 @@ class CostarUR5Driver(CostarArm):
         if not cartesian:
           self.send_q(traj.points[-1].positions,acceleration,velocity)
         else:
-          self.send_cart(pt.positions,acceleration,velocity) ##
+          self.send_cart(traj.points[-1].positions,acceleration,velocity) ##
         self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
 
@@ -125,7 +126,7 @@ class CostarUR5Driver(CostarArm):
 
             self.pt_publisher.publish(pt)
         else:
-          T = self.kdl_kin.forward(q)
+          T = pm.fromMatrix(self.kdl_kin.forward(q))
           (angle,axis) = T.M.GetRotAngle()
           cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
           self.ur.movel(cmd,wait=False,acc=acceleration,vel=velocity)

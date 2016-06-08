@@ -221,7 +221,7 @@ class CostarArm(object):
             (dist,traj) = possible_goals[0]
             rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-            msg = self.send_trajectory(traj,acceleration,velocity,cartesian=True)
+            msg = self.send_trajectory(traj,acceleration,velocity,cartesian=False)
 
             return msg
 
