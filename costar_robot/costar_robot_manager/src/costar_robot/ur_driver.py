@@ -34,7 +34,14 @@ class CostarUR5Driver(CostarArm):
 
         self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
 
-        self.q0 = np.array(self.ur.getj())
+        # self.q0 = np.array(self.ur.getj())
+        # print self.ur.getj_all()
+
+        self.current_joint_positions = self.ur.getj_all(True)
+        self.q0 = np.array(self.current_joint_positions[0])
+        self.q_v0 = np.array(self.current_joint_positions[1])
+        self.q_a0 = np.array(self.current_joint_positions[2])
+
         self.old_q0 = self.q0
         self.set_goal(self.q0)
 
@@ -161,13 +168,16 @@ class CostarUR5Driver(CostarArm):
     def handle_tick(self):
 
         # send out the joint states
-        self.q0 = np.array(self.ur.getj())
+        self.current_joint_positions = self.ur.getj_all(True)
+        self.q0 = np.array(self.current_joint_positions[0])
+        self.q_v0 = np.array(self.current_joint_positions[1])
+        self.q_a0 = np.array(self.current_joint_positions[2])
         self.js_publisher.publish(JointState(
           header=Header(stamp=rospy.Time.now()),
           name=self.joint_names,
           position=self.q0,
-          velocity=[0,0,0,0,0,0],
-          effort=[0,0,0,0,0,0]))
+          velocity=self.q_v0,
+          effort=self.q_a0))
         self.update_position()
 
         if self.driver_status in mode.keys():
