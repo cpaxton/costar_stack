@@ -46,6 +46,7 @@ find_package(catkin REQUIRED std_msgs geometry_msgs predicator_msgs sensor_msgs 
 add_service_files(
   FILES
   SetStop.srv
+  SetFreedrive.srv
   SetTeachMode.srv
   SetServoMode.srv
   ServoToPose.srv
