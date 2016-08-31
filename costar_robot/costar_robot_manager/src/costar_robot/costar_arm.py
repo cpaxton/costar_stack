@@ -22,7 +22,6 @@ from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
 
-
 class CostarArm(object):
 
     def __init__(self,

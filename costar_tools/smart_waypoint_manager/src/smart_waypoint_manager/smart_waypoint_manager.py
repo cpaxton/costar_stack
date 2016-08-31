@@ -17,6 +17,9 @@ from predicator_landmark import GetWaypointsService
 SmartWaypointManager
 This class will create and load smart waypoints from the $LIBRARIAN_HOME/smart_waypoints directory
 It also provides ways to use and access these methods
+- stores smartmove waypoints with associated class info
+- stores joint space waypoints
+- stores a set of 6dof cartesian waypoints (for now in the world frame)
 '''
 class SmartWaypointManager:
 
@@ -47,6 +50,7 @@ class SmartWaypointManager:
 
         self.folder = 'smartmove_waypoint'
         self.js_folder = 'joint_states'
+        self.cart_folder = 'cartesian'
         self.info_folder = 'smartmove_info'
 
         self.add_type_service(self.folder)
@@ -55,6 +59,8 @@ class SmartWaypointManager:
         self.waypoint_names = {}
         self.js_waypoints = {}
         self.js_waypoint_names = {}
+        self.cart_waypoints = {}
+        self.cart_waypoint_names = {}
 
         self.all_moves = []
         self.all_js_moves = []
@@ -141,7 +147,15 @@ class SmartWaypointManager:
         print self.waypoint_names
         print self.waypoints
         print self.js_waypoint_names
-        print self.js_waypoints
+        print self.js_waypoint
+
+        '''
+        this section loads cartesian waypoints
+        '''
+
+        cart_filenames = self.list_service(self.cart_folder).entries
+        for name in cart_filenames:
+          data = yaml.load(self.load_service(id=name,type=self.cart_folder).text)
 
     def lookup_waypoint(self,obj_class,name):
       rospy.logwarn("looking for %s"%name)
