@@ -37,7 +37,7 @@ class CostarUR5Driver(CostarArm):
         # self.q0 = np.array(self.ur.getj())
         # print self.ur.getj_all()
 
-        self.current_joint_positions = self.ur.getj_all(True)
+        self.current_joint_positions = self.ur.getj_all()
         self.q0 = np.array(self.current_joint_positions[0])
         self.q_v0 = np.array(self.current_joint_positions[1])
         self.q_a0 = np.array(self.current_joint_positions[2])
@@ -168,7 +168,7 @@ class CostarUR5Driver(CostarArm):
     def handle_tick(self):
 
         # send out the joint states
-        self.current_joint_positions = self.ur.getj_all(True)
+        self.current_joint_positions = self.ur.getj_all()
         self.q0 = np.array(self.current_joint_positions[0])
         self.q_v0 = np.array(self.current_joint_positions[1])
         self.q_a0 = np.array(self.current_joint_positions[2])

@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /TF1/Frames1
         - /PointCloud21
         - /RobotModel1
@@ -57,63 +58,161 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 1
       Frames:
+        1:
+          Value: false
+        AAA-linkInitapp:
+          Value: true
+        AAA-linkappr:
+          Value: true
+        AAA-linkgrasp:
+          Value: true
+        AAA-nodeActualAss:
+          Value: true
+        AAA-nodeAppAss:
+          Value: true
+        AAA-nodeInitAss:
+          Value: true
+        AAAA--0:
+          Value: true
+        AAAB:
+          Value: true
         All Enabled: false
+        CENTER:
+          Value: true
         Obj::link_uniform::1:
           Value: true
         Obj::link_uniform::2:
           Value: true
         Obj::link_uniform::3:
           Value: true
-        Obj::link_uniform::4:
-          Value: true
-        Obj::link_uniform::5:
-          Value: true
-        Obj::link_uniform::6:
-          Value: true
         Obj::node_uniform::1:
           Value: true
         Obj::node_uniform::2:
           Value: true
         Obj::node_uniform::3:
-          Value: true
+          Value: false
         Obj::node_uniform::4:
-          Value: true
+          Value: false
         Obj::node_uniform::5:
-          Value: true
+          Value: false
+        Obj::node_uniform::6:
+          Value: false
+        START:
+          Value: false
+        angled_grasp_link_01:
+          Value: false
         ar_marker_0:
           Value: true
         ar_marker_2:
-          Value: true
+          Value: false
+        ar_marker_3:
+          Value: false
+        asdf:
+          Value: false
+        attach1:
+          Value: false
+        attach3:
+          Value: false
         base_link:
-          Value: true
+          Value: false
         camera_depth_frame:
-          Value: true
+          Value: false
         camera_depth_optical_frame:
-          Value: true
+          Value: false
         camera_link:
-          Value: true
+          Value: false
         camera_rgb_frame:
-          Value: true
+          Value: false
         camera_rgb_optical_frame:
+          Value: false
+        down:
+          Value: false
+        drop back:
+          Value: true
+        drop front:
           Value: true
         ee_link:
-          Value: true
+          Value: false
         endpoint:
-          Value: true
+          Value: false
         endpoint_align:
-          Value: true
+          Value: false
         endpoint_align0:
-          Value: true
+          Value: false
         endpoint_marker:
-          Value: true
+          Value: false
+        forearm_link:
+          Value: false
+        grasp_node_01:
+          Value: false
+        grasp_node_01b:
+          Value: false
+        grasp_node_01c:
+          Value: false
+        grasp_node_02a:
+          Value: false
+        grasp_node_02b:
+          Value: false
+        grasp_node_03a:
+          Value: false
+        grasp_node_03b:
+          Value: false
         gripper_link:
+          Value: false
+        link_offset:
+          Value: false
+        low back:
           Value: true
+        low front:
+          Value: true
+        low_attach01:
+          Value: false
+        low_attach1:
+          Value: false
+        low_attach2:
+          Value: false
+        makita approach:
+          Value: false
+        makita1:
+          Value: false
+        makita1b:
+          Value: false
+        makita2:
+          Value: false
+        makita2b:
+          Value: false
+        objects/link_uniform/1:
+          Value: true
+        objects/link_uniform/2:
+          Value: true
+        objects/link_uniform/3:
+          Value: true
+        objects/node_uniform/1:
+          Value: false
+        objects/node_uniform/2:
+          Value: false
+        objects/node_uniform/3:
+          Value: false
+        objects/node_uniform/4:
+          Value: false
+        objects/node_uniform/5:
+          Value: false
+        objects/node_uniform/6:
+          Value: false
         preferred_orientation:
-          Value: true
+          Value: false
+        shoulder_link:
+          Value: false
+        upper_arm_link:
+          Value: false
         world:
           Value: true
+        wrist_1_link:
+          Value: false
+        wrist_2_link:
+          Value: false
         wrist_3_link:
-          Value: true
+          Value: false
       Marker Scale: 0.5
       Name: TF
       Show Arrows: false
@@ -132,12 +231,6 @@ Visualization Manager:
                 {}
               Obj::link_uniform::3:
                 {}
-              Obj::link_uniform::4:
-                {}
-              Obj::link_uniform::5:
-                {}
-              Obj::link_uniform::6:
-                {}
               Obj::node_uniform::1:
                 {}
               Obj::node_uniform::2:
@@ -148,14 +241,122 @@ Visualization Manager:
                 {}
               Obj::node_uniform::5:
                 {}
+              Obj::node_uniform::6:
+                {}
               ar_marker_0:
                 {}
+              ar_marker_3:
+                {}
           world:
+            1:
+              {}
+            AAA-linkInitapp:
+              {}
+            AAA-linkappr:
+              {}
+            AAA-linkgrasp:
+              {}
+            AAA-nodeActualAss:
+              {}
+            AAA-nodeAppAss:
+              {}
+            AAA-nodeInitAss:
+              {}
+            AAAA--0:
+              {}
+            AAAB:
+              {}
+            CENTER:
+              {}
+            START:
+              {}
+            angled_grasp_link_01:
+              {}
             ar_marker_2:
+              {}
+            asdf:
+              {}
+            attach1:
+              {}
+            attach3:
               {}
             base_link:
               preferred_orientation:
                 {}
+              shoulder_link:
+                upper_arm_link:
+                  forearm_link:
+                    wrist_1_link:
+                      wrist_2_link:
+                        wrist_3_link:
+                          ee_link:
+                            endpoint:
+                              endpoint_align0:
+                                endpoint_align:
+                                  endpoint_marker:
+                                    {}
+                            gripper_link:
+                              {}
+            down:
+              {}
+            drop back:
+              {}
+            drop front:
+              {}
+            grasp_node_01:
+              {}
+            grasp_node_01b:
+              {}
+            grasp_node_01c:
+              {}
+            grasp_node_02a:
+              {}
+            grasp_node_02b:
+              {}
+            grasp_node_03a:
+              {}
+            grasp_node_03b:
+              {}
+            link_offset:
+              {}
+            low back:
+              {}
+            low front:
+              {}
+            low_attach01:
+              {}
+            low_attach1:
+              {}
+            low_attach2:
+              {}
+            makita approach:
+              {}
+            makita1:
+              {}
+            makita1b:
+              {}
+            makita2:
+              {}
+            makita2b:
+              {}
+            objects/link_uniform/1:
+              {}
+            objects/link_uniform/2:
+              {}
+            objects/link_uniform/3:
+              {}
+            objects/node_uniform/1:
+              {}
+            objects/node_uniform/2:
+              {}
+            objects/node_uniform/3:
+              {}
+            objects/node_uniform/4:
+              {}
+            objects/node_uniform/5:
+              {}
+            objects/node_uniform/6:
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -258,7 +459,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: ""
+      Color Transformer: RGB8
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -267,7 +468,7 @@ Visualization Manager:
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
-      Position Transformer: ""
+      Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
@@ -302,7 +503,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.94179
+      Distance: 2.41276
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -314,10 +515,10 @@ Visualization Manager:
         Z: -0.476494
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.05979
+      Pitch: 0.699796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.585484
+      Yaw: 0.770485
     Saved: ~
 Window Geometry:
   Displays:
@@ -335,5 +536,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 412
+  X: 0
   Y: 25
