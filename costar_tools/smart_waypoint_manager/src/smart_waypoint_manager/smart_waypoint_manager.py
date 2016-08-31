@@ -248,7 +248,6 @@ class SmartWaypointManager:
                 self.broadcaster.sendTransform(trans,rot,rospy.Time.now(),name,self.world)
                 #print (trans, rot, name)
 
-
     '''
     Send any non-smart waypoints we might be managing.
     '''
