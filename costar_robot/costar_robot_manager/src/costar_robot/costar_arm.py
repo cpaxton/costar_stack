@@ -157,6 +157,7 @@ class CostarArm(object):
     '''
     def save_frame_call(self,req):
       rospy.logwarn('Save frame does not check to see if your frame already exists!')
+      print self.ee_pose
 
       return 'SUCCESS - '
 
@@ -165,6 +166,7 @@ class CostarArm(object):
     '''
     def save_joints_call(self,req):
       rospy.logwarn('Save frame does not check to see if your joint position already exists!')
+      print self.q0
 
       return 'SUCCESS - '
 
@@ -249,7 +251,7 @@ class CostarArm(object):
             return msg
 
         else:
-            msg = 'FAILURE - no match to predicate moves'
+            msg = 'FAILURE - no matching moves for specified predicates'
             return msg
 
     def set_goal(self,q):
