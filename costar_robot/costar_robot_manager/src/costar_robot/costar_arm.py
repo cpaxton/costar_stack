@@ -72,7 +72,7 @@ class CostarArm(object):
         self.smartmove = rospy.Service('/costar/SmartMove',SmartMove,self.smart_move_call)
         self.js_servo = rospy.Service('/costar/ServoToJointState',ServoToJointState,self.servo_to_joints_call)
         self.save_frame = rospy.Service('/costar/SaveFrame',SaveFrame,self.save_frame_call)
-        self.save_frame = rospy.Service('/costar/SaveJointPosition',SaveFrame,self.save_joints_call)
+        self.save_joints = rospy.Service('/costar/SaveJointPosition',SaveFrame,self.save_joints_call)
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
