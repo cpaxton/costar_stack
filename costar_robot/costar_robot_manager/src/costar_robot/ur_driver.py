@@ -2,6 +2,7 @@
 import rospy
 import urx
 import numpy as np
+import tf_conversions.posemath as pm
 from costar_robot import CostarArm
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
@@ -28,12 +29,19 @@ class CostarUR5Driver(CostarArm):
         end_link = "ee_link"
         planning_group = "manipulator"
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
-            steps_per_meter=0,
+            steps_per_meter=100,
             base_steps=1)
 
         self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
 
-        self.q0 = np.array(self.ur.getj())
+        # self.q0 = np.array(self.ur.getj())
+        # print self.ur.getj_all()
+
+        self.current_joint_positions = self.ur.getj_all(True)
+        self.q0 = np.array(self.current_joint_positions[0])
+        self.q_v0 = np.array(self.current_joint_positions[1])
+        self.q_a0 = np.array(self.current_joint_positions[2])
+
         self.old_q0 = self.q0
         self.set_goal(self.q0)
 
@@ -52,27 +60,28 @@ class CostarUR5Driver(CostarArm):
         stamp = rospy.Time.now().to_sec()
         self.cur_stamp = stamp
 
-        for pt in traj.points[:-1]:
-          if not cartesian:
-            self.send_q(pt.positions,acceleration,velocity)
-          else:
-            self.send_cart(pt.positions,acceleration,velocity) ##
-          self.set_goal(pt.positions)
+	if self.simulation:
+          for pt in traj.points[:-1]:
+            if not cartesian:
+              self.send_q(pt.positions,acceleration,velocity)
+            else:
+              self.send_cart(pt.positions,acceleration,velocity) ##
+            self.set_goal(pt.positions)
 
-          print " -- %s"%(str(pt.positions))
-          start_t = rospy.Time.now()
+            print " -- %s"%(str(pt.positions))
+            start_t = rospy.Time.now()
 
-          if self.cur_stamp > stamp:
-            return 'FAILURE - preempted'
+            if self.cur_stamp > stamp:
+              return 'FAILURE - preempted'
 
-          rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
-          t = pt.time_from_start
+            rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
+            t = pt.time_from_start
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
         if not cartesian:
           self.send_q(traj.points[-1].positions,acceleration,velocity)
         else:
-          self.send_cart(pt.positions,acceleration,velocity) ##
+          self.send_cart(traj.points[-1].positions,acceleration,velocity) ##
         self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
 
@@ -112,7 +121,7 @@ class CostarUR5Driver(CostarArm):
 
             self.pt_publisher.publish(pt)
         else:
-            self.ur.movej(q,wait=False,acc=acceleration,vel=velocity)
+            self.ur.movej(q,wait=True,acc=acceleration,vel=velocity)
 
     '''
     URX supports Cartesian moves, so we will recover our forward kinematics
@@ -125,10 +134,10 @@ class CostarUR5Driver(CostarArm):
 
             self.pt_publisher.publish(pt)
         else:
-          T = self.kdl_kin.forward(q)
+          T = pm.fromMatrix(self.kdl_kin.forward(q))
           (angle,axis) = T.M.GetRotAngle()
           cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
-          self.ur.movel(cmd,wait=False,acc=acceleration,vel=velocity)
+          self.ur.movel(cmd,wait=True,acc=acceleration,vel=velocity)
 
     '''
     Send a whole sequence of points to a robot...
@@ -159,13 +168,16 @@ class CostarUR5Driver(CostarArm):
     def handle_tick(self):
 
         # send out the joint states
-        self.q0 = np.array(self.ur.getj())
+        self.current_joint_positions = self.ur.getj_all(True)
+        self.q0 = np.array(self.current_joint_positions[0])
+        self.q_v0 = np.array(self.current_joint_positions[1])
+        self.q_a0 = np.array(self.current_joint_positions[2])
         self.js_publisher.publish(JointState(
           header=Header(stamp=rospy.Time.now()),
           name=self.joint_names,
           position=self.q0,
-          velocity=[0,0,0,0,0,0],
-          effort=[0,0,0,0,0,0]))
+          velocity=self.q_v0,
+          effort=self.q_a0))
         self.update_position()
 
         if self.driver_status in mode.keys():

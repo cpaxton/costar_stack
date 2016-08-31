@@ -233,13 +233,13 @@ class CostarArm(object):
             possible_goals = zip(dists,qs)
             possible_goals.sort()
 
-            print "POSSIBLE GOALS"
-            print possible_goals
+            #print "POSSIBLE GOALS"
+            #print possible_goals
             
             (dist,traj) = possible_goals[0]
             rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-            msg = self.send_trajectory(traj,acceleration,velocity,cartesian=True)
+            msg = self.send_trajectory(traj,acceleration,velocity,cartesian=False)
 
             return msg
 
@@ -334,13 +334,10 @@ class CostarArm(object):
 
             # inverse kinematics
             traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
-            if len(traj.points) == 0:
-                (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
-                if not res is None:
-                    traj = res.planned_trajectory.joint_trajectory
-
-            #if len(traj) == 0:
-            #    traj.append(self.planner.ik(T,self.q0))
+            #if len(traj.points) == 0:
+            #    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
+            #    if not res is None:
+            #        traj = res.planned_trajectory.joint_trajectory
 
             # Send command
             if len(traj.points) > 0:
