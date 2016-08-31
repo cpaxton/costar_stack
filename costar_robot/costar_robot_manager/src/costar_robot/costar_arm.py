@@ -21,6 +21,7 @@ from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
+from smart_waypoint_manager import SmartWaypointManager
 
 class CostarArm(object):
 
@@ -63,11 +64,8 @@ class CostarArm(object):
 
         self.cur_stamp = 0
 
-        # TODO: load joint states
-        self.joint_states = {}
-
-        # TODO: list of transforms to publish
-        self.transforms = {}
+        # TODO: ensure the manager is set up properly
+        self.smart_waypoint_manager = SmartWaypointManager()
 
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)

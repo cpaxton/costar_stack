@@ -53,6 +53,7 @@ add_service_files(
   SmartMove.srv
   EmptyCommand.srv
   SaveFrame.srv
+  LookupJointStates.srv
 )
 
 ## Generate actions in the 'action' folder
