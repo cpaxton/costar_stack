@@ -64,6 +64,12 @@ class CostarArm(object):
 
         self.cur_stamp = 0
 
+        # TODO: load joint states
+        self.joint_states = {}
+
+        # TODO: list of transforms to publish
+        self.transforms = {}
+
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
         self.shutdown = rospy.Service('/costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
@@ -418,4 +424,8 @@ class CostarArm(object):
     def tick(self):
         self.status_publisher.publish(self.driver_status)
         self.handle_tick()
+
+        # publish messages
+        for (name, tf) in self.transforms:
+          pass
 
