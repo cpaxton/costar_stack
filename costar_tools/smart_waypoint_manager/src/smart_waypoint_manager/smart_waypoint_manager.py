@@ -10,6 +10,7 @@ from librarian_msgs.srv import *
 from librarian_msgs.msg import *
 
 from costar_objrec_msgs.msg import *
+from costar_robot_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
 
@@ -248,3 +249,21 @@ class SmartWaypointManager:
                 #print (trans, rot, name)
 
 
+    '''
+    Send any non-smart waypoints we might be managing.
+    '''
+    def publish_cartesian_waypoints(self):
+
+        for (name,pose) in self.cart_waypoints:
+            (trans,rot) = pm.toTf(pm.fromMsg(pose))
+            self.broadcaster.sendTransform(trans,rot,rospy.Time.now(),name,self.world)
+
+    '''
+    implement service to get joint states
+    '''
+    def get_joint_states_by_name_srv(self, req):
+        if req.name in self.js_waypoints
+            msg = LookupJointStatesResponse(joint_states=self.js_waypoints[name], ack='SUCCESS')
+        else:
+            msg = LookupJointStatesResponse(ack='FAILURE - %s not found'%req.name)
+        return msg
