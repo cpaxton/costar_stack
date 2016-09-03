@@ -3,10 +3,17 @@
 import rospy
 from costar_robot import WaypointManager
 
-rospy.init_node('costar_waypoint_manager')
-wm = WaypointManager()
+'''
+Offer up a list of services to access possible waypoints and joint state waypoints.
+'''
+def waypoint_manager_service(req):
+  pass
 
-rate = rospy.Rate(60)
+if __name__ == '__main__':
+  rospy.init_node('costar_waypoint_manager')
+  wm = WaypointManager()
 
-while not rospy.is_shutdown():
-  rate.sleep()
+  rate = rospy.Rate(60)
+
+  while not rospy.is_shutdown():
+    rate.sleep()
