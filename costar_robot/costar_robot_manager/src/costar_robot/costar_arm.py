@@ -65,7 +65,7 @@ class CostarArm(object):
         self.cur_stamp = 0
 
         # TODO: ensure the manager is set up properly
-        self.smart_waypoint_manager = SmartWaypointManager()
+        self.waypoint_manager = WaypointManager()
 
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
@@ -156,6 +156,7 @@ class CostarArm(object):
     def save_frame_call(self,req):
       rospy.logwarn('Save frame does not check to see if your frame already exists!')
       print self.ee_pose
+      self.waypoint_manager.save_frame(self.ee_pose, self.world)
 
       return 'SUCCESS - '
 
@@ -165,6 +166,7 @@ class CostarArm(object):
     def save_joints_call(self,req):
       rospy.logwarn('Save frame does not check to see if your joint position already exists!')
       print self.q0
+      self.waypoint_manager.save_frame(self.q0)
 
       return 'SUCCESS - '
 
@@ -174,7 +176,7 @@ class CostarArm(object):
     '''
     def smart_move_call(self,req):
 
-        if False and not self.driver_status == 'SERVO':
+        if not self.driver_status == 'SERVO':
             rospy.logerr('DRIVER -- Not in servo mode!')
             return 'FAILURE - not in servo mode'
 
@@ -424,7 +426,6 @@ class CostarArm(object):
         self.status_publisher.publish(self.driver_status)
         self.handle_tick()
 
-        # publish messages
-        for (name, tf) in self.transforms:
-          pass
+        # publish TF messages to display frames
+        self.waypoint_manager.publish_tf()
 
