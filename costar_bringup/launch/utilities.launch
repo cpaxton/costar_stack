@@ -1,4 +1,7 @@
 <launch>
+
+    <arg name="start_robotiq_force_sensor" default="false" doc="(bool) Launch robotiq force sensor."/>
+
     <!-- Librarian -->
     <node pkg="librarian_core" type="core.py" name="librarian_core"/>
 
@@ -14,6 +17,9 @@
     <node pkg="point_cloud_recorder" type="point_cloud_recorder.py" name="point_cloud_recorder_service">
       <param name="id" value="costar"/>
     </node>
+
+    <!-- Force sensor -->
+    <node if="$(arg start_robotiq_force_sensor)" pkg="robotiq_force_torque_sensor" type="rq_sensor" name="robotiq_force_torque_sensor"/>
 
     <!--
     publish new tf frames for any detected objects!
