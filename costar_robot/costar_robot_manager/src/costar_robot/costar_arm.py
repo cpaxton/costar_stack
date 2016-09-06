@@ -69,7 +69,7 @@ class CostarArm(object):
         # Note that while the waypoint manager is currently a part of CostarArm
         # If we wanted to set this up for multiple robots it should be treated
         # as an independent component.
-        self.waypoint_manager = WaypointManager()
+        self.waypoint_manager = WaypointManager(service=True)
 
         # set up services
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
@@ -83,7 +83,6 @@ class CostarArm(object):
         self.save_joints = rospy.Service('/costar/SaveJointPosition',SaveFrame,self.save_joints_call)
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
-
       
         # Create publishers. These will send necessary information out about the state of the robot.
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
@@ -188,7 +187,10 @@ class CostarArm(object):
             rospy.logerr('DRIVER -- Not in servo mode!')
             return 'FAILURE - not in servo mode'
 
+        # Check acceleration and velocity limits
         (acceleration, velocity) = self.check_req_speed_params(req) 
+
+        # Find possible poses
         (poses,names) = self.get_waypoints_srv.get_waypoints(
                 req.obj_class, # object class to move to
                 req.predicates, # predicates to match
@@ -221,9 +223,6 @@ class CostarArm(object):
                 # try to move to the pose until one succeeds
                 T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
                 T = T_base_world.Inverse()*pm.fromMsg(pose)
-
-                # Check acceleration and velocity limits
-                # Send command
 
                 pt = JointTrajectoryPoint()
 

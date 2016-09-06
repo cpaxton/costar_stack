@@ -6,6 +6,8 @@ import tf_conversions.posemath as pm
 from predicator_msgs.srv import *
 from predicator_msgs.msg import *
 
+from costar_robot_msgs.srv import *
+
 from librarian_msgs.srv import *
 from librarian_msgs.msg import *
 
@@ -32,22 +34,35 @@ class WaypointManager:
     self.endpoint = endpoint
 
     self.js_folder = 'joint_states'
-    self.cart_folder = 'cartesian'
+    self.cart_folder = 'instructor_waypoint'
 
     self.js_waypoints = {}
-    self.js_waypoint_names = {}
     self.cart_waypoints = {}
-    self.cart_waypoint_names = {}
     self.all_js_moves = []
+    self.all_cart_moves = []
 
     # If we are bringing this up as an independent component...
     if service:
-      pass
+      self.get_joint_states_waypoints_list = rospy.Service('/costar/GetJointStateWaypoints',GetList,self.get_js_waypoints_list)
+      self.get_waypoints_list = rospy.Service('/costar/GetWaypointsList',GetList,self.get_waypoints_list)
 
     self.update()
 
   '''
-  Update list of frames from librarian
+  Return the list of joint state waypoints
+  '''
+  def get_js_waypoints_list(self,req):
+    return self.js_waypoints.keys()
+
+  '''
+  Return the list of cartesian waypoints
+  '''
+  def get_waypoints_list(self,req):
+    return self.cart_waypoints.keys()
+
+  '''
+  Update list of frames from librarian.
+  These are all saved on disk somewhere or another.
   '''
   def update(self):
     
@@ -57,26 +72,20 @@ class WaypointManager:
 
     for name in js_filenames:
       data = yaml.load(self.load_service(id=name,type=self.js_folder).text)
-      if not data[1] in self.waypoints.keys():
-        self.js_waypoints[data[1]] = []
-        self.js_waypoint_names[data[1]] = []
-
-        self.js_waypoints[data[1]].append(data[0])
-        self.js_waypoint_names[data[1]].append(name)
-        self.all_js_moves.append(data[1] + "/" + name)
-
-    print " === LOADING === "
-    print self.cart_waypoint_names
-    print self.cart_waypoints
-    print self.js_waypoint_names
-    print self.js_waypoints
+      self.js_waypoints[name] = data
+      self.all_js_moves.append(name)
 
     # ----------------------------------------
     # this section loads cartesian waypoints
-
     cart_filenames = self.list_service(self.cart_folder).entries
     for name in cart_filenames:
       data = yaml.load(self.load_service(id=name,type=self.cart_folder).text)
+      self.cart_waypoints[name] = data
+      self.all_cart_moves.append(name)
+    
+    print " === LOADED === "
+    print "Global: " + str(self.cart_waypoints.keys())
+    print "Joint states: " + str(self.js_waypoints.keys())
 
   '''
   Save frame to library if necessary
