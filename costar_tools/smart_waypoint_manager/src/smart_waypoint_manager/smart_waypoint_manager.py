@@ -10,6 +10,7 @@ from librarian_msgs.srv import *
 from librarian_msgs.msg import *
 
 from costar_objrec_msgs.msg import *
+from costar_robot_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
 
@@ -17,6 +18,9 @@ from predicator_landmark import GetWaypointsService
 SmartWaypointManager
 This class will create and load smart waypoints from the $LIBRARIAN_HOME/smart_waypoints directory
 It also provides ways to use and access these methods
+- stores smartmove waypoints with associated class info
+- stores joint space waypoints
+- stores a set of 6dof cartesian waypoints (for now in the world frame)
 '''
 class SmartWaypointManager:
 
@@ -46,18 +50,13 @@ class SmartWaypointManager:
         self.endpoint = endpoint
 
         self.folder = 'smartmove_waypoint'
-        self.js_folder = 'joint_states'
         self.info_folder = 'smartmove_info'
-
         self.add_type_service(self.folder)
 
         self.waypoints = {}
         self.waypoint_names = {}
-        self.js_waypoints = {}
-        self.js_waypoint_names = {}
 
         self.all_moves = []
-        self.all_js_moves = []
 
         self.objs = []
         self.obj_classes = []
@@ -68,7 +67,6 @@ class SmartWaypointManager:
         self.available_references = None
         
         self.add_type_service(self.info_folder)
-        self.add_type_service(self.js_folder)
         self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
         self.available_regions = yaml.load(self.load_service(type="smartmove_info",id="regions").text)
         self.available_references = yaml.load(self.load_service(type="smartmove_info",id="references").text)
@@ -121,28 +119,6 @@ class SmartWaypointManager:
           self.waypoint_names[data[1]].append(name)
           self.all_moves.append(data[1] + "/" + name)
 
-        '''
-        this section loads joint space waypoints
-        '''
-
-        js_filenames = self.list_service(self.js_folder).entries
-
-        for name in js_filenames:
-          data = yaml.load(self.load_service(id=name,type=self.js_folder).text)
-          if not data[1] in self.waypoints.keys():
-            self.js_waypoints[data[1]] = []
-            self.js_waypoint_names[data[1]] = []
-
-            self.js_waypoints[data[1]].append(data[0])
-            self.js_waypoint_names[data[1]].append(name)
-            self.all_js_moves.append(data[1] + "/" + name)
-
-        print " === LOADING === "
-        print self.waypoint_names
-        print self.waypoints
-        print self.js_waypoint_names
-        print self.js_waypoints
-
     def lookup_waypoint(self,obj_class,name):
       rospy.logwarn("looking for %s"%name)
       rospy.logwarn(self.waypoints)
@@ -192,9 +168,6 @@ class SmartWaypointManager:
         if not pose is None:
             self.save_service(id=name.strip('/'),type=self.folder,text=yaml.dump([pose,self.obj_class[obj]]))
 
-    def save_joint_states(self,q,name):
-        self.save_service(id=name.strip('/'),type=self.js_folder,text=yaml.dump(q))
-
     def get_new_waypoint(self,obj):
         try:
             (trans,rot) = self.listener.lookupTransform(obj,self.endpoint,rospy.Time(0))
@@ -233,4 +206,12 @@ class SmartWaypointManager:
                 self.broadcaster.sendTransform(trans,rot,rospy.Time.now(),name,self.world)
                 #print (trans, rot, name)
 
+    '''
+    Send any non-smart waypoints we might be managing.
+    '''
+    def publish_cartesian_waypoints(self):
+
+        for (name,pose) in self.cart_waypoints:
+            (trans,rot) = pm.toTf(pm.fromMsg(pose))
+            self.broadcaster.sendTransform(trans,rot,rospy.Time.now(),name,self.world)
 

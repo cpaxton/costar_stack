@@ -21,7 +21,8 @@ from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
-
+from smart_waypoint_manager import SmartWaypointManager
+from waypoint_manager import WaypointManager
 
 class CostarArm(object):
 
@@ -64,6 +65,9 @@ class CostarArm(object):
 
         self.cur_stamp = 0
 
+        # TODO: ensure the manager is set up properly
+        self.waypoint_manager = WaypointManager()
+
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
         self.shutdown = rospy.Service('/costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
@@ -71,6 +75,8 @@ class CostarArm(object):
         self.plan = rospy.Service('/costar/PlanToPose',ServoToPose,self.plan_to_pose_call)
         self.smartmove = rospy.Service('/costar/SmartMove',SmartMove,self.smart_move_call)
         self.js_servo = rospy.Service('/costar/ServoToJointState',ServoToJointState,self.servo_to_joints_call)
+        self.save_frame = rospy.Service('/costar/SaveFrame',SaveFrame,self.save_frame_call)
+        self.save_joints = rospy.Service('/costar/SaveJointPosition',SaveFrame,self.save_joints_call)
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
@@ -146,12 +152,32 @@ class CostarArm(object):
         return (acceleration, velocity)
 
     '''
+    Save the current end effector pose as a frame that we can return to
+    '''
+    def save_frame_call(self,req):
+      rospy.logwarn('Save frame does not check to see if your frame already exists!')
+      print self.ee_pose
+      self.waypoint_manager.save_frame(self.ee_pose, self.world)
+
+      return 'SUCCESS - '
+
+    '''
+    Save the current joint states as a frame that we can return to
+    '''
+    def save_joints_call(self,req):
+      rospy.logwarn('Save frame does not check to see if your joint position already exists!')
+      print self.q0
+      self.waypoint_manager.save_frame(self.q0)
+
+      return 'SUCCESS - '
+
+    '''
     Find any valid object that meets the requirements.
     Find a cartesian path or possibly longer path through joint space.
     '''
     def smart_move_call(self,req):
 
-        if False and not self.driver_status == 'SERVO':
+        if not self.driver_status == 'SERVO':
             rospy.logerr('DRIVER -- Not in servo mode!')
             return 'FAILURE - not in servo mode'
 
@@ -226,7 +252,7 @@ class CostarArm(object):
             return msg
 
         else:
-            msg = 'FAILURE - no match to predicate moves'
+            msg = 'FAILURE - no matching moves for specified predicates'
             return msg
 
     def set_goal(self,q):
@@ -400,4 +426,7 @@ class CostarArm(object):
     def tick(self):
         self.status_publisher.publish(self.driver_status)
         self.handle_tick()
+
+        # publish TF messages to display frames
+        self.waypoint_manager.publish_tf()
 

@@ -49,7 +49,7 @@ class GetWaypointsService:
         type_predicate.predicate = frame_type
         type_predicate.params = ['*','','']
 
-	print predicates
+        print predicates
 
         res = self.and_srv([type_predicate]+predicates)
 

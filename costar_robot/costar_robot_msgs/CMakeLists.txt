@@ -52,6 +52,8 @@ add_service_files(
   ServoToJointState.srv
   SmartMove.srv
   EmptyCommand.srv
+  SaveFrame.srv
+  LookupJointStates.srv
 )
 
 ## Generate actions in the 'action' folder
