@@ -68,6 +68,7 @@ class CostarArm(object):
         # TODO: ensure the manager is set up properly
         self.waypoint_manager = WaypointManager()
 
+        # set up services
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
         self.shutdown = rospy.Service('/costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
@@ -77,10 +78,15 @@ class CostarArm(object):
         self.js_servo = rospy.Service('/costar/ServoToJointState',ServoToJointState,self.servo_to_joints_call)
         self.save_frame = rospy.Service('/costar/SaveFrame',SaveFrame,self.save_frame_call)
         self.save_joints = rospy.Service('/costar/SaveJointPosition',SaveFrame,self.save_joints_call)
-        self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
         self.driver_status = 'IDLE'
+
+      
+        # Create publishers. These will send necessary information out about the state of the robot.
+        self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
         self.status_publisher = rospy.Publisher('/costar/DriverStatus',String,queue_size=1000)
+        self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
+
         self.robot = URDF.from_parameter_server()
         if start_js_cb:
             self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
@@ -92,11 +98,9 @@ class CostarArm(object):
         else:
             self.listener = listener
 
-        #print self.tree.getNrOfSegments()
-        #print self.chain.getNrOfJoints()
+        # cCreate reference to pyKDL kinematics
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
 
-        self.display_pub = rospy.Publisher('costar/display_trajectory',DisplayTrajectory,queue_size=1000)
 
         #self.set_goal(self.q0)
         self.goal = None
