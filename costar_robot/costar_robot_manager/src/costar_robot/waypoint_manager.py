@@ -17,7 +17,7 @@ These are stored in Librarian and get loaded any time the system comes up.
 '''
 class WaypointManager:
 
-  def __init__(self,world="world",ns="",endpoint="/endpoint",):
+  def __init__(self,world="world",ns="",endpoint="/endpoint",service=False):
     self.tf_publisher = tf.TransformBroadcaster()
 
     # Require librarian services.
@@ -39,6 +39,10 @@ class WaypointManager:
     self.cart_waypoints = {}
     self.cart_waypoint_names = {}
     self.all_js_moves = []
+
+    # If we are bringing this up as an independent component...
+    if service:
+      pass
 
     self.update()
 
