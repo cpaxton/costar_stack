@@ -50,10 +50,7 @@ class SmartWaypointManager:
         self.endpoint = endpoint
 
         self.folder = 'smartmove_waypoint'
-        self.js_folder = 'joint_states'
-        self.cart_folder = 'cartesian'
         self.info_folder = 'smartmove_info'
-
         self.add_type_service(self.folder)
 
         self.waypoints = {}
@@ -70,7 +67,6 @@ class SmartWaypointManager:
         self.available_references = None
         
         self.add_type_service(self.info_folder)
-        self.add_type_service(self.js_folder)
         self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
         self.available_regions = yaml.load(self.load_service(type="smartmove_info",id="regions").text)
         self.available_references = yaml.load(self.load_service(type="smartmove_info",id="references").text)

@@ -29,6 +29,9 @@ class WaypointManager:
     self.world = world
     self.endpoint = endpoint
 
+    self.js_folder = 'joint_states'
+    self.cart_folder = 'cartesian'
+
     self.js_waypoints = {}
     self.js_waypoint_names = {}
     self.cart_waypoints = {}
@@ -57,10 +60,10 @@ class WaypointManager:
         self.all_js_moves.append(data[1] + "/" + name)
 
     print " === LOADING === "
-    print self.waypoint_names
-    print self.waypoints
+    print self.cart_waypoint_names
+    print self.cart_waypoints
     print self.js_waypoint_names
-    print self.js_waypoint
+    print self.js_waypoints
 
     # ----------------------------------------
     # this section loads cartesian waypoints
@@ -97,7 +100,7 @@ class WaypointManager:
   implement service to get joint states
   '''
   def get_joint_states_by_name_srv(self, req):
-      if req.name in self.js_waypoints
+      if req.name in self.js_waypoints:
           msg = LookupJointStatesResponse(joint_states=self.js_waypoints[name], ack='SUCCESS')
       else:
           msg = LookupJointStatesResponse(ack='FAILURE - %s not found'%req.name)

@@ -22,6 +22,7 @@ from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
 from smart_waypoint_manager import SmartWaypointManager
+from waypoint_manager import WaypointManager
 
 class CostarArm(object):
 
