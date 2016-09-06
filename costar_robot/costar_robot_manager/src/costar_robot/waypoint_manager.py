@@ -52,13 +52,13 @@ class WaypointManager:
   Return the list of joint state waypoints
   '''
   def get_js_waypoints_list(self,req):
-    return self.js_waypoints.keys()
+    return GetListResponse(items=self.js_waypoints.keys())
 
   '''
   Return the list of cartesian waypoints
   '''
   def get_waypoints_list(self,req):
-    return self.cart_waypoints.keys()
+    return GetListResponse(items=self.cart_waypoints.keys())
 
   '''
   Update list of frames from librarian.
