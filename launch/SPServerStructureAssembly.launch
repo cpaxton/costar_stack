@@ -1,10 +1,10 @@
 <launch>
   <!-- This is for running detection of nodes and links without setting all the parameters. Unstable launch file, will change often. -->
   <!-- Object file Name without extension-->
-  <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM." />
+  <arg name="object"         default="link_uniform,node_uniform,sander" doc="Object mesh names. Must be specified in the same order as in the SVM." />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
-  <arg name="data_path"      default="$(env HOME)/data/primesense" doc="SP segmenter data folder" />
-  <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
+  <arg name="data_path"      default="$(env HOME)/data/" doc="SP segmenter data folder" />
+  <arg name="svm_path"       default="link_node_sander_svm" doc="Object svm folder name located in data path" />
   <arg name="debug_args"     default=""/>
 
   <!-- Segmentation Parameters parameters-->
@@ -62,7 +62,9 @@
   <arg name="objectVisibility"  default=".1" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
 
 
-  <arg name="aboveTable"     default="0.02" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
+  <arg name="aboveTableMin"     default="0.03" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
+  <arg name="aboveTableMax"     default="0.5" doc="The maximum point cloud distance from segmented table." />
+
   <arg name="tableTF"        default="ar_marker_2" doc="Any TF frame located in the table can be used for table segmentation" />
   <arg name="saveTabledir"   default="$(arg data_path)" doc="Save/Load folder for segmenting table" />
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
@@ -89,18 +91,23 @@
     <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
     <param name="sceneVisibility"  type="double" value="$(arg sceneVisibility)"/>
     <param name="objectVisibility"  type="double" value="$(arg objectVisibility)"/>
-    <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
+    <param name="aboveTableMin"     type="double" value="$(arg aboveTableMin)"/>
+    <param name="aboveTableMax"     type="double" value="$(arg aboveTableMax)"/>
     <param name="use_cuda"   type="bool"   value="$(arg use_cuda)"/>
     <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
     <param name="useCropBox" type="bool" value="$(arg useCropBox)"/>
-    <param name="cropBoxX" type="double" value="1"/>
-    <param name="cropBoxY" type="double" value="1"/>
-    <param name="cropBoxZ" type="double" value="1"/>
-    
+    <param name="cropBoxX" type="double" value="0.3"/>
+    <param name="cropBoxY" type="double" value="0.3"/>
+    <param name="cropBoxZ" type="double" value="0.3"/>
+  
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
     <param name="saveTable"   type="bool" value="$(arg saveTable)" />
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
+    <param name="tableDistanceThreshold" type="double" value="0.015"/>
+    <param name="tableAngularThreshold"  type="double" value="2"/>
+    <param name="tableMinimalInliers"  type="double" value="7500"/>
+    
     <param name="useBinarySVM"   type="bool" value="$(arg useBinarySVM)" />
     <param name="useMultiClassSVM"   type="bool" value="$(arg useMultiClassSVM)" />
     <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />

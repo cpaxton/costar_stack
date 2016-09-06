@@ -62,6 +62,8 @@ private:
     std::string gripperTF; // keep information about gripper TF frame for object in gripper segmentation
     std::map<std::string, objectSymmetry> objectDict; // for orientation normalization
     bool loadTable, haveTable, useTableSegmentation;
+    double tableDistanceThreshold, tableAngularThreshold;
+    int tableMinimalInliers;
     tf::TransformBroadcaster br;
     ros::ServiceServer spSegmenter;
     ros::ServiceServer segmentGripper;
@@ -70,7 +72,7 @@ private:
     // Point cloud related
     sensor_msgs::PointCloud2 inputCloud; // cache the point cloud
     pcl::PointCloud<PointT>::Ptr tableConvexHull; // for object in table segmentation
-    double aboveTable; // point cloud need to be this value above the table in meters
+    double aboveTableMin, aboveTableMax; // point cloud need to be this value above the table in meters
 
     // Publisher related
     bool table_corner_published;

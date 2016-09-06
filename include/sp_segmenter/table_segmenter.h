@@ -14,7 +14,7 @@
 
 #include "sp_segmenter/utility/typedef.h"
 
-void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::StampedTransform &transform,const double &region, bool keepOrganized = true)
+void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::StampedTransform &transform,const Eigen::Vector3f &cropbox, bool keepOrganized = true)
 {
 	for (unsigned int i = 0; i < 3; i++)
   {
@@ -23,19 +23,23 @@ void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::Sta
   	pass.setKeepOrganized(keepOrganized);
   	std::string axisName;
   	double positionToSegment;
+  	double region;
 		
     switch (i){
 			case 0:
     		axisName = "x";
     		positionToSegment = transform.getOrigin().getX();
+    		region = cropbox[0];
     		break;
 			case 1: 
     		axisName = "y"; 
     		positionToSegment = transform.getOrigin().getY();
+    		region = cropbox[1];
     		break;
 			default: 
     		axisName = "z";
     		positionToSegment = transform.getOrigin().getZ();
+    		region = cropbox[2];
     		break;
 			}
 		std::cerr << "Segmenting axis: " << axisName << "max: " << positionToSegment + region	<< " min: " << positionToSegment - region << std::endl;
@@ -45,7 +49,7 @@ void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::Sta
 	}
 }
 
-void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl::PointCloud<PointT>::Ptr &convexHull, const double aboveTable = 0.01)
+void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl::PointCloud<PointT>::Ptr &convexHull, const double aboveTableMin = 0.01, const double aboveTableMax = 0.25)
 {
 
 	std::cerr << "\nSegment object above table \n";
@@ -55,7 +59,7 @@ void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl
 	prism.setInputPlanarHull(convexHull);
 
 	// from 1 cm above table to 50 cm above table
-	prism.setHeightLimits(aboveTable, 0.5f);
+	prism.setHeightLimits(aboveTableMin, aboveTableMax);
 	pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices);
 
 	prism.segment(*objectIndices);
@@ -69,7 +73,9 @@ void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl
 	*cloud_input = *objects;
 }
 
-pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr negative)
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr negative, 
+	pcl::visualization::PCLVisualizer::Ptr viewer,
+	double distanceThreshold = 0.02, double angularThreshold = 2.0, int minimalInliers = 5000)
 {
 	// Get Normal Cloud
 	pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
@@ -83,9 +89,9 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 	// Segment planes
 	pcl::OrganizedMultiPlaneSegmentation< pcl::PointXYZRGBA, pcl::Normal, pcl::Label > mps;
 
-	mps.setMinInliers (8000);
-	mps.setAngularThreshold (0.017453 * 2.0); // 2 degrees
-	mps.setDistanceThreshold (0.02); // 2cm
+	mps.setMinInliers (minimalInliers);
+	mps.setAngularThreshold (0.017453 * angularThreshold); // in radians
+	mps.setDistanceThreshold (distanceThreshold); // in meters
 	mps.setInputNormals (normals);
 	mps.setInputCloud (negative);
 	std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
@@ -94,6 +100,23 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
     // Retrieve the convex hull.
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
     if (regions.size() > 0) {
+    	std::cerr << "Number of possible table regions: " << regions.size() << std::endl;
+        std::cerr<<"Visualize region"<<std::endl;
+    	for (size_t i = 0; i < regions.size(); i++){
+    		std::cerr << "Region" << i <<" size: " << regions[i].getCount() << std::endl;
+    		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr contour (new pcl::PointCloud<pcl::PointXYZRGBA>);
+    		contour->points = regions[i].getContour();
+
+    		if (viewer)
+    		{
+    			std::stringstream ss; ss << "Region" << i;
+	            viewer->removeAllPointClouds();
+	            viewer->addPointCloud(contour, ss.str());
+	            viewer->spin();
+	            viewer->removeAllPointClouds();
+    		}
+    	} 
+
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>);
         boundary->points = regions[0].getContour();
         

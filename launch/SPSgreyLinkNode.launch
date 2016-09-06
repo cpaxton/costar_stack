@@ -62,7 +62,8 @@
   <arg name="objectVisibility"  default=".1" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
 
 
-  <arg name="aboveTable"     default="0.01" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
+  <arg name="aboveTableMin"     default="0.01" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
+  <arg name="aboveTableMax"     default="0.25" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
   <arg name="tableTF"        default="ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
   <arg name="saveTabledir"   default="$(arg data_path)" doc="Save/Load folder for segmenting table" />
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
@@ -89,13 +90,14 @@
     <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
     <param name="sceneVisibility"  type="double" value="$(arg sceneVisibility)"/>
     <param name="objectVisibility"  type="double" value="$(arg objectVisibility)"/>
-    <param name="aboveTable"     type="double" value="$(arg aboveTable)"/>
+    <param name="aboveTableMin"     type="double" value="$(arg aboveTableMin)"/>
+    <param name="aboveTableMax"     type="double" value="$(arg aboveTableMax)"/>
     <param name="use_cuda"   type="bool"   value="$(arg use_cuda)"/>
     <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
     <param name="useCropBox" type="bool" value="$(arg useCropBox)"/>
-    <param name="cropBoxX" type="double" value="1"/>
-    <param name="cropBoxY" type="double" value="1"/>
-    <param name="cropBoxZ" type="double" value="1"/>
+    <param name="cropBoxX" type="double" value="0.25"/>
+    <param name="cropBoxY" type="double" value="0.25"/>
+    <param name="cropBoxZ" type="double" value="0.25"/>
     
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />

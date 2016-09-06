@@ -88,11 +88,17 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("POINTS_OUT", POINTS_OUT,std::string("points_out"));
     //get only best poses (1 pose output) or multiple poses
     this->nh.param("objRecRANSACdetector", objRecRANSACdetector, std::string("StandardRecognize"));
+
     this->nh.param("minConfidence", minConfidence, 0.0);
-    this->nh.param("aboveTable", aboveTable, 0.01);
+    this->nh.param("aboveTableMin", aboveTableMin, 0.01);
+    this->nh.param("aboveTableMax", aboveTableMax, 0.25);
     this->haveTable = false;
     this->nh.param("loadTable",loadTable, true);
     this->nh.param("useTableSegmentation",useTableSegmentation,true);
+    this->nh.param("tableDistanceThreshold",tableDistanceThreshold,0.02);
+    this->nh.param("tableAngularThreshold",tableAngularThreshold,2.0);
+    this->nh.param("tableMinimalInliers",tableMinimalInliers,5000);
+    
     this->nh.param("useCropBox",useCropBox,true);
     this->nh.param("cropBoxX",cropBoxX,1.0);
     this->nh.param("cropBoxY",cropBoxY,1.0);
@@ -213,7 +219,6 @@ void semanticSegmentation::initializeSemanticSegmentation()
             }
             else 
             {
-                std::cerr << "General Class!!!" << std::endl;
                 objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.16, voxelSize));
                 objrec[model_id]->setParams(0.2,0.2);
             }
@@ -338,7 +343,7 @@ void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCl
     }
     
     if (useTableSegmentation) {
-      segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+      segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTableMin, aboveTableMax);
     }
 
     if (full_cloud->size() < 1){
@@ -398,7 +403,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
   
     if( viewer )
     {
-        std::cerr<<"Visualize whole screen"<<std::endl;
+        std::cerr<<"Visualize table segmented screen"<<std::endl;
         viewer->removeAllPointClouds();
         viewer->addPointCloud(scene_f, "whole_scene");
         viewer->spin();
@@ -540,8 +545,18 @@ bool semanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
         
         fromROSMsg(inputCloud,*full_cloud);
         std::cerr << "PCL organized: " << full_cloud->isOrganized() << std::endl;
-        volumeSegmentation(full_cloud,table_transform,0.5);
-        tableConvexHull = getTableConvexHull(full_cloud);
+        volumeSegmentation(full_cloud,table_transform,crop_box_size);
+        
+        if( viewer )
+        {
+            std::cerr<<"Visualize cropbox screen"<<std::endl;
+            viewer->removeAllPointClouds();
+            viewer->addPointCloud(full_cloud, "cropbox_scene");
+            viewer->spin();
+            viewer->removeAllPointClouds();
+        }
+
+        tableConvexHull = getTableConvexHull(full_cloud, viewer, tableDistanceThreshold, tableAngularThreshold,tableMinimalInliers);
         if (tableConvexHull->size() < 3) {
             std::cerr << "Retrying table segmentation...\n";
             return false;
@@ -739,7 +754,7 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     }
     
     if (useTableSegmentation) {
-      segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTable);
+      segmentCloudAboveTable(full_cloud, tableConvexHull, aboveTableMin, aboveTableMax);
     }
     
     if (full_cloud->size() < 1){
@@ -818,7 +833,7 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
         tf::StampedTransform transform;
         listener->lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
         // do a box segmentation around the gripper (50x50x50 cm)
-        volumeSegmentation(full_cloud,transform,0.25,false);
+        volumeSegmentation(full_cloud,transform,crop_box_size,false);
         std::cerr << "Volume Segmentation done.\n";
     }
     else
