@@ -209,18 +209,23 @@ void semanticSegmentation::initializeSemanticSegmentation()
             
             if( temp_cur == "link_uniform")
             {
-                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.075, voxelSize));
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(link_width, voxelSize));
                 objrec[model_id]->setParams(objectVisibility,sceneVisibility);
             }
             else if( temp_cur == "node_uniform")
             {
-                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(node_width, voxelSize));
                 objrec[model_id]->setParams(objectVisibility,sceneVisibility);
             }
-            else 
+            else if( temp_cur == "sander_makita")
             {
-                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.16, voxelSize));
-                objrec[model_id]->setParams(0.2,0.2);
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(sander_width, voxelSize));
+                objrec[model_id]->setParams(objectVisibility,sceneVisibility);
+            }
+            else
+            {
+                objrec[model_id] = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
+                objrec[model_id]->setParams(objectVisibility,sceneVisibility);
             }
 
             /// @todo allow different visibility parameters for each object class
