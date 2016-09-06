@@ -66,6 +66,9 @@ class CostarArm(object):
         self.cur_stamp = 0
 
         # TODO: ensure the manager is set up properly
+        # Note that while the waypoint manager is currently a part of CostarArm
+        # If we wanted to set this up for multiple robots it should be treated
+        # as an independent component.
         self.waypoint_manager = WaypointManager()
 
         # set up services

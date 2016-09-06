@@ -19,6 +19,8 @@ class WaypointManager:
 
   def __init__(self,world="world",ns="",endpoint="/endpoint",):
     self.tf_publisher = tf.TransformBroadcaster()
+
+    # Require librarian services.
     rospy.wait_for_service('/librarian/add_type',5)
     self.add_type_service = rospy.ServiceProxy('/librarian/add_type', librarian_msgs.srv.AddType)
     self.save_service = rospy.ServiceProxy('/librarian/save', librarian_msgs.srv.Save)
