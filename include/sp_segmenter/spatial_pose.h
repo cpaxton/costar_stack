@@ -115,7 +115,8 @@ void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<s
   std::string object_type;
 
   Eigen::Quaternion<float> baseRotation;
-  if (result_nn.size() > 0) 
+  std::cerr << __FILE__ << ":" << __LINE__ << " DBG\n";
+  if (false and result_nn.size() > 0) 
   {
     // std::cerr << "Found old pose: " << result_nn.size() << std::endl;
     baseRotation = std::get<1>(result_nn.at(0)).pose.rotation; // use old orientation
@@ -124,7 +125,10 @@ void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<s
   }
   else
   {
-    baseRotation = Eigen::Quaternion<float>(baseRotationInput.w(),baseRotationInput.x(),baseRotationInput.y(),baseRotationInput.z());
+    baseRotation = Eigen::Quaternion<float>(baseRotationInput.w(),
+        baseRotationInput.x(),
+        baseRotationInput.y(),
+        baseRotationInput.z());
   }
 
   for (const poseT &p: all_poses) {

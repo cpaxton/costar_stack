@@ -181,13 +181,4 @@ void normalizeAllModelOrientation (std::vector<poseT> &all_poses, const Eigen::Q
   }
 }
 
-void normalizeAllModelOrientation (std::vector<poseT> &all_poses, const std::map<std::string, objectSymmetry> &objectDict)
-{
-    for (unsigned int i = 0; i < all_poses.size(); i++)
-    {
-        //        std::cerr << "Object: " << all_poses[i].model_name << std::endl;
-        all_poses[i].rotation = normalizeModelOrientation(all_poses[i].rotation, objectDict.find(all_poses[i].model_name)->second);
-    }
-}
-
 #endif /* symmetricOrientationRealignment_h */
