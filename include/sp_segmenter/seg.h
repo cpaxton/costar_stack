@@ -38,8 +38,7 @@ struct segT{
     pcl::PointCloud<PointT>::Ptr cloud;
     std::vector<int> indices;   //index in original cloud
 };   
-
-        
+       
 static uchar model_color[11][3] = 
 { {0, 0, 0}, 
   {255, 0, 0},

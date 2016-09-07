@@ -111,7 +111,14 @@ add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS})
 add_library(Tracking src/tracker.cpp src/klttracker.cpp src/PnPUtil.cpp)
 target_link_libraries(Tracking ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library(Utility include/sp_segmenter/utility/typedef.h include/sp_segmenter/utility/utility.h utility/utility.cpp include/sp_segmenter/utility/mcqd.h utility/mcqd.cpp include/sp_segmenter/seg.h src/seg.cpp include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
+add_library(Utility
+  include/sp_segmenter/utility/typedef.h
+  include/sp_segmenter/utility/utility.h
+  utility/utility.cpp
+  include/sp_segmenter/utility/mcqd.h
+  utility/mcqd.cpp include/sp_segmenter/seg.h
+  src/seg.cpp include/sp_segmenter/greedyObjRansac.h
+  src/greedyObjRansac.cpp)
 target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
 add_library(linear utility/liblinear/linear.h utility/liblinear/tron.h 
@@ -126,7 +133,9 @@ add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
 
 
-add_library(semanticSegmentation include/sp_segmenter/semanticSegmentation.h src/semanticSegmentation.cpp) 
+add_library(semanticSegmentation
+  include/sp_segmenter/semanticSegmentation.h
+  src/semanticSegmentation.cpp) 
 target_link_libraries(semanticSegmentation Utility DataParser PoolLib Tracking #${Boost_LIBRARIES} 
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 

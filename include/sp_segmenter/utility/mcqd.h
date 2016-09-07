@@ -80,8 +80,8 @@ class Maxclique {
       std::cout << "]" << std::endl;
     }
 #endif
-    ColorClass() : sz(0), i(0) {}
-    ColorClass(const int sz) : sz(sz), i(0) { init(sz); }
+    ColorClass() : i(0), sz(0) {}
+    ColorClass(const int sz) : i(0), sz(sz) { init(sz); }
     ~ColorClass() { if (i) delete [] i;
     }
     void init(const int sz) { i = new int[sz]; rewind(); }

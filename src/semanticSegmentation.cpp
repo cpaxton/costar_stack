@@ -43,7 +43,6 @@ semanticSegmentation::semanticSegmentation(int argc, char** argv, const ros::Nod
         this->compute_pose = true;
     
     this->setNodeHandle(nh);
-
 }
 
 void semanticSegmentation::initializeSemanticSegmentation()
@@ -75,6 +74,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         {0, 128, 255},
         {128, 0, 255}
     };
+
     table_corner_published = false;
 
     std::copy(&color_label_tmp[0][0], &color_label_tmp[0][0]+11*3,&color_label[0][0]);

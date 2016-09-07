@@ -16,11 +16,15 @@
 #include <math.h>
 #include <boost/math/constants/constants.hpp>
 
+// Pass current ROS node handle
+// Load in parameters for objects from ROS namespace
 std::map<std::string, objectSymmetry> fillDictionary(const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
 {
     const double degToRad = boost::math::constants::pi<double>() / 180;
     std::map<std::string, objectSymmetry> objectDict;
+    std::cerr << "LOADING IN OBJECTS\n";
     for (unsigned int i = 0; i < cur_name.size(); i++) {
+        std::cerr << "Name of obj: " << cur_name[i] << "\n";
         objectSymmetry tmp;
         nh.param(cur_name.at(i)+"/x", tmp.roll,360.0);
         nh.param(cur_name.at(i)+"/y", tmp.pitch,360.0);
@@ -164,13 +168,13 @@ void printQuaternion(const Eigen::Quaternion<numericType> &input)
 template <typename numericType>
 Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion<numericType> &q_new, const Eigen::Quaternion<numericType>  &q_previous, const objectSymmetry &object)
 {
-  std::cerr << "Input Qnew: ";printQuaternion(q_new);
-  std::cerr << "Input Qold: ";printQuaternion(q_previous);
+  std::cerr << "Input Qnew: "; printQuaternion(q_new);
+  std::cerr << "Input Qold: "; printQuaternion(q_previous);
   Eigen::Quaternion<float> rotationChange = q_previous.inverse() * q_new;
   // Since the rotationChange should be close to identity, realign the rotationChange as close as identity based on symmetric property of the object
   rotationChange = normalizeModelOrientation(rotationChange, object);
   
-  std::cerr << "Output Q: ";printQuaternion(q_previous * rotationChange);
+  std::cerr << "Output Q: "; printQuaternion(q_previous * rotationChange);
   // fix the orientation of new pose
   return (q_previous * rotationChange);
 }
