@@ -13,7 +13,7 @@ double generateRandomOrientation(const int &symmetricProperties)
 
 int main(int argc, char **argv)
 {
-	srand(time(NULL));
+	srand(0);//time(NULL));
 	std::string mode;
 	// for (int i = 0; i < argc; i++)
 	// 	std::cout << i << " arg: " << argv[i] << std::endl;

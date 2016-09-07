@@ -96,28 +96,38 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
     const double pi = boost::math::constants::pi<double>();
     Eigen::Matrix3f symmetricOffset;
     Eigen::Quaternion<numericType> minQuaternion;
-    // std::cout << ceil(2*pi / object.roll) << ", " << 
-    //     ceil(2*pi / object.yaw) << ", " << 
-    //     ceil(2*pi / object.roll) << ", ";
+    unsigned int num_roll_steps = ceil(2*pi / object.roll);
+    unsigned int num_pitch_steps = ceil(2*pi / object.pitch);
+    unsigned int num_yaw_steps = ceil(2*pi / object.yaw);
+        std::cout << ">>> " << num_roll_steps << ", " << 
+         num_yaw_steps << ", " << 
+         num_pitch_steps << ", \n";
     double minAngle = 100;
-    for (unsigned int i = 0; i < ceil(2*pi / object.roll); i++)
-        for (unsigned int j = 0; j < ceil(2*pi / object.pitch); j++)
-            for (unsigned int k = 0; k < ceil(2*pi / object.yaw); k++)
+    for (unsigned int i = 0; i < num_roll_steps; i++)
+    {
+        for (unsigned int j = 0; j < num_pitch_steps; j++)
+        {
+            for (unsigned int k = 0; k < num_yaw_steps; k++) 
             {
                 symmetricOffset =  Eigen::Matrix3f::Identity()
                     * Eigen::AngleAxisf(i * object.yaw, Eigen::Vector3f::UnitZ())
                     * Eigen::AngleAxisf(j * object.pitch, Eigen::Vector3f::UnitY())
                     * Eigen::AngleAxisf(k * object.roll, Eigen::Vector3f::UnitX());
-                Eigen::Quaternion<numericType> rotatedInputQuaternion = q_from_pose * Eigen::Quaternion<float>(symmetricOffset);
-                if (minAngle > rotatedInputQuaternion.angularDistance(Eigen::Quaternion<float>::Identity())) 
+                Eigen::Quaternion<numericType> rotatedInputQuaternion = q_from_pose * Eigen::Quaternion<numericType>(symmetricOffset);
+                std::cerr << " - "
+                    << minAngle << " " << rotatedInputQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity()) 
+                    << "\n";
+                if (minAngle > rotatedInputQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity())) 
                 {
-                    minAngle = rotatedInputQuaternion.angularDistance(Eigen::Quaternion<float>::Identity ());
+                    minAngle = rotatedInputQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity ());
                     minQuaternion = rotatedInputQuaternion;
-                    // std::cout << "Found better matrix with angular distance: " << minAngle * 180 / pi << std::endl;
+                    std::cout << "Found better matrix with angular distance: " << minAngle * 180 / pi << std::endl;
                 }
             }
-    std::cout << "Best rotation matrix: \n" << minQuaternion.matrix() << std::endl;
-    // std::cout << "Best angular Distance:" << minQuaternion.angularDistance(Eigen::Quaternion<float>::Identity()) << std::endl;
+        }
+    }
+    std::cout << "\nBest rotation matrix: \n" << minQuaternion.matrix() << std::endl;
+    std::cout << "Best angular Distance:" << minQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity()) << std::endl;
     
     return minQuaternion;
 }
