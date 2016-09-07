@@ -15,7 +15,7 @@ double generateRandomOrientation(const int &symmetricProperties)
 int main(int argc, char **argv)
 {
     const double degToRad = boost::math::constants::pi<double>() / 180;
-	srand(time(NULL));
+	srand(0);//time(NULL));
 	std::string mode;
 	// for (int i = 0; i < argc; i++)
 	// 	std::cout << i << " arg: " << argv[i] << std::endl;
@@ -36,8 +36,8 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	std::stringstream ss;
-	objectSymmetry link{180.,180.,90.,"",90.};
-	objectSymmetry node{90.,90.,90.,"",90.};
+	objectSymmetry link(180.,180.,90.);
+	objectSymmetry node(90.,90.,90.);
 	int rnd_node_x, rnd_node_y, rnd_node_z;
 	int rnd_link_x, rnd_link_y, rnd_link_z;
 	rnd_node_x = rand() % 90 - 45;
