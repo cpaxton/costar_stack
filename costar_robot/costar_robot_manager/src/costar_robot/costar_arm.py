@@ -71,7 +71,8 @@ class CostarArm(object):
         # as an independent component.
         self.waypoint_manager = WaypointManager(service=True)
 
-        # set up services
+        # Set up services
+        # The CostarArm services let the UI put it into teach mode or anything else
         self.teach_mode = rospy.Service('/costar/SetTeachMode',SetTeachMode,self.set_teach_mode_call)
         self.servo_mode = rospy.Service('/costar/SetServoMode',SetServoMode,self.set_servo_mode_call)
         self.shutdown = rospy.Service('/costar/ShutdownArm',EmptyService,self.shutdown_arm_call)
