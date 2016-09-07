@@ -89,7 +89,7 @@ void treeInsert(objectRtree &rtree, const std::vector<poseT> &all_poses, const d
         std::stringstream child;
         tmpObject.index = ++objectTFindex[p.model_name];
         // Does not have tracking yet, can not keep the label on object.
-        child << "Obj::" << p.model_name << "::" << tmpObject.index;
+        child << "obj_" << p.model_name << "_" << tmpObject.index;
         tmpObject.tfName = child.str();
         rtree.insert(value(generatePoint(p),tmpObject));
     }
@@ -153,8 +153,7 @@ void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<s
 
 void createTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> &objectDict, std::vector<poseT> &all_poses, 
     const double &timestamp, std::map<std::string, unsigned int> &objectTFindex, 
-    const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0))
-{
+    const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0)) {
     // clear all elements
     rtree.clear();
     Eigen::Quaternion<float> baseRotation(baseRotationInput.w(),baseRotationInput.x(),baseRotationInput.y(),baseRotationInput.z());
@@ -200,7 +199,7 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
             tmpObject.index = ++objectTFindex[p.model_name];
             // Does not have tracking yet, can not keep the label on object.
             std::stringstream child;
-            child << "Obj::" << p.model_name << "::" << tmpObject.index;
+            child << "obj_" << p.model_name << "_" << tmpObject.index;
             tmpObject.tfName = child.str();
             rtree.remove(result_nn.at(0)); // each nearest neighboor only can be assigned to one match
         
@@ -211,7 +210,7 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
             std::stringstream child;
             tmpObject.index = ++objectTFindex[p.model_name];
             // Does not have tracking yet, can not keep the label on object.
-            child << "Obj::" << p.model_name << "::" << tmpObject.index;
+            child << "obj_" << p.model_name << "_" << tmpObject.index;
             tmpObject.tfName = child.str();
         }
         

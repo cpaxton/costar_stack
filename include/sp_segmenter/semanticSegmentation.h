@@ -51,16 +51,27 @@ private:
     bool hasTF, doingGripperSegmentation;
   
     objectRtree segmentedObjectTree;
-//    std::vector<value> sp_segmenter_detectedPoses; // value: std::pair<point3d,objectPose>. see spatial_pose.h
+
+    // std::vector<value> sp_segmenter_detectedPoses; // value: std::pair<point3d,objectPose>. see spatial_pose.h
     std::string targetNormalObjectTF;
     std::string targetTFtoUpdate;
     bool setObjectOrientationTarget;
     std::vector<segmentedObjectTF> segmentedObjectTFV;
-//    std::map<std::string, segmentedObjectTF> segmentedObjectTFMap; // the object poses result in TF. depreciate, used TF instead
-    std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
+
+    // TODO(ahundt): re-enable this to use previous positions of each object
+    // the object poses result in TF. depreciate, used TF instead
+    // std::map<std::string, segmentedObjectTF> segmentedObjectTFMap;
+
+    // keep information about TF index
+    std::map<std::string, unsigned int> objectTFIndex;
     tf::TransformListener * listener;
-    std::string gripperTF; // keep information about gripper TF frame for object in gripper segmentation
-    std::map<std::string, objectSymmetry> objectDict; // for orientation normalization
+
+    // keep information about gripper TF frame for object in gripper segmentation
+    std::string gripperTF;
+
+    // map of symmetries for orientation normalization
+    std::map<std::string, objectSymmetry> objectDict;
+
     bool loadTable, haveTable, useTableSegmentation;
     double tableDistanceThreshold, tableAngularThreshold;
     int tableMinimalInliers;
@@ -115,7 +126,6 @@ private:
     bool useCropBox;
     tf::StampedTransform table_transform;
     Eigen::Vector3f crop_box_size;
-
    
 protected:
 //    void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
@@ -136,6 +146,5 @@ public:
     void callbackPoses(const sensor_msgs::PointCloud2 &inputCloud);
     bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool serviceCallbackGripper (sp_segmenter::segmentInGripper::Request & request, sp_segmenter::segmentInGripper::Response& response);
-
 };
 #endif

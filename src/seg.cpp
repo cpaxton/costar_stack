@@ -178,7 +178,7 @@ pcl::PointCloud<myPointXYZ>::Ptr FilterCloud(const pcl::PointCloud<myPointXYZ>::
     {
         std::vector<int> indices (1);
 	std::vector<float> sqr_dist (1);
-        int nres = tree.nearestKSearch(scene->at(i), 1, indices, sqr_dist);
+        //int nres = tree.nearestKSearch(scene->at(i), 1, indices, sqr_dist);
         if ( sqr_dist[0] > sqrT )
         {
             #pragma omp critical
