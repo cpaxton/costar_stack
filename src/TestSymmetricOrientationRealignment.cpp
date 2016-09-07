@@ -6,6 +6,7 @@
 
 double generateRandomOrientation(const int &symmetricProperties)
 {
+    const double degToRad = boost::math::constants::pi<double>() / 180;
 	int random = rand()%(int(360/symmetricProperties)) * symmetricProperties;
 	std::cout << random << ", ";
 	return (random) * degToRad;
@@ -13,6 +14,7 @@ double generateRandomOrientation(const int &symmetricProperties)
 
 int main(int argc, char **argv)
 {
+    const double degToRad = boost::math::constants::pi<double>() / 180;
 	srand(time(NULL));
 	std::string mode;
 	// for (int i = 0; i < argc; i++)
@@ -34,8 +36,8 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	std::stringstream ss;
-	objectSymmetry link(180,180,90);
-	objectSymmetry node(90,90,90);
+	objectSymmetry link{180.,180.,90.,"",90.};
+	objectSymmetry node{90.,90.,90.,"",90.};
 	int rnd_node_x, rnd_node_y, rnd_node_z;
 	int rnd_link_x, rnd_link_y, rnd_link_z;
 	rnd_node_x = rand() % 90 - 45;
@@ -61,7 +63,7 @@ int main(int argc, char **argv)
 		std::cout << "Node Rotation Matrix: \n" << node_result << std::endl;
 		Eigen::Vector3f ea = extractRPYfromRotMatrix(node_result);
 		initial_node = Eigen::Quaternion<float>(node_result);
-		initial_node = normalizeModelOrientationQ(initial_node,node);
+		initial_node = normalizeModelOrientation(initial_node,node);
 		node_result = initial_node.matrix();
 		ss << "Original matrix:\n" << node_result << std::endl;
 	}
@@ -76,7 +78,7 @@ int main(int argc, char **argv)
 		std::cout << "Link Rotation Matrix: \n" << link_result << std::endl;
 		Eigen::Vector3f ea = extractRPYfromRotMatrix(link_result);
 		initial_link = Eigen::Quaternion<float>(link_result);
-		initial_link = normalizeModelOrientationQ(initial_link,link);
+		initial_link = normalizeModelOrientation(initial_link,link);
 		link_result = initial_link.matrix();
 		ss << "Original matrix:\n" << link_result << std::endl;
 	}
@@ -98,7 +100,7 @@ int main(int argc, char **argv)
 	    		* Eigen::AngleAxisf(node_roll, Eigen::Vector3f::UnitX());
     		// std::cerr  << "True initial Rot Matrix: \n" << rand_node_rotmatrix << std::endl;
 			Eigen::Quaternion<float> rand_node_q(rand_node_rotmatrix);
-			Eigen::Quaternion<float> normalizedQ = normalizeModelOrientationQ(rand_node_q,node);
+			Eigen::Quaternion<float> normalizedQ = normalizeModelOrientation(rand_node_q,node);
 			//normalizeModelOrientation(rand_node_q,node);
 			if (i == 0)firstResult = normalizedQ;
 			else if (firstResult.angularDistance(normalizedQ) < 0.01) consistencyToFirstResult++;
@@ -121,7 +123,7 @@ int main(int argc, char **argv)
 	    		* Eigen::AngleAxisf(link_roll, Eigen::Vector3f::UnitX());
 	    	std::cerr  << "Initial Rot Matrix: \n" << rand_link_rotmatrix << std::endl;
 			Eigen::Quaternion<float> rand_link_q(rand_link_rotmatrix);
-			Eigen::Quaternion<float> normalizedQ = normalizeModelOrientationQ(rand_link_q,link);
+			Eigen::Quaternion<float> normalizedQ = normalizeModelOrientation(rand_link_q,link);
 			// normalizeModelOrientation(rand_link_q,link);
 			if (i == 0)firstResult = normalizedQ;
 			else if (firstResult.angularDistance(normalizedQ) < 0.01) consistencyToFirstResult++;

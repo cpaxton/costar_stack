@@ -167,32 +167,10 @@ target_link_libraries(foreRun Utility PoolLib ${OpenCV_LIBS} ${PCL_LIBRARIES}  $
 add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
 target_link_libraries(SPSegmenterServer semanticSegmentation Utility DataParser PoolLib #${Boost_LIBRARIES} 
                   ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
-#add_executable(sift_test src/main_sift_test.cpp) 
-#target_link_libraries(sift_test Utility DataParser PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
-#add_executable(gen_gt_seg src/main_gt_seg.cpp) 
-#target_link_libraries(gen_gt_seg Utility DataParser PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)
+target_link_libraries(TestSymmetricOrientationRealignment semanticSegmentation Utility DataParser PoolLib ${Boost_LIBRARIES} 
+                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${ObjRecRANSAC_LIBRARY}  ${VTK_LIBS})
 
-#add_executable(triple_test src/main_triple.cpp) 
-#target_link_libraries(triple_test Utility DataParser PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-
-#add_executable(semantics src/main_semantics.cpp) 
-#target_link_libraries(semantics Utility DataParser PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-
-#add_executable(DictLearning src/main_dict.cpp include/sp_segmenter/WKmeans.h src/WKmeans.cpp ) 
-#target_link_libraries(DictLearning DataParser Utility PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-
-#add_executable(uw_test src/main_uw_test.cpp) 
-#target_link_libraries(uw_test Utility DataParser PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-
-#add_executable(hard_mining src/main_hardneg.cpp) 
-#target_link_libraries(hard_mining Utility DataParser PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 

@@ -272,6 +272,8 @@ struct objectSymmetry
     double roll;
     double pitch;
     double yaw;
+    std::string preferred_axis;
+    double preferred_step;
 };
 
 

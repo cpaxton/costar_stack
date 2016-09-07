@@ -11,8 +11,9 @@
 
 // ros stuff
 #include <ros/ros.h>
-#include <eigen3/Eigen/src/Geometry/Quaternion.h>
+#include <Eigen/Geometry>
 #include "sp_segmenter/utility/typedef.h"
+#include "sp_segmenter/utility/utility.h"
 #include <math.h>
 #include <boost/math/constants/constants.hpp>
 
@@ -40,59 +41,18 @@ std::map<std::string, objectSymmetry> fillDictionary(const ros::NodeHandle &nh, 
     return objectDict;
 }
 
-void realignOrientation (Eigen::Matrix3f &rotMatrix, const objectSymmetry &object, const int &axisToAlign)
+template <typename numericStandard>
+Eigen::Matrix<numericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix<numericStandard, 3, 3> &input, bool reversePitch = false)
 {
-    Eigen::Vector3f objAxes[3];
-    objAxes[0] = Eigen::Vector3f(rotMatrix(0,0),rotMatrix(1,0),rotMatrix(2,0));
-    objAxes[1] = Eigen::Vector3f(rotMatrix(0,1),rotMatrix(1,1),rotMatrix(2,1));
-    objAxes[2] = Eigen::Vector3f(rotMatrix(0,2),rotMatrix(1,2),rotMatrix(2,2));
-    
-    Eigen::Vector3f axis(0,0,0);
-    axis[axisToAlign] = 1;
-    double dotProduct = axis.dot(objAxes[axisToAlign]);
-    double angle = std::acos(dotProduct); //since the vector is unit vector
-    
-    Eigen::Vector3f bestAxis[3];
-    bestAxis[0] = Eigen::Vector3f(1,0,0);
-    bestAxis[1] = Eigen::Vector3f(0,1,0);
-    bestAxis[2] = Eigen::Vector3f(0,0,1);
-    
-
-    int axisToRotate = 0;
-    double objectLimit = 999;
-    // pick smallest object Limit that correspond to the object symmetry
-    for (int i = 1; i < 3; i++) {
-        double tmp;
-        // set the rotation step that correspond to object symmetry
-        switch ((i+axisToAlign)%3) {
-            case 0:
-                tmp = object.roll;
-                break;
-            case 1:
-                tmp = object.pitch;
-                break;
-            default:
-                tmp = object.yaw;
-                break;
-        }
-        if (tmp < objectLimit){
-            objectLimit = tmp;
-            axisToRotate = (i + axisToAlign)%3;
-        }
-    }
-    
-    //    std::cerr << "Number of step: " << std::floor(abs(angle)/objectLimit + 0.3333) << " " << angle * 180 / pi << " " << objectLimit * 180 / pi <<std::endl;
-    
-    if (std::floor(abs(angle)/objectLimit + 0.3) < 1) {
-        //min angle = 66% of the objectLimit to be aligned
-        return;
-    }
-    
-    // rotate target axis to align as close as possible with its original axis by rotating the best axis to align the target axis. Use -angle because we want to undo the rotation
-    rotMatrix = rotMatrix * Eigen::AngleAxisf(std::round(angle/objectLimit) * objectLimit,bestAxis[axisToRotate]);
-    //    std::cerr << "Rotate axis" << axisToRotate << " : " << angle * 180 / pi << " -> " << std::round(angle/objectLimit) * objectLimit * 180 / pi <<std::endl;
+    Eigen::Matrix<numericStandard, 3, 1> result;
+    numericStandard x_component = std::sqrt(input(0,0) * input(0,0) + input(1,0) *input(1,0));
+    // since using sqrt, there are 2 solution for x_component
+    x_component = reversePitch ? -x_component : x_component;
+    result[1] = std::atan2(-input(2,0), x_component);
+    result[2] = std::atan2(input(1,0)/std::cos(result[1]),input(0,0)/std::cos(result[1]));
+    result[0] = std::atan2(input(2,1)/std::cos(result[1]),input(2,2)/std::cos(result[1]));
+    return result;
 }
-
 
 template <typename numericType>
 Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion<numericType> &q_from_pose, const objectSymmetry &object)
@@ -125,39 +85,6 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
     
     return minQuaternion;
 }
-
-template <typename numericType>
-Eigen::Quaternion<numericType> normalizeModelOrientationRPY(const Eigen::Quaternion<numericType> &q_from_pose, const objectSymmetry &object)
-{
-    float yaw,pitch,roll;
-    Eigen::Matrix3f rotMatrix = q_from_pose.toRotationMatrix();
-    std::cerr << "Initial Rot Matrix: \n" << rotMatrix << std::endl;
-  
-    double pi = boost::math::constants::pi<double>();
-  
-    //convert to euler angle
-    Eigen::Vector3f ea = rotMatrix.eulerAngles(2,1,0);
-    std::cerr << "RPY: "<< ea * 180/pi << std::endl;
-    roll = std::round(ea[2]/object.roll) * object.roll;
-    pitch = std::round(ea[1]/object.pitch) * object.pitch;
-    yaw = std::round(ea[0]/object.yaw) * object.yaw;
-    
-    rotMatrix = rotMatrix * Eigen::AngleAxisf(- roll, Eigen::Vector3f::UnitX())
-    * Eigen::AngleAxisf(- pitch, Eigen::Vector3f::UnitY())
-    * Eigen::AngleAxisf(- yaw, Eigen::Vector3f::UnitZ());
-    std::cerr << "Corrected RPY Rot Matrix: \n" << rotMatrix << std::endl;
-  
-    ea = rotMatrix.eulerAngles(2,1,0);
-    std::cerr << "Final RPY: "<< ea * 180/pi << std::endl;
-  
-    //  realign again with different method to remove the effect of euler angle singularity
-    // realignOrientation(rotMatrix, object, 2);
-    //    std::cerr << "Realign z Rot Matrix: \n" << rotMatrix << std::endl;
-    // realignOrientation(rotMatrix, object, 1);
-    //    std::cerr << "Realign y Rot Matrix: \n" << rotMatrix << std::endl;
-    return Eigen::Quaternion<numericType>(rotMatrix);
-}
-
 
 template <typename numericType>
 void printQuaternion(const Eigen::Quaternion<numericType> &input)
