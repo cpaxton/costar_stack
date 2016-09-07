@@ -153,7 +153,7 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
 {
   std::cerr << "Input Qnew: "; printQuaternion(q_new);
   std::cerr << "Input Qold: "; printQuaternion(q_previous);
-  Eigen::Quaternion<float> rotationChange = q_previous.inverse() * q_new;
+  Eigen::Quaternion<numericType> rotationChange = q_previous.inverse() * q_new;
   // Since the rotationChange should be close to identity, realign the rotationChange as close as identity based on symmetric property of the object
   rotationChange = normalizeModelOrientation(rotationChange, object);
   
