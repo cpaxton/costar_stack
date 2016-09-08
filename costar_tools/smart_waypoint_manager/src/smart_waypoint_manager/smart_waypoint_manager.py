@@ -25,7 +25,7 @@ It also provides ways to use and access these methods
 class SmartWaypointManager:
 
 
-    def __init__(self,world="world",ns="",endpoint="/endpoint", listener = None):
+    def __init__(self,world="world",ns="",endpoint="/endpoint", listener=None, broadcaster=None):
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
 
         rospy.loginfo("[SmartMove] Waiting for LIBRARIAN to handle file I/O...")
@@ -40,7 +40,11 @@ class SmartWaypointManager:
 
         self.detected_objects = rospy.Subscriber(ns + '/detected_object_list', DetectedObjectList, self.detected_objects_cb)
 
-        self.broadcaster = tf.TransformBroadcaster()
+        if not broadcaster is None:
+            self.broadcaster = broadcaster
+        else:
+            self.broadcaster = tf.TransformBroadcaster()
+
         if not listener is None:
           self.listener = listener
         else:

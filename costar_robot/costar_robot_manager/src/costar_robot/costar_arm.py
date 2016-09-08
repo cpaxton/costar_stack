@@ -30,6 +30,7 @@ class CostarArm(object):
             base_link, end_link, planning_group,
             world="/world",
             listener=None,
+            broadcaster=None,
             traj_step_t=0.1,
             max_acc=1,
             max_vel=1,
@@ -65,11 +66,28 @@ class CostarArm(object):
 
         self.cur_stamp = 0
 
+        # Set up TF broadcaster
+        if not broadcaster is None:
+            self.broadcaster = broadcaster
+        else:
+            self.broadcaster = tf.TransformBroadcaster()
+
+        # Set up TF listener and smartmove manager
+        if listener is None:
+            self.listener = tf.TransformListener()
+        else:
+            self.listener = listener
+
+        self.smartmove_manager = SmartWaypointManager(
+                listener=self.listener,
+                broadcaster=self.broadcaster)
+
         # TODO: ensure the manager is set up properly
         # Note that while the waypoint manager is currently a part of CostarArm
         # If we wanted to set this up for multiple robots it should be treated
         # as an independent component.
-        self.waypoint_manager = WaypointManager(service=True)
+        self.waypoint_manager = WaypointManager(service=True,
+                broadcaster=self.broadcaster)
 
         # Set up services
         # The CostarArm services let the UI put it into teach mode or anything else
@@ -96,14 +114,8 @@ class CostarArm(object):
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
 
-        if listener is None:
-            self.listener = tf.TransformListener()
-        else:
-            self.listener = listener
-
         # cCreate reference to pyKDL kinematics
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
-
 
         #self.set_goal(self.q0)
         self.goal = None

@@ -19,8 +19,11 @@ These are stored in Librarian and get loaded any time the system comes up.
 '''
 class WaypointManager:
 
-  def __init__(self,world="world",ns="",endpoint="/endpoint",service=False):
-    self.tf_publisher = tf.TransformBroadcaster()
+  def __init__(self,world="world",ns="",endpoint="/endpoint",service=False,broadcaster=None):
+    if not broadcaster is None:
+        self.broadcaster = broadcaster
+    else:
+        self.broadcaster = tf.TransformBroadcaster()
 
     # Require librarian services.
     rospy.wait_for_service('/librarian/add_type',5)
@@ -52,12 +55,14 @@ class WaypointManager:
   Return the list of joint state waypoints
   '''
   def get_js_waypoints_list(self,req):
+    self.update()
     return GetListResponse(items=self.js_waypoints.keys())
 
   '''
   Return the list of cartesian waypoints
   '''
   def get_waypoints_list(self,req):
+    self.update()
     return GetListResponse(items=self.cart_waypoints.keys())
 
   '''
