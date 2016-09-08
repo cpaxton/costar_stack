@@ -93,10 +93,14 @@ class SimplePlanning:
           pt.time_from_start = rospy.Duration(i * ts)
           traj.points.append(pt)
           q0 = q
-        else: # i == steps:
+        elif i == steps:
           return JointTrajectory()
 
       if len(traj.points) < base_steps:
+          print rospy.logerr("Planning failure with " \
+                  + str(len(traj.points)) \
+                  + " / " + str(base_steps) \
+                  + " points.")
           return JointTrajectory()
 
       return traj

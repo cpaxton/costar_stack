@@ -240,7 +240,11 @@ class CostarArm(object):
                 pt = JointTrajectoryPoint()
 
                 #q = self.planner.ik(T, self.q0)
-                traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
+                traj = self.planner.getCartesianMove(T,
+                        self.q0,
+                        self.base_steps,
+                        self.steps_per_meter)
+
                 #if len(traj.points) == 0:
                 #    print T
                 #    (code,res) = self.planner.getPlan(pm.toMsg(T),self.q0) # find a non-local movement
@@ -351,8 +355,6 @@ class CostarArm(object):
     Tries a cartesian move, then if that fails goes into a joint-space move.
     '''
     def servo_to_pose_call(self,req): 
-        #rospy.loginfo('Recieved servo to pose request')
-        #print req
         if self.driver_status == 'SERVO':
             T = pm.fromMsg(req.target)
 
