@@ -69,6 +69,64 @@ std::map<std::string, objectSymmetry> fillDictionary(const ros::NodeHandle &nh, 
     return objectDict;
 }
 
+
+template <typename numericStandard>
+void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const objectSymmetry &object, const int axisToAlign)
+{
+    Eigen::Vector3f objAxes[3];
+    objAxes[0] = Eigen::Vector3f(rotMatrix(0,0),rotMatrix(1,0),rotMatrix(2,0));
+    objAxes[1] = Eigen::Vector3f(rotMatrix(0,1),rotMatrix(1,1),rotMatrix(2,1));
+    objAxes[2] = Eigen::Vector3f(rotMatrix(0,2),rotMatrix(1,2),rotMatrix(2,2));
+    double pi = boost::math::constants::pi<double>();
+    Eigen::Vector3f axis(0,0,0);
+    axis[axisToAlign] = 1;
+
+    double dotProduct = axis.dot(objAxes[axisToAlign]);
+    double angle = std::acos(dotProduct); //since the vector is unit vector
+    
+    Eigen::Vector3f bestAxis[3];
+    bestAxis[0] = Eigen::Vector3f(1,0,0);
+    bestAxis[1] = Eigen::Vector3f(0,1,0);
+    bestAxis[2] = Eigen::Vector3f(0,0,1);
+
+    int axisToRotate = 0;
+    double objectLimit = std::numeric_limits<double>::max();
+    // pick smallest object Limit that correspond to the object symmetry
+    for (int i = 1; i < 3; i++) {
+        double tmp;
+        // set the rotation step that correspond to object symmetry
+        switch ((i + axisToAlign)%3) {
+            case 0:
+                tmp = object.roll;
+                break;
+            case 1:
+                tmp = object.pitch;
+                break;
+            default:
+                tmp = object.yaw;
+                break;
+        }
+        if (tmp < objectLimit){
+            objectLimit = tmp;
+            axisToRotate = (i + axisToAlign)%3;
+        }
+    }
+    
+    //    std::cerr << "Number of step: " << std::floor(abs(angle)/objectLimit + 0.3333) << " " << angle * 180 / pi << " " << objectLimit * 180 / pi <<std::endl;
+    
+    if (std::floor(std::abs(angle+0.5236)/objectLimit) < 1) {
+        //min angle = within 30 degree to the objectLimit to be aligned
+        std::cerr << "Angle: " << angle * 180 / pi << " is too small, no need to fix the rotation\n";
+        return;
+    }
+    std::cerr << "Initial matrix\n" << rotMatrix << std::endl;
+
+    // rotate target axis to align as close as possible with its original axis by rotating the best axis to align the target axis. Use -angle because we want to undo the rotation
+    rotMatrix = rotMatrix * Eigen::AngleAxisf(std::round(angle/objectLimit) * objectLimit,bestAxis[axisToRotate]);
+    std::cerr << "Corrected matrix\n" << rotMatrix << std::endl;
+    std::cerr << "Rotate axis" << axisToRotate << " : " << angle * 180 / pi << " -> " << std::round(angle/objectLimit) * objectLimit * 180 / pi <<std::endl;
+}
+
 template <typename numericStandard>
 Eigen::Matrix<numericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix<numericStandard, 3, 3> &input, bool reversePitch = false)
 {
@@ -138,8 +196,12 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
             << minQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity())
             << std::endl;
     }
-    
-    return minQuaternion;
+
+    Eigen::Matrix<numericType,3,3> normalize_orientation = minQuaternion.matrix();
+    realignOrientation(normalize_orientation,object,2);
+    realignOrientation(normalize_orientation,object,0);    
+
+    return Eigen::Quaternion<numericType>(normalize_orientation);
 }
 
 template <typename numericType>

@@ -530,7 +530,8 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     else
     {
         std::cerr << "update tree\n";
-        updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
+        createTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
+        // updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
     }
     return getAllPoses(segmentedObjectTree);
 }
