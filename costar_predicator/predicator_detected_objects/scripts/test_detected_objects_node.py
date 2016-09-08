@@ -26,17 +26,21 @@ obj3.symmetry.z_symmetries = 4
 ls.objects = [obj1,obj2,obj3]
 
 rate = rospy.Rate(10)
-pub = rospy.Publisher("detected_object_list",DetectedObjectList,queue_size=1000)
+pub = rospy.Publisher("SPServer/detected_object_list",DetectedObjectList,queue_size=1000)
 
 tfb = tf.TransformBroadcaster()
 
-while not rospy.is_shutdown():
-    pub.publish(ls)
+rospy.loginfo("Sending transforms and fake detections...")
 
-    tfb.sendTransform((0.5, -0.2, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj1.id, "world")
-    tfb.sendTransform((0.6, 0.1, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj2.id, "world")
-    tfb.sendTransform((0.5, 0.3, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj3.id, "world")
+try:
+    while not rospy.is_shutdown():
+        pub.publish(ls)
 
-    rate.sleep()
-    
+        tfb.sendTransform((0.4, -0.2, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj1.id, "world")
+        tfb.sendTransform((0.5, 0.1, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj2.id, "world")
+        tfb.sendTransform((0.5, 0.3, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj3.id, "world")
+
+        rate.sleep()
+except rospy.ROSInterruptException, e:
+    pass
 

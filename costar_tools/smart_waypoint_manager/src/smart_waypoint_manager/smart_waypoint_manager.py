@@ -81,21 +81,17 @@ class SmartWaypointManager:
     this includes symmetry information produced by the vision pipeline
     '''
     def detected_objects_cb(self,msg):
-        #self.objs = [obj.id for obj in msg.objects]
-        #self.obj_classes = [obj.object_class for obj in msg.objects]
-        #for (o,c) in zip(self.objs,self.obj_classes):
-        #    self.obj_class[o] = c
 
-	for obj in msg.objects:
-	  if not obj.id in self.objs:
-	    self.objs.append(obj.id)
-	  if not obj.object_class in self.obj_classes:
-            self.objs.append(obj.object_class)
-	  self.obj_class[obj.id] = obj.object_class
+        for obj in msg.objects:
+          if not obj.id in self.objs:
+            self.objs.append(obj.id)
+          if not obj.object_class in self.obj_classes:
+                self.objs.append(obj.object_class)
+          self.obj_class[obj.id] = obj.object_class
 
 
-        #print self.objs
-        #print self.obj_classes
+        print self.objs
+        print self.obj_classes
 
     '''
     get all waypoints from the disk
@@ -141,7 +137,7 @@ class SmartWaypointManager:
     def get_detected_objects(self):
         self.objs = []
         self.obj_classes = []
-        rospy.logwarn(str(self.available_obj_classes))
+        rospy.logwarn("Available object classes: " + str(self.available_obj_classes))
         if not self.available_obj_classes is None:
             rospy.logwarn("- not none")
             for oc in self.available_obj_classes:

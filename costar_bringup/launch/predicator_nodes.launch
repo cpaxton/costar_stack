@@ -60,16 +60,6 @@
           - node_uniform
           - node
           - link
-
-      - name: node_uniform
-        members:
-          - gbeam_node_1/gbeam_node
-          - gbeam_node_2/gbeam_node
-
-      - name: link_uniform
-        members:
-         - gbeam_link_1/gbeam_link
-
     </rosparam>
 
   </node>
