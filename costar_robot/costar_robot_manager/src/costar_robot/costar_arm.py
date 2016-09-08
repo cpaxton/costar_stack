@@ -319,7 +319,6 @@ class CostarArm(object):
                 return self.send_trajectory(traj,acceleration,velocity,cartesian=True)
 
             else:
-                rospy.logerr(res)
                 rospy.logerr('DRIVER -- PLANNING failed')
                 return 'FAILURE - not in servo mode'
         else:

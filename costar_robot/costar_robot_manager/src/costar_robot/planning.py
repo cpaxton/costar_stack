@@ -41,25 +41,20 @@ class SimplePlanning:
     '''
     ik: handles calls to KDL inverse kinematics
     '''
-    def ik(self, F, q0):
+    def ik(self, T, q0, dist=0.5):
 
-      T = pm.toMatrix(F)
+      #T = pm.toMatrix(F)
       q = self.kdl_kin.inverse(T,q0)
 
       if q is None:
-          q = self.kdl_kin.inverse(T,None)
-
-          #(resp,goal) = self.planner.getGoalConstraints(tf_c.toMsg(tf_c.fromMatrix(T)),self.q0)
-          #print resp
-          #q = [joint for joint in resp.solution.joint_state.position]
-          #print "using " + str(q)
+          q = self.kdl_kin.inverse(T)
 
       return q
 
     '''
     TODO: finish this
     '''
-    def getCartesianMove(self, frame, q0, base_steps=10, steps_per_meter=100, vel=1):
+    def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, vel=1):
 
       # interpolate between start and goal
       pose = pm.fromMatrix(self.kdl_kin.forward(q0))
@@ -83,7 +78,8 @@ class SimplePlanning:
         rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
 
         frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
-        q = self.kdl_kin.inverse(frame,q0)
+        #q = self.kdl_kin.inverse(frame,q0)
+        q = self.ik(frame, q0)
 
         if self.verbose:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
