@@ -2,6 +2,7 @@
 
 import rospy
 from costar_objrec_msgs.msg import *
+import tf
 
 rospy.init_node('publish_fake_object_detections')
 
@@ -27,7 +28,15 @@ ls.objects = [obj1,obj2,obj3]
 rate = rospy.Rate(10)
 pub = rospy.Publisher("detected_object_list",DetectedObjectList,queue_size=1000)
 
+tfb = tf.TransformBroadcaster()
+
 while not rospy.is_shutdown():
     pub.publish(ls)
+
+    tfb.sendTransform((0.5, -0.2, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj1.id, "world")
+    tfb.sendTransform((0.6, 0.1, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj2.id, "world")
+    tfb.sendTransform((0.5, 0.3, 0.1), (0, 0, 0, 1), rospy.Time.now(), obj3.id, "world")
+
     rate.sleep()
+    
 

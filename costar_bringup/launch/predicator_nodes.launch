@@ -23,14 +23,14 @@
     <param name="publish_values" value="$(arg publish_values)"/>
 
     <rosparam param="frames">
-      - Obj::link_uniform::1
-      - Obj::link_uniform::2
-      - Obj::link_uniform::3
-      - Obj::link_uniform::4
-      - Obj::node_uniform::1
-      - Obj::node_uniform::2
-      - Obj::node_uniform::3
-      - Obj::node_uniform::4
+      - obj_link_uniform_1
+      - obj_link_uniform_2
+      - obj_link_uniform_3
+      - obj_link_uniform_4
+      - obj_node_uniform_1
+      - obj_node_uniform_2
+      - obj_node_uniform_3
+      - obj_node_uniform_4
       - gbeam_link_1/gbeam_link
       - gbeam_node_1/gbeam_node
       - gbeam_node_2/gbeam_node
