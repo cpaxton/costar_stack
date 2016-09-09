@@ -1,6 +1,7 @@
 predicator_msgs/PredicateStatement[] predicates # predicates to match when moving
 geometry_msgs/Pose pose # offset to move to
 string obj_class # class to move to
+string name # name of the requested motion
 float32 accel
 float32 vel
 ---

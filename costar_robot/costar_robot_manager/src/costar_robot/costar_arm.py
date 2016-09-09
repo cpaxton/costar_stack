@@ -208,7 +208,7 @@ class CostarArm(object):
                 req.obj_class, # object class to move to
                 req.predicates, # predicates to match
                 [req.pose], # offset/transform from each member of the class
-                ["tmp"] # placeholder name
+                [req.name] # placeholder name
                 )
 
         print req.obj_class
