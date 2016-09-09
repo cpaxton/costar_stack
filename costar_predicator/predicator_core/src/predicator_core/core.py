@@ -108,6 +108,9 @@ class Predicator(object):
 
         for pred in req.predicates:
 
+            print "--- MATCH PREDICATE: ---"
+            print pred
+
             try:
                 i = pred.params.index('*')
                 #print i
@@ -116,6 +119,7 @@ class Predicator(object):
                 return resp
 
             key = get_key(pred.predicate, pred.params) 
+            print "With key = %s"%(key)
 
             if key in self._predicates:
                 pred_vals = [stored_params[i] for stored_params in self._predicates[key]]
@@ -124,12 +128,19 @@ class Predicator(object):
                 else:
                     vals = [val for val in vals if (val in pred_vals)]
 
-                print "Current predicate assignments: " + str(pred_vals)
-                print "Possible AND list: " + str(vals)
+                print " - Current predicate assignments: " + str(pred_vals)
+                print " - Possible AND list: " + str(vals)
+            else:
+                vals = None
+                print "Predicate is missing! Cannot match."
+                break
 
         if not vals is None and len(vals) > 0:
             resp.matching = vals
             resp.found = True
+        else:
+            resp.matching = []
+            resp.found = False
 
         return resp
 
@@ -140,6 +151,8 @@ class Predicator(object):
     def match_or(self, req):
 
         vals = []
+
+        print "=== Match OR ==="
 
         for pred in req.predicates:
 

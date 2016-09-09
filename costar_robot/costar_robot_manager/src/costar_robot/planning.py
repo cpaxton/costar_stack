@@ -46,8 +46,9 @@ class SimplePlanning:
       #T = pm.toMatrix(F)
       q = self.kdl_kin.inverse(T,q0)
 
-      if q is None:
-          q = self.kdl_kin.inverse(T)
+      # NOTE: this results in unsafe behavior; do not use without checks
+      #if q is None:
+      #    q = self.kdl_kin.inverse(T)
 
       return q
 

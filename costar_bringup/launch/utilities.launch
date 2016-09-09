@@ -6,7 +6,8 @@
     <node pkg="librarian_core" type="core.py" name="librarian_core"/>
 
     <!-- Predicator -->
-    <include file="$(find predicator_bringup)/launch/core.launch"></include>
+    <include file="$(find predicator_bringup)/launch/core.launch">
+    </include>
    
     <!-- Moveit Environment -->
     <!--<arg name ="tableTFname" default="ar_marker_0" />

@@ -37,6 +37,8 @@
       - gbeam_node_1/gbeam_node
       - gbeam_node_2/gbeam_node
       - ar_marker_0
+      - ar_marker_1
+      - ar_marker_3
       - world
     </rosparam>
 
