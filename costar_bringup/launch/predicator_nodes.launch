@@ -31,6 +31,8 @@
       - obj_node_uniform_2
       - obj_node_uniform_3
       - obj_node_uniform_4
+      - obj_sander_makita_1
+      - obj_sander_makita_2
       - gbeam_link_1/gbeam_link
       - gbeam_node_1/gbeam_node
       - gbeam_node_2/gbeam_node
@@ -56,6 +58,7 @@
         members:
           - drill
           - sander
+          - sander_makita
           - link_uniform
           - node_uniform
           - node
