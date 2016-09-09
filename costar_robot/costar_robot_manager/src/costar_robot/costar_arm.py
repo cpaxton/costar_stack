@@ -204,12 +204,17 @@ class CostarArm(object):
         (acceleration, velocity) = self.check_req_speed_params(req) 
 
         # Find possible poses
-        (poses,names) = self.get_waypoints_srv.get_waypoints(
+        res = self.get_waypoints_srv.get_waypoints(
                 req.obj_class, # object class to move to
                 req.predicates, # predicates to match
                 [req.pose], # offset/transform from each member of the class
                 [req.name] # placeholder name
                 )
+        if res is None:
+            msg = 'FAILURE - no objects found that meet predicate conditions!'
+            return msg
+
+        (poses,names) = res
 
         print req.obj_class
         print req.predicates
@@ -260,17 +265,17 @@ class CostarArm(object):
 
             if len(qs) == 0:
                 msg = 'FAILURE - no joint configurations found!'
+            else:
+                possible_goals = zip(dists,qs)
+                possible_goals.sort()
 
-            possible_goals = zip(dists,qs)
-            possible_goals.sort()
+                #print "POSSIBLE GOALS"
+                #print possible_goals
+                
+                (dist,traj) = possible_goals[0]
+                rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-            #print "POSSIBLE GOALS"
-            #print possible_goals
-            
-            (dist,traj) = possible_goals[0]
-            rospy.logwarn("Trying to move to frame at distance %f"%(dist))
-
-            msg = self.send_trajectory(traj,acceleration,velocity,cartesian=False)
+                msg = self.send_trajectory(traj,acceleration,velocity,cartesian=False)
 
             return msg
 
