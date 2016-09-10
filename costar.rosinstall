@@ -2,6 +2,10 @@
 # There might still be some issues.
 # Some code is covered by patents.
 
+# Robot description
+# NOTE: this is specific to the CIRL UR5
+- git: {version: hydro-devel, local-name: universal_robot, uri: 'git@github.com:jhu-lcsr-forks/universal_robot.git'}
+
 # main
 - git: {version: master, local-name: costar_stack, uri: 'git@github.com:cpaxton/costar_stack.git'}
 - git: {version: master, local-name: sp_segmenter, uri: 'git@github.com:jhu-lcsr/sp_segmenter.git'}

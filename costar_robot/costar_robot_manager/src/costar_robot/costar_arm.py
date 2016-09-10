@@ -39,7 +39,8 @@ class CostarArm(object):
             max_q_diff = 1e-6,
             start_js_cb=True,
             base_steps=10,
-            steps_per_meter=100):
+            steps_per_meter=100,
+            perception_ns="/SPServer"):
 
         self.world = world
         self.base_link = base_link
@@ -78,9 +79,11 @@ class CostarArm(object):
         else:
             self.listener = listener
 
-        self.smartmove_manager = SmartWaypointManager(
-                listener=self.listener,
-                broadcaster=self.broadcaster)
+        # Currently this class does not need a smart waypoint manager.
+        # That will remain in the CoSTAR BT.
+        #self.smartmove_manager = SmartWaypointManager(
+        #        listener=self.listener,
+        #        broadcaster=self.broadcaster)
 
         # TODO: ensure the manager is set up properly
         # Note that while the waypoint manager is currently a part of CostarArm
@@ -100,7 +103,9 @@ class CostarArm(object):
         self.js_servo = rospy.Service('/costar/ServoToJointState',ServoToJointState,self.servo_to_joints_call)
         self.save_frame = rospy.Service('/costar/SaveFrame',SaveFrame,self.save_frame_call)
         self.save_joints = rospy.Service('/costar/SaveJointPosition',SaveFrame,self.save_joints_call)
-        self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
+        self.get_waypoints_srv = GetWaypointsService(world=world,
+                                                     service=False,
+                                                     ns=perception_ns)
         self.driver_status = 'IDLE'
       
         # Create publishers. These will send necessary information out about the state of the robot.
@@ -210,6 +215,7 @@ class CostarArm(object):
                 [req.pose], # offset/transform from each member of the class
                 [req.name] # placeholder name
                 )
+
         if res is None:
             msg = 'FAILURE - no objects found that meet predicate conditions!'
             return msg
@@ -457,4 +463,4 @@ class CostarArm(object):
 
         # publish TF messages to display frames
         self.waypoint_manager.publish_tf()
-
+        

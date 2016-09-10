@@ -197,8 +197,8 @@ class SmartWaypointManager:
             wpts = []
         return wpts
 
-    def update_tf(self):
-        
+    def publish_tf(self):
+
         for key in self.waypoints.keys():
             (poses,names) = self.get_waypoints_srv.get_waypoints(key,[],self.waypoints[key],self.waypoint_names[key])
             for (pose,name) in zip(poses,names):
