@@ -267,8 +267,8 @@ class CostarArm(object):
 
                 if len(traj.points) > 0:
                     qs.append(traj)
-                    dists.append((T.p - T_fwd.p).Norm())
-                    #dists.append((traj.points[-1].positions - self.q0).sum())
+                    #dists.append((T.p - T_fwd.p).Norm())
+                    dists.append((traj.points[-1].positions - self.q0).sum())
                 else:
                     rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
 
