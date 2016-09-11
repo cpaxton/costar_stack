@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
         - /PlanningScene1/Scene Geometry1
@@ -104,34 +105,32 @@ Visualization Manager:
         001:
           Value: true
         01 pickup:
-          Value: true
+          Value: false
         01 place1:
-          Value: true
+          Value: false
         01 place2:
-          Value: true
+          Value: false
         01 workspace:
-          Value: true
+          Value: false
         01 ws down:
-          Value: true
+          Value: false
         02 place1:
-          Value: true
+          Value: false
         02 place2:
-          Value: true
+          Value: false
         03 place1:
           Value: true
         03 place2:
           Value: true
         All Enabled: false
         TEST:
-          Value: true
+          Value: false
         app1:
-          Value: true
-        ar_marker_0:
           Value: false
         ar_marker_3:
-          Value: true
-        base_link:
           Value: false
+        base_link:
+          Value: true
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
@@ -143,53 +142,87 @@ Visualization Manager:
         camera_rgb_optical_frame:
           Value: false
         down:
-          Value: true
-        ee_link:
-          Value: true
-        endpoint:
           Value: false
+        ee_link:
+          Value: false
+        endpoint:
+          Value: true
         endpoint_marker:
           Value: false
         forearm_link:
-          Value: true
+          Value: false
         g1:
-          Value: true
+          Value: false
         grab:
-          Value: true
+          Value: false
         gripper_link:
-          Value: true
+          Value: false
         node_over:
-          Value: true
+          Value: false
         node_pick:
-          Value: true
-        obj_link_uniform_1:
-          Value: true
-        obj_link_uniform_2:
-          Value: true
+          Value: false
         obj_node_uniform_1:
           Value: true
         obj_node_uniform_2:
           Value: true
+        obj_node_uniform_3:
+          Value: true
+        obj_node_uniform_4:
+          Value: true
+        obj_node_uniform_5:
+          Value: true
         objects/link_uniform/1:
+          Value: false
+        objects/link_uniform/2:
+          Value: false
+        objects/link_uniform/3:
+          Value: false
+        objects/link_uniform/4:
           Value: false
         objects/node_uniform/1:
           Value: false
+        objects/node_uniform/10:
+          Value: false
+        objects/node_uniform/11:
+          Value: false
+        objects/node_uniform/12:
+          Value: false
+        objects/node_uniform/13:
+          Value: false
+        objects/node_uniform/14:
+          Value: false
+        objects/node_uniform/15:
+          Value: false
         objects/node_uniform/2:
+          Value: false
+        objects/node_uniform/3:
+          Value: false
+        objects/node_uniform/4:
+          Value: false
+        objects/node_uniform/5:
+          Value: false
+        objects/node_uniform/6:
+          Value: false
+        objects/node_uniform/7:
+          Value: false
+        objects/node_uniform/8:
+          Value: false
+        objects/node_uniform/9:
           Value: false
         preferred_orientation:
           Value: false
         shoulder_link:
-          Value: true
+          Value: false
         upper_arm_link:
-          Value: true
+          Value: false
         world:
           Value: false
         wrist_1_link:
-          Value: true
+          Value: false
         wrist_2_link:
-          Value: true
+          Value: false
         wrist_3_link:
-          Value: true
+          Value: false
       Marker Scale: 0.25
       Name: TF
       Show Arrows: false
@@ -202,17 +235,17 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              ar_marker_0:
-                {}
               ar_marker_3:
-                {}
-              obj_link_uniform_1:
-                {}
-              obj_link_uniform_2:
                 {}
               obj_node_uniform_1:
                 {}
               obj_node_uniform_2:
+                {}
+              obj_node_uniform_3:
+                {}
+              obj_node_uniform_4:
+                {}
+              obj_node_uniform_5:
                 {}
           world:
             00 HOME:
@@ -268,9 +301,41 @@ Visualization Manager:
               {}
             objects/link_uniform/1:
               {}
+            objects/link_uniform/2:
+              {}
+            objects/link_uniform/3:
+              {}
+            objects/link_uniform/4:
+              {}
             objects/node_uniform/1:
               {}
+            objects/node_uniform/10:
+              {}
+            objects/node_uniform/11:
+              {}
+            objects/node_uniform/12:
+              {}
+            objects/node_uniform/13:
+              {}
+            objects/node_uniform/14:
+              {}
+            objects/node_uniform/15:
+              {}
             objects/node_uniform/2:
+              {}
+            objects/node_uniform/3:
+              {}
+            objects/node_uniform/4:
+              {}
+            objects/node_uniform/5:
+              {}
+            objects/node_uniform/6:
+              {}
+            objects/node_uniform/7:
+              {}
+            objects/node_uniform/8:
+              {}
+            objects/node_uniform/9:
               {}
       Update Interval: 0
       Value: true
@@ -555,7 +620,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: ""
+      Color Transformer: RGB8
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -564,11 +629,11 @@ Visualization Manager:
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
-      Position Transformer: ""
+      Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.001
+      Size (m): 0.01
       Style: Spheres
       Topic: /SPServer/table_corner
       Unreliable: false
@@ -599,7 +664,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.36333
+      Distance: 1.41539
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -611,10 +676,10 @@ Visualization Manager:
         Z: 0.103772
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.619797
+      Pitch: 0.294797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.0201453
+      Yaw: 1.22377
     Saved: ~
 Window Geometry:
   Displays:

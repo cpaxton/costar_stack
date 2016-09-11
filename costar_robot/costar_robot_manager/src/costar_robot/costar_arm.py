@@ -267,8 +267,19 @@ class CostarArm(object):
 
                 if len(traj.points) > 0:
                     qs.append(traj)
-                    #dists.append((T.p - T_fwd.p).Norm())
-                    dists.append((traj.points[-1].positions - self.q0).sum())
+
+                    q_dist = np.sqrt((traj.points[-1].positions - self.q0)).dot(np.array(range(len(self.q0),0,-1))).sum()
+
+                    if q_dist > 0.6 * np.pi:
+                        rospy.logwarn("Joint rotation larger than pi")
+                    else:
+                        dists.append((T.p - T_fwd.p).Norm())
+
+                    #metric = (T.p - T_fwd.p).Norm() + np.array([T.M.])
+                    #dists.append((traj.points[-1].positions - self.q0).sum())
+                    # metric = 5*(T.p - T_fwd.p).Norm() + np.sqrt((traj.points[-1].positions - self.q0)).sum();
+                    #print "GRASP METRIC: " + str(metric)
+                    #dists.append(metric)
                 else:
                     rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
 
