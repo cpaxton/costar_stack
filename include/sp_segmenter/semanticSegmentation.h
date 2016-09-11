@@ -49,7 +49,7 @@ private:
     bool classReady, useTFinsteadOfPoses;
     // TF related
     bool hasTF, doingGripperSegmentation;
-  
+    bool useObjectPersistence;
     objectRtree segmentedObjectTree;
 
     // std::vector<value> sp_segmenter_detectedPoses; // value: std::pair<point3d,objectPose>. see spatial_pose.h

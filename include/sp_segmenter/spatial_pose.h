@@ -24,7 +24,6 @@ double maxDeltaTime = 60; //1 minute delta time max
 
 struct objectPose {
     poseT pose;
-//    std::string name;
     double timestamp;
     std::string tfName;
     unsigned int index;
@@ -79,12 +78,11 @@ box generateBox(const poseT &pose, const double &distance)
 }
 
 void treeInsert(objectRtree &rtree, const std::vector<poseT> &all_poses, const double &timestamp, 
-    std::map<std::string, unsigned int> objectTFindex)
+    std::map<std::string, unsigned int> &objectTFindex)
 {
     for (const poseT &p: all_poses) {
         objectPose tmpObject;
         tmpObject.pose = p;
-//        tmpObject.name = p.model_name;
         tmpObject.timestamp = timestamp;
         std::stringstream child;
         tmpObject.index = ++objectTFindex[p.model_name];
@@ -137,7 +135,6 @@ void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<s
     {
         objectPose tmpObject;
         tmpObject.pose = p;
-        //        tmpObject.name = p.model_name;
         tmpObject.timestamp = timestamp;
         std::stringstream child;
         
@@ -177,7 +174,6 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
     double distance = 0.025; // Limit search area to 2.5 cm around the point
     for (const poseT &p: all_poses) {
         objectPose tmpObject;
-        //        tmpObject.name = p.model_name;
         tmpObject.timestamp = timestamp;
         std::vector<value> result_nn;
         box boundary = generateBox(p, distance);
@@ -198,13 +194,13 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
                                                                 p, std::get<1>(result_nn.at(0)).pose,
                                                                 objectDict.find(std::get<1>(result_nn.at(0)).pose.model_name)->second
                                                                 );
-          // tmpObject.tfName = std::get<1>(result_nn.at(0)).tfName; // Disabled keeping old TF name
-          // tmpObject.index = std::get<1>(result_nn.at(0)).index;
-            tmpObject.index = ++objectTFindex[p.model_name];
+            tmpObject.tfName = std::get<1>(result_nn.at(0)).tfName; // Disabled keeping old TF name
+            tmpObject.index = std::get<1>(result_nn.at(0)).index;
+            // tmpObject.index = ++objectTFindex[p.model_name];
             // Does not have tracking yet, can not keep the label on object.
-            std::stringstream child;
-            child << "obj_" << p.model_name << "_" << tmpObject.index;
-            tmpObject.tfName = child.str();
+            // std::stringstream child;
+            // child << "obj_" << p.model_name << "_" << tmpObject.index;
+            // tmpObject.tfName = child.str();
             rtree.remove(result_nn.at(0)); // each nearest neighboor only can be assigned to one match
         
         }

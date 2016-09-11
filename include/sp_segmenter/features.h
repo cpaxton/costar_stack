@@ -288,6 +288,7 @@ private:
     void buildOneSPLevel(int level);
 };
 
+// implementation is at sp.cpp
 class spPooler{
 public:
     spPooler();
@@ -299,12 +300,19 @@ public:
     
 //    pcl::PointCloud<PointT>::Ptr semanticSegment(const std::vector<model*> &model_set, int level);
     std::vector<cv::Mat> gethardNegtive(const model *model_set, int level, bool max_pool = false);
+
+    // load the svm model and the order of superpixels level
+    // level means order of superpixels for classification
+    // right now I only provide level=0,1,2 for classification, 
     void InputSemantics(const model *model_set, int level, bool reset = false, bool max_pool = false);
+
+    // get the result of the SVM
     pcl::PointCloud<PointLT>::Ptr getSemanticLabels();
     std::vector<cv::Mat> sampleSPFea(const int level, int sample_num = -1, bool max_pool_flag = false, bool normalized = true);
 //    std::vector<cv::Mat> sampleSPRawFea(const int level, int sample_num = -1, bool max_pool_flag = false);
     
     void init(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler &cshot_producer, float radius, float ss_ = 0.005);
+    // If not use SIFT pooling!!! Use this light version.
     void lightInit(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler& cshot_producer, float radius, float down_ss = 0.005);
     void reset();
     

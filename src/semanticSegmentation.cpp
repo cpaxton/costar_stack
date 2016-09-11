@@ -109,7 +109,9 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("useMultiClassSVM",useMultiClassSVM,true);
     this->nh.param("useMedianFilter",use_median_filter,true);
     this->nh.param("enableTracking",enableTracking,false);
-  
+    
+    this->nh.param("useObjectPersistence",useObjectPersistence,false);
+
     crop_box_size = Eigen::Vector3f(cropBoxX, cropBoxY, cropBoxZ);
     tableConvexHull = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
     
@@ -422,8 +424,13 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
 
     // pcl::PointCloud<PointLT>::Ptr foreground_cloud(new pcl::PointCloud<PointLT>());
     // std::vector< std::vector<PR_ELEM> > cur_fore_pr(3);
+    
     if(useBinarySVM)
     {
+        // ll means order of superpixels for classification
+        // right now I only provide ll=0,1 for classification, 
+        // the larger order you use will increase the running time of semantic segmentation
+        // recommend to use 1 by default for foreground-background classification
         for( int ll = 0 ; ll <= 1 ; ll++ )
         {
             bool reset_flag = ll == 0 ? true : false;
@@ -489,6 +496,7 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
     }
     else
     {
+        // just combine all the object together and do combined object ransac
         pcl::copyPointCloud(*scene_f,*scene_xyz);
         std::vector<poseT> tmp_poses;
         if      (objRecRANSACdetector == "StandardBest")      combinedObjRec->StandardBest(scene_xyz, all_poses1);
@@ -499,9 +507,10 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
 
     std::vector<poseT> all_poses = all_poses1;
     // RefinePoses(scene_xyz, mesh_set, all_poses1);
-
-    std::map<std::string, unsigned int> tmpTFIndex = objectTFIndex;
+    std::map<std::string, unsigned int> objectTFIndex_no_persistence = objectTFIndex;
+    std::map<std::string, unsigned int> &tmpTFIndex = objectTFIndex;
     
+    // baseRotation sets the preferred orientation for initial pose detection for every object
     Eigen::Quaternion<double> baseRotation;
     if (setObjectOrientationTarget && 
         listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(1.5)) 
@@ -511,7 +520,10 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
           tf::quaternionTFToEigen(transform.getRotation(),baseRotation);
         }
     else
+    {
+        // just use identity if no preferred orientation is being used
         baseRotation.setIdentity();
+    }
     
     if (doingGripperSegmentation || !hasTF){
       // normalize symmetric object Orientation
@@ -523,16 +535,26 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         }
         else
         {
+            // for gripper segmentation, only one value will be updated while the other remains (assuming one gripper)
             std::cerr << "update one value on tree\n";
             updateOneValue(segmentedObjectTree, targetTFtoUpdate, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
         }
     }
-    else
+    else if (useObjectPersistence)
     {
         std::cerr << "update tree\n";
-        createTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
-        // updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
+        updateTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
+        
     }
+    else
+    {
+        // not using object persistance, recreate tree every service call.
+        createTree(segmentedObjectTree, objectDict, all_poses, ros::Time::now().toSec(), tmpTFIndex, baseRotation);
+    }
+
+    // restore original index if not using object persistance
+    if (!useObjectPersistence) tmpTFIndex = objectTFIndex_no_persistence;
+
     return getAllPoses(segmentedObjectTree);
 }
 
