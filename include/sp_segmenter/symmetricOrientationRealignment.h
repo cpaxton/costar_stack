@@ -71,7 +71,7 @@ std::map<std::string, objectSymmetry> fillDictionary(const ros::NodeHandle &nh, 
 
 
 template <typename numericStandard>
-void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const objectSymmetry &object, const int axisToAlign)
+void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const objectSymmetry &object, const int axisToAlign, const bool withRotateSpecificAxis = false, const int rotateAroundSpecificAxis = 0)
 {
     Eigen::Vector3f objAxes[3];
     objAxes[0] = Eigen::Vector3f(rotMatrix(0,0),rotMatrix(1,0),rotMatrix(2,0));
@@ -91,11 +91,35 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const 
 
     int axisToRotate = 0;
     double objectLimit = std::numeric_limits<double>::max();
-    // pick smallest object Limit that correspond to the object symmetry
-    for (int i = 1; i < 3; i++) {
+    
+    if (!withRotateSpecificAxis)
+    {
+         // pick smallest object Limit that correspond to the object symmetry
+        for (int i = 1; i < 3; i++) {
+            double tmp;
+            // set the rotation step that correspond to object symmetry
+            switch ((i + axisToAlign)%3) {
+                case 0:
+                    tmp = object.roll;
+                    break;
+                case 1:
+                    tmp = object.pitch;
+                    break;
+                default:
+                    tmp = object.yaw;
+                    break;
+            }
+            if (tmp < objectLimit){
+                objectLimit = tmp;
+                axisToRotate = (i + axisToAlign)%3;
+            }
+        }
+    }
+    else
+    {
+        axisToRotate = rotateAroundSpecificAxis;
         double tmp;
-        // set the rotation step that correspond to object symmetry
-        switch ((i + axisToAlign)%3) {
+        switch (axisToRotate) {
             case 0:
                 tmp = object.roll;
                 break;
@@ -106,12 +130,9 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const 
                 tmp = object.yaw;
                 break;
         }
-        if (tmp < objectLimit){
-            objectLimit = tmp;
-            axisToRotate = (i + axisToAlign)%3;
-        }
+        objectLimit = tmp;
     }
-    
+
     //    std::cerr << "Number of step: " << std::floor(abs(angle)/objectLimit + 0.3333) << " " << angle * 180 / pi << " " << objectLimit * 180 / pi <<std::endl;
     
     if (std::floor(std::abs(angle+0.5236)/objectLimit) < 1) {
@@ -199,7 +220,7 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
 
     Eigen::Matrix<numericType,3,3> normalize_orientation = minQuaternion.matrix();
     realignOrientation(normalize_orientation,object,2);
-    realignOrientation(normalize_orientation,object,0);    
+    realignOrientation(normalize_orientation,object,0,true,2); 
 
     return Eigen::Quaternion<numericType>(normalize_orientation);
 }
