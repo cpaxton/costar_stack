@@ -644,6 +644,48 @@ class NodeDecoratorWaitForSuccess(Node):
     def timed_out(self,event):
         self.finished = True
 
+class NodeDecoratorReset(Node):
+    ''' Decorator Reset
+    Resets a node and returns its return value
+    '''
+    def __init__(self,name,label,runs=-1):
+        L = 'RESET'
+        if label != '':
+            L_alt = label
+        else:
+            L_alt = name.upper()+' Subtree'
+        color='#22A7F0'
+        self.runs_ = runs
+        self.num_runs_ = 0 
+        super(NodeDecoratorReset,self).__init__(name,L,color,shape='house',alt_label=L_alt,size=12)
+    def get_node_type(self):
+        return 'DECORATOR_RESET'
+    def get_node_name(self):
+        return 'Decorator Reset'
+    def execute(self):
+        if self.runs_ == -1: # resets forever
+            self.child_status_ = self.children_[0].execute()
+            if self.child_status_ == 'SUCCESS':
+                # self.children_[0].reset()
+                return self.set_status('SUCCESS')
+            elif self.child_status_ == 'FAILURE':
+                self.children_[0].reset()
+                return self.set_status('FAILURE')
+            elif self.child_status_ == 'RUNNING':
+                return self.set_status('RUNNING')
+        else:
+            if self.num_runs_ < self.runs_:
+                self.num_runs_ += 1 # always increment  
+                self.child_status_ = self.children_[0].execute()
+                if self.child_status_ == 'SUCCESS':
+                    self.children_[0].reset()
+                    return self.set_status('SUCCESS')
+                elif self.child_status_ == 'FAILURE':
+                    self.children_[0].reset()
+                    return self.set_status('FAILURE')
+                elif self.child_status_ == 'RUNNING':
+                    return self.set_status('RUNNING')
+
 class NodeRoot(Node):
     ''' Root Node
     The root node can have only one child, and typically is used as the root of 

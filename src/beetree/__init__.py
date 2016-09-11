@@ -35,6 +35,7 @@ from beetree_core import NodeCondition
 from beetree_core import NodeQuery
 from beetree_core import NodeVariable
 from beetree_core import NodeDecoratorRepeat
+from beetree_core import NodeDecoratorReset
 from beetree_core import NodeDecoratorIgnoreFail
 from beetree_core import NodeDecoratorWaitForSuccess
 
