@@ -11,6 +11,7 @@
 // for segment object above table
 #include <pcl/surface/convex_hull.h>
 #include <pcl/segmentation/extract_polygonal_prism_data.h>
+#include <pcl/filters/project_inliers.h>
 
 #include "sp_segmenter/utility/typedef.h"
 
@@ -94,6 +95,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
 	mps.setDistanceThreshold (distanceThreshold); // in meters
 	mps.setInputNormals (normals);
 	mps.setInputCloud (negative);
+	mps.setProjectPoints (true); // project the boundary points to the plane
 	std::vector< pcl::PlanarRegion<pcl::PointXYZRGBA>, Eigen::aligned_allocator<pcl::PlanarRegion<pcl::PointXYZRGBA> > > regions;
 	mps.segmentAndRefine (regions);
     

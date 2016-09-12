@@ -62,7 +62,7 @@
   <arg name="objectVisibility"  default=".1" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
 
 
-  <arg name="aboveTableMin"     default="0.025" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
+  <arg name="aboveTableMin"     default="0.015" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
   <arg name="aboveTableMax"     default="0.5" doc="The maximum point cloud distance from segmented table." />
 
   <arg name="tableTF"        default="ar_marker_2" doc="Any TF frame located in the table can be used for table segmentation" />
