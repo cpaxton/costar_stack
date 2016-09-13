@@ -9,6 +9,8 @@ Provide simple interface for managing files used by CoSTAR programs.
 
 ## Using Librarian
 
+Librarian lets CoSTAR save information between runs even when being run across multiple machines. It's particularly useful if the primary machine is being used for perception and planning, and you want to use a smaller machine or tablet for the user interface but save all information to the original desktop. It is started automatically by `costar_bringup`.
+
 ### Launch Files
 
 The `librarian_bringup` package contains launch files for Librarian. As such, you can launch the librarian core easily with:

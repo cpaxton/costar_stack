@@ -4,22 +4,18 @@ Predicator is the CoSTAR package for logical statements.
 
 This software is further described and used in these papers:
 
-        1. Guerin, K., Lea, C., Paxton, C., & Hager, G.D. (2015).
-           A Framework for End-User Instruction of a Robot Assistant for Manufacturing.
-           In IEEE International Conference on Robotics and Automation (ICRA).
-        2. Paxton, C., Bohren, J., & Hager, G. D. (2014).
+        1. Paxton, C., Bohren, J., & Hager, G. D. (2014).
            Standards for Grounding Symbols for Robotic Task Ontologies.
            At IROS 2014 workshop on Standardized Knowledge Representation and Ontologies for Robotics and Automation.
-
-So please cite if you find it useful!
+        2. Guerin, K., Lea, C., Paxton, C., & Hager, G.D. (2015).
+           A Framework for End-User Instruction of a Robot Assistant for Manufacturing.
+           In IEEE International Conference on Robotics and Automation (ICRA).
 
 ## Starting Predicator
 
-### Using Launch Files
+Predicator is launched and configured for use with the CoSTAR system in in `costar_bringup/launch/predicator_nodes.launch`. Most users should just need to edit this launch file.
 
-There is a package called `predicator_bringup` that will start different predicator modules and the predicator core.
-
-#### Launch the Core Only
+There is a package called `predicator_bringup` that will start different predicator modules and the predicator core. You can launch the core only with:
 
 ```
 roslaunch predicator_bringup core.launch
@@ -27,26 +23,13 @@ roslaunch predicator_bringup core.launch
 
 This will launch the `predicator_params` module as well if `params:=true` is set (it is set by default). This is the service which lets other programs manually configure predicator parameters.
 
-**UPDATE 2014-08-11:** As of today, `predicator_params` has been folded into `predicator_core` and this is no longer necessary.
-
-#### Launch the Peg Simulation Example
-
-This launch file uses the configuration included to test predicator in the simulation.
-It depends on having `lcsr_collab` and optionally `lcsr_spacenav` running, so that there is a Gazebo world containing two Barrett WAM arms, two pegs, a stage, and a ring.
-
-```
-roslaunch predicator_bringup pegs_sim_test.launch
-```
-
-### Starting Predicator from Rosrun
-
-Start `predicator_core` to listen to predicate statements from modules:
+You can optionally start different components directly from `rosrun`. First start `predicator_core` to listen to predicate statements from modules:
 
 ```
 rosrun predicator_core core.py
 ```
 
-Once the core is up and running, you can launch different modules to produce predicates. Keep in mind that for our purposes, predicates are always true statements about the world.
+Once the core is up and running, you can launch different modules to produce predicates. Keep in mind that for our purposes, predicates are always true statements about the world. If a predicate is not published it is presumed false.
 
 It may be best to build custom launch files for the different predicator modules instead of launching with `rosrun` since each module needs to be carefully configured.
 
@@ -55,11 +38,6 @@ It may be best to build custom launch files for the different predicator modules
 The Predicator core just aggregates predicates from a number of different topics.
 
 Predicator works through a few different services, described below.
-
-### Instructor Support
-
-Instructor plugins are in the `predicator_plugins` package.
-The user interfaces may require `predicator_core` to be running to get a list of possible predicates.
 
 ### Provided Services
 
@@ -71,7 +49,7 @@ The user interfaces may require `predicator_core` to be running to get a list of
 - **predicator/update_param**: manually set a predicator or remove a predicate; these are intended to be parameters that can be fixed and updated dynamically.
 - **predicator/get_sources**: list the possible sources, the ROS nodes that Predicator has heard from
 - **predicator/get_predicate_names_by_source**: list the names of predicates from each source ROS node
-- **predicator/get_all_predicates_by_source**: return a list of all predicates that might be valid, and a truth assignment, for a given source (BY REQUEST FROM KEL)
+- **predicator/get_all_predicates_by_source**: return a list of all predicates that might be valid, and a truth assignment, for a given source
 - **predicator/get_assignment_names_by_source**: list the assignments to the predicate produced by a given source
 - **predicator/get_predicate_names_by_assignment**: list the possible predicates for a given assignment, based on ValidPredicates messages received. Will only report predicates reported from one source.
 - **predicator/get_assignment_length** returns the number of parameter assignments for a given predicate, if available. Returns -1 if no length has been reported.
@@ -166,8 +144,6 @@ Predicator modules are the ROS packages that actually perform some kind of analy
 
 #### Geometry Module
 
-##### Geometry Module Configuration Example
-
 Nodes like the `predicator_geometry` module can be configured from the ROS parameter server.
 It may be best to start them from a launch file, like the example launch file in `predicator_geometry/launch/pegs_geometry_predicates_test.launch`.
 
@@ -210,7 +186,7 @@ It may be best to start them from a launch file, like the example launch file in
 </node>
 ```
 
-## Writing a Module
+### Writing a Module
 
 Start with:
 
@@ -224,7 +200,7 @@ By default, `predicator_core` will listen to the `predicator/input` topic for in
 
 Modules need to set the `pheader.frame_id` field to their node name, indicating where messages are coming from.
 
-### Creating a Predicate
+#### Creating a Predicate
 
 Create a `predicator_msgs::PredicateStatement` object and add it to the list of items in the `predicator_msgs::PredicateList` published by each module.
 
@@ -239,7 +215,7 @@ Make sure to fill out the fields:
 
 Boolean predicates can be given the values `predicator_msgs::PredicateStatement::TRUE`, `predicator_msgs::PredicateStatement::FALSE`, and `predicator_msgs::PredicateStatement::UNKNOWN`.
 
-### Specifying Valid Predicates
+#### Specifying Valid Predicates
 
 You can send a `predicator_msgs::ValidPredicates` object to help specify what types of predicates your modules can publish that are valid.
 
@@ -249,12 +225,8 @@ Fill out the following fields:
 - `predicates`: the normal, boolean predicates you send out
 - `valid_predicates`: floating point valued features such as distance, etc. that your module may compute.
 
-#### Example Module
-
 Look at **predicator_dummy_module** for an example of how a module should publish predicate statements.
 
-## Troubleshooting
-
-### Contact
+## Contact
 
 Predicator is maintained by Chris Paxton (cpaxton3@jhu.edu).
