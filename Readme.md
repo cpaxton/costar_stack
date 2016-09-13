@@ -72,8 +72,8 @@ roslaunch instructor_core instructor.launch
 ## CoSTAR Packages
 
   * Bringup: launch files, RVIZ configurations, et cetera
-  * [Librarian][costar_librarian/Readme.md]: file management
-  * [Predicator][costar_predicator/Readme.md]: robot knowledge management
+  * [Librarian](costar_librarian/Readme.md): file management
+  * [Predicator](costar_predicator/Readme.md): robot knowledge management
   * Gripper: utilities for integrating different grippers into UI
   * Robot: utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Tools: packages used for data collection, maintaining MoveIt planning scene, and other purposes
