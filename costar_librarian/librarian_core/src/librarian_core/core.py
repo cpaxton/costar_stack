@@ -1,25 +1,22 @@
 #!/usr/bin/env python
-
 import rospy
 import os
-
 import roslib
-roslib.load_manifest("rosparam")
 import rosparam
-
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
-
 from os.path import expanduser
 from os.path import join
+roslib.load_manifest("rosparam")
 
-'''
-Librarian()
-Class containing functions to save and write configuration information to files.
-Files are grouped by "types" like Volumes, Robots, Objects, etc.
-These are all saved into different folders in a root directory.
-'''
+
 class Librarian(object):
+    """
+    Librarian()
+    Class containing functions to save and write configuration information to files.
+    Files are grouped by "types" like Volumes, Robots, Objects, etc.
+    These are all saved into different folders in a root directory.
+    """
 
     '''
     __init__()
@@ -27,13 +24,13 @@ class Librarian(object):
     Advertises services, and loads some information about different items.
     '''
     def __init__(self, start_srvs=True):
-        root = rospy.get_param('~librarian_root','~/.costar/')
+        root = rospy.get_param('~librarian_root', '~/.costar/')
         self._root = expanduser(root)
-        print "Librarian working directory: %s"%(self._root)
+        print "Librarian working directory: {}".format(self._root)
 
         self._records = {}
 
-        if start_srvs == True:
+        if start_srvs is True:
             self._save_srv = rospy.Service('librarian/save', Save, self.save)
             self._load_srv = rospy.Service('librarian/load', Load, self.load)
             self._list_srv = rospy.Service('librarian/list', List, self.get_list)
@@ -63,7 +60,7 @@ class Librarian(object):
             if not os.path.exists(path):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.NO_SUCH_TYPE
-                resp.status.info = "Type %s does not exist!"%(req.type)
+                resp.status.info = "Type {} does not exist!".format(req.type)
             else:
                 resp.path = filename
 
@@ -84,7 +81,7 @@ class Librarian(object):
             if not os.path.exists(filename):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.NO_SUCH_TYPE
-                resp.status.info = "Type %s does not exist!"%(req.type)
+                resp.status.info = "Type {} does not exist!".format(req.type)
             else:
                 resp.path = filename
 
@@ -116,15 +113,12 @@ class Librarian(object):
             if not os.path.exists(path):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.NO_SUCH_TYPE
-                resp.status.info = "Type %s does not exist!"%(req.type)
+                resp.status.info = "Type {} does not exist!".format(req.type)
             else:
                 os.remove(filename)
                 resp.status.result = Status.SUCCESS
         
         return resp
-
-
-       
 
     '''
     save()
@@ -143,7 +137,7 @@ class Librarian(object):
             if not os.path.exists(path):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.NO_SUCH_TYPE
-                resp.status.info = "Type %s does not exist!"%(req.type)
+                resp.status.info = "Type {} does not exist!".format(req.type)
             else:
 
                 # get the operation
@@ -199,11 +193,11 @@ class Librarian(object):
             if not os.path.exists(path):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.NO_SUCH_TYPE
-                resp.status.info = "Type %s does not exist!"%(req.type)
+                resp.status.info = "Type {} does not exist!".format(req.type)
             elif not os.path.exists(filename):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.FILE_MISSING
-                resp.status.info = "File %s does not exist as a member of type %s!"%(req.id, req.type)
+                resp.status.info = "File {} does not exist as a member of type {}!".format(req.id, req.type)
             else:
                 inf = open(filename, 'r')
                 resp.text = inf.read()
@@ -217,12 +211,11 @@ class Librarian(object):
     Load onto the parameter server.
     '''
     def load_params(self, req):
-
-        ''' EXAMPLE OF LOADING PARAMETERS FROM A YAML FILE:
+        """ EXAMPLE OF LOADING PARAMETERS FROM A YAML FILE:
         paramlist=rosparam.load_file("/path/to/myfile",default_namespace="my_namespace")
         for params, ns in paramlist:
             rosparam.upload_params(ns,params)
-        '''
+        """
         resp = LoadResponse()
         if len(req.type) == 0:
                 resp.status.result = Status.FAILURE
@@ -235,15 +228,15 @@ class Librarian(object):
             if not os.path.exists(path):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.NO_SUCH_TYPE
-                resp.status.info = "Type %s does not exist!"%(req.type)
+                resp.status.info = "Type {} does not exist!".format(req.type)
             elif not os.path.exists(filename):
                 resp.status.result = Status.FAILURE
                 resp.status.error = Status.FILE_MISSING
-                resp.status.info = "File %s does not exist as a member of type %s!"%(req.id, req.type)
+                resp.status.info = "File {} does not exist as a member of type {}!".format(req.id, req.type)
             else:
-                paramlist=rosparam.load_file(filename)
+                paramlist = rosparam.load_file(filename)
                 for params, ns in paramlist:
-                    rosparam.upload_params(ns,params)
+                    rosparam.upload_params(ns, params)
 
                 resp.status.result = Status.SUCCESS
 
@@ -263,7 +256,7 @@ class Librarian(object):
         if not os.path.exists(path):
             resp.status.result = Status.FAILURE
             resp.status.error = Status.FILE_MISSING
-            resp.status.info = "Could not find directory '%s'"%(path)
+            resp.status.info = "Could not find directory '{}'".format(path)
         else:
             resp.entries = os.listdir(path)
             resp.status.result = Status.SUCCESS
@@ -280,13 +273,13 @@ class Librarian(object):
 if __name__ == '__main__':
     rospy.init_node('librarian_core')
 
-    #spin_rate = rospy.get_param('rate',10)
-    #rate = rospy.Rate(spin_rate)
+    # spin_rate = rospy.get_param('rate',10)
+    # rate = rospy.Rate(spin_rate)
 
     try:
         lib = Librarian()
 
-        rospy.spin();
+        rospy.spin()
 
     except rospy.ROSInterruptException:
         # shut down the node!
