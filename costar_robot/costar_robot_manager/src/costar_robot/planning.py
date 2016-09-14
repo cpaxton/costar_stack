@@ -22,7 +22,13 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 class SimplePlanning:
     
-    def __init__(self,robot,base_link,end_link,group,move_group_ns="move_group",planning_scene_topic="planning_scene",robot_ns="",verbose=False, kdl_kin=None ,joint_names=[]):
+    def __init__(self,robot,base_link,end_link,group,
+            move_group_ns="move_group",
+            planning_scene_topic="planning_scene",
+            robot_ns="",
+            verbose=False,
+            kdl_kin=None,
+            joint_names=[]):
         self.robot = robot
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
@@ -117,6 +123,7 @@ class SimplePlanning:
         #if joints is None:
 
         joints = self.kdl_kin.inverse(frame,q)
+        print joints
 
         if joints is None:
 
@@ -181,8 +188,6 @@ class SimplePlanning:
 
           return (None, goal)
 
-
-
     def getPlan(self,frame,q,compute_ik=True):
         planning_options = PlanningOptions()
         planning_options.plan_only = False
@@ -209,6 +214,9 @@ class SimplePlanning:
 
         #if (ik_resp.error_code.val > 0):
         #  return (1,None)
+
+        print ik_resp
+        print goal
 
         motion_req.goal_constraints.append(goal)
         motion_req.group_name = self.group

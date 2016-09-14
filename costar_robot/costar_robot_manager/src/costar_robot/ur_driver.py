@@ -30,7 +30,8 @@ class CostarUR5Driver(CostarArm):
         planning_group = "manipulator"
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
             steps_per_meter=100,
-            base_steps=100)
+            base_steps=100,
+            dof=6)
 
         self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
 
@@ -44,9 +45,6 @@ class CostarUR5Driver(CostarArm):
 
         self.old_q0 = self.q0
         self.set_goal(self.q0)
-
-        self.joint_names = [joint.name for joint in self.robot.joints[:6]]
-        self.planner.joint_names = self.joint_names
 
     '''
     Send a whole joint trajectory message to a robot...

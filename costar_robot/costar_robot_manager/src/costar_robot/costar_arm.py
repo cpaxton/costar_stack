@@ -40,6 +40,7 @@ class CostarArm(object):
             start_js_cb=True,
             base_steps=10,
             steps_per_meter=100,
+            dof=7,
             perception_ns="/SPServer"):
 
         self.world = world
@@ -122,11 +123,13 @@ class CostarArm(object):
         # cCreate reference to pyKDL kinematics
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
 
+
         #self.set_goal(self.q0)
         self.goal = None
         self.ee_pose = None
 
-        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group)
+        self.joint_names = [joint.name for joint in self.robot.joints[:6]]
+        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group,kdl_kin=self.kdl_kin,joint_names=self.joint_names)
 
     '''
     js_cb
