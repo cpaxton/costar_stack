@@ -222,7 +222,7 @@ class SimplePlanning:
         motion_req.group_name = self.group
         motion_req.num_planning_attempts = 10
         motion_req.allowed_planning_time = 4.0
-        motion_req.planner_id = "RRTstarkConfigDefault"
+        motion_req.planner_id = "RRTconnectkConfigDefault"
         
         if len(motion_req.goal_constraints[0].joint_constraints) == 0 or (not ik_resp is None and ik_resp.error_code.val < 0):
             return (-31, None)
