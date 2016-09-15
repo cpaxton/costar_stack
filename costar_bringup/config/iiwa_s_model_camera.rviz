@@ -104,6 +104,8 @@ Visualization Manager:
           Value: true
         001:
           Value: true
+        003 node to link assemble init:
+          Value: true
         01 pickup:
           Value: false
         01 place1:
@@ -120,15 +122,15 @@ Visualization Manager:
           Value: false
         03 place1:
           Value: true
+        03 place1b:
+          Value: true
         03 place2:
           Value: true
+        03 place2b:
+          Value: true
         All Enabled: false
-        TEST:
-          Value: false
-        app1:
-          Value: false
-        ar_marker_3:
-          Value: false
+        ar_marker_0:
+          Value: true
         base_link:
           Value: true
         camera_depth_frame:
@@ -151,63 +153,7 @@ Visualization Manager:
           Value: false
         forearm_link:
           Value: false
-        g1:
-          Value: false
-        grab:
-          Value: false
         gripper_link:
-          Value: false
-        node_over:
-          Value: false
-        node_pick:
-          Value: false
-        obj_node_uniform_1:
-          Value: true
-        obj_node_uniform_2:
-          Value: true
-        obj_node_uniform_3:
-          Value: true
-        obj_node_uniform_4:
-          Value: true
-        obj_node_uniform_5:
-          Value: true
-        objects/link_uniform/1:
-          Value: false
-        objects/link_uniform/2:
-          Value: false
-        objects/link_uniform/3:
-          Value: false
-        objects/link_uniform/4:
-          Value: false
-        objects/node_uniform/1:
-          Value: false
-        objects/node_uniform/10:
-          Value: false
-        objects/node_uniform/11:
-          Value: false
-        objects/node_uniform/12:
-          Value: false
-        objects/node_uniform/13:
-          Value: false
-        objects/node_uniform/14:
-          Value: false
-        objects/node_uniform/15:
-          Value: false
-        objects/node_uniform/2:
-          Value: false
-        objects/node_uniform/3:
-          Value: false
-        objects/node_uniform/4:
-          Value: false
-        objects/node_uniform/5:
-          Value: false
-        objects/node_uniform/6:
-          Value: false
-        objects/node_uniform/7:
-          Value: false
-        objects/node_uniform/8:
-          Value: false
-        objects/node_uniform/9:
           Value: false
         preferred_orientation:
           Value: false
@@ -235,22 +181,14 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              ar_marker_3:
-                {}
-              obj_node_uniform_1:
-                {}
-              obj_node_uniform_2:
-                {}
-              obj_node_uniform_3:
-                {}
-              obj_node_uniform_4:
-                {}
-              obj_node_uniform_5:
+              ar_marker_0:
                 {}
           world:
             00 HOME:
               {}
             001:
+              {}
+            003 node to link assemble init:
               {}
             01 pickup:
               {}
@@ -268,11 +206,11 @@ Visualization Manager:
               {}
             03 place1:
               {}
+            03 place1b:
+              {}
             03 place2:
               {}
-            TEST:
-              {}
-            app1:
+            03 place2b:
               {}
             base_link:
               preferred_orientation:
@@ -290,52 +228,6 @@ Visualization Manager:
                             gripper_link:
                               {}
             down:
-              {}
-            g1:
-              {}
-            grab:
-              {}
-            node_over:
-              {}
-            node_pick:
-              {}
-            objects/link_uniform/1:
-              {}
-            objects/link_uniform/2:
-              {}
-            objects/link_uniform/3:
-              {}
-            objects/link_uniform/4:
-              {}
-            objects/node_uniform/1:
-              {}
-            objects/node_uniform/10:
-              {}
-            objects/node_uniform/11:
-              {}
-            objects/node_uniform/12:
-              {}
-            objects/node_uniform/13:
-              {}
-            objects/node_uniform/14:
-              {}
-            objects/node_uniform/15:
-              {}
-            objects/node_uniform/2:
-              {}
-            objects/node_uniform/3:
-              {}
-            objects/node_uniform/4:
-              {}
-            objects/node_uniform/5:
-              {}
-            objects/node_uniform/6:
-              {}
-            objects/node_uniform/7:
-              {}
-            objects/node_uniform/8:
-              {}
-            objects/node_uniform/9:
               {}
       Update Interval: 0
       Value: true
@@ -640,6 +532,69 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: moveit_rviz_plugin/Trajectory
+      Enabled: true
+      Interrupt Display: false
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ee_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forearm_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        upper_arm_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Loop Animation: false
+      Name: Planned Path
+      Robot Alpha: 0.5
+      Robot Description: robot_description
+      Show Robot Collision: false
+      Show Robot Visual: true
+      Show Trail: false
+      State Display Time: 0.05 s
+      Trajectory Topic: /costar/display_trajectory
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -664,7 +619,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.41539
+      Distance: 2.57744
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -676,10 +631,10 @@ Visualization Manager:
         Z: 0.103772
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.294797
+      Pitch: 0.489797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.22377
+      Yaw: 5.13695
     Saved: ~
 Window Geometry:
   Displays:
