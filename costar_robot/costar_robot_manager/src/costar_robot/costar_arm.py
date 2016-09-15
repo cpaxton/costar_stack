@@ -298,7 +298,7 @@ class CostarArm(object):
                 (dist,traj) = possible_goals[0]
                 rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-                msg = self.send_trajectory(traj,acceleration,velocity,cartesian=False)
+                msg = self.send_trajectory(traj,acceleration,velocity,cartesian=False,linear=True)
 
             return msg
 
@@ -344,7 +344,7 @@ class CostarArm(object):
 
                 traj = res.planned_trajectory.joint_trajectory
                 
-                return self.send_trajectory(traj,acceleration,velocity,cartesian=True)
+                return self.send_trajectory(traj,acceleration,velocity,cartesian=False)
 
             else:
                 rospy.logerr('DRIVER -- PLANNING failed')
@@ -398,7 +398,7 @@ class CostarArm(object):
             # Send command
             if len(traj.points) > 0:
                 rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
-                return self.send_trajectory(traj,acceleration,velocity)
+                return self.send_trajectory(traj,acceleration,velocity,cartesian=False,linear=True)
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
                 return 'FAILURE - not in servo mode'

@@ -117,11 +117,6 @@ class SimplePlanning:
 
         goal = Constraints()
 
-        #traj = self.getCartesianMove(frame, q)
-        #if len(traj.pts) > 0:
-        #    joints = traj[-1].positions
-        #if joints is None:
-
         joints = self.kdl_kin.inverse(frame,q)
         print joints
 
