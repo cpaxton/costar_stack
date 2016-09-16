@@ -48,7 +48,7 @@ class CostarIIWADriver(CostarArm):
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False):
+    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False, linear=False):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
