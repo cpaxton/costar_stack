@@ -1,3 +1,4 @@
 string tfToUpdate
+string objectClass
 ---
 string result

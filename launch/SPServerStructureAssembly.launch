@@ -105,7 +105,7 @@
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
     <param name="saveTable"   type="bool" value="$(arg saveTable)" />
     <param name="loadTable"   type="bool" value="$(arg loadTable)" />
-    <param name="tableDistanceThreshold" type="double" value="0.015"/>
+    <param name="tableDistanceThreshold" type="double" value="0.02"/>
     <param name="tableAngularThreshold"  type="double" value="2"/>
     <param name="tableMinimalInliers"  type="double" value="7500"/>
     
