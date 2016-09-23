@@ -127,7 +127,7 @@ add_library(collision_env
   src/collision_env.cpp
   include/collision_env.h
 )
-target_link_libraries(collision_env ${catkin_LIBRARIES})
+target_link_libraries(collision_env ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_library(planning_scene_generator
   src/planning_scene_generator.cpp
