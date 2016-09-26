@@ -18,49 +18,59 @@ It is suggested to download all required packages before building your catkin wo
 
 Download interface package snap_instructor from [LCSR git website](https://git.lcsr.jhu.edu/), or (JHU users) use the following command to download (username and password requested are the same as JHED account):
 
-`git clone https://git.lcsr.jhu.edu/snap/snap_instructor.git`  
-`git clone https://git.lcsr.jhu.edu/snap/ready_air.git`  
+```
+git clone https://git.lcsr.jhu.edu/snap/snap_instructor.git  
+git clone https://git.lcsr.jhu.edu/snap/ready_air.git  
+```
 
 Download the CoSTAR main package and ROS-dependencies from GitHub: 
 
-`git clone https://github.com/cpaxton/costar_stack.git`  
-`git clone https://github.com/SalvoVirga/iiwa_stack.git`  
-`git clone https://github.com/ros-industrial/robotiq.git`  
-`git clone https://github.com/futureneer/beetree.git`  
-`git clone https://github.com/jbohren/rqt_dot.git`  
-`git clone https://github.com/sniekum/ar_track_alvar.git`  
-`git clone https://github.com/sniekum/ar_track_alvar_msgs.git`  
-`git clone https://github.com/gt-ros-pkg/hrl-kdl.git`  
-`git clone https://github.com/cpaxton/xdot.git`  
+```
+git clone https://github.com/cpaxton/costar_stack.git  
+git clone https://github.com/SalvoVirga/iiwa_stack.git  
+git clone https://github.com/ros-industrial/robotiq.git  
+git clone https://github.com/futureneer/beetree.git  
+git clone https://github.com/jbohren/rqt_dot.git  
+git clone https://github.com/sniekum/ar_track_alvar.git  
+git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
+git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
+git clone https://github.com/cpaxton/xdot.git  
+```
 
 Download the required packages from Ubuntu repositories: 
 
-`sudo apt-get install ros-indigo-fcl`  
-`sudo apt-get install ros-indigo-soem`  
-`sudo apt-get install ros-indigo-moveit-full`  
-`sudo apt-get install liburdfdom-headers-dev`  
-`sudo apt-get install ros-indigo-control-msgs`  
-`sudo apt-get install ros-indigo-gazebo-ros-control`  
-`sudo apt-get install ros-indigo-python-orocos-kdl `  
-`sudo apt-get install ros-indigo-razer-hydra`  
-`sudo apt-get install xdot`  
-`sudo apt-get install libccd-dev`  
-`sudo apt-get install ros-indigo-ros-control`  
-`sudo apt-get install ros-indigo-octomap-msgs`  
-`sudo apt-get install ros-indigo-object-recognition-msgs`  
-`sudo apt-get install ros-indigo-realtime-tools`  
-`sudo apt-get install ros-indigo-soem`  
+```
+sudo apt-get install ros-indigo-fcl  
+sudo apt-get install ros-indigo-soem  
+sudo apt-get install ros-indigo-moveit-full  
+sudo apt-get install liburdfdom-headers-dev  
+sudo apt-get install ros-indigo-control-msgs  
+sudo apt-get install ros-indigo-gazebo-ros-control  
+sudo apt-get install ros-indigo-python-orocos-kdl  
+sudo apt-get install ros-indigo-razer-hydra  
+sudo apt-get install xdot  
+sudo apt-get install libccd-dev  
+sudo apt-get install ros-indigo-ros-control  
+sudo apt-get install ros-indigo-octomap-msgs  
+sudo apt-get install ros-indigo-object-recognition-msgs  
+sudo apt-get install ros-indigo-realtime-tools  
+sudo apt-get install ros-indigo-soem  
+```
 
-Download the required package from PyPI:
+If you are using the UR5, download the required package from PyPI:
 
-`sudo pip install urx`
+```
+sudo pip install urx
+```
 
 
 ## Step 2. Build catkin workspace
 
 Change directory into catkin workspace folder and run:
 
-`catkin build`
+```
+catkin build
+```
  
 Note: Please use this command to build your catkin workspace instead of `catkin_make`.
 
@@ -86,9 +96,11 @@ FIrst, download and put the costar_files in ~/.costar using the following comman
 
 Now you can run the simulation with following command (Please remember to run `roscore` first. If problem occurs, please run `source devel/setup.bash` or add this line to ~/.bashrc. ):
 
-`roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false`  
-`roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=false`  
-`roslaunch instructor_core instructor.launch`
+```
+roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false  
+roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=false  
+roslaunch instructor_core instructor.launch
+```
 
 
 *If everything shows up, CoSTAR system is then successfully installed. Enjoy!*

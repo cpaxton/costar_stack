@@ -91,7 +91,7 @@ roslaunch instructor_core instructor.launch
   * Instructor: Behavior Tree-based user interface (built on [Beetree](https://github.com/futureneer/beetree/))
   * Ready Air: drives the current tool attachment and provides services
 
-  Due to licensing issues these cannot be made open source.
+  Due to licensing issues these have not yet been made open source.
 
 ## CoSTAR Tools
 
