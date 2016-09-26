@@ -34,7 +34,7 @@ class collision_environment
         
         std::string tableTFname, parentTableTF, baseLinkName;
 		std::string mesh_source, file_extension;
-        std::string charToFind,breakChar;
+        std::string charToFind,objTFsignature;
         std::string parentFrame; //parent of the TF frame that objects attached to
 		int objectNameFormatIndex;
         bool classReady,hasParent, hasTableTF,hasObjects;

@@ -1,4 +1,5 @@
 #include "collision_env.h"
+#include <boost/filesystem.hpp>
 
 std::vector<std::string> stringVectorSeparator (const std::string &input,
                                                 const std::string &charToFind, const bool &debug)
@@ -56,7 +57,9 @@ void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
     this->nh = nh;
     nh.param("objectNameIdx", objectNameFormatIndex,2);
     nh.param("debug", debug,false);
-    nh.param("charToFind", charToFind,std::string("::"));
+    nh.param("charToFind", charToFind,std::string("/"));
+    nh.param("objTFsignature", objTFsignature,std::string("objects"));
+    
     nh.param("mesh_source", mesh_source,std::string("data/mesh"));
     nh.param("file_extension",file_extension,std::string("stl"));
     nh.param("tableTFname",tableTFname,std::string("tableTF"));
@@ -128,9 +131,16 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
         // name of collision object = TF name
         co.id = detectedObjectsTF.at(i).frame_id;
         co.header.frame_id = parentFrame;
-        std::stringstream ss;
+        std::stringstream file_location, ss;
         // read the location of the mesh file
-        ss << "file://" << mesh_source << "/" << detectedObjectsTF.at(i).name << "." << file_extension;
+
+        file_location << mesh_source << "/" << detectedObjectsTF.at(i).name << "." << file_extension;
+        if (!boost::filesystem::exists( file_location.str() ))
+        {
+            std::cerr << "Warning: Mesh file not found at: " << file_location.str() << std::endl;
+            continue;
+        }
+        ss << "file://" << file_location.str();
         
         // Generate moveit mesh from mesh file
         shapes::Mesh * tmpMesh = shapes::createMeshFromResource(ss.str());
@@ -221,6 +231,14 @@ void collision_environment::getAllObjectTF()
     
     if (!hasParent) //searching for object tf parent
         for (unsigned int i = 0; i < listOfTF.size(); i++) {
+            
+            // if the beginning character of TF is not the same character as object tf signature, skip it
+            if (listOfTF.at(i).compare(0,objTFsignature.length(),objTFsignature) != 0 )
+            {
+                if (debug) std::cerr << listOfTF.at(i) << " does not have signature: " << objTFsignature << std::endl;
+                continue;
+            }
+
             std::vector<std::string> tmp = stringVectorSeparator(listOfTF.at(i), charToFind, debug);
             if (tmp.size() > objectNameFormatIndex)
             {
@@ -252,6 +270,14 @@ void collision_environment::getAllObjectTF()
 
     // get and save the TF name and pose in the class variable
     for (unsigned int i = 0; i < listOfTF.size(); i++) {
+
+        // if the beginning character of TF is not the same character as object tf signature, skip it
+        if (listOfTF.at(i).compare(0,objTFsignature.length(),objTFsignature) != 0 )
+        {
+            if (debug) std::cerr << listOfTF.at(i) << " does not have signature: " << objTFsignature << std::endl;
+            continue;
+        }
+
         std::vector<std::string> tmp = stringVectorSeparator(listOfTF.at(i), charToFind, debug);
         if (tmp.size() > objectNameFormatIndex)
         {
@@ -401,7 +427,7 @@ bool collision_environment::getTable()
         
         geometry_msgs::Pose box_pose;
         tf::poseTFToMsg(transform,box_pose);
-        box_pose.position.z -= primitive.dimensions[2];
+        box_pose.position.z -= primitive.dimensions[2]/2;
         co.primitives.push_back(primitive);
         co.primitive_poses.push_back(box_pose);
 

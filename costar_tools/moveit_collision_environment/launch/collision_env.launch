@@ -1,12 +1,16 @@
 <launch>
   <!-- main collision environment parameter -->
-  <arg name="mesh_source"         default="$(env HOME)/data/mesh" 
+  <arg name="mesh_source"         default="$(env HOME)/data/mesh/collision_mesh" 
     doc="Location of the folder that contains the mesh object files" />
-  <arg name="file_extension"      default="obj" 
+  <arg name="file_extension"      default="stl" 
     doc="The extension that used by all mesh files. Supports assimp importable extension, such as: stl, obj, dae, blend" />
 
-  <arg name="charToFind"          default="::" 
-    doc="Signature characters that separates between the name of object inside of the TF name"/>
+  <arg name="charToFind"          default="/" 
+    doc="Signature characters that separates between the information inside the TF name, such as objectTFsignature, name of object, and object ID"/>
+
+  <arg name="objectTFsignature"    default="objects"
+    doc="Signature characters that must presents inside the TF to be qualified as collision object. This signature must match the start of the TF name" />
+
   <arg name="objectNameIdx"       default="2" 
     doc="The position of the object name after charToFind separation"/>
   <arg name="tableTF"         default="ar_marker_2" 
@@ -37,6 +41,7 @@
     <param name="mesh_source"     type="str"  value="$(arg mesh_source   )" />
     <param name="file_extension"  type="str"  value="$(arg file_extension)" />
 
+    <param name="objTFsignature"  type="str"  value="$(arg objectTFsignature    )" />
     <param name="charToFind"      type="str"  value="$(arg charToFind    )" />
     <param name="objectNameIdx"   type="int"  value="$(arg objectNameIdx )" />
 
