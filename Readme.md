@@ -19,6 +19,10 @@ To fully take advantage of these capabilities you will need:
 
 Note that unfortunately the CoSTAR UI is not open source, so email me at cpaxton3@jhu.edu if you are interested in it.
 
+## Installation
+
+Check out installation instructions [here](INSTALL.md).
+
 ## Starting CoSTAR for the LBR iiwa with GRL
 
 Making sure you are connected to the robot:
