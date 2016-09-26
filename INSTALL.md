@@ -1,5 +1,7 @@
 # How to Install CoSTAR
 
+Instructions by Baichuan Jiang
+
 Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). Some packages, e.g., snap_instructor (user interface) are not open source yet. For JHU users, please go [here](https://git.lcsr.jhu.edu/) and use JHED to login and download. For other users, please contact <cpaxton3@jhu.edu> for help. 
 
 
