@@ -87,31 +87,6 @@ class CostarPSMDriver(CostarArm):
         else:
             return 'FAILURE - did not reach destination'
 
-    '''
-    Send a whole sequence of points to a robot...
-    that is listening to individual joint states.
-    '''
-    def send_sequence(self,traj,acceleration=0.5,velocity=0.5,cartesian=False):
-        q0 = self.q0
-        for q in traj:
-            pt = JointTrajectoryPoint(positions=q)
-            self.pt_publisher.publish(pt)
-            self.set_goal(q)
-
-        if len(traj) > 0:
-            self.pt_publisher.publish(pt)
-            self.set_goal(traj[-1])
-            rate = rospy.Rate(10)
-            start_t = rospy.Time.now()
-
-            # wait until robot is at goal
-            while not self.at_goal:
-                if (rospy.Time.now() - start_t).to_sec() > 10:
-                    return 'FAILURE - timeout'
-                rate.sleep()
-
-            return 'SUCCESS - moved to pose'
-
     def handle_tick(self):
       rospy.logwarn('Function "handle_tick" not yet implemented for PSM!')
       # TODO handle control mode
