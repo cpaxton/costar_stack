@@ -137,32 +137,6 @@ class CostarUR5Driver(CostarArm):
           cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
           self.ur.movel(cmd,wait=True,acc=acceleration,vel=velocity)
 
-    '''
-    Send a whole sequence of points to a robot...
-    that is listening to individual joint states.
-    '''
-    def send_sequence(self,traj,acceleration=0.5,velocity=0.5):
-        q0 = self.q0
-        for q in traj:
-            self.send_q(q,acceleration,velocity)
-            self.set_goal(q)
-
-            #rospy.sleep(0.9*np.sqrt(np.sum((q-q0)**2)))
-
-        if len(traj) > 0:
-            self.send_q(traj[-1],acceleration,velocity)
-            self.set_goal(traj[-1])
-            rate = rospy.Rate(10)
-            start_t = rospy.Time.now()
-
-            # wait until robot is at goal
-            while not self.at_goal:
-                if (rospy.Time.now() - start_t).to_sec() > 10:
-                    return 'FAILURE - timeout'
-                rate.sleep()
-
-            return 'SUCCESS - moved to pose'
-
     def handle_tick(self):
 
         # send out the joint states
