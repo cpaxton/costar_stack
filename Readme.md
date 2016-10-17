@@ -19,6 +19,10 @@ To fully take advantage of these capabilities you will need:
 
 Note that unfortunately the CoSTAR UI is not open source, so email me at cpaxton3@jhu.edu if you are interested in it.
 
+## Installation
+
+Check out installation instructions [here](INSTALL.md).
+
 ## Starting CoSTAR for the LBR iiwa with GRL
 
 Making sure you are connected to the robot:
@@ -87,7 +91,7 @@ roslaunch instructor_core instructor.launch
   * Instructor: Behavior Tree-based user interface (built on [Beetree](https://github.com/futureneer/beetree/))
   * Ready Air: drives the current tool attachment and provides services
 
-  Due to licensing issues these cannot be made open source.
+  Due to licensing issues these have not yet been made open source.
 
 ## CoSTAR Tools
 
