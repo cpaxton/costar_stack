@@ -327,6 +327,9 @@ class CostarArm(object):
             pt = JointTrajectoryPoint()
             traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
             if len(traj.points) > 0:
+                # frames = list()
+                # for i in xrange(len(traj.points)):
+                #     frames.append(traj.points[i].positions)
                 (code,res) = self.planner.getPlan(req.target,traj.points[-1].positions)
             else:
                 (code,res) = self.planner.getPlan(req.target,self.q0)
