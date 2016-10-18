@@ -366,21 +366,6 @@ class CostarArm(object):
         return "FAILURE - running base class!"
 
     '''
-    Send a whole sequence of points to a robot...
-    that is listening to individual joint states.
-    '''
-    def send_sequence(self,traj,acceleration=0.5,velocity=0.5,cartesian=False):
-        rospy.logerr("Function 'send_sequence' not implemented for base class!")
-        return "FAILURE - running base class!"
-
-    '''
-    handle changes in driver mode
-    '''
-    def handle_mode_tick(self):
-        rospy.logerr("Function 'handle_mode_tick' not implemented for base class!")
-        return "FAILURE - running base class!"
-
-    '''
     Standard movement call.
     Tries a cartesian move, then if that fails goes into a joint-space move.
     '''

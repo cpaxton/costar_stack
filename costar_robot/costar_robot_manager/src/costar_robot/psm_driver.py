@@ -23,11 +23,11 @@ from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
 
-mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
+class CostarPSMDriver(CostarArm):
 
-class CostarIIWADriver(CostarArm):
-
-    def __init__(self,world="/world",
+    def __init__(self,
+            name="psm1",
+            world="/world",
             listener=None,
             traj_step_t=0.1,
             max_acc=1,
@@ -36,13 +36,13 @@ class CostarIIWADriver(CostarArm):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6):
 
+        # TODO: correct these
         base_link = 'iiwa_link_0'
         end_link = 'iiwa_link_ee'
         planning_group = 'manipulator'
 
-        super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group, dof=7)
+        super(CostarPSMDriver, self).__init__(base_link,end_link,planning_group, dof=7)
 
-        self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
 
     '''
     Send a whole joint trajectory message to a robot...
@@ -69,10 +69,6 @@ class CostarIIWADriver(CostarArm):
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
 
-          #while not self.near_goal:
-          #  if (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
-          #      break
-          #  rate.sleep()
 
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
         self.pt_publisher.publish(traj.points[-1])
@@ -92,9 +88,10 @@ class CostarIIWADriver(CostarArm):
             return 'FAILURE - did not reach destination'
 
     def handle_tick(self):
-        if self.driver_status in mode.keys():
-            self.iiwa_mode_publisher.publish(mode[self.driver_status])
-        else:
-            #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
-            pass
+      rospy.logwarn('Function "handle_tick" not yet implemented for PSM!')
+      # TODO handle control mode
+      if self.driver_states == 'TEACH':
+        pass
+      else:
+        pass
 
