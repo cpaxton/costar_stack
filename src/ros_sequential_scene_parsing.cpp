@@ -27,6 +27,8 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("object_folder_location",object_folder_location,std::string(""));
 	nh.param("TF_y_inv_gravity_dir",this->tf_y_is_inverse_gravity_direction_,std::string(""));
 
+	nh.param("tf_publisher_initial",this->tf_publisher_initial,std::string(""));
+
 	this->obj_database_.setObjectDatabaseLocation(object_folder_location);
 
 	// sleep for caching the initial TF frames.
@@ -122,7 +124,10 @@ void RosSceneGraph::publishTf() const
 		tf_transform.setFromOpenGLMatrix(gl_matrix);
 		
 		tf::TransformBroadcaster br;
-		br.sendTransform(tf::StampedTransform(tf_transform,ros::Time::now(),this->parent_frame_,it->first) );
+		std::stringstream ss;
+		// the name of tf published by this node is: initial/original_object_tf_name
+		ss << this->tf_publisher_initial << "/" << it->first;
+		br.sendTransform(tf::StampedTransform(tf_transform,ros::Time::now(),this->parent_frame_,ss.str()) );
 	}
 }
 
