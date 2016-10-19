@@ -60,6 +60,7 @@ void ObjectDatabase::setObjectDatabaseLocation(std::string file_location)
 
 bool ObjectDatabase::addObjectToDatabase(std::string object_name, double mass)
 {
+	if (this->debug_messages_) std::cerr << "Adding object: " << object_name << " to the database.\n";
 	std::string object_file_location = this->file_location_ + "/" + object_name + ".bcs";
 	btCollisionShape* simplified_mesh = load_bcs(object_file_location.c_str(), false);
 	if (simplified_mesh != NULL)
@@ -67,12 +68,18 @@ bool ObjectDatabase::addObjectToDatabase(std::string object_name, double mass)
 		Object new_object;
 		new_object.setPhysicalProperties(simplified_mesh, mass);
 		this->database_[object_name] = new_object;
+		if (this->debug_messages_) std::cerr << object_name << " successfully added to the database.\n";
 		return true;
 	}
 	else
 	{
+		if (this->debug_messages_) std::cerr << object_name << " successfully added to the database.\n";
 		return false;
 	}
+}
+void ObjectDatabase::setDebugMode(bool debug)
+{
+	this->debug_messages_ = true;
 }
 
 std::size_t ObjectDatabase::loadDatabase(std::vector<std::string> object_names)

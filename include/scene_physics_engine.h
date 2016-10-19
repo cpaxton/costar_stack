@@ -27,10 +27,13 @@ public:
 	std::map<std::string, btTransform>  getUpdatedObjectPose();
 	void resetObjects();
 
+	void setDebugMode(bool debug);
+	
 private:
 	void simulate();
 
-	bool have_background;
+	bool debug_messages_;
+	bool have_background_;
 	// rigid body data from ObjectWithID input with ID information
 	std::map<std::string, btRigidBody*> rigid_body_;
 	btRigidBody* background_;

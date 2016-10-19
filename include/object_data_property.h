@@ -67,7 +67,7 @@ private:
 struct ObjectDatabase
 {
 public:
-	// ObjectDatabase();
+	ObjectDatabase() : debug_messages_(false) {};
 
 	// set the folder location that contains the object .bcs file
 	void setObjectDatabaseLocation(std::string file_location);
@@ -75,12 +75,15 @@ public:
 	// add one object to the database. The object file must exist in file_location/object_name.bcs. If true, adding object is successful.
 	bool addObjectToDatabase(std::string object_name, double mass = 0.2);
 
+	void setDebugMode(bool debug);
+
 	// add multiple objects to the database. Returns number of unsuccesful adding object operation
 	std::size_t loadDatabase(std::vector<std::string> object_names);
 	std::size_t loadDatabase(std::vector<std::string> object_names, std::vector<double> mass);
 	Object getObjectProperty(std::string object_name) const;
 	bool objectExistInDatabase(std::string) const;
 private:
+	bool debug_messages_;
 	std::map<std::string, Object> database_;
 	std::string file_location_;
 };

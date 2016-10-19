@@ -30,8 +30,10 @@ public:
 	void addBackground(Image background_image);
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
-
+	void setDebugMode(bool debug);
+	
 private:
+	bool debug_messages_;
 	bool physics_engine_ready_;
 	PhysicsEngine * physics_engine_;
 

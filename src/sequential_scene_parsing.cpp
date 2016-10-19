@@ -3,13 +3,6 @@
 #include "sequential_scene_parsing.h"
 #include "utility.h"
 
-void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
-{
-	this->physics_engine_ = physics_engine;
-
-	// Check if physics engine exist
-	this->physics_engine_ready_ = (physics_engine_ != NULL);
-}
 
 SceneGraph::SceneGraph(Image input, Image background_image)
 {
@@ -18,9 +11,20 @@ SceneGraph::SceneGraph(Image input, Image background_image)
 	this->physics_engine_ready_ = false;
 }
 
-// add background
+void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
+{
+	if (this->debug_messages_) std::cerr <<"Setting physics engine into the scene graph.\n";
+	this->physics_engine_ = physics_engine;
+
+	// Check if physics engine exist
+	this->physics_engine_ready_ = (physics_engine_ != NULL);
+}
+
 void SceneGraph::addBackground(Image background_image)
 {
+	if (this->debug_messages_) std::cerr <<"Adding background into the scene graph.\n";
+	
+	// add background
 	this->object_label_.push_back("g");
 	this->background_label_ = "g";
 	this->object_point_cloud_["g"] = background_image;
@@ -58,11 +62,14 @@ void SceneGraph::addBackground(Image background_image)
 void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
 {
 	this->physics_engine_->resetObjects();
+	if (this->debug_messages_) std::cerr <<"Adding new objects into the scene graph.\n";
 	this->physics_engine_->addObjects(objects);
 }
 
 std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 {
+	if (this->debug_messages_) std::cerr <<"Getting corrected object transform from the scene graph.\n";
+	
 	return this->physics_engine_->getUpdatedObjectPose();
 	// std::map<std::string, ObjectParameter> result_eigen_pose;
 	// for (std::map<std::string, btTransform>::const_iterator it = this->rigid_body_.begin(); 
@@ -71,6 +78,11 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 	// 	result_eigen_pose[it->first] = convertBulletToEigenTransform(it->second);
 	// }
 	// return result_eigen_pose;
+}
+
+void SceneGraph::setDebugMode(bool debug)
+{
+	this->debug_messages_ = debug;
 }
 
 SequentialSceneGraph::SequentialSceneGraph(Image background_image)

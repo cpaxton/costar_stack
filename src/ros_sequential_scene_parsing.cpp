@@ -29,6 +29,9 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 
 	nh.param("tf_publisher_initial",this->tf_publisher_initial,std::string(""));
 
+	nh.param("debug_mode",this->debug_messages_,false);
+	this->setDebugMode(this->debug_messages_);
+
 	this->obj_database_.setObjectDatabaseLocation(object_folder_location);
 
 	// sleep for caching the initial TF frames.
@@ -40,6 +43,7 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 
 void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 {
+	std::cerr << "Background points added to the scene.\n";
 	// convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA::Ptr
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 	pcl::fromROSMsg(pc, *cloud);
@@ -49,6 +53,7 @@ void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 
 void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
 {
+	std::cerr << "Updating scene based on detected object message.\n";
 	std::vector<ObjectWithID> objects;
 	// allocate memory for all objects
 	objects.reserve(detected_objects.objects.size());
@@ -108,7 +113,10 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 		else return;
 	}
 	this->ros_scene_.addNewObjectTransforms(objects);
+	std::cerr << "Getting corrected object transform...\n";
 	this->object_transforms_ = this->ros_scene_.getCorrectedObjectTransform();
+
+	std::cerr << "Done. Waiting for new detected object message...\n";
 }
 
 void RosSceneGraph::publishTf() const
@@ -131,3 +139,9 @@ void RosSceneGraph::publishTf() const
 	}
 }
 
+void RosSceneGraph::setDebugMode(bool debug)
+{
+	this->ros_scene_.setDebugMode(debug);
+	this->physics_engine_.setDebugMode(debug);
+	this->obj_database_.setDebugMode(debug);
+}

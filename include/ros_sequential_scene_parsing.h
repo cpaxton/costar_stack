@@ -27,8 +27,11 @@ public:
 	void addBackground(const sensor_msgs::PointCloud2 &pc);
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
 	void publishTf() const;
+
+	void setDebugMode(bool debug);
 private:
 	// void initialize();
+	bool debug_messages_;
 	bool class_ready_;
 	bool physics_gravity_direction_set_;
 	ros::Subscriber detected_object_sub;

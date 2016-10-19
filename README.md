@@ -6,7 +6,9 @@ This rosnode will improve object detection pose estimate and help solving occlud
 
 # Requirements
 This package requires these dependencies:
-	- bullet 2.83 with extra packages (in OSX installation, do brew install bullet --with-extra)
+	- bullet 2.83+ with EXTRA packages installed.
+		- In OSX installation, do brew install bullet --with-extra
+		- In linux installation, configure bullet with BUILD_SHARED_LIBS = ON, BUILD_EXTRAS=ON, INSTALL_EXTRA_LIBS=ON then build and it
 	- pcl 1.7.2
 	- boost 1.59.x
 
