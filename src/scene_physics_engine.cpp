@@ -21,11 +21,15 @@ PhysicsEngine::~PhysicsEngine()
 	this->resetObjects();
 	
 	// removes background
-	this->dynamicsWorld_->removeRigidBody(this->background_);
-	delete this->background_->getMotionState();
-	delete this->background_;
+	if (this->have_background_)
+	{
+		this->dynamicsWorld_->removeRigidBody(this->background_);
+		delete this->background_->getMotionState();
+		delete this->background_;
+	}
 
 	// delete physics world environment
+	if (this->debug_messages_) std::cerr << "Deleting physics engine environment.\n";
 	delete this->dynamicsWorld_;
 	delete this->solver_;
 	delete this->dispatcher_;
@@ -131,9 +135,10 @@ void PhysicsEngine::resetObjects()
 		this->dynamicsWorld_->removeRigidBody(it->second);
 		delete it->second->getMotionState();
 		delete it->second;
+		if (this->debug_messages_) std::cerr << "Removed objects: "<<  it->first <<".\n";
 	}
-
 	this->rigid_body_.clear();
+	if (this->debug_messages_) std::cerr << "Done removing all scene objects.\n";
 }
 
 void PhysicsEngine::setDebugMode(bool debug)

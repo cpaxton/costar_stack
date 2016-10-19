@@ -8,7 +8,7 @@ void Object::setPhysicalProperties(const objectShapePtr mesh, const double &mass
 	this->physical_data_ready_ = true;
 }
 
-void Object::copyPhysicalProperties(objectShapePtr mesh_output, btScalar &mass_output, btVector3 &inertia_output) const
+void Object::copyPhysicalProperties(objectShapePtr &mesh_output, btScalar &mass_output, btVector3 &inertia_output) const
 {
 	mesh_output = this->mesh_;
 	mass_output = this->mass_;

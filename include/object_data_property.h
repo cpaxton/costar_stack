@@ -19,7 +19,7 @@ class Object
 public:
 	Object() : physical_data_ready_(false) {};
 	void setPhysicalProperties(const objectShapePtr mesh, const double &mass);
-	void copyPhysicalProperties(objectShapePtr mesh_output, btScalar &mass_output, btVector3 &inertia_output) const;
+	void copyPhysicalProperties(objectShapePtr &mesh_output, btScalar &mass_output, btVector3 &inertia_output) const;
 	// generate rigid body data that can be added to the bullet physics world
 	btRigidBody* generateRigidBody(const btTransform &transform) const;
 	// void addSpecialProperty();
