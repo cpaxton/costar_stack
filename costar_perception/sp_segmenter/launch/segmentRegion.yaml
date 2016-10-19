@@ -1,0 +1,14 @@
+maxCoordinate:
+  x: 0.3
+  y: 0.5
+  z: 1.0
+
+minCoordinate:
+  x: -0.3
+  y: -0.5
+  z: 0.0
+
+useAxis:
+  x: true
+  y: false
+  z: true

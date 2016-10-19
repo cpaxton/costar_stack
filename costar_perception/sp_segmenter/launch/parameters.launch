@@ -1,0 +1,9 @@
+<launch>
+  <!-- sp_segmenter Data Paths-->
+  <arg name="data_path"    default="$(find sp_segmenter)/data" />
+  <param name="shot_path"  type="str" value="$(arg data_path)/UW_shot_dict/"/>
+  <param name="sift_path"  type="str" value="$(arg data_path)/UW_sift_dict/"/>
+  <param name="fpfh_path"  type="str" value="$(arg data_path)/UW_fpfh_dict/"/>
+  
+  <param name="mesh_path"  type="str" value="$(arg data_path)/mesh/"/>
+</launch>
