@@ -32,6 +32,7 @@ class SimplePlanning:
             robot_ns="",
             verbose=False,
             kdl_kin=None,
+            closed_form_IK_solver = None,
             joint_names=[]):
         self.robot = robot
         self.tree = kdl_tree_from_urdf_model(self.robot)
@@ -47,18 +48,20 @@ class SimplePlanning:
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
         self.verbose = verbose
+        self.closed_form_IK_solver = closed_form_IK_solver
         
-        self.closedFormIKSolver = InverseKinematicsUR5()
-        self.closedFormIKSolver.setJointWeights([6,5,4,3,2,1])
-        self.closedFormIKSolver.setJointLimits(-np.pi, np.pi)
+        
     
     '''
     ik: handles calls to KDL inverse kinematics
     '''
     def ik(self, T, q0, dist=0.5):
-
+      if self.closed_form_IK_solver:
       #T = pm.toMatrix(F)
-      q = self.kdl_kin.inverse(T,q0)
+        # findClosestIK
+        pass
+      else:
+        q = self.kdl_kin.inverse(T,q0)
 
       # NOTE: this results in unsafe behavior; do not use without checks
       #if q is None:

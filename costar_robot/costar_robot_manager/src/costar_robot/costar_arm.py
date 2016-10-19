@@ -40,6 +40,7 @@ class CostarArm(object):
             start_js_cb=True,
             base_steps=10,
             steps_per_meter=100,
+            closed_form_IK_solver = None,
             dof=7,
             perception_ns="/SPServer"):
 
@@ -129,7 +130,7 @@ class CostarArm(object):
         self.ee_pose = None
 
         self.joint_names = [joint.name for joint in self.robot.joints[:6]]
-        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group,kdl_kin=self.kdl_kin,joint_names=self.joint_names)
+        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group,kdl_kin=self.kdl_kin,joint_names=self.joint_names,closed_form_IK_solver=closed_form_IK_solver)
 
     '''
     js_cb
