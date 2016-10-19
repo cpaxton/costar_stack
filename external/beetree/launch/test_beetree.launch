@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="rqt_dot" type="rqt_dot" name="rqt_dot_visualizer"/>
+    <node pkg="beetree" type="beetree_test_publisher.py" name="beetree_test"/>
+</launch>
