@@ -6,7 +6,7 @@ Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 mac
 
 
 ## Prerequisites
-To successfully install CoSTAR system, some software are demanded to be installed as prerequisite: 
+To successfully install the CoSTAR system, some software are demanded to be installed as prerequisite: 
 
 * Python (tested version 2.7.12)
 * Git (tested version 1.9.1)
