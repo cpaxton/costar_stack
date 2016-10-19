@@ -4,4 +4,4 @@ CoSTAR does not rely on any particular perception solution. Instead, we require 
 
 ## SP Segmenter
 
-This is our initial perception package. See [here](costar_perception/sp_segmenter/README.md) for more information.
+This is our initial perception package. See [here](sp_segmenter/README.md) for more information.
