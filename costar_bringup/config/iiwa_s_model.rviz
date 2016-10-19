@@ -12,6 +12,7 @@ Panels:
         - /RobotModel1
         - /PlanningScene1/Scene Robot1
         - /preferred orientation1
+        - /Planned Path1
       Splitter Ratio: 0.572491
     Tree Height: 745
   - Class: rviz/Selection
@@ -32,7 +33,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -420,6 +421,77 @@ Visualization Manager:
       Name: PoseArray
       Topic: /SPServer
       Value: false
+    - Class: moveit_rviz_plugin/Trajectory
+      Enabled: true
+      Interrupt Display: false
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        iiwa_link_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_7:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        iiwa_link_ee:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        iiwa_link_ee_kuka:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Loop Animation: false
+      Name: Planned Path
+      Robot Alpha: 0.5
+      Robot Description: robot_description
+      Show Robot Collision: false
+      Show Robot Visual: true
+      Show Trail: false
+      State Display Time: 0.05 s
+      Trajectory Topic: /iiwa/costar/display_trajectory
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -444,7 +516,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.58645
+      Distance: 4.21202
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -456,10 +528,10 @@ Visualization Manager:
         Z: 0.370841
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.0197965
+      Pitch: 0.484796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.56233
+      Yaw: 3.02733
     Saved: ~
 Window Geometry:
   Displays:
@@ -479,5 +551,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1615
-  X: 65
+  X: 1985
   Y: 24
