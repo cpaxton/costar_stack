@@ -40,6 +40,7 @@ class CostarArm(object):
             start_js_cb=True,
             base_steps=10,
             steps_per_meter=100,
+            closed_form_IK_solver = None,
             dof=7,
             perception_ns="/SPServer"):
 
@@ -129,7 +130,7 @@ class CostarArm(object):
         self.ee_pose = None
 
         self.joint_names = [joint.name for joint in self.robot.joints[:6]]
-        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group,kdl_kin=self.kdl_kin,joint_names=self.joint_names)
+        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group,kdl_kin=self.kdl_kin,joint_names=self.joint_names,closed_form_IK_solver=closed_form_IK_solver)
 
     '''
     js_cb
@@ -327,6 +328,9 @@ class CostarArm(object):
             pt = JointTrajectoryPoint()
             traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
             if len(traj.points) > 0:
+                # frames = list()
+                # for i in xrange(len(traj.points)):
+                #     frames.append(traj.points[i].positions)
                 (code,res) = self.planner.getPlan(req.target,traj.points[-1].positions)
             else:
                 (code,res) = self.planner.getPlan(req.target,self.q0)
