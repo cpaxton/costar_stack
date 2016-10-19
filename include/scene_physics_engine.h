@@ -19,6 +19,9 @@ public:
 	void addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant);
 	// TODO: use mesh as background (table)
 	void addBackgroundMesh();
+
+	// uses a frame that has Y direction up as a guide for gravity direction
+	void setGravityVectorDirectionFromTfYUp(const btTransform &transform_y_is_inverse_gravity_direction);
 	void setGravityVectorDirection(const btVector3 &gravity);
 	void addObjects(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, btTransform>  getUpdatedObjectPose();

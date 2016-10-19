@@ -7,6 +7,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
 #include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 
@@ -25,10 +26,11 @@ public:
 	void setNodeHandle(const ros::NodeHandle &nh);
 	void addBackground(const sensor_msgs::PointCloud2 &pc);
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
-	
+	void publishTf() const;
 private:
 	// void initialize();
 	bool class_ready_;
+	bool physics_gravity_direction_set_;
 	ros::Subscriber detected_object_sub;
 	ros::Subscriber background_pcl_sub;
 	
@@ -37,7 +39,8 @@ private:
 	SceneGraph ros_scene_;
 	PhysicsEngine physics_engine_;
 	std::map<std::string, ObjectParameter> object_transforms_;
-
+	std::string parent_frame_;
+	std::string tf_y_is_inverse_gravity_direction_;
 	ObjectDatabase obj_database_;
 };
 

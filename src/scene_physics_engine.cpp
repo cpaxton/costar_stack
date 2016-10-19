@@ -53,6 +53,16 @@ void PhysicsEngine::addBackgroundMesh()
 	this->have_background = true;
 }
 
+void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transform_y_is_inverse_gravity_direction)
+{
+	btMatrix3x3 rotation_matrix = transform_y_is_inverse_gravity_direction.getBasis();
+
+	// get Y axis direction from the transform
+	btVector3 inverse_gravity(rotation_matrix[0][1],rotation_matrix[1][1],rotation_matrix[2][1]);
+	
+	this->setGravityVectorDirection(-inverse_gravity);
+}
+
 void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 {
 	this->dynamicsWorld_->setGravity(gravity);
