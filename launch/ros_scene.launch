@@ -1,0 +1,16 @@
+<launch>
+  <!-- Scene topic arguments-->
+  <arg name="background_pcl2_topic"          default="/background_points" />
+  <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" />
+  <arg name="detected_object_topic"          default="/detected_object"/>
+  <arg name="TF_y_inv_gravity_dir"           default="/ground"/>
+
+  <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros">  
+    <!-- sequential_scene_ros common Node arg pass -->
+    <param name="background_pcl2_topic"   type="str" value="$(arg background_pcl2_topic)" />
+    <param name="object_folder_location"  type="str" value="$(arg object_folder_location)"/>
+    <param name="detected_object_topic"   type="str" value="$(arg detected_object_topic)"/>
+    <param name="TF_y_inv_gravity_dir"    type="str" value="$(arg TF_y_inv_gravity_dir)"/>
+    
+  </node>
+</launch>
