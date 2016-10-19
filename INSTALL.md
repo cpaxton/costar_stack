@@ -31,7 +31,6 @@ Download the CoSTAR main package and ROS-dependencies from GitHub:
 git clone https://github.com/cpaxton/costar_stack.git  
 git clone https://github.com/SalvoVirga/iiwa_stack.git  
 git clone https://github.com/ros-industrial/robotiq.git  
-git clone https://github.com/futureneer/beetree.git  
 git clone https://github.com/jbohren/rqt_dot.git  
 git clone https://github.com/sniekum/ar_track_alvar.git  
 git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
