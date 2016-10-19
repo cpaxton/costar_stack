@@ -50,23 +50,25 @@ class SimplePlanning:
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
         
-        
+        self.closed_form_ur5_ik = InverseKinematicsUR5()
+        self.closed_form_ur5_ik.setEERotationOffsetROS()
+        self.closed_form_ur5_ik.setJointWeights([6,5,4,3,2,1])
+        self.closed_form_ur5_ik.setJointLimits(-np.pi, np.pi)
     
     '''
     ik: handles calls to KDL inverse kinematics
     '''
     def ik(self, T, q0, dist=0.5):
+      q = None
       if self.closed_form_IK_solver:
       #T = pm.toMatrix(F)
-        # findClosestIK
-        pass
+        q = self.closed_form_ur5_ik.findClosestIK(T,q0)
       else:
         q = self.kdl_kin.inverse(T,q0)
 
       # NOTE: this results in unsafe behavior; do not use without checks
       #if q is None:
       #    q = self.kdl_kin.inverse(T)
-
       return q
 
     '''

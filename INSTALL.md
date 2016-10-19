@@ -37,6 +37,7 @@ git clone https://github.com/sniekum/ar_track_alvar.git
 git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
 git clone https://github.com/cpaxton/xdot.git  
+git clone https://github.com/ThomasTimm/ur_modern_driver.git
 ```
 
 Download the required packages from Ubuntu repositories: 

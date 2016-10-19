@@ -160,7 +160,7 @@ class CostarArm(object):
 
             if goal_diff < 10*self.max_goal_diff:
                 self.near_goal = True
-
+        
         q_diff = np.abs(self.old_q0 - self.q0).sum()
 
         if q_diff < self.max_q_diff:

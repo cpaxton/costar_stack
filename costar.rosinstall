@@ -19,6 +19,7 @@
 
 # motion
 - git: {version: master, local-name: dmp, uri: 'git@github.com:cpaxton/dmp.git'}
+- git: {version: master, local-name: ur_modern_driver, uri: 'git@github.com:ThomasTimm/ur_modern_driver.git'}
 
 # proprietary
 - git: {version: ui-improvements, local-name: instructor, uri: 'git@git.lcsr.jhu.edu:snap/snap_instructor.git'}

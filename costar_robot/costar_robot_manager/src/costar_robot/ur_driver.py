@@ -32,7 +32,7 @@ class CostarUR5Driver(CostarArm):
             steps_per_meter=10,
             base_steps=10,
             dof=6,
-            closed_form_IK_solver=None)
+            closed_form_IK_solver=True)
 
         self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
 
