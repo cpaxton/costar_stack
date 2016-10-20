@@ -1,5 +1,10 @@
 #include <iostream>
 
+#include <pcl/ModelCoefficients.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+
 #include "sequential_scene_parsing.h"
 #include "utility.h"
 
@@ -32,32 +37,31 @@ void SceneGraph::addBackground(Image background_image)
 	this->object_instance_parameter_["g"] = identity;
 	
 	// search for plane of support
-	size_t background_point_size = background_image->points.size();
-	if (background_point_size < 100)
+	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+	// Create the segmentation object
+	pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
+	// Optional
+	seg.setOptimizeCoefficients (true);
+	// Mandatory
+	seg.setModelType (pcl::SACMODEL_PLANE);
+	seg.setMethodType (pcl::SAC_RANSAC);
+	seg.setDistanceThreshold (0.01);
+
+	seg.setInputCloud (background_image);
+	seg.segment (*inliers, *coefficients);
+
+	if (inliers->indices.size () == 0)
 	{
-		// input is already a plane convex hull. Get the plane coefficient directly
-		Eigen::Vector3f origin(background_image->points[0].x, 
-			background_image->points[0].y, 
-			background_image->points[0].z);
-
-		size_t p1_index = background_point_size / 3;
-		Eigen::Vector3f p1(background_image->points[p1_index].x, 
-			background_image->points[p1_index].y, 
-			background_image->points[p1_index].z);
-
-		size_t p2_index = background_point_size* 2 / 3;
-		Eigen::Vector3f p2(background_image->points[p2_index].x, 
-			background_image->points[p2_index].y, 
-			background_image->points[p2_index].z);
-
-		Eigen::Vector3f o_p1 = origin - p1,
-						o_p2 = origin - p2;
-		Eigen::Vector3f normal = o_p2.cross(o_p1);
-		normal = normal / normal.norm();
-		float coeff = - normal.dot(origin);
-		if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
-		this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal), btScalar(coeff));
+		std::cerr <<"Could not estimate a planar model for the given dataset.";
+		return;
 	}
+	Eigen::Vector3f normal(coefficients->values[0],coefficients->values[1], coefficients->values[2]);
+	float coeff = coefficients->values[3];
+
+	if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
+	this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal), btScalar(coeff));
+	
 }
 
 void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)

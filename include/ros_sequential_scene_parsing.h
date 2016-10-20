@@ -34,15 +34,17 @@ private:
 	bool debug_messages_;
 	bool class_ready_;
 	bool physics_gravity_direction_set_;
+	bool has_tf_;
 	ros::Subscriber detected_object_sub;
 	ros::Subscriber background_pcl_sub;
 	
 	ros::NodeHandle nh_;
 	tf::TransformListener listener_;
-	tf::TransformBroadcaster br_;
+	tf::TransformBroadcaster tf_broadcaster_;
 	SceneGraph ros_scene_;
 	PhysicsEngine physics_engine_;
 	std::map<std::string, ObjectParameter> object_transforms_;
+	std::map<std::string, tf::Transform> object_transforms_tf_;
 	std::string parent_frame_;
 	std::string tf_z_is_inverse_gravity_direction_;
 	std::string tf_publisher_initial;

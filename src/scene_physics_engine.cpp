@@ -41,7 +41,7 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
 {
 	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
 	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant);
-	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)));
+	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     
     // unmovable ground object
     btRigidBody::btRigidBodyConstructionInfo

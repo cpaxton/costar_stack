@@ -6,6 +6,7 @@ RosSceneGraph::RosSceneGraph()
 	this->ros_scene_.setPhysicsEngine(&this->physics_engine_);
 	this->class_ready_ = false;
 	this->physics_gravity_direction_set_ = false;
+	this->has_tf_ = false;
 }
 
 RosSceneGraph::RosSceneGraph(const ros::NodeHandle &nh)
@@ -135,28 +136,38 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	}
 	this->ros_scene_.addNewObjectTransforms(objects);
 	std::cerr << "Getting corrected object transform...\n";
+	this->object_transforms_.clear();
 	this->object_transforms_ = this->ros_scene_.getCorrectedObjectTransform();
 
-	std::cerr << "Done. Waiting for new detected object message...\n";
-}
-
-void RosSceneGraph::publishTf()
-{
+	this->object_transforms_tf_.clear();
 	for (std::map<std::string, ObjectParameter>::const_iterator it = this->object_transforms_.begin(); 
 		it != this->object_transforms_.end(); ++it)
 	{
+		std::stringstream ss;
 		tf::Transform tf_transform;
 		double gl_matrix[15];
 		float gl_matrix_f[15];
 		it->second.getOpenGLMatrix(gl_matrix_f);
 		for (int i = 0; i < 15; i++) gl_matrix[i] = double(gl_matrix_f[i]);
 		tf_transform.setFromOpenGLMatrix(gl_matrix);
-		
-		tf::TransformBroadcaster br;
-		std::stringstream ss;
-		// the name of tf published by this node is: initial/original_object_tf_name
-		ss << this->tf_publisher_initial << "/" << it->first;
-		br_.sendTransform(tf::StampedTransform(tf_transform,ros::Time::now(),this->parent_frame_,ss.str()) );
+		ss << this->tf_publisher_initial << "/" << it -> first;
+		object_transforms_tf_[ss.str()] = tf_transform;
+	}
+
+	std::cerr << "Published tf with parent frame: "<< this->parent_frame_ << "\n";
+	this->has_tf_ = true;
+	this->publishTf();
+	std::cerr << "Done. Waiting for new detected object message...\n";
+}
+
+void RosSceneGraph::publishTf()
+{
+	if (!this->has_tf_) return;
+
+	for (std::map<std::string, tf::Transform>::const_iterator it = this->object_transforms_tf_.begin(); 
+		it != this->object_transforms_tf_.end(); ++it)
+	{
+		this->tf_broadcaster_.sendTransform(tf::StampedTransform(it->second,ros::Time::now(),this->parent_frame_,it->first) );
 	}
 }
 
