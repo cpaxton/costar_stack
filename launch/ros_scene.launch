@@ -3,19 +3,23 @@
   <arg name="background_pcl2_topic"          default="/SPServer/table_corner" />
   <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" />
   <arg name="detected_object_topic"          default="/SPServer/detected_object_list"/>
-  <arg name="TF_y_inv_gravity_dir"           default="/base_link"/>
+  <arg name="TF_z_inv_gravity_dir"           default="/base_link"/>
   <arg name="tf_publisher_initial"           default="scene"/>
-  <arg name="debug_mode"                     default="false"/>
+  <arg name="debug"                          default="false"/>
+  <arg name="load_table"                     default="false"/>
+  <arg name="table_location"                 default="$(find sp_segmenter)/data/table.pcd"/>
 
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros" >  
     <!-- sequential_scene_ros common Node arg pass -->
     <param name="background_pcl2_topic"   type="str"     value="$(arg background_pcl2_topic)" />
     <param name="object_folder_location"  type="str"     value="$(arg object_folder_location)"/>
     <param name="detected_object_topic"   type="str"     value="$(arg detected_object_topic)"/>
-    <param name="TF_y_inv_gravity_dir"    type="str"     value="$(arg TF_y_inv_gravity_dir)"/>
+    <param name="TF_z_inv_gravity_dir"    type="str"     value="$(arg TF_z_inv_gravity_dir)"/>
     <param name="tf_publisher_initial"    type="str"     value="$(arg tf_publisher_initial)"/>
 
-    <param name="debug_mode"              type="bool"    value="$(arg debug_mode)"/>
+    <param name="debug_mode"              type="bool"    value="$(arg debug)"/>
+    <param name="load_table"              type="bool"    value="$(arg load_table)"/>
+    <param name="table_location"          type="str"     value="$(arg table_location)"/>
     
   </node>
 </launch>

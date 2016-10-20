@@ -52,9 +52,10 @@ void SceneGraph::addBackground(Image background_image)
 
 		Eigen::Vector3f o_p1 = origin - p1,
 						o_p2 = origin - p2;
-		Eigen::Vector3f normal = o_p1.cross(o_p2);
+		Eigen::Vector3f normal = o_p2.cross(o_p1);
+		normal = normal / normal.norm();
 		float coeff = - normal.dot(origin);
-
+		if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
 		this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal), btScalar(coeff));
 	}
 }

@@ -2,7 +2,7 @@
 
 #include "scene_physics_engine.h"
 
-PhysicsEngine::PhysicsEngine() : have_background_(false)
+PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
 	this->broadphase_ = new btDbvtBroadphase();
@@ -61,11 +61,24 @@ void PhysicsEngine::addBackgroundMesh()
 
 void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transform_y_is_inverse_gravity_direction)
 {
-	if (this->debug_messages_) std::cerr << "Setting physics engine gravity based on a TF transfrom.\n";
-	btMatrix3x3 rotation_matrix = transform_y_is_inverse_gravity_direction.getBasis();
+	if (this->debug_messages_) std::cerr << "Setting physics engine gravity based on a TF transform.\n";
 
-	// get Y axis direction from the transform
-	btVector3 inverse_gravity(rotation_matrix[0][1],rotation_matrix[1][1],rotation_matrix[2][1]);
+	btMatrix3x3 rotation_matrix = transform_y_is_inverse_gravity_direction.getBasis();
+	if (this->debug_messages_)
+	{
+		std::cerr << "Input transform:\n";
+		for (int i = 0; i < 3; i++){
+			for (int j = 0; j < 3; j++)
+			{
+				std::cerr <<  rotation_matrix[i][j] << " ";
+			}
+			std::cerr << std::endl;
+		}
+
+	} 
+
+	// get Z axis direction from the transform
+	btVector3 inverse_gravity(rotation_matrix[0][2],rotation_matrix[1][2],rotation_matrix[2][2]);
 	
 	this->setGravityVectorDirection(-inverse_gravity);
 }
@@ -73,7 +86,11 @@ void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transf
 void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 {
 	if (this->debug_messages_) std::cerr << "Setting physics engine gravity vector.\n";
-	this->dynamicsWorld_->setGravity(gravity);
+	btVector3 gravity_corrected_magnitude = gravity / gravity.norm() * 9.807;
+	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_corrected_magnitude[0] << ", "
+		<< gravity_corrected_magnitude[1] << ", " 
+		<< gravity_corrected_magnitude[2] << std::endl;
+	this->dynamicsWorld_->setGravity(gravity_corrected_magnitude);
 }
 
 void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
@@ -96,8 +113,12 @@ void PhysicsEngine::simulate()
 {
 	if (this->debug_messages_) std::cerr << "Simulating the physics engine.\n";
 	// If do not have background, do not update the scene
+	
 	if (!this->have_background_)
+	{
+		std::cerr << "Skipping simulation, scene does not has any background data yet.\n";
 		return;
+	}
 
 	// TODO: early termination. Check if all object has no changes anymore.
 	bool steady_state = false;

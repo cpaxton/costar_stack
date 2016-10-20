@@ -26,7 +26,7 @@ public:
 	void setNodeHandle(const ros::NodeHandle &nh);
 	void addBackground(const sensor_msgs::PointCloud2 &pc);
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
-	void publishTf() const;
+	void publishTf();
 
 	void setDebugMode(bool debug);
 private:
@@ -39,11 +39,12 @@ private:
 	
 	ros::NodeHandle nh_;
 	tf::TransformListener listener_;
+	tf::TransformBroadcaster br_;
 	SceneGraph ros_scene_;
 	PhysicsEngine physics_engine_;
 	std::map<std::string, ObjectParameter> object_transforms_;
 	std::string parent_frame_;
-	std::string tf_y_is_inverse_gravity_direction_;
+	std::string tf_z_is_inverse_gravity_direction_;
 	std::string tf_publisher_initial;
 	ObjectDatabase obj_database_;
 };

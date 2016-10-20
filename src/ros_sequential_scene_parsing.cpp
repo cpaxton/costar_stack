@@ -1,3 +1,4 @@
+#include <pcl/io/pcd_io.h>
 #include "ros_sequential_scene_parsing.h"
 
 RosSceneGraph::RosSceneGraph()
@@ -21,16 +22,34 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	std::string detected_object_topic;
 	std::string background_pcl2_topic;
 	std::string object_folder_location;
+	std::string background_location;
+
+	bool debug_mode, load_table;
 
 	nh.param("detected_object_topic", detected_object_topic,std::string("/detected_object"));
 	nh.param("background_pcl2_topic", background_pcl2_topic,std::string("/background_points"));
 	nh.param("object_folder_location",object_folder_location,std::string(""));
-	nh.param("TF_y_inv_gravity_dir",this->tf_y_is_inverse_gravity_direction_,std::string(""));
+	nh.param("TF_z_inv_gravity_dir",this->tf_z_is_inverse_gravity_direction_,std::string(""));
 
 	nh.param("tf_publisher_initial",this->tf_publisher_initial,std::string(""));
+	nh.param("debug_mode",debug_mode,false);
+	nh.param("load_table",load_table,false);
+	if (load_table){
+		nh.param("table_location",background_location,std::string(""));
+		pcl::PCDReader reader;
+		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr background_cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
+		if (reader.read(background_location,*background_cloud) == 0){
+			this->ros_scene_.addBackground(background_cloud);
+			std::cerr << "Background point loaded successfully\n";
+		}
+		else
+			std::cerr << "Failed to load the background points\n"; 
+	}
+	
 
-	nh.param("debug_mode",this->debug_messages_,false);
-	this->setDebugMode(this->debug_messages_);
+
+	std::cerr << "Debug mode: " << debug_mode << std::endl;
+	this->setDebugMode(debug_mode);
 
 	this->obj_database_.setObjectDatabaseLocation(object_folder_location);
 
@@ -96,10 +115,12 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	}
 	if (! this->physics_gravity_direction_set_)
 	{
-		if (this->listener_.waitForTransform(this->tf_y_is_inverse_gravity_direction_,this->parent_frame_,now,ros::Duration(1.0)))
+		std::cerr << "Gravity direction of the physics_engine is not set yet.\n";
+		if (this->listener_.waitForTransform(this->tf_z_is_inverse_gravity_direction_,this->parent_frame_,now,ros::Duration(1.0)))
 		{
+			std::cerr << "Setting gravity direction of the physics_engine.\n";
 			tf::StampedTransform transform;
-			this->listener_.lookupTransform(this->parent_frame_,this->tf_y_is_inverse_gravity_direction_,ros::Time(0),transform);
+			this->listener_.lookupTransform(this->parent_frame_,this->tf_z_is_inverse_gravity_direction_,ros::Time(0),transform);
 			double gl_matrix[15];
 			float gl_matrix_f[15];
 			transform.getOpenGLMatrix(gl_matrix);
@@ -119,7 +140,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	std::cerr << "Done. Waiting for new detected object message...\n";
 }
 
-void RosSceneGraph::publishTf() const
+void RosSceneGraph::publishTf()
 {
 	for (std::map<std::string, ObjectParameter>::const_iterator it = this->object_transforms_.begin(); 
 		it != this->object_transforms_.end(); ++it)
@@ -135,12 +156,13 @@ void RosSceneGraph::publishTf() const
 		std::stringstream ss;
 		// the name of tf published by this node is: initial/original_object_tf_name
 		ss << this->tf_publisher_initial << "/" << it->first;
-		br.sendTransform(tf::StampedTransform(tf_transform,ros::Time::now(),this->parent_frame_,ss.str()) );
+		br_.sendTransform(tf::StampedTransform(tf_transform,ros::Time::now(),this->parent_frame_,ss.str()) );
 	}
 }
 
 void RosSceneGraph::setDebugMode(bool debug)
 {
+	this->debug_messages_ = debug;
 	this->ros_scene_.setDebugMode(debug);
 	this->physics_engine_.setDebugMode(debug);
 	this->obj_database_.setDebugMode(debug);
