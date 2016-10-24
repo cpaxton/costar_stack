@@ -12,6 +12,8 @@
 #include <Eigen/Geometry>
 
 #include "scene_physics_engine.h"
+#include "scene_physics_engine_w_rendering.h"
+
  // ObjectParameter == Object Pose
 typedef btTransform ObjectParameter;
 // typedef Eigen::Transform< double,3,Eigen::Affine > ObjectParameter;
@@ -25,7 +27,7 @@ public:
 	SceneGraph(Image input, Image background_image);
 	
 	// set physics engine environment to be used.
-	void setPhysicsEngine(PhysicsEngine* physics_engine);
+	void setPhysicsEngine(PhysicsEngineWRender* physics_engine);
 
 	void addBackground(Image background_image);
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
@@ -35,7 +37,7 @@ public:
 private:
 	bool debug_messages_;
 	bool physics_engine_ready_;
-	PhysicsEngine * physics_engine_;
+	PhysicsEngineWRender * physics_engine_;
 
 	// TODO
 	// void addObject();

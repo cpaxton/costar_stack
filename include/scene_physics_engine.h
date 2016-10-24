@@ -5,7 +5,7 @@
 #include <map>
 
 // Bullet physics engine
-#include <Bullet3Common/b3FileUtils.h>
+// #include <Bullet3Common/b3FileUtils.h>
 
 #include "object_data_property.h"
 
@@ -16,7 +16,7 @@ public:
 	~PhysicsEngine();
 
 	// use plane as background (table)
-	void addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant);
+	void addBackgroundPlane(const std::vector<btVector3> &plane_points);
 	// TODO: use mesh as background (table)
 	void addBackgroundMesh();
 

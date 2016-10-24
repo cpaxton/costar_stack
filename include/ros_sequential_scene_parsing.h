@@ -29,6 +29,8 @@ public:
 	void publishTf();
 
 	void setDebugMode(bool debug);
+	void callGlutMain(int argc, char* argv[]);
+	
 private:
 	// void initialize();
 	bool debug_messages_;
@@ -42,7 +44,8 @@ private:
 	tf::TransformListener listener_;
 	tf::TransformBroadcaster tf_broadcaster_;
 	SceneGraph ros_scene_;
-	PhysicsEngine physics_engine_;
+	// PhysicsEngine physics_engine_;
+	PhysicsEngineWRender physics_engine_;
 	std::map<std::string, ObjectParameter> object_transforms_;
 	std::map<std::string, tf::Transform> object_transforms_tf_;
 	std::string parent_frame_;

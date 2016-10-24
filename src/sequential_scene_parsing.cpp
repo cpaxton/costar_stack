@@ -16,7 +16,7 @@ SceneGraph::SceneGraph(Image input, Image background_image)
 	this->physics_engine_ready_ = false;
 }
 
-void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
+void SceneGraph::setPhysicsEngine(PhysicsEngineWRender* physics_engine)
 {
 	if (this->debug_messages_) std::cerr <<"Setting physics engine into the scene graph.\n";
 	this->physics_engine_ = physics_engine;
@@ -36,32 +36,39 @@ void SceneGraph::addBackground(Image background_image)
 	btTransform identity; identity.setIdentity();
 	this->object_instance_parameter_["g"] = identity;
 	
-	// search for plane of support
-	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-	// Create the segmentation object
-	pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
-	// Optional
-	seg.setOptimizeCoefficients (true);
-	// Mandatory
-	seg.setModelType (pcl::SACMODEL_PLANE);
-	seg.setMethodType (pcl::SAC_RANSAC);
-	seg.setDistanceThreshold (0.01);
+	// // search for plane of support
+	// pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+	// pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+	// // Create the segmentation object
+	// pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
+	// // Optional
+	// seg.setOptimizeCoefficients (true);
+	// // Mandatory
+	// seg.setModelType (pcl::SACMODEL_PLANE);
+	// seg.setMethodType (pcl::SAC_RANSAC);
+	// seg.setDistanceThreshold (0.01);
 
-	seg.setInputCloud (background_image);
-	seg.segment (*inliers, *coefficients);
+	// seg.setInputCloud (background_image);
+	// seg.segment (*inliers, *coefficients);
 
-	if (inliers->indices.size () == 0)
+	// if (inliers->indices.size () == 0)
+	// {
+	// 	std::cerr <<"Could not estimate a planar model for the given dataset.";
+	// 	return;
+	// }
+	// Eigen::Vector3f normal(coefficients->values[0],coefficients->values[1], coefficients->values[2]);
+	// float coeff = coefficients->values[3];
+
+	// if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
+	// this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal), btScalar(coeff));
+	std::vector<btVector3> convex_plane_points;
+	convex_plane_points.reserve(background_image->size());
+	for (std::size_t i = 0; i < background_image->size(); i++)
 	{
-		std::cerr <<"Could not estimate a planar model for the given dataset.";
-		return;
+		btVector3 convex_hull_point(background_image->points[i].x,background_image->points[i].y,background_image->points[i].z);
+		convex_plane_points.push_back(convex_hull_point);
 	}
-	Eigen::Vector3f normal(coefficients->values[0],coefficients->values[1], coefficients->values[2]);
-	float coeff = coefficients->values[3];
-
-	if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
-	this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal), btScalar(coeff));
-	
+	this->physics_engine_->addBackgroundPlane(convex_plane_points);
 }
 
 void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)

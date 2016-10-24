@@ -37,10 +37,19 @@ PhysicsEngine::~PhysicsEngine()
 	delete this->broadphase_;
 }
 
-void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant)
+void PhysicsEngine::addBackgroundPlane(const std::vector<btVector3> &plane_points)
 {
-	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
-	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant);
+
+	if (this->debug_messages_) std::cerr << "Adding background(convex hull) to the physics engine's world.\n";
+	
+	btConvexHullShape background_convex;
+	for (std::vector<btVector3>::const_iterator it = plane_points.begin(); it != plane_points.end(); ++it)
+	{
+		// add a point to the convex hull then recalculate the AABB
+		background_convex.addPoint(*it, true);
+	}
+
+	btCollisionShape*  background = new btConvexHullShape(background_convex);
 	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     
     // unmovable ground object
@@ -48,6 +57,9 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
             background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
     
     this->background_ = new btRigidBody(background_RigidBodyCI);
+    this->background_->setFriction(1.f);
+    this->background_->setRollingFriction(1.f);
+    
     this->dynamicsWorld_->addRigidBody(this->background_);
     this->have_background_ = true;
 }

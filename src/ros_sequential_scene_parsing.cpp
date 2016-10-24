@@ -16,6 +16,11 @@ RosSceneGraph::RosSceneGraph(const ros::NodeHandle &nh)
 	this->setNodeHandle(nh);
 }
 
+void RosSceneGraph::callGlutMain(int argc, char* argv[])
+{
+	glutmain(argc, argv,1024,600,"Scene Parsing Demo",&this->physics_engine_);
+}
+
 void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 {
 	this->nh_ = nh;
@@ -52,7 +57,7 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	std::cerr << "Debug mode: " << debug_mode << std::endl;
 	this->setDebugMode(debug_mode);
 
-	this->obj_database_.setObjectDatabaseLocation(object_folder_location);
+	this->obj_database_.setObjectFolderLocation(object_folder_location);
 
 	// sleep for caching the initial TF frames.
 	sleep(1.0);

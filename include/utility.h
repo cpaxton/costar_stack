@@ -3,6 +3,20 @@
 
 #include <Eigen/Geometry>
 #include <btBulletDynamicsCommon.h>
+#include <map>
+
+template <class container_type>
+container_type getContentOfConstantMap(const std::string &key, const std::map<std::string, container_type> &database)
+{
+	typename std::map<std::string, container_type>::const_iterator it(database.find(key));
+	return it != database.end() ? it->second : container_type();
+}
+
+template <typename container_type>
+bool keyExistInConstantMap(const std::string &key, const std::map<std::string, container_type> &database)
+{
+	return database.find(key) != database.end();
+}
 
 
 template <typename numericStandard>
