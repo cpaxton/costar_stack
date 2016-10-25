@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include "scene_physics_engine_w_rendering.h"
 #include "ros_sequential_scene_parsing.h"
 #include <boost/thread.hpp>
 
@@ -16,18 +16,21 @@ void rosMainloop(ros::Rate &r, RosSceneGraph &test)
 
 int main(int argc, char* argv[])
 {
-	ros::init(argc,argv, "scene_graph_test");
+#if 0
+    PhysicsEngineWRender test;
+    // test.initPhysics();
+    return glutmain(argc,argv, 1024,600,"Test",&test);
+#else
+    ros::init(argc,argv, "scene_graph_test");
     ros::NodeHandle nh ("~");
     ros::Rate r(10); //10Hz
-	RosSceneGraph test(nh);
-	
+    RosSceneGraph test(nh);
     // Run this on separate thread
-    // boost::thread * thr = new boost::thread(boost::bind(rosMainloop, r,boost::ref(test))); 
-    // ros::spin();
-    rosMainloop(r,test);
-    return glutmain(argc,argv, 1024,600,"Test",&test.physics_engine_);
+    boost::thread * thr = new boost::thread(boost::bind(rosMainloop, r,boost::ref(test))); 
+
     // Run the physics simulation
-    // test.callGlutMain(argc,argv);
+    test.callGlutMain(argc,argv);
+#endif
     
 	return 0;
 }

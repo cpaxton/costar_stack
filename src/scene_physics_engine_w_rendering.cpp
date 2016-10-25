@@ -257,13 +257,6 @@ void PhysicsEngineWRender::initPhysics()
 	m_dynamicsWorld = new btDiscreteDynamicsWorld(m_dispatcher, 
 		m_broadphase, m_solver, m_collisionConfiguration);
 	m_dynamicsWorld->setDebugDrawer(&gDebugDraw);
-
-	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 0);
-	btDefaultMotionState* groundMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0.0713292, 0.111188, 0.960509)));
-    btRigidBody::btRigidBodyConstructionInfo
-            groundRigidBodyCI(0, groundMotionState, groundShape, btVector3(0, 0, 0));
-    btRigidBody*  groundRigidBody = new btRigidBody(groundRigidBodyCI);
-    m_dynamicsWorld->addRigidBody(groundRigidBody);
 }
 
 void PhysicsEngineWRender::exitPhysics()
@@ -312,8 +305,7 @@ void PhysicsEngineWRender::clientMoveAndDisplay()
 		m_dynamicsWorld->debugDrawWorld();
 	}
 	// std::cerr << "Number of objects: " << this->rigid_body_.size() << std::endl;
-	std::cerr << m_cameraPosition[0] << ", " << m_cameraPosition[1] << ", " << m_cameraPosition[2] << std::endl;
-	std::cerr << m_cameraTargetPosition[0] << ", " << m_cameraTargetPosition[1] << ", " << m_cameraTargetPosition[2] << std::endl;
+	
 	renderme(); 
 	glFlush();
 	swapBuffers();

@@ -224,12 +224,18 @@ target_link_libraries(
 )
 
 target_link_libraries(
- sequential_scene_ros rosSequentialSceneParsing
+ sequential_scene_ros physicsEngine rosSequentialSceneParsing
 )
 
 #target_link_libraries(
 # bare_scene_ros rosSequentialSceneParsing
 #)
+
+add_executable(draw_bullet_hello_world tool/main_bullet_hello_world_draw.cpp tool/bullet_hello_world_draw.cpp )
+
+target_link_libraries(
+ draw_bullet_hello_world ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader OpenGLSupport 
+)
 
 
 #############

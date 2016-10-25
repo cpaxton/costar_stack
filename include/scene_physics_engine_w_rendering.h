@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <boost/thread.hpp>
 
 // Rendering platform
 #ifdef _WINDOWS
@@ -16,7 +17,6 @@
 #include "debugdrawer/GlutStuff.h"
 #include "debugdrawer/GLDebugDrawer.h"
 
-#include <boost/thread.hpp>
 #include "object_data_property.h"
 
 class PhysicsEngineWRender : public PlatformDemoApplication
@@ -28,6 +28,7 @@ public:
         exitPhysics();
     }
 
+    GLDebugDrawer gDebugDraw;
 	// use plane as background (table)
 	void addBackgroundPlane(const std::vector<btVector3> &plane_points);
 	// TODO: use mesh as background (table)
@@ -62,7 +63,6 @@ public:
         demo->initPhysics();
         return demo;
     }
-	GLDebugDrawer gDebugDraw;
 
 private:
 	void simulate();
@@ -79,8 +79,7 @@ private:
 	btDefaultCollisionConfiguration* m_collisionConfiguration;
 	btCollisionDispatcher* m_dispatcher;
 	btSequentialImpulseConstraintSolver* m_solver;
-	btDiscreteDynamicsWorld* m_dynamicsWorld;
-
+	// DO NOT DECLARE m_dynamicworld here. It will break OPENGL simulation
     btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
 	
 	btVector3 camera_coordinate_, target_coordinate_;
