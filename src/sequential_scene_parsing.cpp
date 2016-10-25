@@ -16,6 +16,7 @@ SceneGraph::SceneGraph(Image input, Image background_image)
 	this->physics_engine_ready_ = false;
 }
 
+// void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
 void SceneGraph::setPhysicsEngine(PhysicsEngineWRender* physics_engine)
 {
 	if (this->debug_messages_) std::cerr <<"Setting physics engine into the scene graph.\n";

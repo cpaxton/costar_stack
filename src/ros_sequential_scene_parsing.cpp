@@ -24,7 +24,7 @@ void RosSceneGraph::callGlutMain(int argc, char* argv[])
 void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 {
 	this->nh_ = nh;
-
+	this->has_background_ = false;
 	std::string detected_object_topic;
 	std::string background_pcl2_topic;
 	std::string object_folder_location;
@@ -68,13 +68,18 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 
 void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 {
-	std::cerr << "Background points added to the scene.\n";
-	// convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA::Ptr
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
-	pcl::fromROSMsg(pc, *cloud);
+	if (!this->has_background_)
+	{
+		std::cerr << "Background points added to the scene.\n";
+		// convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA::Ptr
+		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
+		pcl::fromROSMsg(pc, *cloud);
 
-	this->ros_scene_.addBackground(cloud);
+		this->ros_scene_.addBackground(cloud);
+		this->has_background_ = true;
+	}
 }
+	
 
 void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
 {
@@ -109,7 +114,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 
 				for (int i = 0; i < 15; i++) gl_matrix_f[i] = float(gl_matrix[i]);
 				btTransform bt; bt.setFromOpenGLMatrix(gl_matrix_f);
-				obj_tmp.assignData(object_tf_frame,bt );
+				obj_tmp.assignData(object_tf_frame, bt);
 				objects.push_back(obj_tmp);
 			}
 			else

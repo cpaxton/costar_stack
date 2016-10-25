@@ -28,6 +28,7 @@ public:
 	
 	// set physics engine environment to be used.
 	void setPhysicsEngine(PhysicsEngineWRender* physics_engine);
+	// void setPhysicsEngine(PhysicsEngine* physics_engine);
 
 	void addBackground(Image background_image);
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
@@ -38,6 +39,7 @@ private:
 	bool debug_messages_;
 	bool physics_engine_ready_;
 	PhysicsEngineWRender * physics_engine_;
+	// PhysicsEngine * physics_engine_;
 
 	// TODO
 	// void addObject();

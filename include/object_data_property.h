@@ -23,6 +23,7 @@ struct PhysicalProperties
 	btScalar mass_;
 	btScalar friction_;
 	btScalar rolling_friction_;
+	btVector3 inertia_;
 
 	PhysicalProperties() : mass_(1.0), friction_(1.0), rolling_friction_(1.0) {};
 
@@ -37,14 +38,16 @@ struct PhysicalProperties
 		this->mass_ = other.mass_;
 		this->friction_ = other.friction_;
 		this->rolling_friction_ = other.rolling_friction_;
+		this->inertia_ = other.inertia_;
 		return *this;
 	}
 
-	void extractPhysicalProperty(btScalar &mass_out, btScalar &friction_out, btScalar &rolling_friction_out)
+	void extractPhysicalProperty(btScalar &mass_out, btScalar &friction_out, btScalar &rolling_friction_out, btVector3 &inertia_out)
 	{
 		mass_out = this->mass_;
 		friction_out = this->friction_;
 		rolling_friction_out = this->rolling_friction_;
+		inertia_out = this->inertia_;
 	}
 };
 
@@ -79,12 +82,11 @@ protected:
 	objectShapePtr mesh_;
 	PhysicalProperties physical_properties_;
 
+	// object physical parameters in SI units (automatically generated)
 	// btScalar mass_;
 	// btScalar friction_;
 	// btScalar rolling_friction_;
 	
-	// object physical parameters in SI units (automatically generated)
-	btVector3 inertia_;
 
 };
 

@@ -38,6 +38,17 @@ void PhysicsEngineWRender::addBackgroundPlane(const std::vector<btVector3> &plan
 	this->background_->setRollingFriction(1.f);
 	
 	this->m_dynamicsWorld->addRigidBody(this->background_);
+
+	if (this->debug_messages_)
+	{
+		std::cerr << "Background: \n";
+		btTransform background_tf;
+		this->background_->getMotionState()->getWorldTransform(background_tf);
+		btQuaternion q = background_tf.getRotation();
+		btVector3 t = background_tf.getOrigin();
+		std::cerr << "Quaterion: " << q[0] << ", " << q[1] << ", "  << q[2] << ", "  << q[3] << std::endl;
+		std::cerr << "Translation: " << t[0]  << ", " << t[1]  << ", " << t[2] << std::endl;
+	}
 	this->have_background_ = true;
 }
 
@@ -94,6 +105,17 @@ void PhysicsEngineWRender::addObjects(const std::vector<ObjectWithID> &objects)
 		this->rigid_body_[it->getID()] = it->generateRigidBodyForWorld();
 		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's world.\n";
 		this->m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
+
+		if (this->debug_messages_)
+		{
+			std::cerr << "Object " << it->getID() <<", address: " << this->rigid_body_[it->getID()]  <<": \n";
+			btTransform object_tf;
+			this->rigid_body_[it->getID()]->getMotionState()->getWorldTransform(object_tf);
+			btQuaternion q = object_tf.getRotation();
+			btVector3 t = object_tf.getOrigin();
+			std::cerr << "Quaterion: " << q[0] << ", " << q[1] << ", "  << q[2] << ", "  << q[3] << std::endl;
+			std::cerr << "Translation: " << t[0]  << ", " << t[1]  << ", " << t[2] << std::endl;
+		}
 	}
 	if (this->debug_messages_) std::cerr << "Scene objects added to the physics engine.\n";
 }
@@ -130,8 +152,18 @@ std::map<std::string, btTransform>  PhysicsEngineWRender::getUpdatedObjectPose()
 		it != this->rigid_body_.end(); ++it)
 	{
 		it->second->getMotionState()->getWorldTransform(result_pose[it->first]);
+
+		if (this->debug_messages_)
+		{
+			std::cerr << "Object " << it->first << std::endl;
+			btQuaternion q = result_pose[it->first].getRotation();
+			btVector3 t = result_pose[it->first].getOrigin();
+			std::cerr << "Quaterion: " << q[0] << ", " << q[1] << ", "  << q[2] << ", "  << q[3] << std::endl;
+			std::cerr << "Translation: " << t[0]  << ", " << t[1]  << ", " << t[2] << std::endl;
+		}
 	}
 
+	if (this->debug_messages_) std::cerr << "Done scene objects poses.\n";
 	return result_pose;
 }
 

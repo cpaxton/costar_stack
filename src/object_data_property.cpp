@@ -4,7 +4,7 @@ void Object::setPhysicalProperties(const objectShapePtr mesh, const PhysicalProp
 {
 	this->mesh_ = mesh;
 	this->physical_properties_ = physical_properties;
-	this->mesh_->calculateLocalInertia(this->physical_properties_.mass_, this->inertia_);
+	this->mesh_->calculateLocalInertia(this->physical_properties_.mass_, this->physical_properties_.inertia_);
 
 	this->physical_data_ready_ = true;
 }
@@ -20,8 +20,9 @@ btRigidBody* Object::generateRigidBody(const btTransform &transform) const
 {
 	btDefaultMotionState* object_motion_state = 
 		new btDefaultMotionState(transform);
+
 	btRigidBody::btRigidBodyConstructionInfo object_RigidBodyCI(this->physical_properties_.mass_, 
-		object_motion_state, this->mesh_, this->inertia_);
+		object_motion_state, this->mesh_, this->physical_properties_.inertia_);
 
 	btRigidBody* object_RigidBody = new btRigidBody(object_RigidBodyCI);
 	object_RigidBody->setFriction(this->physical_properties_.friction_);
