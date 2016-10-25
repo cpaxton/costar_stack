@@ -212,7 +212,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- physicsEngine objectDataProperty OpenGLSupport ${BULLET_LIBRARIES}
+ physicsEngine objectDataProperty OpenGLSupport ${BULLET_LIBRARIES} ${Boost_LIBRARIES}
 )
 
 target_link_libraries(

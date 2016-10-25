@@ -7,6 +7,7 @@ RosSceneGraph::RosSceneGraph()
 	this->class_ready_ = false;
 	this->physics_gravity_direction_set_ = false;
 	this->has_tf_ = false;
+	this->exit_ = false;
 }
 
 RosSceneGraph::RosSceneGraph(const ros::NodeHandle &nh)
@@ -14,10 +15,12 @@ RosSceneGraph::RosSceneGraph(const ros::NodeHandle &nh)
 	this->ros_scene_.setPhysicsEngine(&this->physics_engine_);
 	this->physics_gravity_direction_set_ = false;
 	this->setNodeHandle(nh);
+	this->exit_ = false;
 }
 
 void RosSceneGraph::callGlutMain(int argc, char* argv[])
 {
+	this->physics_engine_.renderingLaunched();
 	glutmain(argc, argv,1024,600,"Scene Parsing Demo",&this->physics_engine_);
 }
 
@@ -78,6 +81,7 @@ void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 		this->ros_scene_.addBackground(cloud);
 		this->has_background_ = true;
 	}
+	this->exit_ = true;
 }
 	
 
@@ -168,6 +172,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	this->has_tf_ = true;
 	this->publishTf();
 	std::cerr << "Done. Waiting for new detected object message...\n";
+	this->exit_ = true;
 }
 
 void RosSceneGraph::publishTf()

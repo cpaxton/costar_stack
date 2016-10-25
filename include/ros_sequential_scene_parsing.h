@@ -30,6 +30,8 @@ public:
 
 	void setDebugMode(bool debug);
 	void callGlutMain(int argc, char* argv[]);
+	PhysicsEngineWRender physics_engine_;
+	bool exit_;
 	
 private:
 	// void initialize();
@@ -46,13 +48,13 @@ private:
 	tf::TransformBroadcaster tf_broadcaster_;
 	SceneGraph ros_scene_;
 	// PhysicsEngine physics_engine_;
-	PhysicsEngineWRender physics_engine_;
 	std::map<std::string, ObjectParameter> object_transforms_;
 	std::map<std::string, tf::Transform> object_transforms_tf_;
 	std::string parent_frame_;
 	std::string tf_z_is_inverse_gravity_direction_;
 	std::string tf_publisher_initial;
 	ObjectDatabase obj_database_;
+	
 };
 
 

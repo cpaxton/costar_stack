@@ -13,6 +13,10 @@
 #define PlatformDemoApplication GlutDemoApplication
 #endif
 
+#include "debugdrawer/GlutStuff.h"
+#include "debugdrawer/GLDebugDrawer.h"
+
+#include <boost/thread.hpp>
 #include "object_data_property.h"
 
 class PhysicsEngineWRender : public PlatformDemoApplication
@@ -37,6 +41,7 @@ public:
 	void resetObjects();
 
 	void setDebugMode(bool debug);
+	void renderingLaunched();
 
 // Additional functions used for rendering:
     void initPhysics();
@@ -57,12 +62,14 @@ public:
         demo->initPhysics();
         return demo;
     }
+	GLDebugDrawer gDebugDraw;
 
 private:
 	void simulate();
 
 	bool debug_messages_;
 	bool have_background_;
+	bool rendering_launched_;
 	// rigid body data from ObjectWithID input with ID information
 	std::map<std::string, btRigidBody*> rigid_body_;
 	btRigidBody* background_;
@@ -74,6 +81,10 @@ private:
 	btSequentialImpulseConstraintSolver* m_solver;
 	btDiscreteDynamicsWorld* m_dynamicsWorld;
 
+    btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
+	
+	btVector3 camera_coordinate_, target_coordinate_;
+	boost::mutex mtx_;
 };
 
 #endif
