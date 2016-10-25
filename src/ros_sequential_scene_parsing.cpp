@@ -7,7 +7,6 @@ RosSceneGraph::RosSceneGraph()
 	this->class_ready_ = false;
 	this->physics_gravity_direction_set_ = false;
 	this->has_tf_ = false;
-	this->exit_ = false;
 }
 
 RosSceneGraph::RosSceneGraph(const ros::NodeHandle &nh)
@@ -15,7 +14,6 @@ RosSceneGraph::RosSceneGraph(const ros::NodeHandle &nh)
 	this->ros_scene_.setPhysicsEngine(&this->physics_engine_);
 	this->physics_gravity_direction_set_ = false;
 	this->setNodeHandle(nh);
-	this->exit_ = false;
 }
 
 void RosSceneGraph::callGlutMain(int argc, char* argv[])
@@ -54,13 +52,12 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 		else
 			std::cerr << "Failed to load the background points\n"; 
 	}
-	
-
 
 	std::cerr << "Debug mode: " << debug_mode << std::endl;
 	this->setDebugMode(debug_mode);
 
 	this->obj_database_.setObjectFolderLocation(object_folder_location);
+	if (this->fillObjectPropertyDatabase()) this->obj_database_.loadDatabase(this->physical_properties_database_);
 
 	// sleep for caching the initial TF frames.
 	sleep(1.0);
@@ -81,7 +78,6 @@ void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 		this->ros_scene_.addBackground(cloud);
 		this->has_background_ = true;
 	}
-	this->exit_ = true;
 }
 	
 
@@ -172,7 +168,6 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	this->has_tf_ = true;
 	this->publishTf();
 	std::cerr << "Done. Waiting for new detected object message...\n";
-	this->exit_ = true;
 }
 
 void RosSceneGraph::publishTf()
@@ -192,4 +187,23 @@ void RosSceneGraph::setDebugMode(bool debug)
 	this->ros_scene_.setDebugMode(debug);
 	this->physics_engine_.setDebugMode(debug);
 	this->obj_database_.setDebugMode(debug);
+}
+
+bool RosSceneGraph::fillObjectPropertyDatabase()
+{
+	if (! this->nh_.hasParam("object_property")) return false;
+	XmlRpc::XmlRpcValue object_params;
+	// std::map< std::string, std::string > object_params;
+	this->nh_.getParam("object_property", object_params);
+	for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = object_params.begin(); it != object_params.end(); ++it)
+	{
+		std::string object_name = it->first;
+		std::cerr << "Found object property: " << object_name << std::endl;
+		double mass, friction, rolling_friction;
+		mass = object_params[it->first]["mass"];
+		friction = object_params[it->first]["mass"];
+		rolling_friction = object_params[it->first]["mass"];
+		this->physical_properties_database_[object_name] = PhysicalProperties(mass,friction,rolling_friction);
+	}
+	return true;
 }

@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <boost/thread.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 // Rendering platform
 #ifdef _WINDOWS
@@ -30,7 +31,8 @@ public:
 
     GLDebugDrawer gDebugDraw;
 	// use plane as background (table)
-	void addBackgroundPlane(const std::vector<btVector3> &plane_points);
+	void addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center);
+	void addBackgroundConvexHull(const std::vector<btVector3> &plane_points);
 	// TODO: use mesh as background (table)
 	void addBackgroundMesh();
 
@@ -70,6 +72,8 @@ private:
 	bool debug_messages_;
 	bool have_background_;
 	bool rendering_launched_;
+	bool in_simulation_;
+	unsigned int counter_;
 	// rigid body data from ObjectWithID input with ID information
 	std::map<std::string, btRigidBody*> rigid_body_;
 	btRigidBody* background_;

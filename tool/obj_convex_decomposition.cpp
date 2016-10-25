@@ -17,7 +17,7 @@ ObjConvexDecomposition::ObjConvexDecomposition(size_t n_clusters, double concavi
 	this->vrml_flag_ = false;
 	this->convex_hull_enable_polyhedral_contact_clipping_ = false;
 	this->reduce_hull_vertices_using_BtShapeHull_ = false;
-	this->convex_hull_collision_margin_ = 0.01f;
+	this->convex_hull_collision_margin_ = 0.0001f; // 0.1 mm
 }
 
 void ObjConvexDecomposition::setOutputFilename(std::string filename)

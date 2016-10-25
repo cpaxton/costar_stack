@@ -8,8 +8,29 @@ PhysicsEngineWRender::PhysicsEngineWRender() : have_background_(false), debug_me
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
 	this->initPhysics();
 }
+void PhysicsEngineWRender::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center)
+{
+	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
+	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant);
+	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
+    
+    // unmovable ground object
+    btRigidBody::btRigidBodyConstructionInfo
+            background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
+    
+    this->background_ = new btRigidBody(background_RigidBodyCI);
+    m_dynamicsWorld->addRigidBody(this->background_);
+	this->background_->setFriction(10.f);
+	this->background_->setRollingFriction(10.f);
+	this->have_background_ = true;
 
-void PhysicsEngineWRender::addBackgroundPlane(const std::vector<btVector3> &plane_points)
+	this->camera_coordinate_ = btVector3(0,0,0);
+	this->target_coordinate_ = plane_center;
+	this->setCameraPositionAndTarget(camera_coordinate_,target_coordinate_);
+	this->setCameraClippingPlaneNearFar(0.005f);
+}
+
+void PhysicsEngineWRender::addBackgroundConvexHull(const std::vector<btVector3> &plane_points)
 {
 	// mtx_.lock();
 
@@ -24,6 +45,7 @@ void PhysicsEngineWRender::addBackgroundPlane(const std::vector<btVector3> &plan
 		background_convex.addPoint(*it, true);
 		plane_center+= *it;
 	}
+	background_convex.setMargin(0.0001); // 0.1 mm
 
 	plane_center /= plane_points.size();
 	// since everything is in reference to camera coordinate, camera coordinate is 0,0,0
@@ -40,8 +62,8 @@ void PhysicsEngineWRender::addBackgroundPlane(const std::vector<btVector3> &plan
 			background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
 	
 	this->background_ = new btRigidBody(background_RigidBodyCI);
-	this->background_->setFriction(1.f);
-	this->background_->setRollingFriction(1.f);
+	this->background_->setFriction(10.f);
+	this->background_->setRollingFriction(10.f);
 	
 	m_dynamicsWorld->addRigidBody(this->background_);
 
@@ -58,16 +80,6 @@ void PhysicsEngineWRender::addBackgroundPlane(const std::vector<btVector3> &plan
 	this->have_background_ = true;
 
 	// mtx_.unlock();
-	btCollisionShape* fallShape = new btSphereShape(0.05);
-	btDefaultMotionState* fallMotionState =
-            new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), this->target_coordinate_));
-    btScalar mass = 0;
-    btVector3 fallInertia(0, 0, 0);
-    fallShape->calculateLocalInertia(mass, fallInertia);
-    btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState, fallShape, fallInertia);
-    btRigidBody* fallRigidBody = new btRigidBody(fallRigidBodyCI);
-    m_dynamicsWorld->addRigidBody(fallRigidBody);
-    m_collisionShapes.push_back(fallShape);
     m_collisionShapes.push_back(background);
 }
 
@@ -158,31 +170,48 @@ void PhysicsEngineWRender::simulate()
 		return;
 	}
 
-	// TODO: early termination. Check if all object has no changes anymore.
-	bool steady_state = false;
-
-	for (int i = 0; i < 300; i++)
+	if (this->rendering_launched_)
 	{
-		// if (this->rendering_launched_)
-		// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-		///step the simulation
-		if (m_dynamicsWorld)
+		this->in_simulation_ = true;
+		this->counter_ = 0;
+		while (this->counter_ < 600 )
 		{
-			m_dynamicsWorld->stepSimulation(1 / 60.f, 10);
-			//optional but useful: debug drawing
-			m_dynamicsWorld->debugDrawWorld();
-
-			if (steady_state) break;
+			// Do nothing;
+			boost::this_thread::sleep(boost::posix_time::milliseconds(10));
 		}
-		
-		// if (this->rendering_launched_){
-		// 	renderme(); 
-		// 	glFlush();
-		// 	swapBuffers();
-		// }
+
+		this->in_simulation_ = false;
 	}
-	if (this->debug_messages_) std::cerr << "Simulation done.\n";
+	else
+	{
+		for (int i = 0; i < 600; i++)
+			m_dynamicsWorld->stepSimulation(1 / 120.f, 10);
+	}
+	// TODO: early termination. Check if all object has no changes anymore.
+	// bool steady_state = false;
+
+	// for (int i = 0; i < 300; i++)
+	// {
+	// 	// if (this->rendering_launched_)
+	// 	// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	// 	///step the simulation
+	// 	if (m_dynamicsWorld)
+	// 	{
+	// 		m_dynamicsWorld->stepSimulation(1 / 60.f, 10);
+	// 		//optional but useful: debug drawing
+	// 		m_dynamicsWorld->debugDrawWorld();
+
+	// 		if (steady_state) break;
+	// 	}
+		
+	// 	// if (this->rendering_launched_){
+	// 	// 	renderme(); 
+	// 	// 	glFlush();
+	// 	// 	swapBuffers();
+	// 	// }
+	// }
+	// if (this->debug_messages_) std::cerr << "Simulation done.\n";
 	// mtx_.unlock();
 }
 
@@ -190,7 +219,7 @@ std::map<std::string, btTransform>  PhysicsEngineWRender::getUpdatedObjectPose()
 {
 	if (this->debug_messages_) std::cerr << "Getting updated scene objects poses.\n";
 	// Run simulation to get an update on object poses
-	// this->simulate();
+	this->simulate();
 
 	// mtx_.lock();
 	std::map<std::string, btTransform> result_pose;
@@ -300,11 +329,14 @@ void PhysicsEngineWRender::clientMoveAndDisplay()
 	///step the simulation
 	if (m_dynamicsWorld)
 	{
-		m_dynamicsWorld->stepSimulation(ms / 1000000.f);
+		if (this->in_simulation_ && this->counter_ < 600){
+			// m_dynamicsWorld->stepSimulation(ms / 1000000.f);
+			m_dynamicsWorld->stepSimulation(1 / 120.f, 10);
+			counter_++;
+		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
 	}
-	// std::cerr << "Number of objects: " << this->rigid_body_.size() << std::endl;
 	
 	renderme(); 
 	glFlush();
@@ -321,7 +353,6 @@ void PhysicsEngineWRender::displayCallback(void) {
 	//optional but useful: debug drawing to detect problems
 	if (m_dynamicsWorld)
 		m_dynamicsWorld->debugDrawWorld();
-
 	glFlush();
 	swapBuffers();
 

@@ -10,7 +10,6 @@ void rosMainloop(ros::Rate &r, RosSceneGraph &test)
         test.publishTf();
         r.sleep();
         ros::spinOnce();
-        if (test.exit_) break;
     }
 }
 
@@ -27,7 +26,7 @@ int main(int argc, char* argv[])
     RosSceneGraph test(nh);
     // Run this on separate thread
     boost::thread * thr = new boost::thread(boost::bind(rosMainloop, r,boost::ref(test))); 
-
+    // ros::spin();
     // Run the physics simulation
     test.callGlutMain(argc,argv);
 #endif

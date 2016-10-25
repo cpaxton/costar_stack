@@ -30,8 +30,9 @@ public:
 
 	void setDebugMode(bool debug);
 	void callGlutMain(int argc, char* argv[]);
+
+	bool fillObjectPropertyDatabase();
 	PhysicsEngineWRender physics_engine_;
-	bool exit_;
 	
 private:
 	// void initialize();
@@ -54,7 +55,7 @@ private:
 	std::string tf_z_is_inverse_gravity_direction_;
 	std::string tf_publisher_initial;
 	ObjectDatabase obj_database_;
-	
+	std::map<std::string, PhysicalProperties> physical_properties_database_;
 };
 
 
