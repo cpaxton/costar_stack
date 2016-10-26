@@ -3,7 +3,7 @@
 
 #include "scene_physics_engine_w_rendering.h"
 
-PhysicsEngineWRender::PhysicsEngineWRender() : have_background_(false), debug_messages_(false), rendering_launched_(false)
+PhysicsEngineWRender::PhysicsEngineWRender() : have_background_(false), debug_messages_(false), rendering_launched_(false), use_background_normal_as_gravity_(false)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
 	this->initPhysics();
@@ -11,7 +11,7 @@ PhysicsEngineWRender::PhysicsEngineWRender() : have_background_(false), debug_me
 void PhysicsEngineWRender::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center)
 {
 	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
-	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant);
+	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant * SCALING);
 	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     
     // unmovable ground object
@@ -20,14 +20,17 @@ void PhysicsEngineWRender::addBackgroundPlane(btVector3 plane_normal, btScalar p
     
     this->background_ = new btRigidBody(background_RigidBodyCI);
     m_dynamicsWorld->addRigidBody(this->background_);
-	this->background_->setFriction(10.f);
-	this->background_->setRollingFriction(10.f);
+	this->background_->setFriction(1.f);
+	this->background_->setRollingFriction(1.f);
 	this->have_background_ = true;
 
 	this->camera_coordinate_ = btVector3(0,0,0);
-	this->target_coordinate_ = plane_center;
+	this->target_coordinate_ = plane_center * SCALING;
 	this->setCameraPositionAndTarget(camera_coordinate_,target_coordinate_);
 	this->setCameraClippingPlaneNearFar(0.005f);
+	this->background_surface_normal_ = plane_normal;
+	if (this->use_background_normal_as_gravity_)
+		this->setGravityVectorDirection(-background_surface_normal_);
 }
 
 void PhysicsEngineWRender::addBackgroundConvexHull(const std::vector<btVector3> &plane_points)
@@ -42,8 +45,9 @@ void PhysicsEngineWRender::addBackgroundConvexHull(const std::vector<btVector3> 
 	for (std::vector<btVector3>::const_iterator it = plane_points.begin(); it != plane_points.end(); ++it)
 	{
 		// add a point to the convex hull then recalculate the AABB
-		background_convex.addPoint(*it, true);
-		plane_center+= *it;
+		btVector3 rescaled_point_coordinate = *it * SCALING;
+		background_convex.addPoint(rescaled_point_coordinate, true);
+		plane_center+= rescaled_point_coordinate;
 	}
 	background_convex.setMargin(0.0001); // 0.1 mm
 
@@ -62,8 +66,8 @@ void PhysicsEngineWRender::addBackgroundConvexHull(const std::vector<btVector3> 
 			background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
 	
 	this->background_ = new btRigidBody(background_RigidBodyCI);
-	this->background_->setFriction(10.f);
-	this->background_->setRollingFriction(10.f);
+	this->background_->setFriction(1.f);
+	this->background_->setRollingFriction(1.f);
 	
 	m_dynamicsWorld->addRigidBody(this->background_);
 
@@ -118,13 +122,20 @@ void PhysicsEngineWRender::setGravityVectorDirection(const btVector3 &gravity)
 {
 	// mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Setting physics engine gravity vector.\n";
-	btVector3 gravity_corrected_magnitude = gravity / gravity.norm() * 9.807;
+	btVector3 gravity_corrected_magnitude = gravity / gravity.norm() * 9.807 * SCALING;
 	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_corrected_magnitude[0] << ", "
 		<< gravity_corrected_magnitude[1] << ", " 
 		<< gravity_corrected_magnitude[2] << std::endl;
 	m_dynamicsWorld->setGravity(gravity_corrected_magnitude);
 
 	// mtx_.unlock();
+}
+
+void PhysicsEngineWRender::setGravityFromBackgroundNormal(const bool &input)
+{
+	this->use_background_normal_as_gravity_ = input;
+	if (this->use_background_normal_as_gravity_ && this->have_background_)
+		this->setGravityVectorDirection(-background_surface_normal_);
 }
 
 void PhysicsEngineWRender::addObjects(const std::vector<ObjectWithID> &objects)
@@ -174,21 +185,21 @@ void PhysicsEngineWRender::simulate()
 	{
 		this->in_simulation_ = true;
 		this->counter_ = 0;
-		while (this->counter_ < 600 )
+		while (this->in_simulation_ && this->counter_ < 600 )
 		{
 			// Do nothing;
 			boost::this_thread::sleep(boost::posix_time::milliseconds(10));
 		}
-
 		this->in_simulation_ = false;
 	}
 	else
 	{
 		for (int i = 0; i < 600; i++)
+		{
 			m_dynamicsWorld->stepSimulation(1 / 120.f, 10);
+			if (this->checkSteadyState()) break;
+		}
 	}
-	// TODO: early termination. Check if all object has no changes anymore.
-	// bool steady_state = false;
 
 	// for (int i = 0; i < 300; i++)
 	// {
@@ -213,6 +224,21 @@ void PhysicsEngineWRender::simulate()
 	// }
 	// if (this->debug_messages_) std::cerr << "Simulation done.\n";
 	// mtx_.unlock();
+}
+bool PhysicsEngineWRender::checkSteadyState()
+{
+	bool steady_state = true;
+	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
+	{
+		// Check if any object is still moving
+		if (it->second->getActivationState() == 1)
+		{
+			steady_state = false;
+			break;
+		}
+	}
+	return steady_state;
 }
 
 std::map<std::string, btTransform>  PhysicsEngineWRender::getUpdatedObjectPose()
@@ -332,7 +358,8 @@ void PhysicsEngineWRender::clientMoveAndDisplay()
 		if (this->in_simulation_ && this->counter_ < 600){
 			// m_dynamicsWorld->stepSimulation(ms / 1000000.f);
 			m_dynamicsWorld->stepSimulation(1 / 120.f, 10);
-			counter_++;
+			// counter_++;
+			if (this->checkSteadyState()) this->in_simulation_ = false;
 		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();

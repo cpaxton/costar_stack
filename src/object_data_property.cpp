@@ -27,7 +27,7 @@ btRigidBody* Object::generateRigidBody(const btTransform &transform) const
 	btRigidBody* object_RigidBody = new btRigidBody(object_RigidBodyCI);
 	object_RigidBody->setFriction(this->physical_properties_.friction_);
 	object_RigidBody->setRollingFriction(this->physical_properties_.rolling_friction_);
-	
+	object_RigidBody->setDamping(0.5,0.5);
 	return object_RigidBody;
 }
 
@@ -107,6 +107,7 @@ bool ObjectDatabase::addObjectToDatabase(const std::string &object_name)
 	if (this->debug_messages_) std::cerr << "Adding object: " << object_name << " to the database.\n";
 	std::string object_file_location = this->file_location_ + "/" + object_name + ".bcs";
 	btCollisionShape* simplified_mesh = load_bcs(object_file_location.c_str(), false);
+	simplified_mesh->setLocalScaling(btVector3(SCALING,SCALING,SCALING));
 	if (simplified_mesh != NULL)
 	{
 		Object new_object;

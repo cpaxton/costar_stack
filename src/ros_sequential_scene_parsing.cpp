@@ -1,5 +1,6 @@
 #include <pcl/io/pcd_io.h>
 #include "ros_sequential_scene_parsing.h"
+#include "utility_ros.h"
 
 RosSceneGraph::RosSceneGraph()
 {
@@ -37,6 +38,7 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("background_pcl2_topic", background_pcl2_topic,std::string("/background_points"));
 	nh.param("object_folder_location",object_folder_location,std::string(""));
 	nh.param("TF_z_inv_gravity_dir",this->tf_z_is_inverse_gravity_direction_,std::string(""));
+	nh.param("bg_normal_as_gravity",background_normal_as_gravity_,false);
 
 	nh.param("tf_publisher_initial",this->tf_publisher_initial,std::string(""));
 	nh.param("debug_mode",debug_mode,false);
@@ -108,12 +110,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 				this->obj_database_.addObjectToDatabase(object_class))
 			{
 				obj_tmp.assignPhysicalPropertyFromObject(this->obj_database_.getObjectProperty(object_class));
-				double gl_matrix[15];
-				float gl_matrix_f[15];
-				transform.getOpenGLMatrix(gl_matrix);
-
-				for (int i = 0; i < 15; i++) gl_matrix_f[i] = float(gl_matrix[i]);
-				btTransform bt; bt.setFromOpenGLMatrix(gl_matrix_f);
+				btTransform bt = convertRosTFToBulletTF(transform);
 				obj_tmp.assignData(object_tf_frame, bt);
 				objects.push_back(obj_tmp);
 			}
@@ -127,22 +124,27 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	if (! this->physics_gravity_direction_set_)
 	{
 		std::cerr << "Gravity direction of the physics_engine is not set yet.\n";
-		if (this->listener_.waitForTransform(this->tf_z_is_inverse_gravity_direction_,this->parent_frame_,now,ros::Duration(1.0)))
+		if (this->background_normal_as_gravity_)
+		{
+			std::cerr << "Setting gravity direction of the physics_engine.\n";
+			this->physics_engine_.setGravityFromBackgroundNormal(true);
+			this->physics_gravity_direction_set_ = true;
+		}
+		else if (this->listener_.waitForTransform(this->tf_z_is_inverse_gravity_direction_,this->parent_frame_,now,ros::Duration(1.0)))
 		{
 			std::cerr << "Setting gravity direction of the physics_engine.\n";
 			tf::StampedTransform transform;
 			this->listener_.lookupTransform(this->parent_frame_,this->tf_z_is_inverse_gravity_direction_,ros::Time(0),transform);
-			double gl_matrix[15];
-			float gl_matrix_f[15];
-			transform.getOpenGLMatrix(gl_matrix);
-
-			for (int i = 0; i < 15; i++) gl_matrix_f[i] = float(gl_matrix[i]);
-			btTransform bt; bt.setFromOpenGLMatrix(gl_matrix_f);
+			btTransform bt = convertRosTFToBulletTF(transform);
 			this->physics_engine_.setGravityVectorDirectionFromTfYUp(bt);
 			this->physics_gravity_direction_set_ = true;
 		}
+		else
+		{
+			std::cerr << "Gravity direction is not set yet. No update will be done to the object TF\n";
+			return;
+		}
 		// Do nothing if gravity has not been set and the direction cannot be found
-		else return;
 	}
 	this->ros_scene_.addNewObjectTransforms(objects);
 	std::cerr << "Getting corrected object transform...\n";
@@ -155,11 +157,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	{
 		std::stringstream ss;
 		tf::Transform tf_transform;
-		double gl_matrix[15];
-		float gl_matrix_f[15];
-		it->second.getOpenGLMatrix(gl_matrix_f);
-		for (int i = 0; i < 15; i++) gl_matrix[i] = double(gl_matrix_f[i]);
-		tf_transform.setFromOpenGLMatrix(gl_matrix);
+		tf_transform = convertBulletTFToRosTF(it->second);
 		ss << this->tf_publisher_initial << "/" << it -> first;
 		object_transforms_tf_[ss.str()] = tf_transform;
 	}

@@ -39,6 +39,7 @@ public:
 	// uses a frame that has Y direction up as a guide for gravity direction
 	void setGravityVectorDirectionFromTfYUp(const btTransform &transform_y_is_inverse_gravity_direction);
 	void setGravityVectorDirection(const btVector3 &gravity);
+	void setGravityFromBackgroundNormal(const bool &input);
 	void addObjects(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, btTransform>  getUpdatedObjectPose();
 	void resetObjects();
@@ -68,15 +69,18 @@ public:
 
 private:
 	void simulate();
+	bool checkSteadyState();
 
 	bool debug_messages_;
 	bool have_background_;
+	bool use_background_normal_as_gravity_;
 	bool rendering_launched_;
 	bool in_simulation_;
 	unsigned int counter_;
 	// rigid body data from ObjectWithID input with ID information
 	std::map<std::string, btRigidBody*> rigid_body_;
 	btRigidBody* background_;
+	btVector3 background_surface_normal_;
 
 	// physics engine environment parameters
 	btBroadphaseInterface* m_broadphase;

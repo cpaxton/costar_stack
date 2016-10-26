@@ -15,6 +15,10 @@
 // Contains variety of tools for handling conversion and getting content from one datatype to another
 #include "utility.h"
 
+// World scaling for better precision, since we are dealing with small objects (centimeter sized instead of meter sized object)
+// Will be applied to collision shapes, gravity, and transforms (in physics engine world. In real world, it will be rescaled again appropriately)
+#define SCALING 100
+
 typedef btCollisionShape* objectShapePtr;
 typedef btCollisionShape objectShape;
 
@@ -24,7 +28,6 @@ struct PhysicalProperties
 	btScalar friction_;
 	btScalar rolling_friction_;
 	btVector3 inertia_;
-
 	PhysicalProperties() : mass_(1.0), friction_(1.0), rolling_friction_(1.0) {};
 
 	// template constructor

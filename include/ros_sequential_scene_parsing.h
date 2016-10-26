@@ -39,6 +39,7 @@ private:
 	bool debug_messages_;
 	bool class_ready_;
 	bool physics_gravity_direction_set_;
+	bool background_normal_as_gravity_;
 	bool has_tf_;
 	bool has_background_;
 	ros::Subscriber detected_object_sub;

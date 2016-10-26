@@ -110,7 +110,7 @@ void    helloBulletDemo::initPhysics()
 
     m_dynamicsWorld->setDebugDrawer(&gDebugDraw);
 
-    btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 0);
+    btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 0.0);
     m_collisionShapes.push_back(groundShape);
     btDefaultMotionState* groundMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     btRigidBody::btRigidBodyConstructionInfo
