@@ -132,10 +132,10 @@ class CostarArm(object):
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
         self.planner = SimplePlanning(self.robot,base_link,end_link,
-        	self.planning_group,
-        	kdl_kin=self.kdl_kin,
-        	joint_names=self.joint_names,
-        	closed_form_IK_solver=closed_form_IK_solver)
+            self.planning_group,
+            kdl_kin=self.kdl_kin,
+            joint_names=self.joint_names,
+            closed_form_IK_solver=closed_form_IK_solver)
 
     '''
     js_cb
@@ -243,8 +243,8 @@ class CostarArm(object):
 
         if not poses is None:
             msg = 'FAILURE - no valid objects found!'
-            qs = []
             dists = []
+            Ts = []
             for (pose,name) in zip(poses,names):
 
                 # figure out which tf frame we care about
@@ -262,52 +262,27 @@ class CostarArm(object):
                 T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
                 T = T_base_world.Inverse()*pm.fromMsg(pose)
 
-                pt = JointTrajectoryPoint()
+                Ts.append(T)
 
-                #q = self.planner.ik(T, self.q0)
-                traj = self.planner.getCartesianMove(T,
-                        self.q0,
-                        self.base_steps,
-                        self.steps_per_meter)
+                # TODO(cpaxton) update this to include rotation
+                dists.append((T.p - T_fwd.p).Norm())
 
-                #if len(traj.points) == 0:
-                #    print T
-                #    (code,res) = self.planner.getPlan(pm.toMsg(T),self.q0) # find a non-local movement
-                #    traj = res.planned_trajectory.joint_trajectory
-
-                print "Considering object with name = %s"%tf_frame
-
-                if len(traj.points) > 0:
-                    qs.append(traj)
-
-                    q_dist = np.sqrt((traj.points[-1].positions - self.q0)).dot(np.array(range(len(self.q0),0,-1))).sum()
-
-                    if q_dist > 0.6 * np.pi:
-                        rospy.logwarn("Joint rotation larger than pi")
-                    else:
-                        dists.append((T.p - T_fwd.p).Norm())
-
-                    #metric = (T.p - T_fwd.p).Norm() + np.array([T.M.])
-                    #dists.append((traj.points[-1].positions - self.q0).sum())
-                    # metric = 5*(T.p - T_fwd.p).Norm() + np.sqrt((traj.points[-1].positions - self.q0)).sum();
-                    #print "GRASP METRIC: " + str(metric)
-                    #dists.append(metric)
-                else:
-                    rospy.logwarn('SIMPLE DRIVER -- IK failed for %s'%name)
-
-            if len(qs) == 0:
+            if len(Ts) == 0:
                 msg = 'FAILURE - no joint configurations found!'
             else:
-                possible_goals = zip(dists,qs)
+
+                possible_goals = zip(dists,Ts)
                 possible_goals.sort()
-
-                #print "POSSIBLE GOALS"
-                #print possible_goals
                 
-                (dist,traj) = possible_goals[0]
-                rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-                msg = self.send_trajectory(traj,acceleration,velocity,cartesian=False,linear=True)
+                for (dist,traj) in possible_goals:
+	                rospy.logwarn("Trying to move to frame at distance %f"%(dist))
+
+	                # plan to T
+	                (code,res) = self.planner.getPlan(pm.toMsg(T),self.q0)
+	                msg = self.send_and_publish_planning_result(res,acceleration,velocity)
+	                if msg[0:6] == 'SUCCESS':
+	                    break
 
             return msg
 
@@ -319,6 +294,24 @@ class CostarArm(object):
         self.at_goal = False
         self.near_goal = False
         self.goal = pm.fromMatrix(self.kdl_kin.forward(q))
+
+    def send_and_publish_planning_result(self,res,acceleration,velocity):
+        if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
+
+            disp = DisplayTrajectory()
+            disp.trajectory.append(res.planned_trajectory)
+            disp.trajectory_start = res.trajectory_start
+            self.display_pub.publish(disp)
+
+            traj = res.planned_trajectory.joint_trajectory
+            print res.planned_trajectory.joint_trajectory
+            
+            return self.send_trajectory(traj,acceleration,velocity,cartesian=False)
+
+        else:
+            rospy.logerr('DRIVER -- PLANNING failed')
+            return 'FAILURE - not in servo mode'
+
 
     '''
     Definitely do a planned motion.
@@ -334,32 +327,10 @@ class CostarArm(object):
 
             # Send command
             pt = JointTrajectoryPoint()
-            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
-            if len(traj.points) > 0:
-                # frames = list()
-                # for i in xrange(len(traj.points)):
-                #     frames.append(traj.points[i].positions)
-                (code,res) = self.planner.getPlan(req.target,traj.points[-1].positions)
-            else:
-                (code,res) = self.planner.getPlan(req.target,self.q0)
+            (code,res) = self.planner.getPlan(req.target,self.q0)
 
             print "DONE PLANNING: " + str((code, res))
-
-            if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
-
-                disp = DisplayTrajectory()
-                disp.trajectory.append(res.planned_trajectory)
-                disp.trajectory_start = res.trajectory_start
-                self.display_pub.publish(disp)
-
-                traj = res.planned_trajectory.joint_trajectory
-                print res.planned_trajectory.joint_trajectory
-                
-                return self.send_trajectory(traj,acceleration,velocity,cartesian=False)
-
-            else:
-                rospy.logerr('DRIVER -- PLANNING failed')
-                return 'FAILURE - not in servo mode'
+            return self.send_and_publish_planning_result(res,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
             return 'FAILURE - not in servo mode'
