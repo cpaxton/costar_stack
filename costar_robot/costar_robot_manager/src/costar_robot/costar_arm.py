@@ -131,7 +131,11 @@ class CostarArm(object):
         self.ee_pose = None
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
-        self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group,kdl_kin=self.kdl_kin,joint_names=self.joint_names,closed_form_IK_solver=closed_form_IK_solver)
+        self.planner = SimplePlanning(self.robot,base_link,end_link,
+        	self.planning_group,
+        	kdl_kin=self.kdl_kin,
+        	joint_names=self.joint_names,
+        	closed_form_IK_solver=closed_form_IK_solver)
 
     '''
     js_cb
@@ -339,10 +343,8 @@ class CostarArm(object):
             else:
                 (code,res) = self.planner.getPlan(req.target,self.q0)
 
-            #pt.positions = q
-            if code > 0:
-              self.at_goal = True
-              return 'SUCCESS - at goal'
+            print "DONE PLANNING: " + str((code, res))
+
             if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
 
                 disp = DisplayTrajectory()
@@ -351,6 +353,7 @@ class CostarArm(object):
                 self.display_pub.publish(disp)
 
                 traj = res.planned_trajectory.joint_trajectory
+                print res.planned_trajectory.joint_trajectory
                 
                 return self.send_trajectory(traj,acceleration,velocity,cartesian=False)
 

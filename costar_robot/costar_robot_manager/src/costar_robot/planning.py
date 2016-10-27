@@ -89,8 +89,11 @@ class SimplePlanning:
       steps = base_steps + int((pose.p - frame.p).Norm() * steps_per_meter)
       print " -- Computing %f steps"%steps
 
-      ts = (pose.p - frame.p).Norm() / steps
+      ts = (pose.p - frame.p).Norm() / steps * 10
       traj = JointTrajectory()
+      traj.points.append(JointTrajectoryPoint(positions=q0,
+          	velocities=[0]*len(q0),
+          	accelerations=[0]*len(q0)))
 
       # compute IK
       for i in range(1,steps+1):
@@ -105,7 +108,9 @@ class SimplePlanning:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if not q is None:
-          pt = JointTrajectoryPoint(positions=q)
+          pt = JointTrajectoryPoint(positions=q,
+          	velocities=[0]*len(q),
+          	accelerations=[0]*len(q))
           pt.time_from_start = rospy.Duration(i * ts)
           traj.points.append(pt)
           q0 = q
@@ -119,6 +124,7 @@ class SimplePlanning:
                   + " points.")
           return JointTrajectory()
 
+      traj.joint_names = self.joint_names
       return traj
 
     def getGoalConstraints(self, frames, q, timeout=2.0, mode = ModeJoints):
@@ -248,7 +254,7 @@ class SimplePlanning:
 
     def getPlan(self,frame,q,compute_ik=True):
         planning_options = PlanningOptions()
-        planning_options.plan_only = False
+        planning_options.plan_only = True
         planning_options.replan = False
         planning_options.replan_attempts = 0
         planning_options.replan_delay = 0.1
