@@ -75,7 +75,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
         {128, 0, 255}
     };
 
-    table_corner_published = false;
+    table_corner_published = 0;
 
     std::copy(&color_label_tmp[0][0], &color_label_tmp[0][0]+11*3,&color_label[0][0]);
     double cropBoxX, cropBoxY, cropBoxZ;
@@ -324,17 +324,25 @@ void semanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_in
 void semanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
 {
     if (!classReady) return;
-    if (useTableSegmentation && !table_corner_published)
+    if (useTableSegmentation)
     {
         if (!haveTable) haveTable = getAndSaveTable(inputCloud);
         
-        if (haveTable) { // publish the table corner
-            table_corner_published = true;
-            sensor_msgs::PointCloud2 output_msg;
-            toROSMsg(*tableConvexHull,output_msg);
-            output_msg.header.frame_id = inputCloud.header.frame_id;
-            std::cerr << "Published table corner point cloud\n";
-            table_corner_pub.publish(output_msg);
+        if (haveTable) {
+             // publish the table corner every 10 frame of inputCloud
+            if (table_corner_published == 0)
+            {
+                sensor_msgs::PointCloud2 output_msg;
+                toROSMsg(*tableConvexHull,output_msg);
+                output_msg.header.frame_id = inputCloud.header.frame_id;
+                // std::cerr << "Published table corner point cloud\n";
+                table_corner_pub.publish(output_msg);
+            }
+            else 
+            {
+                table_corner_published++;
+                if (table_corner_published > 10) table_corner_published = 0;
+            }
         }
         else return; // still does not have table
     }
@@ -614,17 +622,25 @@ void semanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &pc)
     // The callback from main only update the cloud data
     inputCloud = pc;
     
-    if (useTableSegmentation && !table_corner_published)
+    if (useTableSegmentation)
     {
         if (!haveTable) haveTable = getAndSaveTable(inputCloud);
         
-        if (haveTable) { // publish the table corner
-            table_corner_published = true;
-            sensor_msgs::PointCloud2 output_msg;
-            toROSMsg(*tableConvexHull,output_msg);
-            output_msg.header.frame_id = inputCloud.header.frame_id;
-            std::cerr << "Published table corner point cloud\n";
-            table_corner_pub.publish(output_msg);
+        if (haveTable) {
+             // publish the table corner every 10 frame of inputCloud
+            if (table_corner_published == 0)
+            {
+                sensor_msgs::PointCloud2 output_msg;
+                toROSMsg(*tableConvexHull,output_msg);
+                output_msg.header.frame_id = inputCloud.header.frame_id;
+                // std::cerr << "Published table corner point cloud\n";
+                table_corner_pub.publish(output_msg);
+            }
+            else 
+            {
+                table_corner_published++;
+                if (table_corner_published > 10) table_corner_published = 0;
+            }
         }
         else return; // still does not have table
     }

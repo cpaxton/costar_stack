@@ -86,7 +86,7 @@ private:
     double aboveTableMin, aboveTableMax; // point cloud need to be this value above the table in meters
 
     // Publisher related
-    bool table_corner_published;
+    unsigned int table_corner_published;
     std::string POINTS_IN, POINTS_OUT, POSES_OUT;
     ros::Publisher pc_pub, pose_pub, detected_object_pub, table_corner_pub;
     ros::Subscriber pc_sub;
