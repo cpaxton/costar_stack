@@ -7,6 +7,9 @@ from costar_robot import CostarArm
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
 
+from trajectory_msgs.msg import JointTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectory
+
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
 
 class CostarUR5Driver(CostarArm):
@@ -33,19 +36,6 @@ class CostarUR5Driver(CostarArm):
             base_steps=10,
             dof=6,
             closed_form_IK_solver=True)
-
-        self.js_publisher = rospy.Publisher('joint_states',JointState,queue_size=1000)
-
-        # self.q0 = np.array(self.ur.getj())
-        # print self.ur.getj_all()
-
-        self.current_joint_positions = self.ur.getj_all()
-        self.q0 = np.array(self.current_joint_positions[0])
-        self.q_v0 = np.array(self.current_joint_positions[1])
-        self.q_a0 = np.array(self.current_joint_positions[2])
-
-        self.old_q0 = self.q0
-        self.set_goal(self.q0)
 
     '''
     Send a whole joint trajectory message to a robot...
@@ -114,13 +104,10 @@ class CostarUR5Driver(CostarArm):
     send a single joint space position
     '''
     def send_q(self,q,acceleration,velocity):
-        if self.simulation:
-            pt = JointTrajectoryPoint()
-            pt.positions = q
+        pt = JointTrajectoryPoint()
+        pt.positions = q
 
-            self.pt_publisher.publish(pt)
-        else:
-            self.ur.movej(q,wait=True,acc=acceleration,vel=velocity)
+        self.pt_publisher.publish(pt)
 
     '''
     URX supports Cartesian moves, so we will recover our forward kinematics
@@ -133,25 +120,28 @@ class CostarUR5Driver(CostarArm):
 
             self.pt_publisher.publish(pt)
         else:
-          T = pm.fromMatrix(self.kdl_kin.forward(q))
-          (angle,axis) = T.M.GetRotAngle()
-          cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
-          self.ur.movel(cmd,wait=True,acc=acceleration,vel=velocity)
+            rospy.logwarn('UR5 cartesian moves are currently unsupported.')
+        #else:
+        # @TODO(cpaxton) implement UR5 cartesian moves
+        #  T = pm.fromMatrix(self.kdl_kin.forward(q))
+        #  (angle,axis) = T.M.GetRotAngle()
+        #  cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
+        #  self.ur.movel(cmd,wait=True,acc=acceleration,vel=velocity)
 
     def handle_tick(self):
 
         # send out the joint states
-        self.current_joint_positions = self.ur.getj_all()
-        self.q0 = np.array(self.current_joint_positions[0])
-        self.q_v0 = np.array(self.current_joint_positions[1])
-        self.q_a0 = np.array(self.current_joint_positions[2])
-        self.js_publisher.publish(JointState(
-          header=Header(stamp=rospy.Time.now()),
-          name=self.joint_names,
-          position=self.q0,
-          velocity=self.q_v0,
-          effort=self.q_a0))
-        self.update_position()
+        #self.current_joint_positions = self.ur.getj_all()
+        #self.q0 = np.array(self.current_joint_positions[0])
+        #self.q_v0 = np.array(self.current_joint_positions[1])
+        #self.q_a0 = np.array(self.current_joint_positions[2])
+        #self.js_publisher.publish(JointState(
+        #  header=Header(stamp=rospy.Time.now()),
+        #  name=self.joint_names,
+        #  position=self.q0,
+        #  velocity=self.q_v0,
+        #  effort=self.q_a0))
+        #self.update_position()
 
         if self.driver_status in mode.keys():
 

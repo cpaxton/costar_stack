@@ -48,6 +48,7 @@ class CostarArm(object):
         self.base_link = base_link
         self.end_link = end_link
         self.planning_group = planning_group
+        self.dof = dof
 
         self.base_steps = base_steps
         self.steps_per_meter = steps_per_meter
@@ -64,8 +65,8 @@ class CostarArm(object):
         self.at_goal = True
         self.near_goal = True
         self.moving = False
-        self.q0 = [0,0,0,0,0,0,0]
-        self.old_q0 = [0,0,0,0,0,0,0]
+        self.q0 = [0] * self.dof
+        self.old_q0 = [0] * self.dof
 
         self.cur_stamp = 0
 
@@ -129,7 +130,7 @@ class CostarArm(object):
         self.goal = None
         self.ee_pose = None
 
-        self.joint_names = [joint.name for joint in self.robot.joints[:6]]
+        self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
         self.planner = SimplePlanning(self.robot,base_link,end_link,self.planning_group,kdl_kin=self.kdl_kin,joint_names=self.joint_names,closed_form_IK_solver=closed_form_IK_solver)
 
     '''
@@ -138,9 +139,12 @@ class CostarArm(object):
     '''
     def js_cb(self,msg):
 
-        self.old_q0 = self.q0
-        self.q0 = np.array(msg.position)
-        self.update_position()
+        if len(msg.position) is self.dof:
+            self.old_q0 = self.q0
+            self.q0 = np.array(msg.position)
+            self.update_position()
+        else:
+            rospy.logwarn('Incorrect joint dimensionality')
 
     '''
     update current position information
