@@ -176,8 +176,6 @@ class SimplePlanning:
               p.pose.orientation.w = frame.orientation.w
               p.header.frame_id = "/world"
 
-              print p
-
               ik_req = moveit_msgs.msg.PositionIKRequest()
               ik_req.robot_state.joint_state.name = self.joint_names
               ik_req.robot_state.joint_state.position = q
@@ -278,7 +276,7 @@ class SimplePlanning:
         # - returns: goal contraints
 
         if compute_ik:
-          (ik_resp, goal) = self.getGoalConstraints(frame,q,ModeCart)
+          (ik_resp, goal) = self.getGoalConstraints(frame,q,mode=ModeCart)
         
         #if (ik_resp.error_code.val > 0):
         #  return (1,None)
