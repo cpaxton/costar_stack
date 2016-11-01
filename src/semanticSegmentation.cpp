@@ -113,6 +113,13 @@ void semanticSegmentation::initializeSemanticSegmentation()
     this->nh.param("useObjectPersistence",useObjectPersistence,false);
 
     crop_box_size = Eigen::Vector3f(cropBoxX, cropBoxY, cropBoxZ);
+    
+
+    this->nh.param("cropBoxGripperX",cropBoxX,1.0);
+    this->nh.param("cropBoxGripperY",cropBoxY,1.0);
+    this->nh.param("cropBoxGripperZ",cropBoxZ,1.0);
+    crop_box_gripper_size = Eigen::Vector3f(cropBoxX, cropBoxY, cropBoxZ);
+
     tableConvexHull = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
     
     lab_pooler_set.resize(6);
@@ -203,7 +210,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     }
     else objrec.resize(cur_name.size());
 
-    for (int model_id = 0; model_id < cur_name.size(); model_id++)
+    for (std::size_t model_id = 0; model_id < cur_name.size(); model_id++)
     {
         // add all models. model_id starts in model_name start from 1.
         std::string temp_cur = cur_name.at(model_id);
@@ -244,14 +251,6 @@ void semanticSegmentation::initializeSemanticSegmentation()
         mesh_set.push_back(mesh_buf);
         objectTFIndex[temp_cur] = 0;
     }
-/***************************
-    objrec[1]->AddModel(mesh_path + "link", "link");
-    objrec[2]->AddModel(mesh_path + "node", "node");
-    // model_name[model_id+1] = temp_cur;
-    // model_name_map[temp_cur] = model_id+1;
-    ModelT mesh_buf = LoadMesh(mesh_path + "link.obj", "link");
-    mesh_set.push_back(mesh_buf);
-***************************/
 
     hie_producer = Hier_Pooler(radius);
     hie_producer.LoadDict_L0(shot_path, "200", "200");
@@ -281,7 +280,6 @@ void semanticSegmentation::initializeSemanticSegmentation()
         viewer->addCoordinateSystem(0.1);
         viewer->setCameraPosition(0, 0, 0.1, 0, 0, 1, 0, -1, 0);
         viewer->setSize(1280, 960);
-        // viewer->setBackgroundColor (255, 255, 255);
     }
 
     if(enableTracking)
@@ -313,7 +311,7 @@ void semanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_in
 {
   pcl::PointCloud<PointT>::Ptr  cropped_cloud(new pcl::PointCloud<PointT>());
   pcl::CropBox<PointT> crop_box;
-
+  crop_box.setKeepOrganized(true);
   crop_box.setInputCloud(cloud_input);
   crop_box.setMax(box_size.homogeneous());
   crop_box.setMin((-box_size).homogeneous());
@@ -485,20 +483,33 @@ std::vector<poseT> semanticSegmentation::spSegmenterCallback(const pcl::PointClo
         splitCloud(label_cloud, cloud_set);
 
         std::cerr<<"Calculate poses"<<std::endl;
-        #pragma omp parallel for schedule(dynamic, 1)
-        for(size_t j = 1 ; j <= mesh_set.size(); j++ ){ // loop over all objects
-            if( cloud_set[j]->empty() == false )
-            {
-                std::vector<poseT> tmp_poses;
-                if      (objRecRANSACdetector == "StandardBest")      objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
-                else if (objRecRANSACdetector == "GreedyRecognize")   objrec[j-1]->GreedyRecognize(cloud_set[j], tmp_poses);
-                else if (objRecRANSACdetector == "StandardRecognize") objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
-                else ROS_ERROR("Unsupported objRecRANSACdetector!");
-
-
-                #pragma omp critical
+        if (doingGripperSegmentation)
+        {
+            std::vector<poseT> tmp_poses;
+            int objrec_index = model_name_map[objectClassInGripper];
+            if      (objRecRANSACdetector == "StandardBest")      objrec[objrec_index-1]->StandardBest(cloud_set[objrec_index], tmp_poses);
+            else if (objRecRANSACdetector == "GreedyRecognize")   objrec[objrec_index-1]->GreedyRecognize(cloud_set[objrec_index], tmp_poses);
+            else if (objRecRANSACdetector == "StandardRecognize") objrec[objrec_index-1]->StandardRecognize(cloud_set[objrec_index], tmp_poses, minConfidence);
+            else ROS_ERROR("Unsupported objRecRANSACdetector!");
+            all_poses1.insert(all_poses1.end(), tmp_poses.begin(), tmp_poses.end());
+        }
+        else
+        {
+            #pragma omp parallel for schedule(dynamic, 1)
+            for(size_t j = 1 ; j <= mesh_set.size(); j++ ){ // loop over all objects
+                if( cloud_set[j]->empty() == false )
                 {
-                    all_poses1.insert(all_poses1.end(), tmp_poses.begin(), tmp_poses.end());
+                    std::vector<poseT> tmp_poses;
+                    if      (objRecRANSACdetector == "StandardBest")      objrec[j-1]->StandardBest(cloud_set[j], tmp_poses);
+                    else if (objRecRANSACdetector == "GreedyRecognize")   objrec[j-1]->GreedyRecognize(cloud_set[j], tmp_poses);
+                    else if (objRecRANSACdetector == "StandardRecognize") objrec[j-1]->StandardRecognize(cloud_set[j], tmp_poses, minConfidence);
+                    else ROS_ERROR("Unsupported objRecRANSACdetector!");
+
+
+                    #pragma omp critical
+                    {
+                        all_poses1.insert(all_poses1.end(), tmp_poses.begin(), tmp_poses.end());
+                    }
                 }
             }
         }
@@ -581,8 +592,13 @@ bool semanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
         pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
         
         fromROSMsg(inputCloud,*full_cloud);
-        std::cerr << "PCL organized: " << full_cloud->isOrganized() << std::endl;
-        volumeSegmentation(full_cloud,table_transform,crop_box_size);
+        Eigen::Vector3f crop_box_size_table = crop_box_size;
+        double tableTF_z_box;
+        nh.param("cropBoxTableZ", tableTF_z_box,0.005);
+        crop_box_size_table[2] = tableTF_z_box;
+        Eigen::Affine3d cam_tf_in_table;
+        tf::transformTFToEigen(table_transform.inverse(), cam_tf_in_table);
+        cropPointCloud(full_cloud, cam_tf_in_table.cast<float>(), crop_box_size_table);
         
         if( viewer )
         {
@@ -820,7 +836,7 @@ bool semanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, s
     
     // get all poses from spSegmenterCallback
     std::vector<poseT> all_poses = spSegmenterCallback(full_cloud,*final_cloud);
-    ROS_INFO("Found %u objects",all_poses.size());
+    ROS_INFO("Found %lu objects",all_poses.size());
     // std::cerr << "found: " << all_poses.size() << "\n";
 
     if(enableTracking)
@@ -858,6 +874,8 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
     nh.param("objRecRANSACdetectorInGripper",objRecRANSACdetector,std::string("StandardBest"));
     
     targetTFtoUpdate = request.tfToUpdate;
+    objectClassInGripper = request.objectClass;
+
     this->doingGripperSegmentation = true;
   
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
@@ -872,14 +890,14 @@ bool semanticSegmentation::serviceCallbackGripper (sp_segmenter::segmentInGrippe
         this->doingGripperSegmentation = false;
         return false;
     }
-    
     if (listener->waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
     {
         tf::StampedTransform transform;
         listener->lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
-        // do a box segmentation around the gripper (50x50x50 cm)
-        volumeSegmentation(full_cloud,transform,crop_box_size,false);
-        std::cerr << "Volume Segmentation done.\n";
+
+        Eigen::Affine3d gripper_tf;
+        tf::transformTFToEigen(transform.inverse(), gripper_tf);
+        cropPointCloud(full_cloud, gripper_tf.cast<float>(), crop_box_gripper_size);
     }
     else
     {

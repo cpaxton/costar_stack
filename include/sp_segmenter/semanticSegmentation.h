@@ -67,7 +67,7 @@ private:
     tf::TransformListener * listener;
 
     // keep information about gripper TF frame for object in gripper segmentation
-    std::string gripperTF;
+    std::string gripperTF, objectClassInGripper;
 
     // map of symmetries for orientation normalization
     std::map<std::string, objectSymmetry> objectDict;
@@ -125,7 +125,7 @@ private:
     
     bool useCropBox;
     tf::StampedTransform table_transform;
-    Eigen::Vector3f crop_box_size;
+    Eigen::Vector3f crop_box_size, crop_box_gripper_size;
    
 protected:
 //    void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);

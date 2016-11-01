@@ -15,41 +15,6 @@
 
 #include "sp_segmenter/utility/typedef.h"
 
-void volumeSegmentation(pcl::PointCloud<PointT>::Ptr &cloud_input, const tf::StampedTransform &transform,const Eigen::Vector3f &cropbox, bool keepOrganized = true)
-{
-	for (unsigned int i = 0; i < 3; i++)
-  {
-  	pcl::PassThrough<PointT> pass;
-  	pass.setInputCloud (cloud_input);
-  	pass.setKeepOrganized(keepOrganized);
-  	std::string axisName;
-  	double positionToSegment;
-  	double region;
-		
-    switch (i){
-			case 0:
-    		axisName = "x";
-    		positionToSegment = transform.getOrigin().getX();
-    		region = cropbox[0];
-    		break;
-			case 1: 
-    		axisName = "y"; 
-    		positionToSegment = transform.getOrigin().getY();
-    		region = cropbox[1];
-    		break;
-			default: 
-    		axisName = "z";
-    		positionToSegment = transform.getOrigin().getZ();
-    		region = cropbox[2];
-    		break;
-			}
-		std::cerr << "Segmenting axis: " << axisName << "max: " << positionToSegment + region	<< " min: " << positionToSegment - region << std::endl;
-		pass.setFilterFieldName (axisName);
-		pass.setFilterLimits (positionToSegment - region, positionToSegment + region);
-		pass.filter (*cloud_input);
-	}
-}
-
 void segmentCloudAboveTable(pcl::PointCloud<PointT>::Ptr &cloud_input, const pcl::PointCloud<PointT>::Ptr &convexHull, const double aboveTableMin = 0.01, const double aboveTableMax = 0.25)
 {
 
@@ -114,6 +79,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
     			std::stringstream ss; ss << "Region" << i;
 	            viewer->removeAllPointClouds();
 	            viewer->addPointCloud(contour, ss.str());
+	            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0f, 0.0f, 0.0f,ss.str());
 	            viewer->spin();
 	            viewer->removeAllPointClouds();
     		}

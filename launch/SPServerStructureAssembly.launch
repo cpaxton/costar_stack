@@ -1,10 +1,10 @@
 <launch>
   <!-- This is for running detection of nodes and links without setting all the parameters. Unstable launch file, will change often. -->
   <!-- Object file Name without extension-->
-  <arg name="object"         default="link_uniform,node_uniform,sander_makita" doc="Object mesh names. Must be specified in the same order as in the SVM." />
+  <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM." />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data/" doc="SP segmenter data folder" />
-  <arg name="svm_path"       default="link_node_sander_svm" doc="Object svm folder name located in data path" />
+  <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
   <arg name="debug_args"     default=""/>
 
   <!-- Segmentation Parameters parameters-->
@@ -74,7 +74,7 @@
 
   <arg name="setObjectOrientation" default="true" doc="use specified TF as Object preferred orientation" />
   <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
-  <arg name="gripperTF"      default="endpoint_marker" doc="The gripper tf where target object would be attached" />
+  <arg name="gripperTF"      default="gripper_center" doc="The gripper tf where target object would be attached" />
   <arg name="useObjectPersistence" default="false" doc="use Rtree to check for existing objects to preserve orientation and TF names" />
 
   <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
@@ -97,9 +97,14 @@
     <param name="use_cuda"   type="bool"   value="$(arg use_cuda)"/>
     <param name="useTableSegmentation" type="bool" value="$(arg useTableSegmentation)"/>
     <param name="useCropBox" type="bool" value="$(arg useCropBox)"/>
-    <param name="cropBoxX" type="double" value="0.3"/>
-    <param name="cropBoxY" type="double" value="0.3"/>
-    <param name="cropBoxZ" type="double" value="0.3"/>
+    <param name="cropBoxX" type="double" value="0.35"/>
+    <param name="cropBoxY" type="double" value="0.35"/>
+    <param name="cropBoxZ" type="double" value="0.35"/>
+    <param name="cropBoxTableZ" type="double" value="0.005"/>
+
+    <param name="cropBoxGripperX" type="double" value="0.05"/>
+    <param name="cropBoxGripperY" type="double" value="0.125"/>
+    <param name="cropBoxGripperZ" type="double" value="0.05"/>
   
     <param name="tableTF"        type="str" value="$(arg tableTF)"/>
     <param name="saveTable_directory"   type="str" value="$(arg saveTabledir)" />
