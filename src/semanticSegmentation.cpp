@@ -144,7 +144,8 @@ void semanticSegmentation::initializeSemanticSegmentation()
     std::cerr << "Node is running with objRecRANSACdetector: " << objRecRANSACdetector << "\n";
     
     pc_pub = nh.advertise<sensor_msgs::PointCloud2>(POINTS_OUT,1000);
-    // nh.param("pairWidth", pairWidth, 0.05);
+    
+    nh.param("voxelSize", voxelSize, 0.003);
 
     //double link_width = 0.075;
     //double node_width = 0.05;
@@ -196,7 +197,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
     
     if (!useMultiClassSVM || cur_name.size() == 1){
         // initialize combinedObjRecRansac
-        combinedObjRec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(0.05, voxelSize));
+        combinedObjRec = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(pairWidth, voxelSize));
         combinedObjRec->setParams(objectVisibility,sceneVisibility);
         combinedObjRec->setUseCUDA(use_cuda);
     }

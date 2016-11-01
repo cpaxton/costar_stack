@@ -1,10 +1,10 @@
 <launch>
   <!-- This is for running detection of nodes and links without setting all the parameters. Unstable launch file, will change often. -->
   <!-- Object file Name without extension-->
-  <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM." />
+  <arg name="object"         default="link_uniform,node_uniform,sander_makita" doc="Object mesh names. Must be specified in the same order as in the SVM." />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data/" doc="SP segmenter data folder" />
-  <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
+  <arg name="svm_path"       default="link_node_sander_svm" doc="Object svm folder name located in data path" />
   <arg name="debug_args"     default=""/>
 
   <!-- Segmentation Parameters parameters-->
@@ -17,7 +17,7 @@
        to more imprecise alignment.  Bigger values lead to better alignment but
        require large visible object parts. -->
   <!-- <arg name="pairWidth"      default="0.05" /> -->
-  <arg name="link_width"        default="0.075" />
+  <arg name="link_width"        default="0.122" />
   <arg name="node_width"        default="0.05" />
   <arg name="sander_width"      default="0.16" />
 
@@ -29,7 +29,7 @@
        resulting "voxel-surface" (especially for a sparsely sampled scene) and
        thus will make normal computation unreliable. Processing time, of
        course, will increase with smaller voxel size. -->
-  <!-- TODO: add voxel size -->
+  <arg name="voxelSize"      default="0.004" />
 
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
@@ -59,7 +59,7 @@
        object hypotheses with small alignment with the scene will be accepted.
        -->
 
-  <arg name="objectVisibility"  default=".1" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
+  <arg name="objectVisibility"  default=".15" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
 
 
   <arg name="aboveTableMin"     default="0.015" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
@@ -128,6 +128,7 @@
     <param name="link_width"  type="double" value="$(arg link_width)"/>
     <param name="node_width"  type="double" value="$(arg node_width)"/>
     <param name="sander_width"  type="double" value="$(arg sander_width)"/>
+    <param name="voxelSize"  type="double" value="$(arg voxelSize)"/>
 
     <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
     <param name="useTF"      type="bool" value="$(arg useTF)" />
