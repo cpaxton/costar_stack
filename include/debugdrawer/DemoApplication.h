@@ -67,6 +67,7 @@ protected:
 	
 	float m_ele;
 	float m_azi;
+	float m_rot;
 	btVector3 m_cameraPosition;
 	btVector3 m_cameraTargetPosition;//look at
 

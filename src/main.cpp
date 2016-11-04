@@ -1,5 +1,5 @@
 #include <iostream>
-#include "scene_physics_engine_w_rendering.h"
+#include "scene_physics_engine.h"
 #include "ros_sequential_scene_parsing.h"
 #include <boost/thread.hpp>
 
@@ -16,7 +16,7 @@ void rosMainloop(ros::Rate &r, RosSceneGraph &test)
 int main(int argc, char* argv[])
 {
 #if 0
-    PhysicsEngineWRender test;
+    PhysicsEngine test;
     // test.initPhysics();
     return glutmain(argc,argv, 1024,600,"Test",&test);
 #else

@@ -22,6 +22,8 @@
 typedef btCollisionShape* objectShapePtr;
 typedef btCollisionShape objectShape;
 
+enum background_mode {BACKGROUND_PLANE, BACKGROUND_HULL, BACKGROUND_MESH};
+
 struct PhysicalProperties
 {
 	btScalar mass_;

@@ -4,6 +4,7 @@
   <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" />
   <arg name="detected_object_topic"          default="/SPServer/detected_object_list"/>
   <arg name="background_normal_as_gravity"   default="true"/>
+  <arg name="background_mode"                default="0"/>
   <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3"/>
   <arg name="tf_publisher_initial"           default="scene"/>
   <arg name="debug"                          default="true"/>
@@ -20,6 +21,7 @@
 
     <param name="debug_mode"              type="bool"    value="$(arg debug)"/>
     <param name="load_table"              type="bool"    value="$(arg load_table)"/>
+    <param name="background_mode"         type="int"     value="$(arg background_mode)"/>
     <param name="table_location"          type="str"     value="$(arg table_location)"/>
     <param name="bg_normal_as_gravity"    type="bool"    value="$(arg background_normal_as_gravity)"/>
 

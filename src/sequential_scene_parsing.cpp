@@ -18,7 +18,7 @@ SceneGraph::SceneGraph(Image input, Image background_image)
 }
 
 // void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
-void SceneGraph::setPhysicsEngine(PhysicsEngineWRender* physics_engine)
+void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
 {
 	if (this->debug_messages_) std::cerr <<"Setting physics engine into the scene graph.\n";
 	this->physics_engine_ = physics_engine;
@@ -27,7 +27,7 @@ void SceneGraph::setPhysicsEngine(PhysicsEngineWRender* physics_engine)
 	this->physics_engine_ready_ = (physics_engine_ != NULL);
 }
 
-void SceneGraph::addBackground(Image background_image)
+void SceneGraph::addBackground(Image background_image, int mode)
 {
 	if (this->debug_messages_) std::cerr <<"Adding background into the scene graph.\n";
 	
@@ -37,7 +37,7 @@ void SceneGraph::addBackground(Image background_image)
 	this->object_point_cloud_["g"] = background_image;
 	btTransform identity; identity.setIdentity();
 	this->object_instance_parameter_["g"] = identity;
-#if 1
+
 	// search for plane of support
 	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
 	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
@@ -52,30 +52,43 @@ void SceneGraph::addBackground(Image background_image)
 
 	seg.setInputCloud (background_image);
 	seg.segment (*inliers, *coefficients);
-
-	if (inliers->indices.size () == 0)
-	{
-		std::cerr <<"Could not estimate a planar model for the given dataset.";
-		return;
-	}
 	Eigen::Vector3f normal(coefficients->values[0],coefficients->values[1], coefficients->values[2]);
 	float coeff = coefficients->values[3];
 
-	if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
-	Eigen::Vector4f cloud_centroid;
-	pcl::compute3DCentroid(*background_image,cloud_centroid);
-	btVector3 bt_cloud_centroid(cloud_centroid[0],cloud_centroid[1],cloud_centroid[2]);
-	this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal), -btScalar(coeff),bt_cloud_centroid);
-#else
-	std::vector<btVector3> convex_plane_points;
-	convex_plane_points.reserve(background_image->size());
-	for (std::size_t i = 0; i < background_image->size(); i++)
+	switch (mode)
 	{
-		btVector3 convex_hull_point(background_image->points[i].x,background_image->points[i].y,background_image->points[i].z);
-		convex_plane_points.push_back(convex_hull_point);
+		case BACKGROUND_PLANE:
+		{
+			if (inliers->indices.size () == 0)
+			{
+				std::cerr <<"Could not estimate a planar model for the given dataset.";
+				return;
+			}
+
+			if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
+			Eigen::Vector4f cloud_centroid;
+			pcl::compute3DCentroid(*background_image,cloud_centroid);
+			btVector3 bt_cloud_centroid(cloud_centroid[0],cloud_centroid[1],cloud_centroid[2]);
+			this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal) * SCALING, -btScalar(coeff * SCALING),bt_cloud_centroid * SCALING);
+			break;
+		}
+		case BACKGROUND_HULL:
+		{
+			std::vector<btVector3> convex_plane_points;
+			convex_plane_points.reserve(background_image->size());
+			for (std::size_t i = 0; i < background_image->size(); i++)
+			{
+				btVector3 convex_hull_point(background_image->points[i].x,background_image->points[i].y,background_image->points[i].z);
+				convex_plane_points.push_back(convex_hull_point * SCALING);
+			}
+			this->physics_engine_->addBackgroundConvexHull(convex_plane_points, convertEigenToBulletVector(normal) * SCALING);
+			break;
+		}
+		case BACKGROUND_MESH:
+			break;
+		default:
+			break;
 	}
-	this->physics_engine_->addBackgroundConvexHull(convex_plane_points);
-#endif
 }
 
 void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)

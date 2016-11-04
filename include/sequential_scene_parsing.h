@@ -12,7 +12,6 @@
 #include <Eigen/Geometry>
 
 #include "scene_physics_engine.h"
-#include "scene_physics_engine_w_rendering.h"
 
  // ObjectParameter == Object Pose
 typedef btTransform ObjectParameter;
@@ -27,10 +26,10 @@ public:
 	SceneGraph(Image input, Image background_image);
 	
 	// set physics engine environment to be used.
-	void setPhysicsEngine(PhysicsEngineWRender* physics_engine);
+	void setPhysicsEngine(PhysicsEngine* physics_engine);
 	// void setPhysicsEngine(PhysicsEngine* physics_engine);
 
-	void addBackground(Image background_image);
+	void addBackground(Image background_image, int mode = 0);
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
 	void setDebugMode(bool debug);
@@ -38,7 +37,7 @@ public:
 private:
 	bool debug_messages_;
 	bool physics_engine_ready_;
-	PhysicsEngineWRender * physics_engine_;
+	PhysicsEngine * physics_engine_;
 	// PhysicsEngine * physics_engine_;
 
 	// TODO

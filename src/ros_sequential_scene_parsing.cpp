@@ -43,6 +43,7 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("tf_publisher_initial",this->tf_publisher_initial,std::string(""));
 	nh.param("debug_mode",debug_mode,false);
 	nh.param("load_table",load_table,false);
+
 	if (load_table){
 		nh.param("table_location",background_location,std::string(""));
 		pcl::PCDReader reader;
@@ -72,12 +73,13 @@ void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 {
 	if (!this->has_background_)
 	{
+		this->nh_.param("background_mode",background_mode_,0);
 		std::cerr << "Background points added to the scene.\n";
 		// convert sensor_msgs::PointCloud2 to pcl::PointXYZRGBA::Ptr
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 		pcl::fromROSMsg(pc, *cloud);
 
-		this->ros_scene_.addBackground(cloud);
+		this->ros_scene_.addBackground(cloud,background_mode_);
 		this->has_background_ = true;
 	}
 }

@@ -65,6 +65,7 @@ m_cameraDistance(15.0),
 m_debugMode(0),
 m_ele(20.f),
 m_azi(0.f),
+m_rot(0.f),
 m_cameraPosition(0.f,0.f,0.f),
 m_cameraTargetPosition(0.f,0.f,0.f),
 m_mouseOldX(0),
@@ -220,8 +221,10 @@ void DemoApplication::updateCamera() {
 
 	aspect = m_glutScreenWidth / (btScalar)m_glutScreenHeight;
 	extents.setValue(aspect * 1.0f, 1.0f,0);
-	
-	
+
+	btVector3 cam_up = -eyePos.cross(right);
+	cam_up = btMatrix3x3(btQuaternion(eyePos, m_rot)) * cam_up;
+
 	if (m_ortho)
 	{
 		// reset matrix
@@ -245,7 +248,7 @@ void DemoApplication::updateCamera() {
 		glLoadIdentity();
 		gluLookAt(m_cameraPosition[0], m_cameraPosition[1], m_cameraPosition[2], 
 			m_cameraTargetPosition[0], m_cameraTargetPosition[1], m_cameraTargetPosition[2], 
-			m_cameraUp.getX(),m_cameraUp.getY(),m_cameraUp.getZ());
+			cam_up[0],cam_up[1],cam_up[2]);
 	}
 
 }
@@ -993,6 +996,17 @@ void	DemoApplication::mouseMotionFunc(int x,int y)
 				m_cameraDistance = btScalar(0.1);
 
 			
+		} 
+	}
+	else if (m_modifierKeys& BT_ACTIVE_SHIFT)
+	{
+		if(m_mouseButtons & 1) 
+		{
+			float cx = m_glutScreenWidth/2,
+				cy = m_glutScreenHeight/2;
+			
+			m_rot += btAtan2(m_mouseOldX - cx,m_mouseOldY - cy) - btAtan2(x - cx, y - cy);
+			m_rot = fmodf(m_rot, btScalar(360.f));
 		} 
 	}
 
