@@ -60,7 +60,12 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 	seg.setInputCloud (background_image);
 	seg.segment (*inliers, *coefficients);
 	Eigen::Vector3f normal(coefficients->values[0],coefficients->values[1], coefficients->values[2]);
+	btVector3 normal_bt = convertEigenToBulletVector(normal);
 	float coeff = coefficients->values[3];
+
+	Eigen::Vector4f cloud_centroid;
+	pcl::compute3DCentroid(*background_image,cloud_centroid);
+	btVector3 bt_cloud_centroid(cloud_centroid[0],cloud_centroid[1],cloud_centroid[2]);
 
 	switch (mode)
 	{
@@ -73,10 +78,7 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 			}
 
 			if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
-			Eigen::Vector4f cloud_centroid;
-			pcl::compute3DCentroid(*background_image,cloud_centroid);
-			btVector3 bt_cloud_centroid(cloud_centroid[0],cloud_centroid[1],cloud_centroid[2]);
-			this->physics_engine_->addBackgroundPlane(convertEigenToBulletVector(normal) * SCALING, -btScalar(coeff * SCALING),bt_cloud_centroid * SCALING);
+			this->physics_engine_->addBackgroundPlane(normal_bt * SCALING, -btScalar(coeff * SCALING),bt_cloud_centroid * SCALING);
 			break;
 		}
 		case BACKGROUND_HULL:
@@ -88,7 +90,7 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 				btVector3 convex_hull_point(background_image->points[i].x,background_image->points[i].y,background_image->points[i].z);
 				convex_plane_points.push_back(convex_hull_point * SCALING);
 			}
-			this->physics_engine_->addBackgroundConvexHull(convex_plane_points, convertEigenToBulletVector(normal) * SCALING);
+			this->physics_engine_->addBackgroundConvexHull(convex_plane_points, normal_bt * SCALING);
 			break;
 		}
 		case BACKGROUND_MESH:
@@ -148,7 +150,7 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 						pclPointToBulletVector(mesh_cloud->points[ it->vertices[2] ]) * SCALING 
 					);
 			}
-			this->physics_engine_->addBackgroundMesh(trimesh);
+			this->physics_engine_->addBackgroundMesh(trimesh,normal_bt * SCALING, bt_cloud_centroid * SCALING);
 
 			break;
 		}

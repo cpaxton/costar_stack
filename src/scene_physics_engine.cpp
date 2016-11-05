@@ -89,13 +89,31 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
     m_collisionShapes.push_back(background);
 }
 
-void PhysicsEngine::addBackgroundMesh(btTriangleMesh* trimesh)
+void PhysicsEngine::addBackgroundMesh(btTriangleMesh* trimesh, btVector3 plane_normal, btVector3 plane_center)
 {
 	if (this->debug_messages_) std::cerr << "Adding background(mesh).\n";
+	this->camera_coordinate_ = btVector3(0,0,0);
+	this->target_coordinate_ = plane_center;
+	this->setCameraPositionAndTarget(camera_coordinate_,target_coordinate_);
+	this->setCameraClippingPlaneNearFar(0.005f);
+	this->background_surface_normal_ = plane_normal;
+	if (this->use_background_normal_as_gravity_)
+		this->setGravityVectorDirection(-background_surface_normal_);
+
 	bool useQuantizedBvhTree = true;
 
-	btCollisionShape* trimeshShape  = new btBvhTriangleMeshShape(trimesh,useQuantizedBvhTree);
+	btCollisionShape* background  = new btBvhTriangleMeshShape(trimesh,useQuantizedBvhTree);
+	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
 	
+	// unmovable ground object
+	btRigidBody::btRigidBodyConstructionInfo
+			background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
+	
+	this->background_ = new btRigidBody(background_RigidBodyCI);
+	this->background_->setFriction(1.f);
+	this->background_->setRollingFriction(1.f);
+	
+	m_dynamicsWorld->addRigidBody(this->background_);
 	this->have_background_ = true;
 }
 
@@ -190,10 +208,11 @@ void PhysicsEngine::simulate()
 	{
 		this->in_simulation_ = true;
 		this->counter_ = 0;
-		while (this->in_simulation_ && this->counter_ < 600 )
+		while (this->in_simulation_ && this->counter_ < 100 )
 		{
 			// Do nothing;
 			boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+			this->counter_++;
 		}
 		this->in_simulation_ = false;
 	}
@@ -339,10 +358,9 @@ void PhysicsEngine::clientMoveAndDisplay()
 	///step the simulation
 	if (m_dynamicsWorld)
 	{
-		if (this->in_simulation_ && this->counter_ < 600){
+		if (this->in_simulation_){
 			// m_dynamicsWorld->stepSimulation(ms / 1000000.f);
 			m_dynamicsWorld->stepSimulation(1 / 120.f, 10);
-			// counter_++;
 			if (this->checkSteadyState()) this->in_simulation_ = false;
 		}
 		//optional but useful: debug drawing

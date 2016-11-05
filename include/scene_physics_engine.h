@@ -34,7 +34,7 @@ public:
 	void addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center);
 	void addBackgroundConvexHull(const std::vector<btVector3> &plane_points, btVector3 plane_normal);
 	// TODO: use mesh as background (table)
-	void addBackgroundMesh(btTriangleMesh* trimesh);
+	void addBackgroundMesh(btTriangleMesh* trimesh, btVector3 plane_normal, btVector3 plane_center);
 
 	// uses a frame that has Y direction up as a guide for gravity direction
 	void setGravityVectorDirectionFromTfYUp(const btTransform &transform_y_is_inverse_gravity_direction);
