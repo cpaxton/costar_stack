@@ -89,10 +89,13 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
     m_collisionShapes.push_back(background);
 }
 
-void PhysicsEngine::addBackgroundMesh()
+void PhysicsEngine::addBackgroundMesh(btTriangleMesh* trimesh)
 {
 	if (this->debug_messages_) std::cerr << "Adding background(mesh).\n";
-	// TODO
+	bool useQuantizedBvhTree = true;
+
+	btCollisionShape* trimeshShape  = new btBvhTriangleMeshShape(trimesh,useQuantizedBvhTree);
+	
 	this->have_background_ = true;
 }
 

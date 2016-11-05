@@ -3,6 +3,7 @@
 
 #include <Eigen/Geometry>
 #include <btBulletDynamicsCommon.h>
+#include <pcl/point_types.h>
 #include <map>
 
 template <class container_type>
@@ -72,6 +73,12 @@ Eigen::Transform< numericStandard,3,Eigen::Affine > convertBulletToEigenTransfor
 	Eigen::Translation<numericStandard,3> tmpTranslation (ei_vec);
     Eigen::Transform< numericStandard,3,Eigen::Affine >  result = tmpTranslation * ei_q;
     return result;
+}
+
+template <typename PointT>
+btVector3 pclPointToBulletVector(const PointT &input)
+{
+	return btVector3(input.x,input.y,input.z);
 }
 
 #endif

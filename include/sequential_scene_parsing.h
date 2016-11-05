@@ -16,20 +16,22 @@
  // ObjectParameter == Object Pose
 typedef btTransform ObjectParameter;
 // typedef Eigen::Transform< double,3,Eigen::Affine > ObjectParameter;
-typedef pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Image;
+typedef pcl::PointCloud<pcl::PointXYZRGBA>::Ptr ImagePtr;
+typedef pcl::PointXYZRGBA ImagePoint;
+typedef pcl::PointCloud<pcl::PointXYZRGBA> Image;
 typedef std::vector<bool> DecisionVector;
 
 class SceneGraph
 {
 public:
 	SceneGraph() : physics_engine_ready_(false) {};
-	SceneGraph(Image input, Image background_image);
+	SceneGraph(ImagePtr input, ImagePtr background_image);
 	
 	// set physics engine environment to be used.
 	void setPhysicsEngine(PhysicsEngine* physics_engine);
 	// void setPhysicsEngine(PhysicsEngine* physics_engine);
 
-	void addBackground(Image background_image, int mode = 0);
+	void addBackground(ImagePtr background_image, int mode = 0);
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
 	void setDebugMode(bool debug);
@@ -51,7 +53,7 @@ private:
 
 	std::vector<std::string> object_label_;
 	std::string background_label_;
-	std::map<std::string, Image> object_point_cloud_;
+	std::map<std::string, ImagePtr> object_point_cloud_;
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
 
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 
@@ -62,12 +64,12 @@ private:
 class SequentialSceneGraph
 {
 public:
-	SequentialSceneGraph(Image background_image);
-	void addScene(Image input_image);
+	SequentialSceneGraph(ImagePtr background_image);
+	void addScene(ImagePtr input_image);
 	// generateEstimate();
 ;
 private:
-	DecisionVector BDLinear(Image I, SceneGraph G_minus, SceneGraph G_bar, DecisionVector D, std::vector<std::string> O);
+	DecisionVector BDLinear(ImagePtr I, SceneGraph G_minus, SceneGraph G_bar, DecisionVector D, std::vector<std::string> O);
 	void binaryDecision();
 	void graphSweep();
 	void phase1();
