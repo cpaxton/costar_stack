@@ -7,6 +7,7 @@
 
 #include "sp_segmenter/seg.h"
 #include "sp_segmenter/utility/utility.h"
+#include <ObjRecRANSAC/ObjRecRANSAC.h>
 
 #include <pcl/features/normal_3d.h>
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
