@@ -118,21 +118,22 @@ add_library(Utility
   include/sp_segmenter/utility/mcqd.h
   utility/mcqd.cpp include/sp_segmenter/seg.h
   src/seg.cpp)
-target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
+
+add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
 
 add_library(linear utility/liblinear/linear.h utility/liblinear/tron.h 
             utility/liblinear/linear.cpp utility/liblinear/predict.c utility/liblinear/tron.cpp 
             utility/liblinear/blas/blas.h utility/liblinear/blas/blasp.h utility/liblinear/blas/daxpy.c 
             utility/liblinear/blas/ddot.c utility/liblinear/blas/dnrm2.c utility/liblinear/blas/dscal.c)
 
+target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
+target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY} )
+
 add_library(PoolLib include/sp_segmenter/features.h src/features.cpp src/HierFea.cpp src/Int_Imager.cpp src/Pooler_L0.cpp src/sp.cpp)
-target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
+target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
 add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
-target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}   ${ObjRecRANSAC_LIBRARY} ${VTK_LIBS} )
-
-add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
-target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY} )
+target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
 
 add_library(semanticSegmentation
@@ -140,7 +141,7 @@ add_library(semanticSegmentation
   src/semanticSegmentation.cpp) 
 
 target_link_libraries(semanticSegmentation Utility DataParser PoolLib Tracking GreedyObjRecRANSAC
-                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+                   ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 
 #add_executable(spTraining src/main_sp_training.cpp) 
 #target_link_libraries(spTraining Utility DataParser PoolLib ${Boost_LIBRARIES} 
@@ -152,7 +153,7 @@ target_link_libraries(semanticSegmentation Utility DataParser PoolLib Tracking G
 
 add_executable(spCompact src/main_sp_compact.cpp)
 target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES}
-               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+              ${catkin_LIBRARIES}  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
 target_link_libraries(SimpleSegmenter Utility DataParser PoolLib GreedyObjRecRANSAC
@@ -161,7 +162,7 @@ target_link_libraries(SimpleSegmenter Utility DataParser PoolLib GreedyObjRecRAN
 #if(CATKIN_FOUND)
     add_executable(SPSegmenterNode src/main_ros.cpp) 
     target_link_libraries(SPSegmenterNode Utility DataParser PoolLib Tracking GreedyObjRecRANSAC
-                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+                ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 #endif(CATKIN_FOUND)
 
 add_executable(foreRun src/main_foreground.cpp)
@@ -169,7 +170,7 @@ target_link_libraries(foreRun Utility PoolLib GreedyObjRecRANSAC ${OpenCV_LIBS} 
 
 add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
 target_link_libraries(SPSegmenterServer semanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
-                  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+                ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 
 add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)
 target_link_libraries(TestSymmetricOrientationRealignment semanticSegmentation Utility DataParser PoolLib ${Boost_LIBRARIES} )
