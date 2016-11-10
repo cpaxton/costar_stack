@@ -9,8 +9,6 @@
 #ifndef symmetricOrientationRealignment_h
 #define symmetricOrientationRealignment_h
 
-// ros stuff
-#include <ros/ros.h>
 #include <Eigen/Geometry>
 #include "sp_segmenter/utility/typedef.h"
 #include "sp_segmenter/utility/utility.h"
@@ -22,7 +20,6 @@ const double degToRad = boost::math::constants::pi<double>() / 180.0;
 //for normalizing object rotation
 struct objectSymmetry
 {
-
     double roll;
     double pitch;
     double yaw;
@@ -46,29 +43,6 @@ struct objectSymmetry
 
     objectSymmetry() : roll(0.), pitch(0.), yaw(0.), preferred_axis(""), preferred_step(0.) {}
 };
-
-// Pass current ROS node handle
-// Load in parameters for objects from ROS namespace
-std::map<std::string, objectSymmetry> fillDictionary(const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
-{
-    std::map<std::string, objectSymmetry> objectDict;
-    std::cerr << "LOADING IN OBJECTS\n";
-    for (unsigned int i = 0; i < cur_name.size(); i++) {
-        std::cerr << "Name of obj: " << cur_name[i] << "\n";
-
-        double r, p, y, step;
-        std::string preferred_axis;
-        nh.param(cur_name.at(i)+"/x", r, 360.0);
-        nh.param(cur_name.at(i)+"/y", p, 360.0);
-        nh.param(cur_name.at(i)+"/z", y, 360.0);
-        nh.param(cur_name.at(i)+"/preferred_step", step, 360.0);
-        nh.param(cur_name.at(i)+"/preferred_axis", preferred_axis, std::string("z"));
-
-        objectDict[cur_name.at(i)] = objectSymmetry(r, p, y, preferred_axis, step);
-    }
-    return objectDict;
-}
-
 
 template <typename numericStandard>
 void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const objectSymmetry &object, const int axisToAlign, const bool withRotateSpecificAxis = false, const int rotateAroundSpecificAxis = 0)

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
-SET(CMAKE_BUILD_TYPE "Release")
-find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions cv_bridge costar_objrec_msgs QUIET)# greedy_objrec_ransac)
 project(sp_segmenter C CXX)
+SET(CMAKE_BUILD_TYPE "Release")
 
-
+OPTION(BUILD_ROS_BINDING "Build ROS Binding" OFF)
+OPTION(USE_OBJRECRANSAC "Use ObjRecRANSAC" OFF)
 
 # Enable C++11
 include(CheckCXXCompilerFlag)
@@ -17,50 +17,6 @@ else()
         message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support, or our tests failed to detect it correctly. Please use a different C++ compiler or report this problem to the developers.")
 endif()
 
-
-find_package(PCL REQUIRED) 
-find_package(OpenCV REQUIRED) 
-find_package(OpenMP )
-find_package(Boost)
-find_package(VTK)
-
-if(NOT EXISTS OBJREC_USE_CUDA)
-  FIND_PACKAGE(CUDA)
-  if(CUDA_FOUND)
-    set(OBJREC_USE_CUDA TRUE)
-  endif()
-endif()
-
-IF(OBJREC_USE_CUDA)
-  set(OBJREC_CUDA_DEVICE_ID 1 CACHE STRING "Which GPU device to use when running")
-  message(STATUS "CUDA Found and enabled with OBJREC_USE_CUDA=TRUE, Using CUDA GPU Device # " ${OBJREC_CUDA_DEVICE_ID})
-  add_definitions(-DUSE_CUDA)
-  add_definitions(-DCUDA_DEVICE_ID=${OBJREC_CUDA_DEVICE_ID})
-
-  set(CUDA_TOOLKIT_ROOT_DIR $ENV{CUDA_TOOLKIT_ROOT_DIR})
-  FIND_PACKAGE(CUDA REQUIRED)
-
-  add_definitions(-DOBJ_REC_RANSAC_PROFILE)
-
-  #add_definitions(-DOBJ_REC_RANSAC_VERBOSE)
-  #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_1)
-  #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_2)
-ENDIF()
-
-
-IF(NOT VTK_FOUND)
-  message(FATAL_ERROR "VTK not found. VTK is not installed or cmake can not find it. Install VTK first and then try again.
-  If VTK is installed but cmake can not find it, set the VTK_DIR entry to the folder which contains the file VTKConfig.cmake")
-ENDIF(NOT VTK_FOUND)
-
-
-IF(OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  add_definitions(-DUSE_OPENMP)
-  message (STATUS "Found OpenMP")
-ENDIF(OPENMP_FOUND)
-
 if (UNIX)
   message(status "Setting GCC flags")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -g -Wall")
@@ -70,110 +26,137 @@ else()
 endif()
 message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
-if(catkin_FOUND)
-    add_service_files(
-      FILES
-      SPSegmenterServer.srv
-      segmentInGripper.srv
-    )
+# CORE LIBRARIES NEEDED FOR SP_SEGMENTER
+find_package(PCL REQUIRED) 
+find_package(OpenCV REQUIRED) 
+find_package(OpenMP )
+find_package(Boost)
+find_package(VTK)
 
-    generate_messages(
-      DEPENDENCIES
-      std_msgs
-    )
+IF(NOT VTK_FOUND)
+  message(FATAL_ERROR "VTK not found. VTK is not installed or cmake can not find it. Install VTK first and then try again.
+  If VTK is installed but cmake can not find it, set the VTK_DIR entry to the folder which contains the file VTKConfig.cmake")
+ENDIF(NOT VTK_FOUND)
 
-  if (APPLE)
-    catkin_package(
-      INCLUDE_DIRS include utility
-      LIBRARIES 
-      CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime
-      DEPENDS PCL OpenCV ObjRecRANSAC
-    )
-  else()
-    catkin_package(
-      INCLUDE_DIRS include utility
-      LIBRARIES 
-      CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime
-      DEPENDS PCL OpenCV OpenMP ObjRecRANSAC
-    )
-  endif()
-endif()
+IF(OPENMP_FOUND)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  add_definitions(-DUSE_OPENMP)
+  message (STATUS "Found OpenMP")
+ENDIF(OPENMP_FOUND)
 
 include_directories(include utility)
+include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
-
-include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} ${catkin_LIBRARY_DIRS})
+link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
 
-#library
-add_library(Tracking src/tracker.cpp src/klttracker.cpp src/PnPUtil.cpp)
-target_link_libraries(Tracking ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
-
 add_library(Utility
-  include/sp_segmenter/utility/typedef.h
-  include/sp_segmenter/utility/utility.h
-  utility/utility.cpp
-  include/sp_segmenter/utility/mcqd.h
-  utility/mcqd.cpp include/sp_segmenter/seg.h
-  src/seg.cpp)
-
-add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
-
+  include/sp_segmenter/utility/typedef.h include/sp_segmenter/utility/utility.h utility/utility.cpp
+  include/sp_segmenter/utility/mcqd.h utility/mcqd.cpp include/sp_segmenter/seg.h src/seg.cpp)
 add_library(linear utility/liblinear/linear.h utility/liblinear/tron.h 
             utility/liblinear/linear.cpp utility/liblinear/predict.c utility/liblinear/tron.cpp 
             utility/liblinear/blas/blas.h utility/liblinear/blas/blasp.h utility/liblinear/blas/daxpy.c 
             utility/liblinear/blas/ddot.c utility/liblinear/blas/dnrm2.c utility/liblinear/blas/dscal.c)
+add_library(PoolLib include/sp_segmenter/features.h src/features.cpp src/HierFea.cpp src/Int_Imager.cpp src/Pooler_L0.cpp src/sp.cpp)
+add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
 
 target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
-target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY} )
-
-add_library(PoolLib include/sp_segmenter/features.h src/features.cpp src/HierFea.cpp src/Int_Imager.cpp src/Pooler_L0.cpp src/sp.cpp)
 target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
-
-add_library(DataParser include/sp_segmenter/UWDataParser.h include/sp_segmenter/BBDataParser.h include/sp_segmenter/JHUDataParser.h src/UWDataParser.cpp src/BBDataParser.cpp src/JHUDataParser.cpp) 
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
+
+# Enable OBJRECRANSAC
+IF (USE_OBJRECRANSAC)
+  ADD_DEFINITIONS( -DUSE_OBJRECRANSAC)
+  find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
+
+  add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
+  target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY})
+
+  if(NOT EXISTS OBJREC_USE_CUDA)
+    FIND_PACKAGE(CUDA)
+    if(CUDA_FOUND)
+      set(OBJREC_USE_CUDA TRUE)
+    endif()
+  endif()
+
+  IF(OBJREC_USE_CUDA)
+    set(OBJREC_CUDA_DEVICE_ID 1 CACHE STRING "Which GPU device to use when running")
+    message(STATUS "CUDA Found and enabled with OBJREC_USE_CUDA=TRUE, Using CUDA GPU Device # " ${OBJREC_CUDA_DEVICE_ID})
+    add_definitions(-DUSE_CUDA)
+    add_definitions(-DCUDA_DEVICE_ID=${OBJREC_CUDA_DEVICE_ID})
+
+    set(CUDA_TOOLKIT_ROOT_DIR $ENV{CUDA_TOOLKIT_ROOT_DIR})
+    FIND_PACKAGE(CUDA REQUIRED)
+
+    add_definitions(-DOBJ_REC_RANSAC_PROFILE)
+
+    #add_definitions(-DOBJ_REC_RANSAC_VERBOSE)
+    #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_1)
+    #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_2)
+  ENDIF()
+ENDIF()
+
+
+# Build ROS BINDING
+IF (BUILD_ROS_BINDING)
+  ADD_DEFINITIONS( -DBUILD_ROS_BINDING)
+  find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions cv_bridge costar_objrec_msgs QUIET)
+  include_directories(${catkin_INCLUDE_DIRS})
+  link_directories(${catkin_LIBRARY_DIRS})
+
+  if(catkin_FOUND)
+      add_service_files(
+        FILES
+        SPSegmenterServer.srv
+        segmentInGripper.srv
+      )
+
+      generate_messages(
+        DEPENDENCIES
+        std_msgs
+      )
+
+    if (APPLE)
+      catkin_package(
+        CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
+        DEPENDS PCL OpenCV ObjRecRANSAC
+      )
+    else()
+      catkin_package(
+        CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
+        DEPENDS PCL OpenCV OpenMP ObjRecRANSAC
+      )
+    endif()
+  endif()
+ENDIF()
 
 add_library(semanticSegmentation
   include/sp_segmenter/semanticSegmentation.h
   src/semanticSegmentation.cpp) 
 
-target_link_libraries(semanticSegmentation Utility DataParser PoolLib Tracking GreedyObjRecRANSAC
-                   ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+target_link_libraries(semanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
+                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 
-#add_executable(spTraining src/main_sp_training.cpp) 
-#target_link_libraries(spTraining Utility DataParser PoolLib ${Boost_LIBRARIES} 
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-
-#add_executable(spSVM src/main_sp_svm.cpp) 
-#target_link_libraries(spSVM Utility DataParser PoolLib
-#              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
-
-add_executable(spCompact src/main_sp_compact.cpp)
-target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES}
-              ${catkin_LIBRARIES}  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-
-add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
-target_link_libraries(SimpleSegmenter Utility DataParser PoolLib GreedyObjRecRANSAC
-              ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
-
-#if(CATKIN_FOUND)
-    add_executable(SPSegmenterNode src/main_ros.cpp) 
-    target_link_libraries(SPSegmenterNode Utility DataParser PoolLib Tracking GreedyObjRecRANSAC
-                ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
-#endif(CATKIN_FOUND)
-
-add_executable(foreRun src/main_foreground.cpp)
-target_link_libraries(foreRun Utility PoolLib GreedyObjRecRANSAC ${OpenCV_LIBS} ${PCL_LIBRARIES} ${VTK_LIBS})
-
-add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
-target_link_libraries(SPSegmenterServer semanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
-                ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
-
-add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)
-target_link_libraries(TestSymmetricOrientationRealignment semanticSegmentation Utility DataParser PoolLib ${Boost_LIBRARIES} )
-
-
-
+# add_executable(spCompact src/main_sp_compact.cpp)
+# target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES}
+#               ${catkin_LIBRARIES}  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+# 
+# add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
+# target_link_libraries(SimpleSegmenter Utility DataParser PoolLib GreedyObjRecRANSAC
+#               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+# 
+# add_executable(SPSegmenterNode src/main_ros.cpp) 
+# target_link_libraries(SPSegmenterNode Utility DataParser PoolLib Tracking GreedyObjRecRANSAC
+#             ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+# 
+# add_executable(foreRun src/main_foreground.cpp)
+# target_link_libraries(foreRun Utility PoolLib GreedyObjRecRANSAC ${OpenCV_LIBS} ${PCL_LIBRARIES} ${VTK_LIBS})
+# 
+# add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
+# target_link_libraries(SPSegmenterServer semanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
+#                 ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+# 
+# add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)
+# target_link_libraries(TestSymmetricOrientationRealignment semanticSegmentation Utility DataParser PoolLib ${Boost_LIBRARIES} )

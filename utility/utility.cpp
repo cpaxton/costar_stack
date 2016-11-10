@@ -313,8 +313,8 @@ void ComputeCentroid(pcl::PointCloud<PointT>::Ptr cloud, pcl::PointCloud<myPoint
 {
     pcl::PointXYZ centroid;
     double cx=0, cy=0, cz=0;
-    std::size_t num = cloud->points.size();
-    for(std::size_t i=0; i < num ; i++ )
+    int num = cloud->points.size();
+    for(int i=0; i < num ; i++ )
     {
         cx += cloud->points[i].x;
         cy += cloud->points[i].y;
@@ -351,7 +351,7 @@ cv::Mat fpfh_cloud(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::PointClo
     //std::cerr<<fpfhs->size()<<" "<<cloud_filtered->size()<<std::endl;
     //system("pause");
     cv::Mat fea = cv::Mat::zeros(fpfhs->size(), 33, CV_32FC1);
-    for( std::size_t i = 0 ; i < fpfhs->size() ; i++ )
+    for( int i = 0 ; i < fpfhs->size() ; i++ )
     {
         float *ptr = (float *)fea.row(i).data;
         memcpy(ptr, fpfhs->at(i).histogram, sizeof(float)*33);
@@ -468,7 +468,7 @@ cv::Mat shot_cloud_ss(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::Point
 
     shot.compute(*descriptors);
     cv::Mat fea = cv::Mat::zeros(descriptors->size(), 352, CV_32FC1);
-    for( std::size_t i = 0 ; i < descriptors->size() ; i++ )
+    for( int i = 0 ; i < descriptors->size() ; i++ )
     {
         float *ptr = (float *)fea.row(i).data;
         float temp = descriptors->at(i).descriptor[0];  // check whether descriptor is valid
@@ -573,8 +573,8 @@ cv::Mat cshot_cloud_uni(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::Poi
     shot.compute(*descriptors);
     
     std::vector<cv::Mat> fea_pool;
-    std::size_t num = descriptors->size();
-    for( std::size_t i = 0 ; i < num ; i++ )
+    int num = descriptors->size();
+    for( int i = 0 ; i < num ; i++ )
     {
         cv::Mat cur_fea = cv::Mat::zeros(1, 1344, CV_32FC1);
         float temp = descriptors->at(i).descriptor[0];  // check whether descriptor is valid
@@ -667,10 +667,10 @@ void RefineCloud(pcl::PointCloud<PointT>::Ptr cloud, pcl::PointCloud<PointT>::Pt
 
 void ExtractHue(pcl::PointCloud<PointT>::Ptr cloud, pcl::PointCloud<pcl::PointXYZHSV>::Ptr cloud_hue)
 {
-    std::size_t num = cloud->points.size();
+    int num = cloud->points.size();
     pcl::copyPointCloud<PointT>(*cloud, *cloud_hue);
     //#pragma omp parallel for firstprivate(cloud_hue)
-    for(std::size_t j = 0 ; j < num ; j++ )
+    for(int j = 0 ; j < num ; j++ )
     {
             pcl::PointXYZHSV &temp = cloud_hue->points[j];
             int rgb[3] = { cloud->points[j].r, cloud->points[j].g, cloud->points[j].b };
@@ -743,7 +743,7 @@ void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "off_key_pt2");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "off_key_pt2");
 	//*
-	for (std::size_t j = 0; j < key_pt1->size (); j++)
+	for (int j = 0; j < key_pt1->size (); j++)
 	{
 		std::stringstream ss_line;
 		ss_line << "corr_line" << j;
@@ -757,11 +757,11 @@ void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl
 		viewer->addLine<myPointXYZ, myPointXYZ> (model_point, scene_point, 0, 255, 0, ss_line.str ());
 	}
 	//*
-	for(std::size_t i = 0 ; i < key1.size(); i++ )
+	for(int i = 0 ; i < key1.size(); i++ )
 	{
             if( key1[i].shift_vec.empty() == false)
             {
-                for( std::size_t j = 0 ; j < key1[i].shift_vec.size() ; j++ )
+                for( int j = 0 ; j < key1[i].shift_vec.size() ; j++ )
                 {
                     std::stringstream ss_line;
                     ss_line << "proj_line" << i <<" " <<j;
@@ -1146,7 +1146,7 @@ pcl::PointCloud<myPointXYZ>::Ptr GenNormalPt(const pcl::PointCloud<myPointXYZ>::
     pcl::PointCloud<myPointXYZ>::Ptr combined_cloud(new pcl::PointCloud<myPointXYZ>());
     if( cloud->size() != cloud_normals->size() )    //one to one correspondence
         return combined_cloud;
-    for( std::size_t i = 0 ; i < cloud->size() ; i++ )
+    for( int i = 0 ; i < cloud->size() ; i++ )
     {
         myPointXYZ pt = cloud->at(i);
         NormalT pt_normal = cloud_normals->at(i);
@@ -1203,9 +1203,9 @@ pcl::PointCloud<myPointXYZ>::Ptr uniformSampleCloud(const pcl::PointCloud<myPoin
 
 std::vector<int> getOneClique(const Eigen::MatrixXi &adj_mat, const std::vector<int> &active_idx)
 {
-    std::size_t num = active_idx.size();
+    int num = active_idx.size();
     bool **adj = new bool*[num];
-    for(std::size_t i = 0 ; i < num ; i++ )
+    for(int i = 0 ; i < num ; i++ )
     {
         adj[i] = new bool[num];
         int r = active_idx[i];
