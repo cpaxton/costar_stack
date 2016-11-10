@@ -28,6 +28,10 @@ struct ModelObjRecRANSACParameter
     ModelObjRecRANSACParameter(const double &pair_width, const double &voxel_size) : pair_width_(pair_width), voxel_size_(voxel_size), object_visibility_(0.1), scene_visibility_(0.1)
     {};
 
+    ModelObjRecRANSACParameter(const double &pair_width, const double &voxel_size, const double &object_visibility, const double &scene_visibility) : 
+        pair_width_(pair_width), voxel_size_(voxel_size), object_visibility_(object_visibility), scene_visibility_(scene_visibility)
+    {};
+
     void setPairWidth(const double &pair_width);
     void setVoxelSize(const double &voxel_size);
     void setObjectVisibility(const double &object_visibility);
@@ -63,9 +67,9 @@ public:
     semanticSegmentation();
     ~semanticSegmentation();
 
+    void initializeSemanticSegmentation();
     bool getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd = false, const std::string &save_directory_path = ".");
     bool segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<PointLT>::Ptr &result);
-
 #ifdef USE_OBJRECRANSAC
     std::vector<objectTransformInformation> calculateObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud);
     std::vector<objectTransformInformation> getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type);
@@ -74,36 +78,49 @@ public:
 #endif
 
     void setDirectorySHOT(const std::string &path_to_shot_directory);
-    void setDirectorySVM(const std::string &path_to_svm_directory, bool multi_model_svm_);
+    void setDirectorySVM(const std::string &path_to_svm_directory);
     void setUseMultiClassSVM(bool use_multi_class_svm);
     void setUseBinarySVM(bool use_binary_svm);
-    void setPointCloudDownsampleValue(float down_ss);
-    void setHierFeaRatio(float ratio);
+    template <typename NumericType>
+        void setPointCloudDownsampleValue(NumericType down_ss);
+    template <typename NumericType>
+        void setHierFeaRatio(NumericType ratio);
 
     void setUseVisualization(bool visualization_flag);
 
     // Table Segmentation Functions
-    void setCropBoxSize(const double &x, const double &y, const double &z);
-    void setCropBoxPose(const Eigen::Affine3f &target_pose_relative_to_camera_frame);
+    void setUseCropBox(const bool &use_crop_box);
+    template <typename NumericType>
+        void setCropBoxSize(const NumericType &x, const NumericType &y, const NumericType &z);
+    template <typename NumericType>
+        void setCropBoxSize(const Eigen::Matrix<NumericType, 3, 1> crop_box_size);
+    template <typename NumericType>
+        void setCropBoxPose(const Eigen::Transform< NumericType, 3, Eigen::Affine> &target_pose_relative_to_camera_frame);
     void setUseTableSegmentation(bool use_table_segmentation);
-    void setCropAboveTableBoundary(const double &min, const double &max);
+    template <typename NumericType>
+        void setCropAboveTableBoundary(const NumericType &min, const NumericType &max);
     void loadTableFromFile(const std::string &table_pcd_path);
-    void setTableSegmentationParameters(double table_distance_threshold, bool table_angular_threshold, unsigned int table_minimal_inliers);
+    template <typename NumericType1, typename NumericType2>
+        void setTableSegmentationParameters(NumericType1 table_distance_threshold, bool table_angular_threshold, NumericType2 table_minimal_inliers);
 
 #ifdef USE_OBJRECRANSAC
-    void setUseComputePose(bool compute_pose);
+    void setUseComputePose(const bool compute_pose);
+    void setUseCuda(const bool use_cuda);
     void addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter);
-    void addModelSymmetricProperty(const std::string &model_name, const double &roll, const double &pitch, const double &yaw, const double &step, const std::string &preferred_axis);
+    template <typename NumericType>
+        void addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis);
+    void addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict);
     void setModeObjRecRANSAC(const int &mode);
-    void setMinConfidenceObjRecRANSAC(const double &min_confidence);
+    template <typename NumericType>
+        void setMinConfidenceObjRecRANSAC(const NumericType &min_confidence);
     void setUseObjectPersistence(const bool use_object_persistence);
 
-    template <typename numericalData>
-    void setPreferredOrientation(Eigen::Quaternion<numericalData> base_rotation);
+    void setUsePreferredOrientation(const bool use_preferred_orientation);
+    template <typename NumericType>
+        void setPreferredOrientation(Eigen::Quaternion<NumericType> base_rotation);
 #endif
 
 protected:
-    void initializeSemanticSegmentation();
     void cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
       const Eigen::Affine3f& camera_transform_in_target, 
       const Eigen::Vector3f& box_size);

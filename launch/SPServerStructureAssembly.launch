@@ -10,26 +10,6 @@
   <!-- Segmentation Parameters parameters-->
   <arg name="params"         default="" />
 
-  <!-- Pair width should be roughly half the extent of the visible object
-       part. This means, for each object point p there should be (at least) one
-       point q (from the same object) such that ||p - q|| <= 'pairwidth'.
-       TRADEOFF: Smaller values allow for detection in occluded scenes but lead
-       to more imprecise alignment.  Bigger values lead to better alignment but
-       require large visible object parts. -->
-  <!-- <arg name="pairWidth"      default="0.05" /> -->
-  <arg name="link_width"        default="0.122" />
-  <arg name="node_width"        default="0.05" />
-  <arg name="sander_width"      default="0.16" />
-
-  <!-- Voxel size is the size of the leafs of the octree, i.e., the "size" of
-       the discretization. TRADEOFF: High values lead to less computation time
-       but ignore object details, e.g., the method could not distinguish
-       between a cylinder and an Amicelli box. Small values allow to better
-       distinguish between objects, but will introduce more holes in the
-       resulting "voxel-surface" (especially for a sparsely sampled scene) and
-       thus will make normal computation unreliable. Processing time, of
-       course, will increase with smaller voxel size. -->
-  <arg name="voxelSize"      default="0.004" />
 
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
@@ -42,22 +22,11 @@
   <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>
   <arg name="useCropBox" default="true" doc="use crop box based on table center."/>
 
-  <!-- sceneVisibility aka Relative object size is the expected fraction of the scene points
-       which belong to an object. For example a value of 0.05 means that each
-       object represented in the scene will contain at least 5% of all scene
-       points. TRADEOFF: lower values lead to more computation time and to
-       higher success probability. -->
 
   <arg name="sceneVisibility"  default=".1"  doc="ObjRecRANSAC: What visible proportion of an object is acceptable for a detection (0.0-1.0)."/>
 
-  <!-- Object visibility is the expected visible object part expressed as
-       fraction of the hole object. For example 'objectVisibility = 0.1' means
-       that 10% of the object surface is visible in the scene. Note that the
-       visibility can not be more than 0.5 since a typical camera can not see
-       more than the half of the object. TRADEOFF: smaller values allow for a
-       detection in occluded scenes but also lead to more false positives since
-       object hypotheses with small alignment with the scene will be accepted.
-       -->
+
+      
 
   <arg name="objectVisibility"  default=".15" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
 

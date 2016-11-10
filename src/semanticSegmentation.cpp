@@ -27,9 +27,6 @@ semanticSegmentation::semanticSegmentation() : class_ready_(false), visualizer_f
     use_binary_svm_(true), use_multi_class_svm_(false), number_of_added_models_(0), use_table_segmentation_(false), 
     pcl_downsample_(0.003), hier_ratio_(0.1), compute_pose_(false), use_cuda_(false)
 {
-#ifdef USE_CUDA
-    use_cuda_ = true;
-#endif
     uchar color_label_tmp[11][3] =
     { 
         {255, 255, 255},
@@ -54,17 +51,21 @@ semanticSegmentation::semanticSegmentation() : class_ready_(false), visualizer_f
     this->base_rotation_.setIdentity();
     this->shot_loaded_ = false;
     this->svm_loaded_ = false;
+    this->table_distance_threshold_ = 0.02;
+    this->table_angular_threshold_ =  2.0;
+    this->table_minimal_inliers_ =  5000;
 }
 
 void semanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_directory)
 {
     this->shot_loaded_ = true;
+    std::cerr << "Loading SHOT...\n";
     std::string shot_path = path_to_shot_directory;
     hie_producer = Hier_Pooler(hier_radius_);
     hie_producer.LoadDict_L0(shot_path, "200", "200");
     hie_producer.setRatio(hier_ratio_);
+    std::cerr << "Done.\n";
 }
-
 
 void semanticSegmentation::setUseMultiClassSVM(bool use_multi_class_svm)
 {
@@ -76,9 +77,9 @@ void semanticSegmentation::setUseBinarySVM(bool use_binary_svm)
     this->use_binary_svm_ = use_binary_svm;
 }
 
-void semanticSegmentation::setDirectorySVM(const std::string &path_to_svm_directory, bool multi_model_svm_)
+void semanticSegmentation::setDirectorySVM(const std::string &path_to_svm_directory)
 {
-    this->svm_loaded_ = true;
+    this->svm_loaded_ = (use_binary_svm_ || use_multi_class_svm_);
     binary_models_.resize(3);
     multi_models_.resize(3);
 
@@ -113,7 +114,7 @@ void semanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
         }
     }
 
-    std::cerr << "Done...\n";
+    std::cerr << "Done.\n";
 }
 
 void semanticSegmentation::setUseVisualization(bool visualization_flag)
@@ -121,40 +122,52 @@ void semanticSegmentation::setUseVisualization(bool visualization_flag)
     this->visualizer_flag_ = visualization_flag;
 }
 
-void semanticSegmentation::setPointCloudDownsampleValue(float down_ss)
+template <typename NumericType>
+void semanticSegmentation::setPointCloudDownsampleValue(NumericType down_ss)
 {
-    this->pcl_downsample_ = down_ss;
+    this->pcl_downsample_ = float(down_ss);
 }
 
-void semanticSegmentation::setHierFeaRatio(float ratio)
+template <typename NumericType>
+void semanticSegmentation::setHierFeaRatio(NumericType ratio)
 {
-    this->hier_ratio_ = ratio;
+    this->hier_ratio_ = float(ratio);
 }
 
-void semanticSegmentation::setCropBoxSize(const double &x, const double &y, const double &z)
+void semanticSegmentation::setUseCropBox(const bool &use_crop_box)
+{
+    this->use_crop_box_ = use_crop_box;
+}
+
+template <typename NumericType>
+void semanticSegmentation::setCropBoxSize(const NumericType &x, const NumericType &y, const NumericType &z)
 {
     this->crop_box_size_ = Eigen::Vector3f(x, y, z);
     this->crop_box_target_pose_.setIdentity();
-    this->use_crop_box_ = true;
 }
 
-void semanticSegmentation::setCropBoxPose(const Eigen::Affine3f &target_pose_relative_to_camera_frame)
+template <typename NumericType>
+void semanticSegmentation::setCropBoxSize(const Eigen::Matrix<NumericType, 3, 1> crop_box_size)
 {
-    this->crop_box_target_pose_ = target_pose_relative_to_camera_frame;
+    this->crop_box_size_ = Eigen::Vector3f(crop_box_size[0], crop_box_size[1], crop_box_size[2]);
+}
+
+template <typename NumericType>
+void semanticSegmentation::setCropBoxPose(const Eigen::Transform< NumericType, 3, Eigen::Affine> &target_pose_relative_to_camera_frame)
+{
+    this->crop_box_target_pose_ = target_pose_relative_to_camera_frame.cast();
 }
 
 void semanticSegmentation::setUseTableSegmentation(bool use_table_segmentation)
 {
     this->use_table_segmentation_ = use_table_segmentation;
-    this->table_distance_threshold_ = 0.02;
-    this->table_angular_threshold_ =  2.0;
-    this->table_minimal_inliers_ =  5000;
 }
 
-void semanticSegmentation::setCropAboveTableBoundary(const double &min, const double &max)
+template <typename NumericType>
+void semanticSegmentation::setCropAboveTableBoundary(const NumericType &min, const NumericType &max)
 {
-    this->above_table_min = min;
-    this->above_table_max = max;
+    this->above_table_min = double(min);
+    this->above_table_max = double(max);
 }
 
 void semanticSegmentation::loadTableFromFile(const std::string &table_pcd_path)
@@ -162,40 +175,73 @@ void semanticSegmentation::loadTableFromFile(const std::string &table_pcd_path)
     pcl::PCDReader reader;
     if( reader.read (table_pcd_path, *table_corner_points_) == 0){
         std::cerr << "Table load successfully\n";
-        have_table_ = true;
+        this->have_table_ = true;
         this->setUseTableSegmentation(true);
     }
     else {
-        have_table_ = false;
+        this->have_table_ = false;
         std::cerr << "Failed to load table. Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
     }
 }
 
-void semanticSegmentation::setTableSegmentationParameters(double table_distance_threshold, bool table_angular_threshold, unsigned int table_minimal_inliers)
+template <typename NumericType1, typename NumericType2>
+void semanticSegmentation::setTableSegmentationParameters(NumericType1 table_distance_threshold, bool table_angular_threshold, NumericType2 table_minimal_inliers)
 {
-    this->table_distance_threshold_ = table_distance_threshold;
+    this->table_distance_threshold_ = double(table_distance_threshold);
     this->table_angular_threshold_ = table_angular_threshold;
     this->table_minimal_inliers_ = table_minimal_inliers;
 }
 
-
 void semanticSegmentation::initializeSemanticSegmentation()
 {
-    // Disabled averaging for standalone semantic segmentation
+    if (this->svm_loaded_)
+        std::cerr << "SVM loaded\n";
+    else
+        std::cerr << "Please set the SVM directory\n";
+
+    if (this->shot_loaded_)
+        std::cerr << "SHOT loaded\n";
+    else
+        std::cerr << "Please set the SHOT directory\n";
 
     if (this->compute_pose_)
     {
+        std::cerr << "Number of loaded model = " << this->number_of_added_models_ << std::endl;
+        if (this->number_of_added_models_ == 0)
+            std::cerr << "No model has been loaded. Please add at least 1 model.\n";
         this->class_ready_ = (this->number_of_added_models_ > 0 && this->svm_loaded_ && this->shot_loaded_);
     }
     else
         this->class_ready_ = (this->svm_loaded_ && this->shot_loaded_);
-    
+
+    if (this->class_ready_)
+        std::cerr << "Semantic segmentation has initialized properly\n";
+    else
+    {
+        std::cerr << "Please resolve the problems before initializing semantic segmentation.\n";
+        return;
+    }
+
     if (!use_table_segmentation_) {
       std::cerr << "WARNING: not using table segmentation!\n";
     }
-    
+
     if (this->compute_pose_)
-        std::cerr << "Semantic Segmentation is running with objRecRANSACdetector: " << objRecRANSAC_mode_ << "\n";
+    {
+        std::cerr << "Semantic Segmentation is running with objRecRANSACdetector: " 
+        switch (objRecRANSAC_mode_)
+        {
+            case STANDARD_BEST:
+                std::cerr << "STANDARD_BEST \n";
+                break;
+            case STANDARD_RECOGNIZE:
+                std::cerr << "STANDARD_RECOGNIZE \n";
+                break;
+            case GREEDY_RECOGNIZE:
+                std::cerr << "GREEDY_RECOGNIZE \n";
+                break;
+        }
+    }
 
     lab_pooler_set.resize(6);
     for( size_t i = 1 ; i < lab_pooler_set.size() ; i++ )
@@ -220,17 +266,27 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
 }
 
-semanticSegmentation::~semanticSegmentation(){
-    for( int ll = 0 ; ll < 3 ; ll++ )
+semanticSegmentation::~semanticSegmentation()
+{
+    if (this->svm_loaded_)
     {
-        free_and_destroy_model(&binary_models_[ll]);
-        if (mesh_set_.size() > 1)
-            free_and_destroy_model(&multi_models_[ll]);
+        for( int ll = 0 ; ll < 3 ; ll++ )
+        {
+            free_and_destroy_model(&binary_models_[ll]);
+            if (use_multi_class_svm_)
+                free_and_destroy_model(&multi_models_[ll]);
+        }
     }
 }
 
 bool semanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd, const std::string &save_directory_path)
 {
+    if (!this->class_ready_)
+    {
+        std::cerr << "Please initialize semantic segmentation first before extracting table surface from point cloud\n";
+        return false;
+    }
+
     if (!this->use_table_segmentation_)
     {
         std::cerr << "use_table_segmentation is set to false. Please enable it first before trying to do table segmentation.\n";
@@ -270,6 +326,12 @@ bool semanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
 
 bool semanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<PointLT>::Ptr &result)
 {
+    if (!this->class_ready_)
+    {
+        std::cerr << "Please initialize semantic segmentation first before doing point cloud segmentation\n";
+        return false;
+    }
+    
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     *full_cloud = *input_cloud;
     if (!have_table_ && use_table_segmentation_)
@@ -362,9 +424,14 @@ bool semanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
 
 
 #ifdef USE_OBJRECRANSAC
-void semanticSegmentation::setUseComputePose(bool compute_pose)
+void semanticSegmentation::setUseComputePose(const bool compute_pose)
 {
     this->compute_pose_ = compute_pose;
+}
+
+void semanticSegmentation::setUseCuda(const bool use_cuda)
+{
+    this->use_cuda_ = use_cuda;
 }
 
 void semanticSegmentation::addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter)
@@ -394,10 +461,16 @@ void semanticSegmentation::addModel(const std::string &path_to_model_directory, 
     object_class_transform_index_[model_name] = 0;
 }
 
-void semanticSegmentation::addModelSymmetricProperty(const std::string &model_name, const double &roll, const double &pitch, const double &yaw, const double &step, const std::string &preferred_axis)
+template <typename NumericType>
+void semanticSegmentation::addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis)
 {
     objectSymmetry symmetric_property;
     object_dict_[model_name] = objectSymmetry(roll, pitch, yaw, preferred_axis, step);
+}
+
+void semanticSegmentation::addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict)
+{
+    this->object_dict_ = object_dict;
 }
 
 void semanticSegmentation::setModeObjRecRANSAC(const int &mode)
@@ -405,16 +478,26 @@ void semanticSegmentation::setModeObjRecRANSAC(const int &mode)
     this->objRecRANSAC_mode_ = mode;
 }
 
-void semanticSegmentation::setMinConfidenceObjRecRANSAC(const double &min_confidence)
+template <typename NumericType>
+void semanticSegmentation::setMinConfidenceObjRecRANSAC(const NumericType &min_confidence)
 {
-    this->min_objrecransac_confidence = min_confidence;
+    this->min_objrecransac_confidence = double(min_confidence);
 }
 
-template <typename numericalData>
-void semanticSegmentation::setPreferredOrientation(Eigen::Quaternion<numericalData> base_rotation)
+void semanticSegmentation::setUsePreferredOrientation(const bool use_preferred_orientation)
 {
-    this->base_rotation_ = Eigen::Quaternion<double>(base_rotation.w(), base_rotation.x(), base_rotation.y(), base_rotation.z() );
-    this->use_preferred_orientation_ = true;
+    this->use_preferred_orientation_ = use_preferred_orientation;
+}
+
+template <typename NumericType>
+void semanticSegmentation::setPreferredOrientation(Eigen::Quaternion<NumericType> base_rotation)
+{
+    if (!this->use_preferred_orientation_) std::cerr << "WARNING: setUsePreferredOrientation is false. No orientation preference will be used\n";
+    else
+    {
+        std::cerr << "Preferred orientation has been set.\n";
+        this->base_rotation_ = base_rotation.cast();
+    }
 }
 
 void semanticSegmentation::setUseObjectPersistence(const bool use_object_persistence)
@@ -424,6 +507,12 @@ void semanticSegmentation::setUseObjectPersistence(const bool use_object_persist
 
 std::vector<objectTransformInformation> semanticSegmentation::calculateObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud)
 {
+    if (!this->class_ready_)
+    {
+        std::cerr << "Please initialize semantic segmentation first before calculating obj transform\n";
+        return std::vector<objectTransformInformation>();
+    }
+
     std::vector<poseT> all_poses;
     if (use_multi_class_svm_)
     {
@@ -520,6 +609,11 @@ std::vector<objectTransformInformation> semanticSegmentation::calculateObjTransf
 
 std::vector<objectTransformInformation> semanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
 {
+    if (!this->class_ready_)
+    {
+        std::cerr << "Please initialize semantic segmentation first before updating one obj transform\n";
+        return std::vector<objectTransformInformation>();
+    }    
     std::vector<poseT> all_poses;
     if (use_multi_class_svm_)
     {

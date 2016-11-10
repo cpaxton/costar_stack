@@ -29,14 +29,16 @@ struct objectSymmetry
     double preferred_step;
 
     // NOTE: input is in degrees
-    objectSymmetry(const double &inputRoll, const double &inputPitch, const double &inputYaw)
+    template <typename NumericType>
+    objectSymmetry(const NumericType &inputRoll, const NumericType &inputPitch, const NumericType &inputYaw)
         : roll(inputRoll*degToRad), pitch(inputPitch*degToRad), yaw(inputYaw * degToRad),
           preferred_axis(""),
           preferred_step(0.0) {}
 
     // NOTE: input is in degrees
-    objectSymmetry(const double &inputRoll, const double &inputPitch, const double &inputYaw,
-        const std::string &axis, const double& step)
+    template <typename NumericType>
+    objectSymmetry(const NumericType &inputRoll, const NumericType &inputPitch, const NumericType &inputYaw,
+        const std::string &axis, const NumericType& step)
         : roll(inputRoll*degToRad), pitch(inputPitch*degToRad), yaw(inputYaw * degToRad),
           preferred_axis(axis),
           preferred_step(step*degToRad) {}
