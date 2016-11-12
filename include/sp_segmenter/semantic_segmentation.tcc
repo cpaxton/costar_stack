@@ -61,7 +61,7 @@ void SemanticSegmentation::setCropAboveTableBoundary(const NumericType &min, con
 }
 
 template <typename NumericType1, typename NumericType2>
-void SemanticSegmentation::setTableSegmentationParameters(NumericType1 table_distance_threshold, bool table_angular_threshold, NumericType2 table_minimal_inliers)
+void SemanticSegmentation::setTableSegmentationParameters(NumericType1 table_distance_threshold, NumericType1 table_angular_threshold, NumericType2 table_minimal_inliers)
 {
     this->table_distance_threshold_ = double(table_distance_threshold);
     this->table_angular_threshold_ = table_angular_threshold;

@@ -61,6 +61,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
     		if (viewer)
     		{
     			std::stringstream ss; ss << "Region" << i;
+    			viewer->setWindowName(ss.str());
 	            viewer->removeAllPointClouds();
 	            viewer->addPointCloud(contour, ss.str());
 	            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0f, 0.0f, 0.0f,ss.str());
@@ -78,6 +79,5 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
         hull.setDimension(2);
         hull.reconstruct(*convexHull);
     }
-    else std::cerr << "Failed to segment Table.\n";
     return convexHull;
 }

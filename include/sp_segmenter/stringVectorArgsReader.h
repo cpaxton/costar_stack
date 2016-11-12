@@ -1,11 +1,7 @@
 #ifndef STRINGVECTORARGSREADER_H_
 #define STRINGVECTORARGSREADER_H_
 
-#include "sp_segmenter/features.h"
-
-// ros header for roslaunch capability
-#include <ros/ros.h>
-
+inline
 std::vector<std::string> stringVectorArgsReader (const ros::NodeHandle &nh,
     const std::string &param_name, const std::string &default_value)
 {

@@ -111,7 +111,7 @@ public:
         void setCropAboveTableBoundary(const NumericType &min, const NumericType &max);
     void loadTableFromFile(const std::string &table_pcd_path);
     template <typename NumericType1, typename NumericType2>
-        void setTableSegmentationParameters(NumericType1 table_distance_threshold, bool table_angular_threshold, NumericType2 table_minimal_inliers);
+        void setTableSegmentationParameters(NumericType1 table_distance_threshold, NumericType1 table_angular_threshold, NumericType2 table_minimal_inliers);
 
     void setUseComputePose(const bool compute_pose);
     void setUseCuda(const bool use_cuda);

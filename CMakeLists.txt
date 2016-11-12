@@ -3,8 +3,8 @@ project(sp_segmenter C CXX)
 
 SET(CMAKE_BUILD_TYPE "Release")
 
-OPTION(BUILD_ROS_BINDING "Build ROS Binding" OFF)
-OPTION(USE_OBJRECRANSAC "Use ObjRecRANSAC" OFF)
+OPTION(BUILD_ROS_BINDING "Build ROS Binding" ON)
+OPTION(USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
 
 
 # Enable C++11
@@ -62,20 +62,24 @@ IF (BUILD_ROS_BINDING)
   if (APPLE)
     catkin_package(
       CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime
-      DEPENDS PCL OpenCV ObjRecRANSAC
+      # DEPENDS PCL OpenCV ObjRecRANSAC
     )
   else()
     catkin_package(
       CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime
-      DEPENDS PCL OpenCV OpenMP ObjRecRANSAC
+      # DEPENDS PCL OpenCV OpenMP
     )
   endif()
 ENDIF()
 
 
 IF (BUILD_ROS_BINDING)
-  include_directories(include utility ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
-  link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} ${catkin_LIBRARY_DIRS})
+  include_directories(include utility ${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS} 
+  )
+  link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} 
+    ${catkin_LIBRARY_DIRS} 
+  ) 
 ELSE()
   include_directories(include utility)
   include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
@@ -102,9 +106,9 @@ add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segment
 
 # Enable OBJRECRANSAC
 IF (USE_OBJRECRANSAC)
-  ADD_DEFINITIONS( -DUSE_OBJRECRANSAC)
   find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
-
+  message(status "ObjRecRANSAC enabled")
+  ADD_DEFINITIONS( -DUSE_OBJRECRANSAC)
   add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
   target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY})
 
@@ -134,6 +138,7 @@ IF (USE_OBJRECRANSAC)
   target_link_libraries(SemanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
                 ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 ELSE()
+  message(status "ObjRecRANSAC disabled")
   target_link_libraries(SemanticSegmentation Utility DataParser PoolLib
                 ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 ENDIF()
@@ -147,10 +152,7 @@ IF (BUILD_ROS_BINDING)
                   ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 
   add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
-  target_link_libraries(SPSegmenterServer RosSemanticSegmentation ${catkin_LIBRARIES})
-ELSE()
-  add_executable(SPSegmenterTest src/sp_segmenter_test.cpp)
-  target_link_libraries(SPSegmenterTest SemanticSegmentation)
+  target_link_libraries(SPSegmenterServer RosSemanticSegmentation)
 ENDIF()
 
 # add_executable(spCompact src/main_sp_compact.cpp)

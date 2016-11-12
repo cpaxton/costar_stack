@@ -8,7 +8,8 @@
   <arg name="debug_args"     default=""/>
 
   <!-- Segmentation Parameters parameters-->
-  <arg name="params"         default="" />
+  <arg name="compute_pose"          default="true" />
+  <arg name="visualization"         default="false" />
 
 
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
@@ -21,20 +22,10 @@
 
   <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>
   <arg name="useCropBox" default="true" doc="use crop box based on table center."/>
-
-
-  <arg name="sceneVisibility"  default=".1"  doc="ObjRecRANSAC: What visible proportion of an object is acceptable for a detection (0.0-1.0)."/>
-
-
-      
-
-  <arg name="objectVisibility"  default=".15" doc="ObjRecRANSAC: relative size of the object with respect to the scene. aka what portion of the object is expected to be visible in the scene.  Each time we see an object we only see a partial match,  and the partial match portion (0.0-1.0). Note that the term scene consists of actual points sent to this object, not necessarily the full frame of a sensor. "/>
-
-
   <arg name="aboveTableMin"     default="0.015" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
   <arg name="aboveTableMax"     default="0.5" doc="The maximum point cloud distance from segmented table." />
 
-  <arg name="tableTF"        default="ar_marker_2" doc="Any TF frame located in the table can be used for table segmentation" />
+  <arg name="tableTF"        default="ar_marker_3" doc="Any TF frame located in the table can be used for table segmentation" />
   <arg name="saveTabledir"   default="$(arg data_path)" doc="Save/Load folder for segmenting table" />
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
@@ -54,13 +45,13 @@
   <arg name="poses_out"      default="poses_out"/>
   <arg name="useTF"          default="true" doc="Whether use TF frames instead of pose array for object pose representation" />
   <!--<node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)" launch-prefix="valgrind - -log-file=$(env HOME)/valgrind.log">  -->
-  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)">  
+  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p " output="screen"> 
+    <param name="compute_pose"   type="bool"   value="$(arg compute_pose)"/>
+    <param name="visualization"  type="bool"   value="$(arg visualization)"/>
     <!-- SPSegmenterNode Node arg pass -->
     <param name="cur_name"   type="str" value="$(arg object)" />
     <param name="objRecRANSACdetector" type="str" value="$(arg objRecRANSACdetector)" />
     <param name="minConfidence"  type="double" value="$(arg minConfidence)"/>
-    <param name="sceneVisibility"  type="double" value="$(arg sceneVisibility)"/>
-    <param name="objectVisibility"  type="double" value="$(arg objectVisibility)"/>
     <param name="aboveTableMin"     type="double" value="$(arg aboveTableMin)"/>
     <param name="aboveTableMax"     type="double" value="$(arg aboveTableMax)"/>
     <param name="use_cuda"   type="bool"   value="$(arg use_cuda)"/>
@@ -69,7 +60,7 @@
     <param name="cropBoxX" type="double" value="0.35"/>
     <param name="cropBoxY" type="double" value="0.35"/>
     <param name="cropBoxZ" type="double" value="0.35"/>
-    <param name="cropBoxTableZ" type="double" value="0.005"/>
+    <param name="cropBoxTableZ" type="double" value="0.01"/>
 
     <param name="cropBoxGripperX" type="double" value="0.05"/>
     <param name="cropBoxGripperY" type="double" value="0.125"/>
@@ -99,10 +90,6 @@
     <param name="POINTS_OUT" type="str" value="$(arg pcl_out)"/>
     <param name="POSES_OUT"  type="str" value="$(arg poses_out)"/>
     <!-- param name="pairWidth"  type="double" value="$(arg pairWidth)"/ -->
-    <param name="link_width"  type="double" value="$(arg link_width)"/>
-    <param name="node_width"  type="double" value="$(arg node_width)"/>
-    <param name="sander_width"  type="double" value="$(arg sander_width)"/>
-    <param name="voxelSize"  type="double" value="$(arg voxelSize)"/>
 
     <param name="svm_path"   type="str" value="$(arg data_path)/$(arg svm_path)/" />
     <param name="useTF"      type="bool" value="$(arg useTF)" />

@@ -254,7 +254,7 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
     
     if( viewer )
     {
-        std::cerr<<"Visualize cropbox screen"<<std::endl;
+        viewer->setWindowName("Cropbox Screen");
         viewer->removeAllPointClouds();
         viewer->addPointCloud(full_cloud, "cropbox_scene");
         viewer->spin();
@@ -273,7 +273,7 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
         std::cerr << "Saved table point cloud in : " << save_directory_path <<"/table.pcd"<<std::endl;
     }
     std::cerr << "Sucessfully segment the table.\n";
-
+    this->have_table_ = true;
     return true;
 }
 
@@ -315,7 +315,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
 
     if( viewer )
     {
-        std::cerr<<"Visualize table segmented screen"<<std::endl;
+        viewer->setWindowName("Table Segmented Screen");
         viewer->removeAllPointClouds();
         viewer->addPointCloud(full_cloud, "whole_scene");
         viewer->spin();
@@ -421,11 +421,11 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
     else
     {
         individual_ObjRecRANSAC_.push_back(boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_)));
-        this->number_of_added_models_++;
         individual_ObjRecRANSAC_[number_of_added_models_]->setParams(parameter.object_visibility_,parameter.scene_visibility_);
         individual_ObjRecRANSAC_[number_of_added_models_]->setUseCUDA(use_cuda_);
         individual_ObjRecRANSAC_[number_of_added_models_]->AddModel(path_to_model_directory + model_name, model_name);
         model_name_map_[model_name] = number_of_added_models_;
+        this->number_of_added_models_++;
     }
     ModelT mesh_buf = LoadMesh(path_to_model_directory + model_name, model_name);  
     mesh_set_.push_back(mesh_buf);

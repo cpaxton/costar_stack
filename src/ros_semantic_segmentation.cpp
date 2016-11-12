@@ -1,6 +1,7 @@
 #include "sp_segmenter/ros_semantic_segmentation.h"
 #include <pcl/filters/crop_box.h>
 #include <tf_conversions/tf_eigen.h>
+#include "sp_segmenter/stringVectorArgsReader.h"
 
 segmentedObjectTF::segmentedObjectTF()
 {
@@ -127,7 +128,7 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     this->nh.param("useTableSegmentation",useTableSegmentation,true);
     this->nh.param("aboveTableMin", aboveTableMin, 0.01);
     this->nh.param("aboveTableMax", aboveTableMax, 0.25);
-    this->nh.param("loadTable",loadTable, true);
+    this->nh.param("loadTable",loadTable, false);
     this->nh.param("tableDistanceThreshold",tableDistanceThreshold,0.02);
     this->nh.param("tableAngularThreshold",tableAngularThreshold,2.0);
     this->nh.param("tableMinimalInliers",tableMinimalInliers,5000.0);
@@ -140,6 +141,11 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
         this->loadTableFromFile(load_directory+"/table.pcd");
     }
     this->setTableSegmentationParameters(tableDistanceThreshold,tableAngularThreshold,tableMinimalInliers);
+
+    // Setting up visualization
+    bool visualization;
+    this->nh.param("visualization",visualization,true);
+    this->setUseVisualization(visualization);
 
     // Setting up ObjRecRANSAC
     bool compute_pose, use_cuda, setObjectOrientationTarget,useObjectPersistence;
@@ -371,7 +377,6 @@ void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformati
     object_list.header.stamp = ros::Time::now();
     object_list.header.frame_id =  inputCloud.header.frame_id;
 
-    std::cerr << "detected poses: " << all_poses.size() << "\n";
     for (std::vector<objectTransformInformation>::const_iterator it = all_poses.begin(); it != all_poses.end(); ++it)
     {
         segmentedObjectTF objectTmp(*it);
@@ -500,6 +505,7 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
             return false;
         }
         this->populateTFMap(object_transform_result);
+        hasTF = true;
         return true;
     }
     else
