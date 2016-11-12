@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sp_segmenter C CXX)
+
 SET(CMAKE_BUILD_TYPE "Release")
 
-OPTION(BUILD_ROS_BINDING "Build ROS Binding" OFF)
+OPTION(BUILD_ROS_BINDING "Build ROS Binding" ON)
 OPTION(USE_OBJRECRANSAC "Use ObjRecRANSAC" OFF)
+
 
 # Enable C++11
 include(CheckCXXCompilerFlag)
@@ -45,10 +47,40 @@ IF(OPENMP_FOUND)
   message (STATUS "Found OpenMP")
 ENDIF(OPENMP_FOUND)
 
-include_directories(include utility)
-include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+# Build ROS BINDING
+IF (BUILD_ROS_BINDING)
+  find_package(catkin REQUIRED COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions cv_bridge costar_objrec_msgs QUIET)
 
-link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS})
+  ADD_DEFINITIONS( -DBUILD_ROS_BINDING)
+
+  add_service_files(
+    FILES SPSegmenterServer.srv SegmentInGripper.srv
+  )
+
+  generate_messages( DEPENDENCIES std_msgs )
+
+  if (APPLE)
+    catkin_package(
+      CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime
+      DEPENDS PCL OpenCV ObjRecRANSAC
+    )
+  else()
+    catkin_package(
+      CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime
+      DEPENDS PCL OpenCV OpenMP ObjRecRANSAC
+    )
+  endif()
+ENDIF()
+
+
+IF (BUILD_ROS_BINDING)
+  include_directories(include utility ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+  link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBRARY_DIRS} ${catkin_LIBRARY_DIRS})
+ELSE()
+  include_directories(include utility)
+  include_directories(${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+ENDIF()
+
 add_definitions(${PCL_DEFINITIONS} ${OpenCV_DEFINITIONS}) 
 
 add_library(Utility
@@ -65,6 +97,10 @@ target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_
 target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
+
+add_library(SemanticSegmentation
+  include/sp_segmenter/semantic_segmentation.h
+  src/semantic_segmentation.cpp)
 
 # Enable OBJRECRANSAC
 IF (USE_OBJRECRANSAC)
@@ -96,48 +132,25 @@ IF (USE_OBJRECRANSAC)
     #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_1)
     #add_definitions(-DOBJ_REC_RANSAC_VERBOSE_2)
   ENDIF()
-ENDIF()
 
-
-# Build ROS BINDING
-IF (BUILD_ROS_BINDING)
-  ADD_DEFINITIONS( -DBUILD_ROS_BINDING)
-  find_package(catkin COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions cv_bridge costar_objrec_msgs QUIET)
-  include_directories(${catkin_INCLUDE_DIRS})
-  link_directories(${catkin_LIBRARY_DIRS})
-
-  if(catkin_FOUND)
-      add_service_files(
-        FILES
-        SPSegmenterServer.srv
-        segmentInGripper.srv
-      )
-
-      generate_messages(
-        DEPENDENCIES
-        std_msgs
-      )
-
-    if (APPLE)
-      catkin_package(
-        CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
-        DEPENDS PCL OpenCV ObjRecRANSAC
-      )
-    else()
-      catkin_package(
-        CATKIN_DEPENDS sensor_msgs geometry_msgs message_runtime #greedy_objrec_ransac
-        DEPENDS PCL OpenCV OpenMP ObjRecRANSAC
-      )
-    endif()
-  endif()
-ENDIF()
-
-add_library(semanticSegmentation
-  include/sp_segmenter/semanticSegmentation.h
-  src/semanticSegmentation.cpp) 
-
-target_link_libraries(semanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
+  target_link_libraries(SemanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
                 ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+ELSE()
+  target_link_libraries(SemanticSegmentation Utility DataParser PoolLib
+                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+ENDIF()
+ 
+IF (BUILD_ROS_BINDING)
+  add_library(RosSemanticSegmentation
+    include/sp_segmenter/ros_semantic_segmentation.h
+    src/ros_semantic_segmentation.cpp)
+
+  target_link_libraries(RosSemanticSegmentation ${catkin_LIBRARIES} SemanticSegmentation Utility DataParser PoolLib
+                  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+
+  add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
+  target_link_libraries(SPSegmenterServer RosSemanticSegmentation ${catkin_LIBRARIES})
+ENDIF()
 
 # add_executable(spCompact src/main_sp_compact.cpp)
 # target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES}
@@ -147,16 +160,6 @@ target_link_libraries(semanticSegmentation Utility DataParser PoolLib GreedyObjR
 # target_link_libraries(SimpleSegmenter Utility DataParser PoolLib GreedyObjRecRANSAC
 #               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 # 
-# add_executable(SPSegmenterNode src/main_ros.cpp) 
-# target_link_libraries(SPSegmenterNode Utility DataParser PoolLib Tracking GreedyObjRecRANSAC
-#             ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
-# 
-# add_executable(foreRun src/main_foreground.cpp)
-# target_link_libraries(foreRun Utility PoolLib GreedyObjRecRANSAC ${OpenCV_LIBS} ${PCL_LIBRARIES} ${VTK_LIBS})
-# 
-# add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
-# target_link_libraries(SPSegmenterServer semanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
-#                 ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 # 
 # add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)
 # target_link_libraries(TestSymmetricOrientationRealignment semanticSegmentation Utility DataParser PoolLib ${Boost_LIBRARIES} )

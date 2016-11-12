@@ -8,17 +8,18 @@
 #include "sp_segmenter/features.h"
 #include "sp_segmenter/JHUDataParser.h"
 #include "sp_segmenter/plane.h"
-#include "sp_segmenter/refinePoses.h"
+// #include "sp_segmenter/refinePoses.h"
 #include "sp_segmenter/common.h"
 #include "sp_segmenter/stringVectorArgsReader.h"
 #include "sp_segmenter/seg.h"
 #include "sp_segmenter/spatial_pose.h"
 #include "sp_segmenter/table_segmenter.h"
 
+enum ObjRecRansacMode {STANDARD_BEST, STANDARD_RECOGNIZE, GREEDY_RECOGNIZE};
+
 #ifdef USE_OBJRECRANSAC
 #include "sp_segmenter/greedyObjRansac.h"
-
-enum ObjRecRansacMode {STANDARD_BEST, STANDARD_RECOGNIZE, GREEDY_RECOGNIZE};
+#endif
 
 struct ModelObjRecRANSACParameter
 {
@@ -43,7 +44,6 @@ struct ModelObjRecRANSACParameter
     double scene_visibility_;
 
 };
-#endif
 
 #define OBJECT_MAX 100
 struct objectTransformInformation
@@ -59,17 +59,28 @@ struct objectTransformInformation
     objectTransformInformation(const std::string &transform_name, const poseT &ObjRecRANSAC_result) : transform_name_(transform_name), model_name_(ObjRecRANSAC_result.model_name),
         origin_(ObjRecRANSAC_result.shift), rotation_(ObjRecRANSAC_result.rotation), confidence_(ObjRecRANSAC_result.confidence)
     {};
+
+    poseT asPoseT() const
+    {
+        poseT result;
+        result.model_name = this->model_name_;
+        result.shift = this->origin_;
+        result.rotation = this->rotation_;
+        result.confidence = this->confidence_;
+        return result;
+    }
 };
 
-class semanticSegmentation
+class SemanticSegmentation
 {
 public:
-    semanticSegmentation();
-    ~semanticSegmentation();
+    SemanticSegmentation();
+    ~SemanticSegmentation();
 
     void initializeSemanticSegmentation();
     bool getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd = false, const std::string &save_directory_path = ".");
     bool segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<PointLT>::Ptr &result);
+    void convertPointCloudLabelToRGBA(const pcl::PointCloud<PointLT>::Ptr &input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &output) const;
 #ifdef USE_OBJRECRANSAC
     std::vector<objectTransformInformation> calculateObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud);
     std::vector<objectTransformInformation> getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type);
@@ -103,27 +114,26 @@ public:
     template <typename NumericType1, typename NumericType2>
         void setTableSegmentationParameters(NumericType1 table_distance_threshold, bool table_angular_threshold, NumericType2 table_minimal_inliers);
 
-#ifdef USE_OBJRECRANSAC
     void setUseComputePose(const bool compute_pose);
     void setUseCuda(const bool use_cuda);
-    void addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter);
+    void setModeObjRecRANSAC(const int &mode);
     template <typename NumericType>
         void addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis);
     void addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict);
-    void setModeObjRecRANSAC(const int &mode);
-    template <typename NumericType>
-        void setMinConfidenceObjRecRANSAC(const NumericType &min_confidence);
     void setUseObjectPersistence(const bool use_object_persistence);
-
     void setUsePreferredOrientation(const bool use_preferred_orientation);
     template <typename NumericType>
         void setPreferredOrientation(Eigen::Quaternion<NumericType> base_rotation);
+    template <typename NumericType>
+        void setMinConfidenceObjRecRANSAC(const NumericType &min_confidence);
+#ifdef USE_OBJRECRANSAC
+    void addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter);
 #endif
 
 protected:
     void cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
       const Eigen::Affine3f& camera_transform_in_target, 
-      const Eigen::Vector3f& box_size);
+      const Eigen::Vector3f& box_size) const;
 
     bool class_ready_;
     bool visualizer_flag_;
@@ -163,21 +173,23 @@ protected:
     Eigen::Quaternion<double> base_rotation_;
     bool use_object_persistence_;
 
+    std::map<std::string, objectSymmetry> object_dict_;
+    // keep information about TF index
+    std::map<std::string, unsigned int> object_class_transform_index_;
 #ifdef USE_OBJRECRANSAC
     boost::shared_ptr<greedyObjRansac> combined_ObjRecRANSAC_;
     std::vector<boost::shared_ptr<greedyObjRansac> > individual_ObjRecRANSAC_;
-    // keep information about TF index
-    std::map<std::string, unsigned int> object_class_transform_index_;
 
     // map of symmetries for orientation normalization
-    std::map<std::string, objectSymmetry> object_dict_;
     objectRtree segmented_object_tree_;
 #endif
-
     pcl::visualization::PCLVisualizer::Ptr viewer;
     Hier_Pooler hie_producer;
     std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set;
     
     uchar color_label[11][3];
 };
+
+// template function implementation
+#include "sp_segmenter/semantic_segmentation.tcc"
 #endif

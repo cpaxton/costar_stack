@@ -1,4 +1,4 @@
-#include "sp_segmenter/semanticSegmentation.h"
+#include "sp_segmenter/semantic_segmentation.h"
 
 #ifdef USE_OBJRECRANSAC
 void ModelObjRecRANSACParameter::setPairWidth(const double &pair_width)
@@ -23,7 +23,7 @@ void ModelObjRecRANSACParameter::setSceneVisibility(const double &scene_visibili
 #endif
 
 
-semanticSegmentation::semanticSegmentation() : class_ready_(false), visualizer_flag_(false), use_crop_box_(false), 
+SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_flag_(false), use_crop_box_(false), 
     use_binary_svm_(true), use_multi_class_svm_(false), number_of_added_models_(0), use_table_segmentation_(false), 
     pcl_downsample_(0.003), hier_ratio_(0.1), compute_pose_(false), use_cuda_(false)
 {
@@ -56,7 +56,7 @@ semanticSegmentation::semanticSegmentation() : class_ready_(false), visualizer_f
     this->table_minimal_inliers_ =  5000;
 }
 
-void semanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_directory)
+void SemanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_directory)
 {
     this->shot_loaded_ = true;
     std::cerr << "Loading SHOT...\n";
@@ -67,17 +67,17 @@ void semanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_dire
     std::cerr << "Done.\n";
 }
 
-void semanticSegmentation::setUseMultiClassSVM(bool use_multi_class_svm)
+void SemanticSegmentation::setUseMultiClassSVM(bool use_multi_class_svm)
 {
     this->use_multi_class_svm_ = use_multi_class_svm;
 }
 
-void semanticSegmentation::setUseBinarySVM(bool use_binary_svm)
+void SemanticSegmentation::setUseBinarySVM(bool use_binary_svm)
 {
     this->use_binary_svm_ = use_binary_svm;
 }
 
-void semanticSegmentation::setDirectorySVM(const std::string &path_to_svm_directory)
+void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_directory)
 {
     this->svm_loaded_ = (use_binary_svm_ || use_multi_class_svm_);
     binary_models_.resize(3);
@@ -117,60 +117,21 @@ void semanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
     std::cerr << "Done.\n";
 }
 
-void semanticSegmentation::setUseVisualization(bool visualization_flag)
+void SemanticSegmentation::setUseVisualization(bool visualization_flag)
 {
     this->visualizer_flag_ = visualization_flag;
 }
-
-template <typename NumericType>
-void semanticSegmentation::setPointCloudDownsampleValue(NumericType down_ss)
-{
-    this->pcl_downsample_ = float(down_ss);
-}
-
-template <typename NumericType>
-void semanticSegmentation::setHierFeaRatio(NumericType ratio)
-{
-    this->hier_ratio_ = float(ratio);
-}
-
-void semanticSegmentation::setUseCropBox(const bool &use_crop_box)
+void SemanticSegmentation::setUseCropBox(const bool &use_crop_box)
 {
     this->use_crop_box_ = use_crop_box;
 }
 
-template <typename NumericType>
-void semanticSegmentation::setCropBoxSize(const NumericType &x, const NumericType &y, const NumericType &z)
-{
-    this->crop_box_size_ = Eigen::Vector3f(x, y, z);
-    this->crop_box_target_pose_.setIdentity();
-}
-
-template <typename NumericType>
-void semanticSegmentation::setCropBoxSize(const Eigen::Matrix<NumericType, 3, 1> crop_box_size)
-{
-    this->crop_box_size_ = Eigen::Vector3f(crop_box_size[0], crop_box_size[1], crop_box_size[2]);
-}
-
-template <typename NumericType>
-void semanticSegmentation::setCropBoxPose(const Eigen::Transform< NumericType, 3, Eigen::Affine> &target_pose_relative_to_camera_frame)
-{
-    this->crop_box_target_pose_ = target_pose_relative_to_camera_frame.cast();
-}
-
-void semanticSegmentation::setUseTableSegmentation(bool use_table_segmentation)
+void SemanticSegmentation::setUseTableSegmentation(bool use_table_segmentation)
 {
     this->use_table_segmentation_ = use_table_segmentation;
 }
 
-template <typename NumericType>
-void semanticSegmentation::setCropAboveTableBoundary(const NumericType &min, const NumericType &max)
-{
-    this->above_table_min = double(min);
-    this->above_table_max = double(max);
-}
-
-void semanticSegmentation::loadTableFromFile(const std::string &table_pcd_path)
+void SemanticSegmentation::loadTableFromFile(const std::string &table_pcd_path)
 {
     pcl::PCDReader reader;
     if( reader.read (table_pcd_path, *table_corner_points_) == 0){
@@ -184,15 +145,7 @@ void semanticSegmentation::loadTableFromFile(const std::string &table_pcd_path)
     }
 }
 
-template <typename NumericType1, typename NumericType2>
-void semanticSegmentation::setTableSegmentationParameters(NumericType1 table_distance_threshold, bool table_angular_threshold, NumericType2 table_minimal_inliers)
-{
-    this->table_distance_threshold_ = double(table_distance_threshold);
-    this->table_angular_threshold_ = table_angular_threshold;
-    this->table_minimal_inliers_ = table_minimal_inliers;
-}
-
-void semanticSegmentation::initializeSemanticSegmentation()
+void SemanticSegmentation::initializeSemanticSegmentation()
 {
     if (this->svm_loaded_)
         std::cerr << "SVM loaded\n";
@@ -228,7 +181,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
     if (this->compute_pose_)
     {
-        std::cerr << "Semantic Segmentation is running with objRecRANSACdetector: " 
+        std::cerr << "Semantic Segmentation is running with objRecRANSACdetector: ";
         switch (objRecRANSAC_mode_)
         {
             case STANDARD_BEST:
@@ -266,7 +219,7 @@ void semanticSegmentation::initializeSemanticSegmentation()
 
 }
 
-semanticSegmentation::~semanticSegmentation()
+SemanticSegmentation::~SemanticSegmentation()
 {
     if (this->svm_loaded_)
     {
@@ -279,7 +232,7 @@ semanticSegmentation::~semanticSegmentation()
     }
 }
 
-bool semanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd, const std::string &save_directory_path)
+bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd, const std::string &save_directory_path)
 {
     if (!this->class_ready_)
     {
@@ -324,7 +277,7 @@ bool semanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
     return true;
 }
 
-bool semanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<PointLT>::Ptr &result)
+bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<PointLT>::Ptr &result)
 {
     if (!this->class_ready_)
     {
@@ -422,19 +375,37 @@ bool semanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     return true;
 }
 
+void SemanticSegmentation::convertPointCloudLabelToRGBA(const pcl::PointCloud<PointLT>::Ptr &input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &output) const
+{
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr result(new pcl::PointCloud<pcl::PointXYZRGBA>);
+    for (pcl::PointCloud<PointLT>::const_iterator it = input->begin(); it != input->end(); ++it)
+    {
+        pcl::PointXYZRGBA point;
+        point.x = it->x;
+        point.y = it->y;
+        point.z = it->z;
+        point.r = color_label[it->label][0];
+        point.b = color_label[it->label][1];
+        point.g = color_label[it->label][2];
+        point.a = 255;
+        result->push_back(point);
+    }
+    output = result;
+}
+
 
 #ifdef USE_OBJRECRANSAC
-void semanticSegmentation::setUseComputePose(const bool compute_pose)
+void SemanticSegmentation::setUseComputePose(const bool compute_pose)
 {
     this->compute_pose_ = compute_pose;
 }
 
-void semanticSegmentation::setUseCuda(const bool use_cuda)
+void SemanticSegmentation::setUseCuda(const bool use_cuda)
 {
     this->use_cuda_ = use_cuda;
 }
 
-void semanticSegmentation::addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter)
+void SemanticSegmentation::addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter)
 {
     if (!use_multi_class_svm_)
     {
@@ -461,51 +432,28 @@ void semanticSegmentation::addModel(const std::string &path_to_model_directory, 
     object_class_transform_index_[model_name] = 0;
 }
 
-template <typename NumericType>
-void semanticSegmentation::addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis)
-{
-    objectSymmetry symmetric_property;
-    object_dict_[model_name] = objectSymmetry(roll, pitch, yaw, preferred_axis, step);
-}
 
-void semanticSegmentation::addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict)
+void SemanticSegmentation::addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict)
 {
     this->object_dict_ = object_dict;
 }
 
-void semanticSegmentation::setModeObjRecRANSAC(const int &mode)
+void SemanticSegmentation::setModeObjRecRANSAC(const int &mode)
 {
     this->objRecRANSAC_mode_ = mode;
 }
 
-template <typename NumericType>
-void semanticSegmentation::setMinConfidenceObjRecRANSAC(const NumericType &min_confidence)
-{
-    this->min_objrecransac_confidence = double(min_confidence);
-}
-
-void semanticSegmentation::setUsePreferredOrientation(const bool use_preferred_orientation)
+void SemanticSegmentation::setUsePreferredOrientation(const bool use_preferred_orientation)
 {
     this->use_preferred_orientation_ = use_preferred_orientation;
 }
 
-template <typename NumericType>
-void semanticSegmentation::setPreferredOrientation(Eigen::Quaternion<NumericType> base_rotation)
-{
-    if (!this->use_preferred_orientation_) std::cerr << "WARNING: setUsePreferredOrientation is false. No orientation preference will be used\n";
-    else
-    {
-        std::cerr << "Preferred orientation has been set.\n";
-        this->base_rotation_ = base_rotation.cast();
-    }
-}
-
-void semanticSegmentation::setUseObjectPersistence(const bool use_object_persistence)
+void SemanticSegmentation::setUseObjectPersistence(const bool use_object_persistence)
 {
     this->use_object_persistence_ = use_object_persistence;
 }
 
-std::vector<objectTransformInformation> semanticSegmentation::calculateObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud)
+std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud)
 {
     if (!this->class_ready_)
     {
@@ -607,7 +555,7 @@ std::vector<objectTransformInformation> semanticSegmentation::calculateObjTransf
 }
 
 
-std::vector<objectTransformInformation> semanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
+std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
 {
     if (!this->class_ready_)
     {
@@ -693,7 +641,7 @@ std::vector<objectTransformInformation> semanticSegmentation::getUpdateOnOneObjT
     return result;
 }
 
-bool semanticSegmentation::segmentAndCalculateObjTransform(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
+bool SemanticSegmentation::segmentAndCalculateObjTransform(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
     pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud_result, std::vector<objectTransformInformation> &object_transform_result)
 {
     bool segmentation_successful = this->segmentPointCloud(input_cloud, labelled_point_cloud_result);
@@ -703,9 +651,11 @@ bool semanticSegmentation::segmentAndCalculateObjTransform(const pcl::PointCloud
     return segmentation_successful;
 }
 
-void semanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
+#endif
+
+void SemanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
   const Eigen::Affine3f& camera_transform_in_target, 
-  const Eigen::Vector3f& box_size)
+  const Eigen::Vector3f& box_size) const
 {
   pcl::PointCloud<PointT>::Ptr  cropped_cloud(new pcl::PointCloud<PointT>());
   pcl::CropBox<PointT> crop_box;
@@ -717,6 +667,3 @@ void semanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_in
   crop_box.filter(*cropped_cloud);
   cloud_input = cropped_cloud;
 }
-
-
-#endif

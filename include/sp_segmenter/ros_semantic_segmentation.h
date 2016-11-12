@@ -1,8 +1,5 @@
-#ifndef SEMANTIC_SEGMENTATION_H
-#define SEMANTIC_SEGMENTATION_H
-
-#ifdef USE_OBJRECRANSAC
-#endif
+#ifndef ROS_SEMANTIC_SEGMENTATION_H
+#define ROS_SEMANTIC_SEGMENTATION_H
 
 // ros stuff
 #include <ros/ros.h>
@@ -19,14 +16,37 @@
 #include <costar_objrec_msgs/DetectedObject.h>
 #include <costar_objrec_msgs/DetectedObjectList.h>
 
-
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
 
-#include "sp_segmenter/semanticSegmentation.h"
+#include "sp_segmenter/semantic_segmentation.h"
 
-class RosSemanticSegmentation : public semanticSegmentation
+// ros service messages for segmenting gripper
+#include "sp_segmenter/SegmentInGripper.h"
+
+class segmentedObjectTF
 {
+private:
+    tf::Transform transform;
+public:
+    std::string TFname;
+    segmentedObjectTF(const objectTransformInformation &input);
+    segmentedObjectTF();
+    tf::StampedTransform generateStampedTransform(const std::string &parent) const;
+};
+
+class RosSemanticSegmentation : public SemanticSegmentation
+{
+public:
+    RosSemanticSegmentation();
+    RosSemanticSegmentation(const ros::NodeHandle &nh);
+    void setNodeHandle(const ros::NodeHandle &nh);
+    void publishTF();
+    void callbackPoses(const sensor_msgs::PointCloud2 &inputCloud);
+    bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+#if 0
+    bool serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response);
+#endif
 
 protected:
     ros::NodeHandle nh;
@@ -36,14 +56,13 @@ protected:
     bool hasTF;
 
     std::string targetNormalObjectTF;
-    std::string targetTFtoUpdate;
     std::vector<segmentedObjectTF> segmentedObjectTFV;
 
     tf::TransformListener * listener;
     tf::TransformBroadcaster br;
 
     // keep information about gripper TF frame for object in gripper segmentation
-    std::string gripperTF, objectClassInGripper;
+    std::string gripperTF;
 
     ros::ServiceServer spSegmenter;
     ros::ServiceServer segmentGripper;
@@ -58,9 +77,6 @@ protected:
     ros::Subscriber pc_sub;
     unsigned int number_of_segmentation_done;
     
-    // Segmentation related
-    bool compute_pose_;
-    
     std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > cloud_vec;
     int maxframes;
     int cur_frame_idx;
@@ -68,20 +84,13 @@ protected:
 
     tf::StampedTransform table_transform;
     Eigen::Vector3f crop_box_size, crop_box_gripper_size;
+    Eigen::Affine3d crop_box_pose_table_;
    
 //    void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
     std::vector<poseT> spSegmenterCallback(const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> & final_cloud);
     bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc);
     void updateCloudData (const sensor_msgs::PointCloud2 &pc);
     void initializeSemanticSegmentationFromRosParam();
-public:
-    semanticSegmentation();
-    semanticSegmentation(const ros::NodeHandle &nh);
-    ~semanticSegmentation();
-    void setNodeHandle(const ros::NodeHandle &nh);
-    void publishTF();
-    void callbackPoses(const sensor_msgs::PointCloud2 &inputCloud);
-    bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
-    bool serviceCallbackGripper (sp_segmenter::segmentInGripper::Request & request, sp_segmenter::segmentInGripper::Response& response);
+    void populateTFMap(std::vector<objectTransformInformation> all_poses);
 };
 #endif
