@@ -13,8 +13,10 @@
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 
+#ifdef COSTAR
 #include <costar_objrec_msgs/DetectedObject.h>
 #include <costar_objrec_msgs/DetectedObjectList.h>
+#endif
 
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
@@ -44,7 +46,7 @@ public:
     void publishTF();
     void callbackPoses(const sensor_msgs::PointCloud2 &inputCloud);
     bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
-#if 0
+#ifdef COSTAR
     bool serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response);
 #endif
 

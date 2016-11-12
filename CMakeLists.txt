@@ -6,7 +6,6 @@ SET(CMAKE_BUILD_TYPE "Release")
 OPTION(BUILD_ROS_BINDING "Build ROS Binding" ON)
 OPTION(USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
 
-
 # Enable C++11
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -46,6 +45,12 @@ IF(OPENMP_FOUND)
   add_definitions(-DUSE_OPENMP)
   message (STATUS "Found OpenMP")
 ENDIF(OPENMP_FOUND)
+
+# COSTAR specific application. Leave this off all time if you are not working at costar
+OPTION(TURN_THIS_OFF "TURN_THIS_OFF" ON)
+if (TURN_THIS_OFF)
+  ADD_DEFINITIONS( -DCOSTAR)
+endif()
 
 # Build ROS BINDING
 IF (BUILD_ROS_BINDING)

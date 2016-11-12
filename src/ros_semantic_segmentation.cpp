@@ -214,13 +214,14 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
         std::cerr << "Node publish TF.\n";
         listener = new (tf::TransformListener);
         spSegmenter = this->nh.advertiseService("SPSegmenter",&RosSemanticSegmentation::serviceCallback,this);
-#if 0
+#ifdef COSTAR
         segmentGripper = this->nh.advertiseService("segmentInGripper",&RosSemanticSegmentation::serviceCallbackGripper,this);
 #endif
         pc_sub = this->nh.subscribe(POINTS_IN,1,&RosSemanticSegmentation::updateCloudData,this);
     }
-    
+#ifdef COSTAR
     detected_object_pub = nh.advertise<costar_objrec_msgs::DetectedObjectList>("detected_object_list",1);
+#endif
     this->nh.param("maxFrames",maxframes,15);
     cur_frame_idx = 0;
     cloud_ready = false;
@@ -371,17 +372,22 @@ void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformati
     ros::param::del("/instructor_landmark/objects");
 
     // segmentedObjectTFMap.clear();
-    segmentedObjectTFV.clear();
+
+#ifdef COSTAR
     costar_objrec_msgs::DetectedObjectList object_list;
     object_list.header.seq = ++(this->number_of_segmentation_done);
     object_list.header.stamp = ros::Time::now();
     object_list.header.frame_id =  inputCloud.header.frame_id;
+#endif
 
+    segmentedObjectTFV.clear();
+    
     for (std::vector<objectTransformInformation>::const_iterator it = all_poses.begin(); it != all_poses.end(); ++it)
     {
         segmentedObjectTF objectTmp(*it);
         segmentedObjectTFV.push_back(objectTmp);
 
+#ifdef COSTAR
         std::stringstream ss;
         std::size_t number_indicator_index = it->model_name_.find_last_of("_",3);
         int model_tf_index = atoi(it->model_name_.substr(number_indicator_index+1).c_str());;
@@ -404,9 +410,12 @@ void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformati
     	object_tmp.symmetry.z_symmetries = std::floor(2 * M_PI / this->object_dict_[ it->model_name_ ].yaw);
     	object_tmp.object_class = it->model_name_;
     	object_list.objects.push_back(object_tmp);
+#endif
     }
 
+#ifdef COSTAR
     detected_object_pub.publish(object_list);
+#endif
 }
 
 pcl::PointCloud<PointT>::Ptr MedianPointCloud(const std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > &cloud_vec)
@@ -528,7 +537,7 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
 #endif
 }
 
-#if 0
+#if COSTAR
 bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response)
 {
     ROS_INFO("Segmenting object on gripper...");
