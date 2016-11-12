@@ -10,7 +10,6 @@
 #include "sp_segmenter/plane.h"
 // #include "sp_segmenter/refinePoses.h"
 #include "sp_segmenter/common.h"
-#include "sp_segmenter/stringVectorArgsReader.h"
 #include "sp_segmenter/seg.h"
 #include "sp_segmenter/spatial_pose.h"
 #include "sp_segmenter/table_segmenter.h"

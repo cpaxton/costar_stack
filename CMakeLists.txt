@@ -3,7 +3,7 @@ project(sp_segmenter C CXX)
 
 SET(CMAKE_BUILD_TYPE "Release")
 
-OPTION(BUILD_ROS_BINDING "Build ROS Binding" ON)
+OPTION(BUILD_ROS_BINDING "Build ROS Binding" OFF)
 OPTION(USE_OBJRECRANSAC "Use ObjRecRANSAC" OFF)
 
 
@@ -98,9 +98,7 @@ target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
 
-add_library(SemanticSegmentation
-  include/sp_segmenter/semantic_segmentation.h
-  src/semantic_segmentation.cpp)
+add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/common.cpp)
 
 # Enable OBJRECRANSAC
 IF (USE_OBJRECRANSAC)
@@ -150,6 +148,9 @@ IF (BUILD_ROS_BINDING)
 
   add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
   target_link_libraries(SPSegmenterServer RosSemanticSegmentation ${catkin_LIBRARIES})
+ELSE()
+  add_executable(SPSegmenterTest src/sp_segmenter_test.cpp)
+  target_link_libraries(SPSegmenterTest SemanticSegmentation)
 ENDIF()
 
 # add_executable(spCompact src/main_sp_compact.cpp)
