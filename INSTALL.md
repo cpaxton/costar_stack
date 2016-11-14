@@ -42,21 +42,7 @@ git clone https://github.com/ThomasTimm/ur_modern_driver.git
 Download the required packages from Ubuntu repositories: 
 
 ```
-sudo apt-get install ros-indigo-fcl  
-sudo apt-get install ros-indigo-soem  
-sudo apt-get install ros-indigo-moveit-full  
-sudo apt-get install liburdfdom-headers-dev  
-sudo apt-get install ros-indigo-control-msgs  
-sudo apt-get install ros-indigo-gazebo-ros-control  
-sudo apt-get install ros-indigo-python-orocos-kdl  
-sudo apt-get install ros-indigo-razer-hydra  
-sudo apt-get install xdot  
-sudo apt-get install libccd-dev  
-sudo apt-get install ros-indigo-ros-control  
-sudo apt-get install ros-indigo-octomap-msgs  
-sudo apt-get install ros-indigo-object-recognition-msgs  
-sudo apt-get install ros-indigo-realtime-tools  
-sudo apt-get install ros-indigo-soem  
+sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl ros-indigo-razer-hydra xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem  
 ```
 
 If you are using the UR5, download the required package from PyPI:
