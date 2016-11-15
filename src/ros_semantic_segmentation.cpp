@@ -384,22 +384,16 @@ void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformati
     
     for (std::vector<objectTransformInformation>::const_iterator it = all_poses.begin(); it != all_poses.end(); ++it)
     {
-        segmentedObjectTF objectTmp(*it);
-        segmentedObjectTFV.push_back(objectTmp);
+        const segmentedObjectTF &segmented_object = *it;
+        segmentedObjectTFV.push_back(segmented_object);
 
 #ifdef COSTAR
         std::stringstream ss;
         ss << "/instructor_landmark/objects/" << it->model_name_ << "/" << it->model_index_;
-        // std::cerr << "frame " << i << " name = " << objectTmp.TFname << "\n";
 
-        ros::param::set(ss.str(), objectTmp.TFname);
-        std::stringstream ss2;
-        ss2 << it->model_name_;
+        ros::param::set(ss.str(), segmented_object.TFname);
         costar_objrec_msgs::DetectedObject object_tmp;
-    	object_tmp.id = ss2.str();
-
-    // std::cerr << object_tmp.id << "; " << ss.str() << "\n";
-
+    	object_tmp.id = segmented_object.TFname;
     	object_tmp.symmetry.x_rotation = this->object_dict_[ it->model_name_ ].roll;
     	object_tmp.symmetry.y_rotation = this->object_dict_[ it->model_name_ ].pitch;
     	object_tmp.symmetry.z_rotation = this->object_dict_[ it->model_name_ ].yaw;

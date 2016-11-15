@@ -167,14 +167,5 @@ IF (BUILD_ROS_BINDING)
 
 ENDIF()
 
-# add_executable(spCompact src/main_sp_compact.cpp)
-# target_link_libraries(spCompact Utility DataParser PoolLib ${Boost_LIBRARIES}
-#               ${catkin_LIBRARIES}  ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-# 
-# add_executable(SimpleSegmenter src/main_simple_seg.cpp) 
-# target_link_libraries(SimpleSegmenter Utility DataParser PoolLib GreedyObjRecRANSAC
-#               ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
-# 
-# 
 # add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)
 # target_link_libraries(TestSymmetricOrientationRealignment semanticSegmentation Utility DataParser PoolLib ${Boost_LIBRARIES} )
