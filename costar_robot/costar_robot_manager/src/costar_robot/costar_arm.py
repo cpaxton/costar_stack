@@ -65,7 +65,7 @@ class CostarArm(object):
         self.at_goal = True
         self.near_goal = True
         self.moving = False
-        self.q0 = [0] * self.dof
+        self.q0 = None #[0] * self.dof
         self.old_q0 = [0] * self.dof
 
         self.cur_stamp = 0
@@ -154,6 +154,10 @@ class CostarArm(object):
     update current position information
     '''
     def update_position(self):
+
+        if self.q0 is None or self.old_q0 is None:
+            return
+
         self.ee_pose = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
         if self.goal is not None:
