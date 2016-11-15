@@ -20,7 +20,7 @@ from pykdl_utils.kdl_kinematics import KDLKinematics
 from trajectory_msgs.msg import JointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 from inverseKinematicsUR5 import InverseKinematicsUR5
-
+from shape_msgs.msg import SolidPrimitive
 ModeJoints = 'joints'
 ModeCart = 'cartesian'
 
@@ -152,66 +152,77 @@ class SimplePlanning:
 
 
           if is_list_of_frame:
+            print "is a list of frames"
             frame = frames[i]
-            previous_q = frames[i-1]
           else:
+            "just one frame"
             frame = frames
 
           if i == 0:
             previous_q = q
 
-          # print i, frame, joints, previous_q
-          joints = self.kdl_kin.inverse(frame,previous_q)
+          print i, frame, joints, previous_q
+          joints = self.ik(pm.toMatrix(frame),previous_q)
+
+          print "JNTS ======================"
           print joints
+          if joints is not None:
+            previous_q = joints
+          # print joints is None
+          # print joints
 
-          if joints is None:
+          # if joints is None:
 
-              p = geometry_msgs.msg.PoseStamped()
-              p.pose.position.x = frame.position.x
-              p.pose.position.y = frame.position.y
-              p.pose.position.z = frame.position.z
-              p.pose.orientation.x = frame.orientation.x
-              p.pose.orientation.y = frame.orientation.y
-              p.pose.orientation.z = frame.orientation.z
-              p.pose.orientation.w = frame.orientation.w
-              p.header.frame_id = "/world"
+          #     p = geometry_msgs.msg.PoseStamped()
+          #     p.pose.position.x = frame.position.x
+          #     p.pose.position.y = frame.position.y
+          #     p.pose.position.z = frame.position.z
+          #     p.pose.orientation.x = frame.orientation.x
+          #     p.pose.orientation.y = frame.orientation.y
+          #     p.pose.orientation.z = frame.orientation.z
+          #     p.pose.orientation.w = frame.orientation.w
+          #     p.header.frame_id = "/world"
 
-              ik_req = moveit_msgs.msg.PositionIKRequest()
-              ik_req.robot_state.joint_state.name = self.joint_names
-              ik_req.robot_state.joint_state.position = q
-              ik_req.avoid_collisions = True
-              ik_req.timeout = rospy.Duration(timeout)
-              ik_req.attempts = 5
-              ik_req.group_name = self.group
-              ik_req.pose_stamped = p
+          #     ik_req = moveit_msgs.msg.PositionIKRequest()
+          #     ik_req.robot_state.joint_state.name = self.joint_names
+          #     ik_req.robot_state.joint_state.position = q
+          #     ik_req.avoid_collisions = True
+          #     ik_req.timeout = rospy.Duration(timeout)
+          #     ik_req.attempts = 5
+          #     ik_req.group_name = self.group
+          #     ik_req.pose_stamped = p
 
-              rospy.logwarn("Getting IK position...")
-              ik_resp = srv(ik_req)
+          #     rospy.logwarn("Getting IK position...")
+          #     ik_resp = srv(ik_req)
 
-              rospy.logwarn("IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val))
+          #     rospy.logwarn("IK RESULT ERROR CODE = %d"%(ik_resp.error_code.val))
 
-              #if ik_resp.error_code.val > 0:
-              #  return (ik_resp, None)
-              #print ik_resp.solution
+          #     #if ik_resp.error_code.val > 0:
+          #     #  return (ik_resp, None)
+          #     #print ik_resp.solution
 
-              ###############################
-              # now create the goal based on inverse kinematics
+          #     ###############################
+          #     # now create the goal based on inverse kinematics
 
-              if not ik_resp.error_code.val < 0:
-                  for i in range(0,len(ik_resp.solution.joint_state.name)):
-                      print ik_resp.solution.joint_state.name[i]
-                      print ik_resp.solution.joint_state.position[i]
-                      joint = JointConstraint()
-                      joint.joint_name = ik_resp.solution.joint_state.name[i]
-                      joint.position = ik_resp.solution.joint_state.position[i] 
-                      joint.tolerance_below = 0.005
-                      joint.tolerance_above = 0.005
-                      joint.weight = 1.0
-                      goal.joint_constraints.append(joint)
+          #     if not ik_resp.error_code.val < 0:
+          #         for i in range(0,len(ik_resp.solution.joint_state.name)):
+          #             print ik_resp.solution.joint_state.name[i]
+          #             print ik_resp.solution.joint_state.position[i]
+          #             joint = JointConstraint()
+          #             joint.joint_name = ik_resp.solution.joint_state.name[i]
+          #             joint.position = ik_resp.solution.joint_state.position[i] 
+          #             joint.tolerance_below = 0.005
+          #             joint.tolerance_above = 0.005
+          #             joint.weight = 1.0
+          #             goal.joint_constraints.append(joint)
 
-              return (ik_resp, goal)
+          #     return (ik_resp, goal)
 
-          elif mode == ModeJoints:
+          print "========================="
+          print mode
+          print joints
+          print self.joint_names
+          if mode == ModeJoints:
             for i in range(0,len(self.joint_names)):
                   print self.joint_names[i]
                   print joints[i]
@@ -224,20 +235,24 @@ class SimplePlanning:
                   goal.joint_constraints.append(joint)
 
           else:
+            # TODO: Try to fix this again. Something is wrong
             cartesian_costraint = PositionConstraint()
+            cartesian_costraint.header.frame_id = 'base_link'
             cartesian_costraint.link_name = self.joint_names[-1]
             cartesian_costraint.target_point_offset = frame.p
             bounding_volume = BoundingVolume()
             sphere_bounding = SolidPrimitive()
             sphere_bounding.type = sphere_bounding.SPHERE;
             # constrain position with sphere 1 mm around target
-            sphere_bounding.SPHERE_RADIUS = 0.001
+            sphere_bounding.dimensions.append(0.01)
+
             bounding_volume.primitives.append(sphere_bounding)
-            cartesian_constrant.constraint_region = bounding_volume
+            cartesian_costraint.constraint_region = bounding_volume
             cartesian_costraint.weight = 1.0
             goal.position_constraints.append(cartesian_costraint)
 
             orientation_costraint = OrientationConstraint()
+            orientation_costraint.header.frame_id = 'base_link'
             orientation_costraint.link_name = self.joint_names[-1]
             orientation_costraint.orientation = frame.M.GetQuaternion()
             orientation_costraint.absolute_x_axis_tolerance = 0.005
@@ -249,6 +264,27 @@ class SimplePlanning:
         return(None, goal)
 
 
+    def updateAllowedCollisions(obj,allowed):
+        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        rospy.wait_for_service('/get_planning_scene', 10.0)
+        get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene)
+        request = PlanningSceneComponents(components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
+        response = get_planning_scene(request)
+
+        acm = response.scene.allowed_collision_matrix
+        if not obj in acm.default_entry_names:
+          # add button to allowed collision matrix
+          acm.default_entry_names += [obj]
+          acm.default_entry_values += [allowed]
+        else:
+          idx = acm.default_entry_names.index(obj)
+          acm.default_entry_values[idx] = allowed;
+
+        planning_scene_diff = PlanningScene(
+                is_diff=True,
+                allowed_collision_matrix=acm)
+
+        self.planning_scene_publisher.publish(planning_scene_diff)
 
     def getPlan(self,frame,q,compute_ik=True):
         planning_options = PlanningOptions()
@@ -276,12 +312,12 @@ class SimplePlanning:
         # - returns: goal contraints
 
         if compute_ik:
-          (ik_resp, goal) = self.getGoalConstraints(frame,q,mode=ModeCart)
+          (ik_resp, goal) = self.getGoalConstraints(frame,q,mode=ModeJoints)
         
         #if (ik_resp.error_code.val > 0):
         #  return (1,None)
 
-        print ik_resp
+        print 'IK error code: ', ik_resp
         print goal
 
         motion_req.goal_constraints.append(goal)
