@@ -48,7 +48,9 @@
 
   </node>
 
-  <node pkg="predicator_landmark" name="predicator_landmark_service" type="get_waypoints_service.py"/>
+  <node pkg="predicator_landmark" name="predicator_landmark_service" type="get_waypoints_service.py">
+    <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
+  </node>
 
   <node name="predicator_fake_class_node"
     type="fake_classes.py"
