@@ -236,12 +236,13 @@ class CostarArm(object):
             msg = 'FAILURE - no objects found that meet predicate conditions!'
             return msg
 
-        (poses,names) = res
+        (poses,names,objects) = res
 
         print req.obj_class
         print req.predicates
         print names
         print poses
+        print objects
 
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
@@ -249,7 +250,7 @@ class CostarArm(object):
             msg = 'FAILURE - no valid objects found!'
             dists = []
             Ts = []
-            for (pose,name) in zip(poses,names):
+            for (pose,name,obj) in zip(poses,names,objects):
 
                 # figure out which tf frame we care about
                 tf_path = name.split('/')
@@ -275,18 +276,22 @@ class CostarArm(object):
                 msg = 'FAILURE - no joint configurations found!'
             else:
 
-                possible_goals = zip(dists,Ts)
+                possible_goals = zip(dists,Ts,objects)
                 possible_goals.sort()
                 
+                for (dist,T,obj) in possible_goals:
 
-                for (dist,traj) in possible_goals:
-	                rospy.logwarn("Trying to move to frame at distance %f"%(dist))
+                    #req = ServoToPoseRequest(target=pm.toMsg(T))
+                    #print req
+                    #return self.plan_to_pose_call(req)
 
-	                # plan to T
-	                (code,res) = self.planner.getPlan(T,self.q0)
-	                msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-	                if msg[0:6] == 'SUCCESS':
-	                    break
+                    rospy.logwarn("Trying to move to frame at distance %f"%(dist))
+
+                    # plan to T
+                    (code,res) = self.planner.getPlan(T,self.q0)
+                    msg = self.send_and_publish_planning_result(res,acceleration,velocity)
+                    if msg[0:6] == 'SUCCESS':
+                        break
 
             return msg
 
@@ -331,7 +336,8 @@ class CostarArm(object):
 
             # Send command
             pt = JointTrajectoryPoint()
-            (code,res) = self.planner.getPlan(req.target,self.q0)
+            pose = pm.fromMsg(req.target)
+            (code,res) = self.planner.getPlan(pose,self.q0)
 
             print "DONE PLANNING: " + str((code, res))
             return self.send_and_publish_planning_result(res,acceleration,velocity)

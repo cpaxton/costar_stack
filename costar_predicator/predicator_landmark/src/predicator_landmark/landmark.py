@@ -85,6 +85,7 @@ class GetWaypointsService:
         #print poses
         new_poses = []
         new_names = []
+        objects = []
 
         for match in res.matching:
             try:
@@ -93,6 +94,7 @@ class GetWaypointsService:
                     #resp.waypoints.poses.append(pm.toMsg(pose * pm.fromTf((trans,rot))))
                     new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * pose))
                     new_names.append(match + "/" + name)
+                    objects.append(match)
 
                     # Create extra poses for symmetries around the Z axis
                     if frame_type in self.obj_symmetries:
@@ -108,5 +110,5 @@ class GetWaypointsService:
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
         
-        return (new_poses, new_names)
+        return (new_poses, new_names, objects)
         
