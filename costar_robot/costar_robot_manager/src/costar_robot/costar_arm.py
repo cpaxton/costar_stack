@@ -144,9 +144,9 @@ class CostarArm(object):
     def js_cb(self,msg):
 
         if len(msg.position) is self.dof:
+            pass
             self.old_q0 = self.q0
             self.q0 = np.array(msg.position)
-            self.update_position()
         else:
             rospy.logwarn('Incorrect joint dimensionality')
 
@@ -159,8 +159,8 @@ class CostarArm(object):
         if self.goal is not None:
 
             #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
-            cart_diff = (self.ee_pose.p - self.goal.p).Norm()
-            rot_diff = self.goal_rotation_weight * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
+            cart_diff = 0 #(self.ee_pose.p - self.goal.p).Norm()
+            rot_diff = 0 #self.goal_rotation_weight * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
             goal_diff = cart_diff + rot_diff
 
             if goal_diff < self.max_goal_diff:
@@ -440,6 +440,7 @@ class CostarArm(object):
     '''
     def tick(self):
         self.status_publisher.publish(self.driver_status)
+        self.update_position()
         self.handle_tick()
 
         # publish TF messages to display frames

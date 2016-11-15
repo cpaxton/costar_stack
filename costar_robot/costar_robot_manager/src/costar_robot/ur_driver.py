@@ -165,6 +165,7 @@ class CostarUR5Driver(CostarArm):
             if self.driver_status == 'SHUTDOWN':
                 self.ur.cleanup()
                 self.ur.shutdown()
+                pass
             elif self.driver_status == 'SERVO':
                 pass
             elif self.driver_status == 'IDLE':
