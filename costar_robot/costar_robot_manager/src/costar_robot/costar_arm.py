@@ -288,7 +288,7 @@ class CostarArm(object):
                     rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
                     # plan to T
-                    (code,res) = self.planner.getPlan(T,self.q0)
+                    (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
                     msg = self.send_and_publish_planning_result(res,acceleration,velocity)
                     if msg[0:6] == 'SUCCESS':
                         break

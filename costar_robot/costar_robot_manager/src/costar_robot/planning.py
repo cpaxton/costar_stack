@@ -264,7 +264,7 @@ class SimplePlanning:
         return(None, goal)
 
 
-    def updateAllowedCollisions(obj,allowed):
+    def updateAllowedCollisions(self,obj,allowed):
         self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
         rospy.wait_for_service('/get_planning_scene', 10.0)
         get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene)
@@ -286,7 +286,7 @@ class SimplePlanning:
 
         self.planning_scene_publisher.publish(planning_scene_diff)
 
-    def getPlan(self,frame,q,compute_ik=True):
+    def getPlan(self,frame,q,obj=None,compute_ik=True):
         planning_options = PlanningOptions()
         planning_options.plan_only = True
         planning_options.replan = False
@@ -294,6 +294,9 @@ class SimplePlanning:
         planning_options.replan_delay = 0.1
         planning_options.planning_scene_diff.is_diff = True
         planning_options.planning_scene_diff.robot_state.is_diff = True
+
+        if obj is not None:
+          self.updateAllowedCollisions(obj,True);
 
         motion_req = MotionPlanRequest()
 
@@ -340,6 +343,9 @@ class SimplePlanning:
         res = self.client.get_result()
 
         rospy.logwarn("Done: " + str(res.error_code.val))
+
+        if obj is not None:
+          self.updateAllowedCollisions(obj,False);
 
         #print res
 
