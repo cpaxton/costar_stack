@@ -536,6 +536,16 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
         std::cerr << "update tree\n";
         updateTree(segmented_object_tree_, object_dict_, all_poses, current_time, tmpTFIndex, base_rotation_);
     }
+
+    std::vector<objectTransformInformation> result = this->getTransformInformationFromTree();
+
+    // restore original index if not using object persistance
+    if (!use_object_persistence_) tmpTFIndex = object_class_transform_index_no_persistence;
+    return result;
+}
+
+std::vector<objectTransformInformation> SemanticSegmentation::getTransformInformationFromTree()  const
+{
     std::vector<objectTransformInformation> result;
     std::vector<value> sp_segmenter_detected_poses = getAllNodes(segmented_object_tree_);
 
@@ -545,15 +555,13 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
         const value &v = sp_segmenter_detected_poses.at(i);
 
         const poseT &pose = std::get<1>(v).pose;
-        const std::string transform_name_ = std::get<1>(v).tfName;
-        result.push_back( objectTransformInformation(transform_name_, pose) );
+        const std::string &transform_name_ = std::get<1>(v).tfName;
+        const unsigned int &model_index = std::get<1>(v).index;
+        result.push_back( objectTransformInformation(transform_name_, pose, model_index) );
     }
 
-    // restore original index if not using object persistance
-    if (!use_object_persistence_) tmpTFIndex = object_class_transform_index_no_persistence;
     return result;
 }
-
 
 std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
 {
@@ -623,18 +631,7 @@ std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjT
     std::cerr << "update one value on tree\n";
     updateOneValue(segmented_object_tree_, transform_name, object_dict_, all_poses, current_time, tmpTFIndex, base_rotation_);
 
-    std::vector<objectTransformInformation> result;
-    std::vector<value> sp_segmenter_detected_poses = getAllNodes(segmented_object_tree_);
-
-    std::cerr << "detected poses: " << sp_segmenter_detected_poses.size() << "\n";
-    for (std::size_t i = 0; i < sp_segmenter_detected_poses.size(); i++)
-    {
-        const value &v = sp_segmenter_detected_poses.at(i);
-
-        const poseT &pose = std::get<1>(v).pose;
-        const std::string transform_name_ = std::get<1>(v).tfName;
-        result.push_back( objectTransformInformation(transform_name_, pose) );
-    }
+    std::vector<objectTransformInformation> result = this->getTransformInformationFromTree();
 
     // restore original index if not using object persistance
     if (!use_object_persistence_) tmpTFIndex = object_class_transform_index_no_persistence;

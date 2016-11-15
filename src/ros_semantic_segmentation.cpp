@@ -389,9 +389,7 @@ void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformati
 
 #ifdef COSTAR
         std::stringstream ss;
-        std::size_t number_indicator_index = it->model_name_.find_last_of("_",3);
-        int model_tf_index = atoi(it->model_name_.substr(number_indicator_index+1).c_str());;
-        ss << "/instructor_landmark/objects/" << it->model_name_ << "/" << model_tf_index;
+        ss << "/instructor_landmark/objects/" << it->model_name_ << "/" << it->model_index_;
         // std::cerr << "frame " << i << " name = " << objectTmp.TFname << "\n";
 
         ros::param::set(ss.str(), objectTmp.TFname);

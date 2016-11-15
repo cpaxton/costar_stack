@@ -50,12 +50,14 @@ struct objectTransformInformation
     // extended from poseT. All transform is with reference to the camera frame
     std::string transform_name_;
     std::string model_name_;
+    unsigned int model_index_;
     Eigen::Vector3f origin_;
     Eigen::Quaternion<float> rotation_;
     double confidence_;
 
     objectTransformInformation() {};
-    objectTransformInformation(const std::string &transform_name, const poseT &ObjRecRANSAC_result) : transform_name_(transform_name), model_name_(ObjRecRANSAC_result.model_name),
+    objectTransformInformation(const std::string &transform_name, const poseT &ObjRecRANSAC_result, unsigned const int &model_index) : transform_name_(transform_name), 
+        model_name_(ObjRecRANSAC_result.model_name), model_index_(model_index),
         origin_(ObjRecRANSAC_result.shift), rotation_(ObjRecRANSAC_result.rotation), confidence_(ObjRecRANSAC_result.confidence)
     {};
 
@@ -133,7 +135,7 @@ protected:
     void cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
       const Eigen::Affine3f& camera_transform_in_target, 
       const Eigen::Vector3f& box_size) const;
-
+    std::vector<objectTransformInformation> getTransformInformationFromTree() const;
     bool class_ready_;
     bool visualizer_flag_;
 
