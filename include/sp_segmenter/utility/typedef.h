@@ -255,14 +255,8 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (SIFTDescr,
                     (float[128], siftDescr, siftDescr)
 )
 
-static bool comp1( const std::pair<int, int> &p1, const std::pair<int, int> &p2 )
-{
-    return p1.second > p2.second;
-}
+bool comp1( const std::pair<int, int> &p1, const std::pair<int, int> &p2 );
 
-static bool comp2( const std::pair<int, float> &p1, const std::pair<int, float> &p2 )
-{
-    return p1.second < p2.second;
-}
+bool comp2( const std::pair<int, float> &p1, const std::pair<int, float> &p2 );
 
 #endif

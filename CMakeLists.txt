@@ -106,8 +106,11 @@ target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_
 target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
+add_library(SpCompact src/sp_compact.cpp)
+target_link_libraries(SpCompact PoolLib Utility linear ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
 add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/common.cpp)
+
 
 # Enable OBJRECRANSAC
 IF (USE_OBJRECRANSAC)
@@ -157,7 +160,11 @@ IF (BUILD_ROS_BINDING)
                   ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
 
   add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
-  target_link_libraries(SPSegmenterServer RosSemanticSegmentation)
+  target_link_libraries(SPSegmenterServer RosSemanticSegmentation) 
+
+  add_executable(SpCompactRos src/main_sp_compact.cpp)
+  target_link_libraries(SpCompactRos SpCompact ${catkin_LIBRARIES})
+
 ENDIF()
 
 # add_executable(spCompact src/main_sp_compact.cpp)
