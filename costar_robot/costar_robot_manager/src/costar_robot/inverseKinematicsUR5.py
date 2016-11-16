@@ -63,16 +63,16 @@ class InverseKinematicsUR5:
 
 		# Robot joint solutions data
 		self.theta1 = np.zeros(2)
-		self.flags1 = np.ones(2)
+		self.flags1 = None
 
 		self.theta5 = np.zeros((2,2))
-		self.flags5 = np.ones((2,2))
+		self.flags5 = None
 
 		self.theta6 = np.zeros((2,2))
 
 		self.theta2 = np.zeros((2,2,2))
 		self.theta3 = np.zeros((2,2,2))
-		self.flags3 = np.ones ((2,2,2))
+		self.flags3 = None
 
 		self.theta4 = np.zeros((2,2,2))
 
@@ -115,6 +115,7 @@ class InverseKinematicsUR5:
 
 	def getTheta1(self):
 		# This function will solve joint 1
+		self.flags1 = np.ones(2)
 
 		p05 = self.gd.dot(np.array([0,0,-self.d[5],1]))-np.array([0,0,0,1])
 		psi = atan2(p05[1],p05[0])
@@ -124,6 +125,8 @@ class InverseKinematicsUR5:
 		# gives tolerance if acos just a little bit bigger than 1 to return
 		# real result, otherwise the solution will be flagged as invalid
 		if abs(self.d[3]) > L:
+			if self.debug:
+				print 'L1 = ', L, ' denominator = ', self.d[3]
 			self.flags1[:] = self.getFlags(self.d[3],L) # false if the ratio > 1.001
 			L = abs(self.d[3])
 		phi = acos(self.d[3]/L)
@@ -139,11 +142,15 @@ class InverseKinematicsUR5:
 	
 	def getTheta5(self):
 		# This function will solve joint 5
+		self.flags5 = np.ones((2,2))
+
 		p06 = self.gd[0:3,3]
 		for i in range(2):
 			p16z = p06[0]*sin(self.theta1[i])-p06[1]*cos(self.theta1[i]);
 			L = self.d[5]
-			if abs(p16z - self.d[3]) > self.d[5]:
+			if abs(p16z - self.d[3]) > L:
+				if self.debug:
+					print 'L5 = ', L, ' denominator = ', abs(p16z - self.d[3])
 				self.flags5[i,:] = self.getFlags(p16z - self.d[3],self.d[5])
 				L = abs(p16z-self.d[3]);
 			theta5i = acos((p16z-self.d[3])/L)
@@ -173,6 +180,7 @@ class InverseKinematicsUR5:
 
 	def getTheta23(self):
 		# This function will solve joint 2 and 3
+		self.flags3 = np.ones ((2,2,2))
 		for i in xrange(2):
 			T1 = transformDHParameter(self.a[0],self.d[0],self.alpha[0],self.theta1[i])
 			T16 = invTransform(T1).dot(self.gd)
@@ -186,6 +194,8 @@ class InverseKinematicsUR5:
 				L = P13.dot(P13.transpose()) - self.a[1]**2 - self.a[2]**2
 
 				if abs(L / (2*self.a[1]*self.a[2]) ) > 1:
+					if self.debug:
+						print 'L3 = ', L, ' denominator = ', (2*self.a[1]*self.a[2])
 					self.flags3[i,j,:] = self.getFlags(L,2*self.a[1]*self.a[2])
 					L = np.sign(L) * 2*self.a[1]*self.a[2]
 				self.theta3[i,j,0] = acos(L / (2*self.a[1]*self.a[2]) )

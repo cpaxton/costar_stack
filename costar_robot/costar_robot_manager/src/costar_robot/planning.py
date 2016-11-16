@@ -51,6 +51,7 @@ class SimplePlanning:
         self.closed_form_IK_solver = closed_form_IK_solver
         
         self.closed_form_ur5_ik = InverseKinematicsUR5()
+        # self.closed_form_ur5_ik.enableDebugMode()
         self.closed_form_ur5_ik.setEERotationOffsetROS()
         self.closed_form_ur5_ik.setJointWeights([6,5,4,3,2,1])
         self.closed_form_ur5_ik.setJointLimits(-np.pi, np.pi)
@@ -164,10 +165,11 @@ class SimplePlanning:
           print i, frame, joints, previous_q
           joints = self.ik(pm.toMatrix(frame),previous_q)
 
-          print "JNTS ======================"
           print joints
           if joints is not None:
             previous_q = joints
+          else:
+            return (None, None)
           # print joints is None
           # print joints
 
@@ -329,7 +331,7 @@ class SimplePlanning:
         motion_req.allowed_planning_time = 4.0
         motion_req.planner_id = "RRTConnectkConfigDefault"
         
-        if len(motion_req.goal_constraints[0].joint_constraints) == 0 or (not ik_resp is None and ik_resp.error_code.val < 0):
+        if goal is None or len(motion_req.goal_constraints[0].joint_constraints) == 0 or (not ik_resp is None and ik_resp.error_code.val < 0):
             return (-31, None)
 
         goal = MoveGroupGoal()

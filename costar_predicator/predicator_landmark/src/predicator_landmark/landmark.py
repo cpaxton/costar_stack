@@ -105,7 +105,22 @@ class GetWaypointsService:
                                 tform = pm.Frame(pm.Rotation.RotZ(theta))
                                 #print tform
                                 new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
-                                new_names.append(match + "/" + name + "/" + str(i))
+                                new_names.append(match + "/" + name + "/z" + str(i))
+                                objects.append(match)
+                        if self.obj_symmetries[frame_type].y_symmetries > 1:
+                            for i in xrange(1, self.obj_symmetries[frame_type].y_symmetries):
+                                theta = i * self.obj_symmetries[frame_type].y_rotation
+                                tform = pm.Frame(pm.Rotation.RotY(theta))
+                                new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                                new_names.append(match + "/" + name + "/y" + str(i))
+                                objects.append(match)
+                        if self.obj_symmetries[frame_type].x_symmetries > 1:
+                            for i in xrange(1, self.obj_symmetries[frame_type].x_symmetries):
+                                theta = i * self.obj_symmetries[frame_type].x_rotation
+                                tform = pm.Frame(pm.Rotation.RotX(theta))
+                                new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                                new_names.append(match + "/" + name + "/x" + str(i))
+                                objects.append(match)
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
