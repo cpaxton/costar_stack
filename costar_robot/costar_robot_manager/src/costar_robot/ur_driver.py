@@ -1,11 +1,11 @@
 
 import rospy
-import urx
 import numpy as np
 import tf_conversions.posemath as pm
 from costar_robot import CostarArm
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
+from std_msgs.msg import String
 
 from trajectory_msgs.msg import JointTrajectoryPoint
 from trajectory_msgs.msg import JointTrajectory
@@ -19,6 +19,7 @@ from control_msgs.msg import FollowJointTrajectoryActionGoal
 from control_msgs.msg import FollowJointTrajectoryGoal
 
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
+urscript_commands = {'TEACH':'set robotmode freedrive','SERVO':'set robotmode run'}
 
 class CostarUR5Driver(CostarArm):
 
@@ -32,9 +33,10 @@ class CostarUR5Driver(CostarArm):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6):
 
-        if not simulation:
-            self.ur = urx.Robot(ip_address)
+        # if not simulation:
+        #     self.ur = urx.Robot(ip_address)
         self.simulation = simulation
+        self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
 
         base_link = "base_link"
         end_link = "ee_link"
@@ -108,12 +110,11 @@ class CostarUR5Driver(CostarArm):
     '''
     def set_teach_mode_call(self,req,cartesian=False):
         if req.enable == True:
-
-            self.ur.set_freedrive(True)
+            self.ur_script_pub.publish(urscript_commands['TEACH'])
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
         else:
-            self.ur.set_freedrive(False)
+            self.ur_script_pub.publish(urscript_commands['SERVO'])
             self.driver_status = 'IDLE'
             return 'SUCCESS - teach mode disabled'
 
@@ -163,8 +164,8 @@ class CostarUR5Driver(CostarArm):
         if self.driver_status in mode.keys():
 
             if self.driver_status == 'SHUTDOWN':
-                self.ur.cleanup()
-                self.ur.shutdown()
+                # self.ur.cleanup()
+                # self.ur.shutdown()
                 pass
             elif self.driver_status == 'SERVO':
                 pass

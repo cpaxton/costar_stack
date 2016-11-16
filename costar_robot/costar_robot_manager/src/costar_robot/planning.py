@@ -162,10 +162,8 @@ class SimplePlanning:
           if i == 0:
             previous_q = q
 
-          print i, frame, joints, previous_q
           joints = self.ik(pm.toMatrix(frame),previous_q)
 
-          print joints
           if joints is not None:
             previous_q = joints
           else:
@@ -219,15 +217,8 @@ class SimplePlanning:
           #             goal.joint_constraints.append(joint)
 
           #     return (ik_resp, goal)
-
-          print "========================="
-          print mode
-          print joints
-          print self.joint_names
           if mode == ModeJoints:
             for i in range(0,len(self.joint_names)):
-                  print self.joint_names[i]
-                  print joints[i]
                   joint = JointConstraint()
                   joint.joint_name = self.joint_names[i]
                   joint.position = joints[i] 
@@ -348,7 +339,5 @@ class SimplePlanning:
 
         if obj is not None:
           self.updateAllowedCollisions(obj,False);
-
-        #print res
 
         return (res.error_code.val, res)

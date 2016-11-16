@@ -238,15 +238,6 @@ class CostarArm(object):
 
         (poses,names,objects) = res
 
-        print req.obj_class
-        print req.predicates
-        print names
-        print objects
-
-        print len(poses)
-        print len(objects)
-        print len(names)
-
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
         if not poses is None:
@@ -281,24 +272,14 @@ class CostarArm(object):
 
                 possible_goals = zip(dists,Ts,objects,names)
                 possible_goals.sort()
-                print len(Ts)
-                print len(dists)
-                print len(objects)
-                print len(names)
+
                 for (dist,T,obj,name) in possible_goals:
-
-                    print "================ to obj = " + str(obj) + " at " + str(name)
-
-                    #req = ServoToPoseRequest(target=pm.toMsg(T))
-                    #print req
-                    #return self.plan_to_pose_call(req)
-
                     rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
                     # plan to T
                     (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
                     msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-                    print 'msg ======================\n', msg
+
                     if msg[0:7] == 'SUCCESS':
                         break
 
@@ -322,7 +303,6 @@ class CostarArm(object):
             self.display_pub.publish(disp)
 
             traj = res.planned_trajectory.joint_trajectory
-            print res.planned_trajectory.joint_trajectory
             
             return self.send_trajectory(traj,acceleration,velocity,cartesian=False)
 
