@@ -19,7 +19,9 @@
 #include <opencv2/core/core.hpp>
 
 // ros header for roslaunch capability
+#ifdef BUILD_ROS_BINDING
 #include <ros/ros.h>
+#endif
 
 #include "sp_segmenter/stringVectorArgsReader.h"
 #include "sp_segmenter/sp_compact.h"
@@ -27,44 +29,70 @@
 int main(int argc, char** argv)
 {
     pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
-    ros::init(argc,argv,"sp_compact_node");
-    ros::NodeHandle nh("~");
-    
+// -------------------------------------------------------------------------
     std::string root_path;
     double foregroundBackgroundCC;
     double multiclassCC;
+    //NUM_OBJECT_TRAINING_DATA*OBJ_SAMPLES approximately = NUM_BACKGROUND_TRAINING_DATA*NUM_BG_SAMPLES
     int bgSampleNum, objSampleNum;
-    nh.param("root_path", root_path, std::string("data/training"));
-    nh.param("foreground_cc", foregroundBackgroundCC, 0.001);
-    nh.param("multiclass_cc", multiclassCC, 0.001);
-    nh.param("bg_sample_num", bgSampleNum, 66); //NUM_OBJECT_TRAINING_DATA*OBJ_SAMPLES = NUM_BACKGROUND_TRAINING_DATA*NUM_BG_SAMPLES
-    nh.param("obj_sample_num", objSampleNum, 100); // these should be chosen so the number of samples is the same for each
-    
-    // adding object classes by reading from nodeHandle args
-    std::vector<std::string> obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
-    
-    // adding background classes by reading from nodeHandle args
-    std::vector<std::string> bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5"));
 
-    // paths for dictionaries
     std::string shot_path, sift_path, fpfh_path;
-    nh.param("shot_path",shot_path,std::string("data/UW_shot_dict"));
-    nh.param("sift_path",sift_path,std::string("data/UW_sift_dict"));
-    nh.param("fpfh_path",fpfh_path,std::string("data/UW_fpfh_dict"));
-
-
+    std::vector<std::string> obj_names, bg_names;
     std::string out_fea_path, out_svm_path;
-    nh.param("out_fea_path",out_fea_path,std::string("fea_pool"));
-    nh.param("out_svm_path",out_svm_path,std::string("svm_pool"));
 
     bool train_bg_flag;
     bool train_multi_flag;
     bool skip_fea;
+
+#ifdef BUILD_ROS_BINDING
+// Getting the parameter from ros param.
+    ros::init(argc,argv,"sp_compact_node");
+    ros::NodeHandle nh("~");
+
+    nh.param("root_path", root_path, std::string("data/training"));
+    nh.param("foreground_cc", foregroundBackgroundCC, 0.001);
+    nh.param("multiclass_cc", multiclassCC, 0.001);
+    nh.param("bg_sample_num", bgSampleNum, 66);
+    nh.param("obj_sample_num", objSampleNum, 100);
+    
+    obj_names = stringVectorArgsReader (nh, "obj_names", std::string("drill"));
+    bg_names = stringVectorArgsReader (nh, "bg_names", std::string("UR5"));
+
+    // paths for dictionaries
+    nh.param("shot_path",shot_path,std::string("data/UW_shot_dict"));
+    nh.param("sift_path",sift_path,std::string("data/UW_sift_dict"));
+    nh.param("fpfh_path",fpfh_path,std::string("data/UW_fpfh_dict"));
+
+    nh.param("out_fea_path",out_fea_path,std::string("fea_pool"));
+    nh.param("out_svm_path",out_svm_path,std::string("svm_pool"));
+
     nh.param("skip_fea",skip_fea,false);
     nh.param("train_bg_flag",train_bg_flag, true);
     nh.param("train_multi_flag",train_multi_flag, true);
+#else
+// Set the parameter manually,
+    root_path = "data/training";
+    foregroundBackgroundCC =  0.001;
+    multiclassCC = 0.001;
+    bgSampleNum = 66;
+    objSampleNum = 100;
+    obj_names = stringVectorArgsReader ("drill");
+    bg_names = stringVectorArgsReader ("UR5");
 
+    // paths for dictionaries
+    shot_path = "data/UW_shot_dict";
+    sift_path = "data/UW_sift_dict";
+    fpfh_path = "data/UW_fpfh_dict";
 
+    out_fea_path = "fea_pool";
+    out_svm_path = "svm_pool";
+
+    skip_fea = false;
+    train_bg_flag  = true;
+    train_multi_flag = true;
+#endif
+// ---------------------------------------------------------------------
+// Setting up the training parameters
     SpCompact training;
     training.setInputPathSIFT(sift_path);
     training.setInputPathSHOT(shot_path);

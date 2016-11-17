@@ -106,8 +106,8 @@ target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_
 target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
-add_library(SpCompact src/sp_compact.cpp)
-target_link_libraries(SpCompact PoolLib Utility linear ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
+add_library(SpCompactLib src/sp_compact.cpp)
+target_link_libraries(SpCompactLib PoolLib Utility linear ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
 add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/common.cpp)
 
@@ -144,13 +144,18 @@ IF (USE_OBJRECRANSAC)
   ENDIF()
 
   target_link_libraries(SemanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
-                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} ${Boost_LIBRARIES})
 ELSE()
   message(status "ObjRecRANSAC disabled")
   target_link_libraries(SemanticSegmentation Utility DataParser PoolLib
-                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} ${Boost_LIBRARIES})
 ENDIF()
- 
+
+# Sample code for training and doing segmentation
+add_executable(SpCompact src/main_sp_compact.cpp)
+add_executable(sample_semantic_segmenter src/main_sample_semantic_segmentation.cpp)
+target_link_libraries(sample_semantic_segmenter SemanticSegmentation)
+
 IF (BUILD_ROS_BINDING)
   add_library(RosSemanticSegmentation
     include/sp_segmenter/ros_semantic_segmentation.h
@@ -162,9 +167,9 @@ IF (BUILD_ROS_BINDING)
   add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
   target_link_libraries(SPSegmenterServer RosSemanticSegmentation) 
 
-  add_executable(SpCompactRos src/main_sp_compact.cpp)
-  target_link_libraries(SpCompactRos SpCompact ${catkin_LIBRARIES})
-
+  target_link_libraries(SpCompact SpCompactLib ${catkin_LIBRARIES})
+ELSE()
+  target_link_libraries(SpCompact SpCompactLib)
 ENDIF()
 
 # add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)
