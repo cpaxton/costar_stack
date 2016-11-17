@@ -24,6 +24,8 @@ from predicator_landmark import GetWaypointsService
 from smart_waypoint_manager import SmartWaypointManager
 from waypoint_manager import WaypointManager
 
+from inverseKinematicsUR5 import InverseKinematicsUR5
+
 class CostarArm(object):
 
     def __init__(self,
@@ -65,7 +67,8 @@ class CostarArm(object):
         self.at_goal = True
         self.near_goal = True
         self.moving = False
-        self.q0 = None #[0] * self.dof
+        self.q0 = None
+        #[0] * self.dof
         self.old_q0 = [0] * self.dof
 
         self.cur_stamp = 0
@@ -131,11 +134,20 @@ class CostarArm(object):
         self.ee_pose = None
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
+
+        self.closed_form_IK_solver = InverseKinematicsUR5()
+        # self.closed_form_ur5_ik.enableDebugMode()
+        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.0])
+        self.closed_form_IK_solver.setEERotationOffsetROS()
+        self.closed_form_IK_solver.setJointWeights(self.joint_weights)
+        self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
+        self.rotation_weight = 0.05
+
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
-            closed_form_IK_solver=closed_form_IK_solver)
+            closed_form_IK_solver=self.closed_form_IK_solver)
 
     '''
     js_cb
@@ -210,6 +222,22 @@ class CostarArm(object):
       self.waypoint_manager.save_frame(self.q0)
 
       return 'SUCCESS - '
+    
+    '''
+    ik: handles calls to KDL inverse kinematics
+    '''
+    def ik(self, T, q0, dist=0.5):
+      q = None
+      if self.closed_form_IK_solver is not None:
+      #T = pm.toMatrix(F)
+        q = self.closed_form_IK_solver.findClosestIK(T,q0)
+      else:
+        q = self.kdl_kin.inverse(T,q0)
+
+      # NOTE: this results in unsafe behavior; do not use without checks
+      #if q is None:
+      #    q = self.kdl_kin.inverse(T)
+      return q
 
     '''
     Find any valid object that meets the requirements.
@@ -264,12 +292,15 @@ class CostarArm(object):
                 Ts.append(T)
 
                 # TODO(cpaxton) update this to include rotation
-                dists.append((T.p - T_fwd.p).Norm())
-
+                q_new = self.ik(pm.toMatrix(T),self.q0)
+                if q_new is not None:
+                    dq = np.absolute(q_new - self.q0) * self.joint_weights
+                    # print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * np.sum(dq)
+                    dists.append((T.p - T_fwd.p).Norm() + self.rotation_weight * np.sum(dq))
+                
             if len(Ts) == 0:
                 msg = 'FAILURE - no objects found!'
             else:
-
                 possible_goals = zip(dists,Ts,objects,names)
                 possible_goals.sort()
 

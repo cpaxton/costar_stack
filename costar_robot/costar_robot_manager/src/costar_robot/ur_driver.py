@@ -1,4 +1,3 @@
-
 import rospy
 import numpy as np
 import tf_conversions.posemath as pm
@@ -33,8 +32,6 @@ class CostarUR5Driver(CostarArm):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6):
 
-        # if not simulation:
-        #     self.ur = urx.Robot(ip_address)
         self.simulation = simulation
         self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
 

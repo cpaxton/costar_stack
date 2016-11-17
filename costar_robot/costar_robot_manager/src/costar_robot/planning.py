@@ -49,21 +49,15 @@ class SimplePlanning:
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
-        
-        self.closed_form_ur5_ik = InverseKinematicsUR5()
-        # self.closed_form_ur5_ik.enableDebugMode()
-        self.closed_form_ur5_ik.setEERotationOffsetROS()
-        self.closed_form_ur5_ik.setJointWeights([6,5,4,3,2,1])
-        self.closed_form_ur5_ik.setJointLimits(-np.pi, np.pi)
     
     '''
     ik: handles calls to KDL inverse kinematics
     '''
     def ik(self, T, q0, dist=0.5):
       q = None
-      if self.closed_form_IK_solver:
+      if self.closed_form_IK_solver is not None:
       #T = pm.toMatrix(F)
-        q = self.closed_form_ur5_ik.findClosestIK(T,q0)
+        q = self.closed_form_IK_solver.findClosestIK(T,q0)
       else:
         q = self.kdl_kin.inverse(T,q0)
 
@@ -314,7 +308,7 @@ class SimplePlanning:
         #  return (1,None)
 
         print 'IK error code: ', ik_resp
-        print goal
+        # print goal
 
         motion_req.goal_constraints.append(goal)
         motion_req.group_name = self.group
