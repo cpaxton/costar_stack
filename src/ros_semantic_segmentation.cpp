@@ -78,7 +78,7 @@ std::map<std::string, objectSymmetry> fillObjectPropertyDictionary(std::map<std:
     return objectDict;
 }
 
-RosSemanticSegmentation::RosSemanticSegmentation() : hasTF(false)
+RosSemanticSegmentation::RosSemanticSegmentation() : hasTF(false), has_crop_box_pose_table_(false)
 {}
 
 void RosSemanticSegmentation::setNodeHandle(const ros::NodeHandle &nh)
@@ -88,7 +88,7 @@ void RosSemanticSegmentation::setNodeHandle(const ros::NodeHandle &nh)
     this->number_of_segmentation_done = 0;
 }
 
-RosSemanticSegmentation::RosSemanticSegmentation(const ros::NodeHandle &nh)
+RosSemanticSegmentation::RosSemanticSegmentation(const ros::NodeHandle &nh) : hasTF(false), has_crop_box_pose_table_(false)
 {  
     this->setNodeHandle(nh);
 }
@@ -108,10 +108,8 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     this->setUseMultiClassSVM(useMultiClassSVM);
     this->setDirectorySVM(svm_path);
 
-    // setting up cropbox
-    bool useCropBox;
-    this->nh.param("useCropBox",useCropBox,true);
-    this->setUseCropBox(useCropBox);
+    this->nh.param("useCropBox",this->use_crop_box_,true);
+    
     double cropBoxX, cropBoxY, cropBoxZ;
     this->nh.param("cropBoxX",cropBoxX,1.0);
     this->nh.param("cropBoxY",cropBoxY,1.0);
@@ -290,36 +288,28 @@ void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inpu
 
 bool RosSemanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
 {
-    std::string tableTFname, tableTFparent;
-    nh.param("tableTF", tableTFname,std::string("/tableTF"));
-    
-    tableTFparent = pc.header.frame_id;
-    if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
+    if (!has_crop_box_pose_table_ && use_crop_box_)
     {
-        std::cerr << "Table TF with name: '" << tableTFname << "' found with parent frame: " << tableTFparent << std::endl;
-        listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),table_transform);
+        return false;
+    }
+    else
+    {
         pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
-        
         fromROSMsg(inputCloud,*full_cloud);
-        Eigen::Vector3f crop_box_size_table = crop_box_size;
-        double tableTF_z_box;
-        nh.param("cropBoxTableZ", tableTF_z_box,0.005);
-        crop_box_size_table[2] = tableTF_z_box;
-        Eigen::Affine3d cam_tf_in_table;
-        tf::transformTFToEigen(table_transform, cam_tf_in_table);
-        this->setCropBoxSize(crop_box_size_table);
-        this->setCropBoxPose(cam_tf_in_table);
-        this->crop_box_pose_table_ = cam_tf_in_table;
+        if (use_crop_box_)
+        {
+            Eigen::Vector3f crop_box_size_table = crop_box_size;
+            double tableTF_z_box;
+            nh.param("cropBoxTableZ", tableTF_z_box,0.005);
+            crop_box_size_table[2] = tableTF_z_box;
+            this->setCropBoxSize(crop_box_size_table);
+            this->setCropBoxPose(crop_box_pose_table_);
+        }
         bool saveTable;
         std::string saveTable_directory;
         nh.param("updateTable",saveTable, true);
         nh.param("saveTable_directory",saveTable_directory,std::string("./data"));
         return this->getTableSurfaceFromPointCloud(full_cloud,saveTable,saveTable_directory);
-    }
-    else
-    {
-        std::cerr << "Fail to find table TF with name: '" << tableTFname << std::endl;
-        return false;
     }
 }
 
@@ -328,7 +318,30 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
     if (!classReady) return;
     // The callback from main only update the cloud data
     inputCloud = pc;
-    
+
+    if (!has_crop_box_pose_table_ && use_crop_box_)
+    {
+        std::string tableTFname, tableTFparent;
+        nh.param("tableTF", tableTFname,std::string("/tableTF"));
+        
+        tableTFparent = pc.header.frame_id;
+        std::cerr << "Getting Table TF with name: '" << tableTFname << " and parent frame: " << tableTFparent << std::endl;
+        if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
+        {
+            std::cerr << "Table TF found\n";
+            listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),table_transform);
+            tf::transformTFToEigen(table_transform, this->crop_box_pose_table_);
+            Eigen::Quaterniond q(this->crop_box_pose_table_.rotation());
+            Eigen::Vector3d t(this->crop_box_pose_table_.translation());
+            printf("Q: %f %f %f %f\tT: %f %f %f\n", q.w(), q.x(), q.y(), q.z(), t.x(), t.y(), t.z());
+            this->has_crop_box_pose_table_ = true;
+            this->setUseCropBox(true);
+            ROS_INFO("Crop Box activated");
+        }
+        else
+            std::cerr << "Fail to find table TF.\n";
+    }
+
     if (this->use_table_segmentation_)
     {
         if (!this->have_table_) getAndSaveTable(inputCloud);
@@ -553,6 +566,7 @@ bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGri
 
         Eigen::Affine3d gripper_tf;
         tf::transformTFToEigen(transform, gripper_tf);
+        this->setUseCropBox(true);
         this->setCropBoxSize(crop_box_gripper_size);
         this->setCropBoxPose(gripper_tf);
 
@@ -574,9 +588,10 @@ bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGri
 #ifdef USE_OBJRECRANSAC
             std::vector<objectTransformInformation> object_transform_result = getUpdateOnOneObjTransform(labelled_point_cloud, target_tf_to_update, object_class);
             this->populateTFMap(object_transform_result);
-            this->setModeObjRecRANSAC(objRecRANSAC_mode_original);
             hasTF = true;
 #endif
+            this->setModeObjRecRANSAC(objRecRANSAC_mode_original);
+            this->setUseCropBox(use_crop_box_);
             ROS_INFO("Object In gripper segmentation done.");
             return true;
         }
@@ -587,6 +602,7 @@ bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGri
         response.result = segmentFail;
     }
     this->setModeObjRecRANSAC(objRecRANSAC_mode_original);
+    this->setUseCropBox(use_crop_box_);
     return false;
 }
 #endif

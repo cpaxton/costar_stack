@@ -51,6 +51,11 @@ public:
 #endif
 
 protected:
+    bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc);
+    void updateCloudData (const sensor_msgs::PointCloud2 &pc);
+    void initializeSemanticSegmentationFromRosParam();
+    void populateTFMap(std::vector<objectTransformInformation> all_poses);
+
     ros::NodeHandle nh;
     bool classReady, useTFinsteadOfPoses;
 
@@ -87,12 +92,6 @@ protected:
     tf::StampedTransform table_transform;
     Eigen::Vector3f crop_box_size, crop_box_gripper_size;
     Eigen::Affine3d crop_box_pose_table_;
-   
-//    void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visualization::PCLVisualizer::Ptr viewer, uchar colors[][3]);
-    std::vector<poseT> spSegmenterCallback(const pcl::PointCloud<PointT>::Ptr full_cloud, pcl::PointCloud<PointLT> & final_cloud);
-    bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc);
-    void updateCloudData (const sensor_msgs::PointCloud2 &pc);
-    void initializeSemanticSegmentationFromRosParam();
-    void populateTFMap(std::vector<objectTransformInformation> all_poses);
+    bool has_crop_box_pose_table_, use_crop_box_ ;
 };
 #endif

@@ -3,7 +3,7 @@
   <!-- Object file Name without extension-->
   <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM." />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
-  <arg name="data_path"      default="$(env HOME)/data/" doc="SP segmenter data folder" />
+  <arg name="data_path"      default="$(env HOME)/data" doc="SP segmenter data folder" />
   <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
   <arg name="debug_args"     default=""/>
 
