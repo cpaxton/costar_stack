@@ -1,6 +1,5 @@
 #include "sp_segmenter/semantic_segmentation.h"
 
-#ifdef USE_OBJRECRANSAC
 void ModelObjRecRANSACParameter::setPairWidth(const double &pair_width)
 {
     this->pair_width_ = pair_width;
@@ -20,8 +19,14 @@ void ModelObjRecRANSACParameter::setSceneVisibility(const double &scene_visibili
 {
     this->scene_visibility_ = scene_visibility;
 }
-#endif
 
+ostream& operator<<(ostream& os, const objectTransformInformation &tf_info)
+{
+    os << "Found " << tf_info.model_name_ << " with ID: " << tf_info.transform_name_ << ". ObjRecRANSAC Confidence: " << tf_info.confidence_ 
+        << "\nlocated at: " << tf_info.origin_.x()  << ", " << tf_info.origin_.y()  << ", " << tf_info.origin_.z()  << ", " << "\nwith orientation: "
+        << tf_info.rotation_.w() << ", " << tf_info.rotation_.x() << ", " << tf_info.rotation_.y() << ", " << tf_info.rotation_.z() << std::endl;
+    return os;
+}
 
 SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_flag_(false), use_crop_box_(false), 
     use_binary_svm_(true), use_multi_class_svm_(false), number_of_added_models_(0), use_table_segmentation_(false), 
@@ -58,35 +63,63 @@ SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_f
 
 void SemanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_directory)
 {
+    bool success = checkFolderExist(path_to_shot_directory);
+    if (!success)
+    {
+        std::cerr << "setDirectorySHOT failed" << std::endl;
+        this->shot_loaded_ = false;
+        return;
+    }
     this->shot_loaded_ = true;
     std::cerr << "Loading SHOT...\n";
+
     std::string shot_path = path_to_shot_directory;
+    if (shot_path.back() != '/')
+        shot_path += "/";
+
     hie_producer = Hier_Pooler(hier_radius_);
     hie_producer.LoadDict_L0(shot_path, "200", "200");
     hie_producer.setRatio(hier_ratio_);
     std::cerr << "Done.\n";
 }
 
-void SemanticSegmentation::setUseMultiClassSVM(bool use_multi_class_svm)
+void SemanticSegmentation::setUseMultiClassSVM(const bool &use_multi_class_svm)
 {
     this->use_multi_class_svm_ = use_multi_class_svm;
 }
 
-void SemanticSegmentation::setUseBinarySVM(bool use_binary_svm)
+void SemanticSegmentation::setUseBinarySVM(const bool &use_binary_svm)
 {
     this->use_binary_svm_ = use_binary_svm;
 }
 
 void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_directory)
 {
-    this->svm_loaded_ = (use_binary_svm_ || use_multi_class_svm_);
+    bool success = checkFolderExist(path_to_svm_directory);
+    if (!success)
+    {
+        std::cerr << "setDirectorySVM failed" << std::endl;
+        this->svm_loaded_ = false;
+        return;
+    }
+    else if ((use_binary_svm_ || use_multi_class_svm_) == false)
+    {
+        std::cerr << "Both setUseMultiClassSVM and setUseBinarySVM is false.\nsetDirectorySVM needs at least one of them to be true\n";
+        return;
+    }
+    this->svm_loaded_ = true;
+
     binary_models_.resize(3);
     multi_models_.resize(3);
 
     std::cerr << "Loading SVM...\n";
     std::cerr << "Use Multi Class SVM = " << use_multi_class_svm_ << std::endl;
     std::cerr << "Use Background Foreground SVM = " << use_binary_svm_ << std::endl;
+
     std::string svm_path = path_to_svm_directory;
+    if (svm_path.back() != '/')
+        svm_path += "/";
+
     for( int ll = 0 ; ll < 3 ; ll++ )
     {
         std::stringstream ss;
@@ -98,7 +131,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
             if (binary_models_[ll] == NULL)
             {
                 // null pointer exception
-                std::cerr << "Failed to load file: " << (svm_path+"binary_L"+ss.str()+"_f.model").c_str();
+                std::cerr << "Failed to load file: " << (svm_path+"binary_L"+ss.str()+"_f.model").c_str() << std::endl;
                 this->svm_loaded_ = false;
             }
         }
@@ -108,7 +141,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
             if (multi_models_[ll] == NULL)
             {
                 // null pointer exception
-                std::cerr << "Failed to load file: " << (svm_path+"multi_L"+ss.str()+"_f.model").c_str();
+                std::cerr << "Failed to load file: " << (svm_path+"multi_L"+ss.str()+"_f.model").c_str() << std::endl;
                 this->svm_loaded_ = false;
             }
         }
@@ -117,16 +150,32 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
     std::cerr << "Done.\n";
 }
 
-void SemanticSegmentation::setUseVisualization(bool visualization_flag)
+void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_directory, const bool &use_binary_svm, const bool &use_multi_class_svm)
+{
+    this->setUseBinarySVM(use_binary_svm);
+    this->setUseMultiClassSVM(use_multi_class_svm);
+    this->setDirectorySVM(path_to_svm_directory);
+}
+
+void SemanticSegmentation::setUseVisualization(const bool &visualization_flag)
 {
     this->visualizer_flag_ = visualization_flag;
+    // Initialize pcl viewer
+    if( visualizer_flag_ )
+    {
+        viewer = pcl::visualization::PCLVisualizer::Ptr (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        viewer->initCameraParameters();
+        viewer->addCoordinateSystem(0.1);
+        viewer->setCameraPosition(0, 0, 0.1, 0, 0, 1, 0, -1, 0);
+        viewer->setSize(1280, 960);
+    }
 }
 void SemanticSegmentation::setUseCropBox(const bool &use_crop_box)
 {
     this->use_crop_box_ = use_crop_box;
 }
 
-void SemanticSegmentation::setUseTableSegmentation(bool use_table_segmentation)
+void SemanticSegmentation::setUseTableSegmentation(const bool &use_table_segmentation)
 {
     this->use_table_segmentation_ = use_table_segmentation;
 }
@@ -206,17 +255,6 @@ void SemanticSegmentation::initializeSemanticSegmentation()
 
     std::cerr << "Hier Feature Ratio = " << hier_ratio_ << std::endl;
     std::cerr << "Hier Feature Downsample = " << pcl_downsample_ << std::endl;
-        
-    // Initialize pcl viewer
-    if( visualizer_flag_ )
-    {
-        viewer = pcl::visualization::PCLVisualizer::Ptr (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-        viewer->initCameraParameters();
-        viewer->addCoordinateSystem(0.1);
-        viewer->setCameraPosition(0, 0, 0.1, 0, 0, 1, 0, -1, 0);
-        viewer->setSize(1280, 960);
-    }
-
 }
 
 SemanticSegmentation::~SemanticSegmentation()
@@ -234,12 +272,6 @@ SemanticSegmentation::~SemanticSegmentation()
 
 bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd, const std::string &save_directory_path)
 {
-    if (!this->class_ready_)
-    {
-        std::cerr << "Please initialize semantic segmentation first before extracting table surface from point cloud\n";
-        return false;
-    }
-
     if (!this->use_table_segmentation_)
     {
         std::cerr << "use_table_segmentation is set to false. Please enable it first before trying to do table segmentation.\n";
@@ -249,9 +281,11 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     *full_cloud = *input_cloud;
 
-    Eigen::Affine3f cam_tf_in_table = crop_box_target_pose_.inverse();
-    cropPointCloud(full_cloud, cam_tf_in_table, this->crop_box_size_);
-    
+
+    if(use_crop_box_) {
+        cropPointCloud(full_cloud, crop_box_target_pose_.inverse(), crop_box_size_);
+    }
+
     if( viewer )
     {
         viewer->setWindowName("Cropbox Screen");
@@ -268,16 +302,26 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
     }
     
     if (save_table_pcd){
-        pcl::PCDWriter writer;
-        writer.write<PointT> (save_directory_path+"/table.pcd", *table_corner_points_, true);
-        std::cerr << "Saved table point cloud in : " << save_directory_path <<"/table.pcd"<<std::endl;
+        std::string save_table_directory = save_directory_path;
+        if (checkFolderExist(save_table_directory))
+        {
+            if (save_table_directory.back() != '/')
+                save_table_directory+= '/';
+            pcl::PCDWriter writer;
+            writer.write<PointT> (save_table_directory+"table.pcd", *table_corner_points_, true);
+            std::cerr << "Saved table point cloud in : " << save_table_directory <<"table.pcd\n";
+        }
+        else
+        {
+            std::cerr << "Failed saving table corner pointcloud in "<< save_table_directory << std::endl;
+        }
     }
     std::cerr << "Sucessfully segment the table.\n";
     this->have_table_ = true;
     return true;
 }
 
-bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<PointLT>::Ptr &result)
+bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<pcl::PointXYZL>::Ptr &result)
 {
     if (!this->class_ready_)
     {
@@ -287,6 +331,26 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     *full_cloud = *input_cloud;
+
+    if(use_crop_box_) {
+      cropPointCloud(full_cloud, crop_box_target_pose_.inverse(), crop_box_size_);
+    }
+
+    if (full_cloud->size() < 1){
+        std::cerr << "No cloud available after using crop box.\n";
+        return false;
+    }
+    
+    if( viewer )
+    {
+        viewer->setWindowName("Cropbox Screen");
+        viewer->removeAllPointClouds();
+        viewer->addPointCloud(full_cloud, "cropbox_scene");
+        viewer->spin();
+        viewer->removeAllPointClouds();
+    }
+
+
     if (!have_table_ && use_table_segmentation_)
     {
         std::cerr << "Error. Does not has any table data yet, but use_table_segmentation_ flag is set to true\n."; 
@@ -301,15 +365,6 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     if (full_cloud->size() < 1)
     {
         std::cerr << "No cloud available after removing all object outside the table. Put some objects above the table. \n";
-        return false;
-    }
-
-    if(use_crop_box_) {
-      cropPointCloud(full_cloud, crop_box_target_pose_.inverse(), crop_box_size_);
-    }
-
-    if (full_cloud->size() < 1){
-        std::cerr << "No cloud available after using crop box.\n";
         return false;
     }
 
@@ -361,7 +416,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
         }
     }
 
-    pcl::PointCloud<PointLT>::Ptr label_cloud(new pcl::PointCloud<PointLT>());
+    pcl::PointCloud<pcl::PointXYZL>::Ptr label_cloud(new pcl::PointCloud<pcl::PointXYZL>());
     label_cloud = triple_pooler.getSemanticLabels();
     triple_pooler.reset();
     
@@ -375,10 +430,10 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     return true;
 }
 
-void SemanticSegmentation::convertPointCloudLabelToRGBA(const pcl::PointCloud<PointLT>::Ptr &input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &output) const
+void SemanticSegmentation::convertPointCloudLabelToRGBA(const pcl::PointCloud<pcl::PointXYZL>::Ptr &input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &output) const
 {
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr result(new pcl::PointCloud<pcl::PointXYZRGBA>);
-    for (pcl::PointCloud<PointLT>::const_iterator it = input->begin(); it != input->end(); ++it)
+    for (pcl::PointCloud<pcl::PointXYZL>::const_iterator it = input->begin(); it != input->end(); ++it)
     {
         pcl::PointXYZRGBA point;
         point.x = it->x;
@@ -395,18 +450,28 @@ void SemanticSegmentation::convertPointCloudLabelToRGBA(const pcl::PointCloud<Po
 
 
 #ifdef USE_OBJRECRANSAC
-void SemanticSegmentation::setUseComputePose(const bool compute_pose)
+void SemanticSegmentation::setUseComputePose(const bool &compute_pose)
 {
     this->compute_pose_ = compute_pose;
 }
 
-void SemanticSegmentation::setUseCuda(const bool use_cuda)
+void SemanticSegmentation::setUseCuda(const bool &use_cuda)
 {
     this->use_cuda_ = use_cuda;
 }
 
 void SemanticSegmentation::addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter)
 {
+    bool success = checkFolderExist(path_to_model_directory);
+    if (!success)
+    {
+        std::cerr << "addModel failed" << std::endl;
+        return;
+    }
+    std::string model_path = path_to_model_directory;
+    if (model_path.back() != '/')
+        model_path += "/";
+
     if (!use_multi_class_svm_)
     {
         if (combined_ObjRecRANSAC_ == NULL)
@@ -415,7 +480,7 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
         }
         combined_ObjRecRANSAC_->setParams(parameter.object_visibility_,parameter.scene_visibility_);
         combined_ObjRecRANSAC_->setUseCUDA(use_cuda_);
-        combined_ObjRecRANSAC_->AddModel(path_to_model_directory + model_name, model_name);
+        combined_ObjRecRANSAC_->AddModel(model_path + model_name, model_name);
         this->number_of_added_models_++;
     }
     else
@@ -423,11 +488,11 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
         individual_ObjRecRANSAC_.push_back(boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_)));
         individual_ObjRecRANSAC_[number_of_added_models_]->setParams(parameter.object_visibility_,parameter.scene_visibility_);
         individual_ObjRecRANSAC_[number_of_added_models_]->setUseCUDA(use_cuda_);
-        individual_ObjRecRANSAC_[number_of_added_models_]->AddModel(path_to_model_directory + model_name, model_name);
+        individual_ObjRecRANSAC_[number_of_added_models_]->AddModel(model_path + model_name, model_name);
         model_name_map_[model_name] = number_of_added_models_;
         this->number_of_added_models_++;
     }
-    ModelT mesh_buf = LoadMesh(path_to_model_directory + model_name, model_name);  
+    ModelT mesh_buf = LoadMesh(model_path + model_name, model_name);  
     mesh_set_.push_back(mesh_buf);
     object_class_transform_index_[model_name] = 0;
 }
@@ -443,21 +508,21 @@ void SemanticSegmentation::setModeObjRecRANSAC(const int &mode)
     this->objRecRANSAC_mode_ = mode;
 }
 
-void SemanticSegmentation::setUsePreferredOrientation(const bool use_preferred_orientation)
+void SemanticSegmentation::setUsePreferredOrientation(const bool &use_preferred_orientation)
 {
     this->use_preferred_orientation_ = use_preferred_orientation;
 }
 
-void SemanticSegmentation::setUseObjectPersistence(const bool use_object_persistence)
+void SemanticSegmentation::setUseObjectPersistence(const bool &use_object_persistence)
 {
     this->use_object_persistence_ = use_object_persistence;
 }
 
-std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud)
+std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud)
 {
-    if (!this->class_ready_)
+    if (!this->class_ready_ || !this->compute_pose_)
     {
-        std::cerr << "Please initialize semantic segmentation first before calculating obj transform\n";
+        std::cerr << "Please set compute pose to true and initialize semantic segmentation before calculating obj transform\n";
         return std::vector<objectTransformInformation>();
     }
 
@@ -563,7 +628,7 @@ std::vector<objectTransformInformation> SemanticSegmentation::getTransformInform
     return result;
 }
 
-std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
+std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
 {
     if (!this->class_ready_)
     {
@@ -639,20 +704,20 @@ std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjT
 }
 
 bool SemanticSegmentation::segmentAndCalculateObjTransform(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
-    pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud_result, std::vector<objectTransformInformation> &object_transform_result)
+    pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud_result, std::vector<objectTransformInformation> &object_transform_result)
 {
     bool segmentation_successful = this->segmentPointCloud(input_cloud, labelled_point_cloud_result);
     if (segmentation_successful)
         object_transform_result = this->calculateObjTransform(labelled_point_cloud_result);
     
-    return segmentation_successful;
+    return (segmentation_successful && object_transform_result.size() > 0);
 }
 
 #endif
 
 void SemanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
-  const Eigen::Affine3f& camera_transform_in_target, 
-  const Eigen::Vector3f& box_size) const
+  const Eigen::Affine3f &camera_transform_in_target, 
+  const Eigen::Vector3f &box_size) const
 {
   pcl::PointCloud<PointT>::Ptr  cropped_cloud(new pcl::PointCloud<PointT>());
   pcl::CropBox<PointT> crop_box;
@@ -663,4 +728,14 @@ void SemanticSegmentation::cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_in
   crop_box.setTransform(camera_transform_in_target);
   crop_box.filter(*cropped_cloud);
   cloud_input = cropped_cloud;
+}
+
+bool SemanticSegmentation::checkFolderExist(const std::string &directory_path) const
+{
+    bool result = boost::filesystem::is_directory(directory_path);
+    if (!result)
+    {
+        std::cerr << "Folder: " << directory_path << " does not exist.\n";
+    }
+    return result;
 }

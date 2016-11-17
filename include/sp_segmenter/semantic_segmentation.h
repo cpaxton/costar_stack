@@ -2,8 +2,10 @@
 #define SEMANTIC_SEGMENTATION_H
 
 #include <time.h> 
+#include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <pcl/filters/crop_box.h>
+#include <boost/filesystem.hpp>
 
 #include "sp_segmenter/features.h"
 #include "sp_segmenter/JHUDataParser.h"
@@ -70,6 +72,8 @@ struct objectTransformInformation
         result.confidence = this->confidence_;
         return result;
     }
+
+    friend ostream& operator<<(ostream& os, const objectTransformInformation &tf_info);
 };
 
 class SemanticSegmentation
@@ -77,65 +81,89 @@ class SemanticSegmentation
 public:
     SemanticSegmentation();
     ~SemanticSegmentation();
+// ---------------------------------------------------------- MAIN OPERATIONAL FUNCTIONS --------------------------------------------------------------------------------------------
 
+    // initializeSemanticSegmentation needs to be called after all main parameter has been set. It will check whether all parameters has been set properly or not
     void initializeSemanticSegmentation();
-    bool getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd = false, const std::string &save_directory_path = ".");
-    bool segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<PointLT>::Ptr &result);
-    void convertPointCloudLabelToRGBA(const pcl::PointCloud<PointLT>::Ptr &input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &output) const;
+
+    // segment input point cloud pcl::PointXYZRGBA to labelled point cloud pcl::PointXYZL
+    bool segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<pcl::PointXYZL>::Ptr &result);
 #ifdef USE_OBJRECRANSAC
-    std::vector<objectTransformInformation> calculateObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud);
-    std::vector<objectTransformInformation> getUpdateOnOneObjTransform(const pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type);
+    // calculate all object poses based on the input labelled point cloud generated from segmentPointCloud function.
+    std::vector<objectTransformInformation> calculateObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud);
+
+    // segment and calculate all object poses based on input cloud. It returns true if the segmentation successful and the detected object poses > 0
     bool segmentAndCalculateObjTransform(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
-        pcl::PointCloud<PointLT>::Ptr &labelled_point_cloud_result, std::vector<objectTransformInformation> &object_transform_result);
+        pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud_result, std::vector<objectTransformInformation> &object_transform_result);
+
+    // Update one object pose that has matching transform name and object type, then returns that updated pose with other poses(from previous detection). 
+    std::vector<objectTransformInformation> getUpdateOnOneObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type);
 #endif
 
+// ---------------------------------------------------------- ADDITIONAL OPERATIONAL FUNCTIONS --------------------------------------------------------------------------------------
+    bool getTableSurfaceFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const bool &save_table_pcd = false, const std::string &save_directory_path = ".");
+    void convertPointCloudLabelToRGBA(const pcl::PointCloud<pcl::PointXYZL>::Ptr &input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &output) const;
+// --------------------------------- MAIN PARAMETERS for point cloud segmentation that needs to be set before initializeSemanticSegmentation ----------------------------------------
     void setDirectorySHOT(const std::string &path_to_shot_directory);
     void setDirectorySVM(const std::string &path_to_svm_directory);
-    void setUseMultiClassSVM(bool use_multi_class_svm);
-    void setUseBinarySVM(bool use_binary_svm);
+    void setDirectorySVM(const std::string &path_to_svm_directory, const bool &use_binary_svm, const bool &use_multi_class_svm);
+    void setUseMultiClassSVM(const bool &use_multi_class_svm);
+    void setUseBinarySVM(const bool &use_binary_svm);
     template <typename NumericType>
-        void setPointCloudDownsampleValue(NumericType down_ss);
+        void setPointCloudDownsampleValue(const NumericType &down_ss);
     template <typename NumericType>
-        void setHierFeaRatio(NumericType ratio);
+        void setHierFeaRatio(const NumericType &ratio);
 
-    void setUseVisualization(bool visualization_flag);
-
-    // Table Segmentation Functions
-    void setUseCropBox(const bool &use_crop_box);
-    template <typename NumericType>
-        void setCropBoxSize(const NumericType &x, const NumericType &y, const NumericType &z);
-    template <typename NumericType>
-        void setCropBoxSize(const Eigen::Matrix<NumericType, 3, 1> crop_box_size);
-    template <typename NumericType>
-        void setCropBoxPose(const Eigen::Transform< NumericType, 3, Eigen::Affine> &target_pose_relative_to_camera_frame);
-    void setUseTableSegmentation(bool use_table_segmentation);
-    template <typename NumericType>
-        void setCropAboveTableBoundary(const NumericType &min, const NumericType &max);
-    void loadTableFromFile(const std::string &table_pcd_path);
-    template <typename NumericType1, typename NumericType2>
-        void setTableSegmentationParameters(NumericType1 table_distance_threshold, NumericType1 table_angular_threshold, NumericType2 table_minimal_inliers);
-
-    void setUseComputePose(const bool compute_pose);
-    void setUseCuda(const bool use_cuda);
+// --------------------------------- MAIN PARAMETERS for ObjRecRANSAC that needs to be set before initializeSemanticSegmentation if compute pose is used-------------------------------
+    void setUseComputePose(const bool &compute_pose);
+    void setUseCuda(const bool &use_cuda);
     void setModeObjRecRANSAC(const int &mode);
-    template <typename NumericType>
-        void addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis);
-    void addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict);
-    void setUseObjectPersistence(const bool use_object_persistence);
-    void setUsePreferredOrientation(const bool use_preferred_orientation);
-    template <typename NumericType>
-        void setPreferredOrientation(Eigen::Quaternion<NumericType> base_rotation);
     template <typename NumericType>
         void setMinConfidenceObjRecRANSAC(const NumericType &min_confidence);
 #ifdef USE_OBJRECRANSAC
     void addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter);
 #endif
 
+// --------------------------------- OPTIONAL PARAMETERS that does not need to be set before initializeSemanticSegmentation, but may help in some cases -------------------------------
+    // Visualize the point cloud segmentation with pcl visualizer
+    void setUseVisualization(const bool &visualization_flag);
+
+    // Crop box will crop the point cloud by making a box with crop_box_size_ around the crop_box_pose. It can be used to remove background data without using binarySVM
+    void setUseCropBox(const bool &use_crop_box);
+    template <typename NumericType>
+        void setCropBoxSize(const NumericType &x, const NumericType &y, const NumericType &z);
+    template <typename NumericType>
+        void setCropBoxSize(const Eigen::Matrix<NumericType, 3, 1> &crop_box_size);
+    template <typename NumericType>
+        void setCropBoxPose(const Eigen::Transform< NumericType, 3, Eigen::Affine> &target_pose_relative_to_camera_frame);
+
+    // Table Segmentation will extract the points above the table region. It can be used to remove background data without using binarySVM
+    void setUseTableSegmentation(const bool &use_table_segmentation);
+    template <typename NumericType>
+        void setCropAboveTableBoundary(const NumericType &min, const NumericType &max);
+    void loadTableFromFile(const std::string &table_pcd_path);
+    template <typename NumericType1, typename NumericType2, typename NumericType3>
+        void setTableSegmentationParameters(const NumericType1 &table_distance_threshold,const NumericType2 &table_angular_threshold,const NumericType3 &table_minimal_inliers);
+
+    // Symmetric parameters will post-process ObjRecRANSAC pose to achieve more consistent pose for all objects that has symmetric properties (e.g. boxes)
+    // by returning a pose that is closest to a preferred orientation or identity (if the preferred orientation is not set). If the symmetric parameter is not set, the object assumed to have no symmetric property
+    template <typename NumericType>
+        void addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis);
+    void addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict);
+    void setUsePreferredOrientation(const bool &use_preferred_orientation);
+    template <typename NumericType>
+        void setPreferredOrientation(const Eigen::Quaternion<NumericType> &base_rotation);
+
+    // Object persistence will post-process ObjRecRANSAC pose to get an object orientation that is closest to the previous detection, 
+    // if the detected object position is within 2.5 cm compared to previous object position
+    void setUseObjectPersistence(const bool &use_object_persistence);
+
 protected:
     void cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
-      const Eigen::Affine3f& camera_transform_in_target, 
-      const Eigen::Vector3f& box_size) const;
+        const Eigen::Affine3f &camera_transform_in_target, 
+        const Eigen::Vector3f &box_size) const;
     std::vector<objectTransformInformation> getTransformInformationFromTree() const;
+    bool checkFolderExist(const std::string &directory_path) const;
     bool class_ready_;
     bool visualizer_flag_;
 

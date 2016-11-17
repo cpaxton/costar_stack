@@ -12,24 +12,24 @@ void SemanticSegmentation::setMinConfidenceObjRecRANSAC(const NumericType &min_c
 }
 
 template <typename NumericType>
-void SemanticSegmentation::setPreferredOrientation(Eigen::Quaternion<NumericType> base_rotation)
+void SemanticSegmentation::setPreferredOrientation(const Eigen::Quaternion<NumericType> &base_rotation)
 {
     if (!this->use_preferred_orientation_) std::cerr << "WARNING: setUsePreferredOrientation is false. No orientation preference will be used\n";
     else
     {
         std::cerr << "Preferred orientation has been set.\n";
-        this->base_rotation_ = base_rotation.template cast<float>  ();
+        this->base_rotation_ = base_rotation.template cast<double>  ();
     }
 }
 
 template <typename NumericType>
-void SemanticSegmentation::setPointCloudDownsampleValue(NumericType down_ss)
+void SemanticSegmentation::setPointCloudDownsampleValue(const NumericType &down_ss)
 {
     this->pcl_downsample_ = float(down_ss);
 }
 
 template <typename NumericType>
-void SemanticSegmentation::setHierFeaRatio(NumericType ratio)
+void SemanticSegmentation::setHierFeaRatio(const NumericType &ratio)
 {
     this->hier_ratio_ = float(ratio);
 }
@@ -42,7 +42,7 @@ void SemanticSegmentation::setCropBoxSize(const NumericType &x, const NumericTyp
 }
 
 template <typename NumericType>
-void SemanticSegmentation::setCropBoxSize(const Eigen::Matrix<NumericType, 3, 1> crop_box_size)
+void SemanticSegmentation::setCropBoxSize(const Eigen::Matrix<NumericType, 3, 1> &crop_box_size)
 {
     this->crop_box_size_ = Eigen::Vector3f(crop_box_size[0], crop_box_size[1], crop_box_size[2]);
 }
@@ -60,8 +60,8 @@ void SemanticSegmentation::setCropAboveTableBoundary(const NumericType &min, con
     this->above_table_max = double(max);
 }
 
-template <typename NumericType1, typename NumericType2>
-void SemanticSegmentation::setTableSegmentationParameters(NumericType1 table_distance_threshold, NumericType1 table_angular_threshold, NumericType2 table_minimal_inliers)
+template <typename NumericType1, typename NumericType2, typename NumericType3>
+void SemanticSegmentation::setTableSegmentationParameters(const NumericType1 &table_distance_threshold,const NumericType2 &table_angular_threshold,const NumericType3 &table_minimal_inliers)
 {
     this->table_distance_threshold_ = double(table_distance_threshold);
     this->table_angular_threshold_ = table_angular_threshold;
