@@ -4,7 +4,8 @@ project(sp_segmenter C CXX)
 SET(CMAKE_BUILD_TYPE "Release")
 
 OPTION(BUILD_ROS_BINDING "Build ROS Binding" ON)
-OPTION(USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
+OPTION(BUILD_USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
+OPTION(BUILD_PYTHON_BINDING "Build Python Binding" ON)
 
 # Enable C++11
 include(CheckCXXCompilerFlag)
@@ -19,13 +20,13 @@ else()
 endif()
 
 if (UNIX)
-  message(status "Setting GCC flags")
+  message(STATUS "Setting GCC flags")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -g -Wall")
 else()
-  message(status "Setting MSVC flags")
+  message(STATUS "Setting MSVC flags")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 endif()
-message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+message(STATUS "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
 # CORE LIBRARIES NEEDED FOR SP_SEGMENTER
 find_package(PCL REQUIRED) 
@@ -49,6 +50,7 @@ ENDIF(OPENMP_FOUND)
 # COSTAR specific application. Leave this off all time if you are not working at costar
 OPTION(TURN_THIS_OFF "TURN_THIS_OFF" ON)
 if (TURN_THIS_OFF)
+  message(STATUS "Warning, only turn this on when you are a part of CoSTAR team. You will need to have costar_objrec_msgs from costar_stack package in github to compile this successfully")
   ADD_DEFINITIONS( -DCOSTAR)
 endif()
 
@@ -106,16 +108,16 @@ target_link_libraries(Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_
 target_link_libraries(PoolLib Utility linear ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
-add_library(SpCompactLib src/sp_compact.cpp)
-target_link_libraries(SpCompactLib PoolLib Utility linear ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
+add_library(SpCompact src/sp_compact.cpp)
+target_link_libraries(SpCompact PoolLib Utility linear ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
 add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/common.cpp)
 
 
 # Enable OBJRECRANSAC
-IF (USE_OBJRECRANSAC)
+IF (BUILD_USE_OBJRECRANSAC)
   find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
-  message(status "ObjRecRANSAC enabled")
+  message(STATUS "ObjRecRANSAC enabled")
   ADD_DEFINITIONS( -DUSE_OBJRECRANSAC)
   add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
   target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY})
@@ -146,17 +148,18 @@ IF (USE_OBJRECRANSAC)
   target_link_libraries(SemanticSegmentation Utility DataParser PoolLib GreedyObjRecRANSAC
                 ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} ${Boost_LIBRARIES})
 ELSE()
-  message(status "ObjRecRANSAC disabled")
+  message(STATUS "ObjRecRANSAC disabled")
   target_link_libraries(SemanticSegmentation Utility DataParser PoolLib
                 ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} ${Boost_LIBRARIES})
 ENDIF()
 
 # Sample code for training and doing segmentation
-add_executable(SpCompact src/main_sp_compact.cpp)
+add_executable(sp_compact src/main_sp_compact.cpp)
 add_executable(sample_semantic_segmenter src/main_sample_semantic_segmentation.cpp)
 target_link_libraries(sample_semantic_segmenter SemanticSegmentation)
 
 IF (BUILD_ROS_BINDING)
+  message(STATUS "ROS Binding enabled")
   add_library(RosSemanticSegmentation
     include/sp_segmenter/ros_semantic_segmentation.h
     src/ros_semantic_segmentation.cpp)
@@ -167,9 +170,42 @@ IF (BUILD_ROS_BINDING)
   add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
   target_link_libraries(SPSegmenterServer RosSemanticSegmentation) 
 
-  target_link_libraries(SpCompact SpCompactLib ${catkin_LIBRARIES})
+  target_link_libraries(sp_compact SpCompact ${catkin_LIBRARIES})
 ELSE()
-  target_link_libraries(SpCompact SpCompactLib)
+  message(STATUS "ROS Binding disabled")
+  target_link_libraries(sp_compact SpCompact)
+ENDIF()
+
+IF (BUILD_PYTHON_BINDING)
+  message(STATUS " Python Binding enabled. Library 'SpCompactPy' will be built which can imported to python")
+  message(STATUS " See python_binding/sample_training.py for an example of how to use it.")
+  find_package(PythonInterp)
+  find_package(PythonLibs)
+  if(APPLE AND ${PYTHON_VERSION_MAJOR} EQUAL 3)
+      find_package(Boost COMPONENTS python3)
+  else()
+      find_package(Boost COMPONENTS python)
+  endif()
+
+  INCLUDE_DIRECTORIES(python_binding ${PYTHON_INCLUDE_DIRS})
+  LINK_LIBRARIES(${PYTHON_LIBRARIES})
+
+  add_library(SpCompactPy SHARED python_binding/py_sp_compact.cpp)
+
+  set_target_properties( SpCompactPy
+    PROPERTIES
+    PREFIX ""
+  )
+  
+  IF (APPLE)
+    set_target_properties( SpCompactPy PROPERTIES SUFFIX ".so" )
+  ENDIF()
+
+  target_link_libraries(SpCompactPy SpCompact ${Boost_LIBRARIES})
+
+  # ADD_SUBDIRECTORY(python_binding)
+ELSE()
+  message(STATUS "Python Binding disabled.")
 ENDIF()
 
 # add_executable(TestSymmetricOrientationRealignment src/TestSymmetricOrientationRealignment.cpp)

@@ -124,6 +124,9 @@ int main(int argc, char** argv)
 
     training.startTrainingSVM();
 
+#ifdef BUILD_ROS_BINDING
     ros::shutdown();
+#endif
+
     return 0;
 } 
