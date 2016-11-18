@@ -348,7 +348,7 @@ private:
     std::vector<float> segs_max_score;
     std::vector< std::vector<float> > class_responses;
     
-    bool max_pool_flag;
+    // bool max_pool_flag;
     
     size_t sp_num;
 };

@@ -42,7 +42,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr & sc
     pcl::PointCloud<PointT>::iterator it_proj = scene_projected->begin();
     
     pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
-    for( int base = 0 ; it_ori < scene->end(), it_proj < scene_projected->end() ; it_ori++, it_proj++, base++ )
+    for( int base = 0 ; it_ori < scene->end() && it_proj < scene_projected->end() ; it_ori++, it_proj++, base++ )
     {
         float diffx = it_ori->x-it_proj->x;
         float diffy = it_ori->y-it_proj->y;
