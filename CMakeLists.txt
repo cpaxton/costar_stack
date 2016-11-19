@@ -191,17 +191,20 @@ IF (BUILD_PYTHON_BINDING)
   LINK_LIBRARIES(${PYTHON_LIBRARIES})
 
   add_library(SpCompactPy SHARED python_binding/py_sp_compact.cpp)
+  add_library(SemanticSegmentationPy SHARED python_binding/py_semantic_segmentation.cpp)
 
-  set_target_properties( SpCompactPy
+  set_target_properties( SpCompactPy SemanticSegmentationPy
     PROPERTIES
     PREFIX ""
   )
   
   IF (APPLE)
-    set_target_properties( SpCompactPy PROPERTIES SUFFIX ".so" )
+    set_target_properties( SpCompactPy SemanticSegmentationPy 
+      PROPERTIES SUFFIX ".so" )
   ENDIF()
 
   target_link_libraries(SpCompactPy SpCompact ${Boost_LIBRARIES})
+  target_link_libraries(SemanticSegmentationPy SemanticSegmentation ${Boost_LIBRARIES})
 
   # ADD_SUBDIRECTORY(python_binding)
 ELSE()

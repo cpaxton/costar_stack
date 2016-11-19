@@ -1,4 +1,4 @@
-
+#ifdef USE_OBJRECRANSAC
 template <typename NumericType>
 void SemanticSegmentation::addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis)
 {
@@ -21,6 +21,7 @@ void SemanticSegmentation::setPreferredOrientation(const Eigen::Quaternion<Numer
         this->base_rotation_ = base_rotation.template cast<double>  ();
     }
 }
+#endif
 
 template <typename NumericType>
 void SemanticSegmentation::setPointCloudDownsampleValue(const NumericType &down_ss)

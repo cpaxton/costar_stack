@@ -74,6 +74,11 @@ struct objectTransformInformation
     }
 
     friend ostream& operator<<(ostream& os, const objectTransformInformation &tf_info);
+
+    void print() const
+    {
+        std::cout << *this;
+    }
 };
 
 class SemanticSegmentation
@@ -115,12 +120,13 @@ public:
         void setHierFeaRatio(const NumericType &ratio);
 
 // --------------------------------- MAIN PARAMETERS for ObjRecRANSAC that needs to be set before initializeSemanticSegmentation if compute pose is used-------------------------------
+
+#ifdef USE_OBJRECRANSAC
     void setUseComputePose(const bool &compute_pose);
     void setUseCuda(const bool &use_cuda);
     void setModeObjRecRANSAC(const int &mode);
     template <typename NumericType>
         void setMinConfidenceObjRecRANSAC(const NumericType &min_confidence);
-#ifdef USE_OBJRECRANSAC
     void addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter);
 #endif
 
@@ -147,6 +153,7 @@ public:
 
     // Symmetric parameters will post-process ObjRecRANSAC pose to achieve more consistent pose for all objects that has symmetric properties (e.g. boxes)
     // by returning a pose that is closest to a preferred orientation or identity (if the preferred orientation is not set). If the symmetric parameter is not set, the object assumed to have no symmetric property
+#ifdef USE_OBJRECRANSAC
     template <typename NumericType>
         void addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis);
     void addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict);
@@ -157,12 +164,15 @@ public:
     // Object persistence will post-process ObjRecRANSAC pose to get an object orientation that is closest to the previous detection, 
     // if the detected object position is within 2.5 cm compared to previous object position
     void setUseObjectPersistence(const bool &use_object_persistence);
+#endif
 
 protected:
     void cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
         const Eigen::Affine3f &camera_transform_in_target, 
         const Eigen::Vector3f &box_size) const;
+#ifdef USE_OBJRECRANSAC
     std::vector<objectTransformInformation> getTransformInformationFromTree() const;
+#endif
     bool checkFolderExist(const std::string &directory_path) const;
     bool class_ready_;
     bool visualizer_flag_;
