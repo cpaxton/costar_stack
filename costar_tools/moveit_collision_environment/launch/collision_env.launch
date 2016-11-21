@@ -19,7 +19,7 @@
     doc="Boolean variable to set whether we use predefined parent name for collision object TF header or not" />
   <arg name="parentFrameName"     default="base_link"
     doc="Predefined collision object TF header" />
-  <arg name="renewTable"          default="true" />
+  <arg name="renewTable"          default="false" />
 
   <arg name="useTableWall"           default="true" doc="Add a wall on back,left, and right edge of the table."/>
   <arg name="useBaseLinkWall"        default="true" doc="Add a wall on back,left, and right edge of the baseLink."/>
