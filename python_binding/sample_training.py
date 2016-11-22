@@ -1,4 +1,4 @@
-from SpCompactPy import *
+from sp_segmenter.SpCompactPy import *
 
 # location of the directory that contains object folder and background folder
 training_folder_path = "data/training";

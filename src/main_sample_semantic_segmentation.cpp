@@ -16,8 +16,8 @@ int main(int argc, char** argv)
     std::cout << "Current path is : " << full_path << std::endl;
 
     segmenter.setDirectorySHOT("./data/UW_shot_dict");
-    segmenter.setUseMultiClassSVM(false);
-    segmenter.setUseBinarySVM(true);
+    segmenter.setUseMultiClassSVM(true);
+    segmenter.setUseBinarySVM(false);
     segmenter.setDirectorySVM("./data/link_node_svm");
     segmenter.setPointCloudDownsampleValue(0.003);
     segmenter.setHierFeaRatio(3);
@@ -38,10 +38,12 @@ int main(int argc, char** argv)
     segmenter.setMinConfidenceObjRecRANSAC(0.15);
     ModelObjRecRANSACParameter node_param(0.05,0.004,0.1,0.1),
         link_param(0.122,0.004,0.1,0.1);
-    segmenter.addModelSymmetricProperty("node_uniform", 90, 90, 90, 90, "z");
     segmenter.addModelSymmetricProperty("link_uniform", 180, 180, 90, 90, "z");
-    segmenter.addModel("./data/mesh", "node_uniform", node_param);
+    segmenter.addModelSymmetricProperty("node_uniform", 90, 90, 90, 90, "z");
+    // The order of adding mesh should be consistent to the name of svm.
+    // For example, in this sample code, the svm file is link_node_svm, so link should be added before node)
     segmenter.addModel("./data/mesh", "link_uniform", link_param);
+    segmenter.addModel("./data/mesh", "node_uniform", node_param);
 #endif
     bool use_table = true;
     if (use_table)

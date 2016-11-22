@@ -2,6 +2,33 @@
 #define PY_INPUT_TO_CPP_UTILS
 // Source: http://stackoverflow.com/questions/15842126/feeding-a-python-list-into-a-function-taking-in-a-vector-with-boost-python
 
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/io/pcd_io.h>
+
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr loadPointCloudFromFile(const std::string &pcd_path)
+{
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr point_cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PCDReader reader;
+  if( reader.read (pcd_path, *point_cloud) == 0)
+  {
+    std::cerr << "Point cloud loaded successfully.\n";
+  }
+  else
+  {
+    std::cerr << "Point cloud fail to load.\n";
+  }
+  return point_cloud;
+}
+
+Eigen::Affine3f makeEigenPose(const Eigen::Quaternionf &quaternion, const Eigen::Translation3f &translation)
+{
+  return Eigen::Affine3f(translation * quaternion);
+}
+
 
 #include <boost/python/stl_iterator.hpp>
 

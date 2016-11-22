@@ -22,10 +22,22 @@ void ModelObjRecRANSACParameter::setSceneVisibility(const double &scene_visibili
 
 ostream& operator<<(ostream& os, const objectTransformInformation &tf_info)
 {
-    os << "Found " << tf_info.model_name_ << " with ID: " << tf_info.transform_name_ << ". ObjRecRANSAC Confidence: " << tf_info.confidence_ 
-        << "\nlocated at: " << tf_info.origin_.x()  << ", " << tf_info.origin_.y()  << ", " << tf_info.origin_.z()  << ", " << "\nwith orientation: "
-        << tf_info.rotation_.w() << ", " << tf_info.rotation_.x() << ", " << tf_info.rotation_.y() << ", " << tf_info.rotation_.z() << std::endl;
+    os << "Found object: " << tf_info.model_name_ << " with ID: " << tf_info.transform_name_ 
+        << ".\nObjRecRANSAC Confidence: " << tf_info.confidence_ 
+        << "\nLocation: " << tf_info.origin_.x()  << ", " << tf_info.origin_.y()  << ", " << tf_info.origin_.z()  << "." 
+        << "\nOrientation: "
+        << tf_info.rotation_.w() << ", " << tf_info.rotation_.x() << ", " << tf_info.rotation_.y() << ", " << tf_info.rotation_.z() << ".\n";
     return os;
+}
+
+bool objectTransformInformation::operator==(const objectTransformInformation& other) const
+{
+    return this->transform_name_ == other.transform_name_
+        && this->model_name_ == other.model_name_
+        && this->model_index_ == other.model_index_
+        && this->confidence_ == other.confidence_
+        && this->origin_  == other.origin_
+        && this->rotation_.isApprox(other.rotation_);
 }
 
 SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_flag_(false), use_crop_box_(false), 
@@ -351,30 +363,33 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     }
 
 
-    if (!have_table_ && use_table_segmentation_)
+    if (use_table_segmentation_)
     {
-        std::cerr << "Error. Does not has any table data yet, but use_table_segmentation_ flag is set to true\n."; 
-        std::cerr << "Please do table segmentation first, or disable use_table_segmentation_\n.";
-        return false;
-    }
-    else
-    {
-      segmentCloudAboveTable(full_cloud, table_corner_points_, above_table_min, above_table_max);
-    }
-    
-    if (full_cloud->size() < 1)
-    {
-        std::cerr << "No cloud available after removing all object outside the table. Put some objects above the table. \n";
-        return false;
-    }
+        if (!have_table_)
+        {
+            std::cerr << "Error. Does not has any table data yet, but use_table_segmentation_ flag is set to true\n."; 
+            std::cerr << "Please do table segmentation first, or disable use_table_segmentation_\n.";
+            return false;
+        }
+        else
+        {
+            segmentCloudAboveTable(full_cloud, table_corner_points_, above_table_min, above_table_max);
 
-    if( viewer )
-    {
-        viewer->setWindowName("Table Segmented Screen");
-        viewer->removeAllPointClouds();
-        viewer->addPointCloud(full_cloud, "whole_scene");
-        viewer->spin();
-        viewer->removeAllPointClouds();
+            if (full_cloud->size() < 1)
+            {
+                std::cerr << "No cloud available after removing all object outside the table. Put some objects above the table. \n";
+                return false;
+            }
+
+            if( viewer )
+            {
+                viewer->setWindowName("Table Segmented Screen");
+                viewer->removeAllPointClouds();
+                viewer->addPointCloud(full_cloud, "whole_scene");
+                viewer->spin();
+                viewer->removeAllPointClouds();
+            }
+        }
     }
 
     spPooler triple_pooler;
@@ -474,6 +489,7 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
 
     if (!use_multi_class_svm_)
     {
+        std::cerr << "Using combined ObjRecRANSAC.\n";
         if (combined_ObjRecRANSAC_ == NULL)
         {
             combined_ObjRecRANSAC_ = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_));
@@ -485,6 +501,7 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
     }
     else
     {
+        std::cerr << "Using individual ObjRecRANSAC for each model.\n";
         individual_ObjRecRANSAC_.push_back(boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_)));
         individual_ObjRecRANSAC_[number_of_added_models_]->setParams(parameter.object_visibility_,parameter.scene_visibility_);
         individual_ObjRecRANSAC_[number_of_added_models_]->setUseCUDA(use_cuda_);
@@ -544,6 +561,7 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
         {
             if( cloud_set[j]->empty() == false )
             {
+                std::cerr << "cloud set " << j << " size: " << cloud_set[j]->size() << std::endl;
                 std::vector<poseT> tmp_poses;
                 switch (objRecRANSAC_mode_)
                 {

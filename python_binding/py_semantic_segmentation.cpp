@@ -4,8 +4,22 @@
  * 11/18/2016
 **************/
 #include <boost/python.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include "py_input_to_cpp_utils.h"
 #include "sp_segmenter/semantic_segmentation.h"
 using namespace boost::python;
+
+void printAllObjectTransformInformation(std::vector<objectTransformInformation> & pose_estimation)
+{
+    for (std::vector<objectTransformInformation>::const_iterator it = pose_estimation.begin(); 
+        it!=pose_estimation.end(); ++it)
+    {
+        std::cerr << *it;
+    }
+}
 
 void (SemanticSegmentation::*setCropBoxSize_d)(const double &,const double &,const double &) = &SemanticSegmentation::setCropBoxSize;
 void (SemanticSegmentation::*setCropBoxSize_f)(const float &,const float &,const float &) = &SemanticSegmentation::setCropBoxSize;
@@ -21,6 +35,24 @@ void (SemanticSegmentation::*setDirectorySVM_2)(const std::string &, const bool 
 
 BOOST_PYTHON_MODULE(SemanticSegmentationPy)
 {
+    def("loadPointCloudFromFile",loadPointCloudFromFile);
+    def("makeEigenPose",makeEigenPose);
+    def("printAllPoses",printAllObjectTransformInformation);
+
+    class_<Eigen::Quaternionf>("EigenQuaternion")
+        .def(init<float,float,float,float>())
+        .def(init<double,double,double,double>())
+    ;
+
+    class_<Eigen::Translation3f>("EigenTranslation")
+        .def(init<float,float,float>())
+        .def(init<double,double,double>())
+    ;
+
+    class_<Eigen::Affine3f>("EigenPose");
+    class_<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr>("PointCloudXYZRGBA");
+    class_<pcl::PointCloud<pcl::PointXYZL>::Ptr>("PointCloudXYZL");
+
     class_<ModelObjRecRANSACParameter>("ModelObjRecRANSACParameter")
         .def(init<double, double>())
         .def(init<double, double, double, double>())
@@ -35,6 +67,10 @@ BOOST_PYTHON_MODULE(SemanticSegmentationPy)
         .def_readwrite("model_name", &objectTransformInformation::model_name_)
         .def_readwrite("model_index", &objectTransformInformation::model_index_)
         .def_readwrite("model_name", &objectTransformInformation::model_name_)
+    ;
+
+    class_<std::vector<objectTransformInformation> >("vectorOfObjectTransformInformation")
+        .def(vector_indexing_suite< std::vector<objectTransformInformation>, true>())
     ;
 
     class_<SemanticSegmentation>("SemanticSegmentation")

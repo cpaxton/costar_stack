@@ -197,7 +197,15 @@ IF (BUILD_PYTHON_BINDING)
     PROPERTIES
     PREFIX ""
   )
-  
+
+  IF (BUILD_ROS_BINDING)
+    # Put the library into catkin's pythonpath
+    set_target_properties ( SpCompactPy SemanticSegmentationPy
+      PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    )
+  ENDIF()
+
   IF (APPLE)
     set_target_properties( SpCompactPy SemanticSegmentationPy 
       PROPERTIES SUFFIX ".so" )
@@ -206,7 +214,6 @@ IF (BUILD_PYTHON_BINDING)
   target_link_libraries(SpCompactPy SpCompact ${Boost_LIBRARIES})
   target_link_libraries(SemanticSegmentationPy SemanticSegmentation ${Boost_LIBRARIES})
 
-  # ADD_SUBDIRECTORY(python_binding)
 ELSE()
   message(STATUS "Python Binding disabled.")
 ENDIF()
