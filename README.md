@@ -131,15 +131,11 @@ Separate every object/background name with `,`
 
 Args list:
 
-object		:	Object folder name without extension. Supports multiple object by inserting `,` between object folder name. Default: ```drill```
-
-bg_names	:	Background folder name without extension. Supports multiple object by inserting `,` between background folder name. Default: ```UR5_2```
-
-training_folder	:	Training folder directory where the object and background folder can be found. Default: ```$(find sp_segmenter)/data/training/```
-
-out_fea_path	:	Output fea folder. Default: ```$(arg training_folder)/fea_pool/```
-
-out_svm_path	:	Output svm folder. Default: ```$(arg training_folder)/svm_pool/```
+- object		:	Object folder name without extension. Supports multiple object by inserting `,` between object folder name. Default: ```drill```
+- bg_names	:	Background folder name without extension. Supports multiple object by inserting `,` between background folder name. Default: ```UR5_2```
+- training_folder	:	Training folder directory where the object and background folder can be found. Default: ```$(find sp_segmenter)/data/training/```
+- out_fea_path	:	Output fea folder. Default: ```$(arg training_folder)/fea_pool/```
+- out_svm_path	:	Output svm folder. Default: ```$(arg training_folder)/svm_pool/```
 
 
 ## Executing
@@ -168,27 +164,18 @@ It is possible to pass some arguments to set the object type, input point cloud 
 
 Args list:
 
-object		:	the object file name without extension. Support multiple object by adding ```,``` between object name. Pay attention to object order if using multiple object by following svm_path object order (Ignore background tag such as UR5).Default: ```drill```
-
-minConfidence	:	Minimum confidence for object ransac to be considered for pose publishing. Default: ```0.2```
+- object		:	the object file name without extension. Support multiple object by adding ```,``` between object name. Pay attention to object order if using multiple object by following svm_path object order (Ignore background tag such as UR5).Default: ```drill```
+- minConfidence	:	Minimum confidence for object ransac to be considered for pose publishing. Default: ```0.2```
 aboveTable  :   Minimum distance from table for object segmentation in meters. Default: ```0.01```
-
-pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
-
-pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
-
-data_path	:	Location of data folder. Default: ```$(find sp_segmenter)/data```
-
-svm_path	:	SVM folder directory in data folder to be loaded. Default: ```UR5_drill_svm```
-loadTable	:	Setting this arg true will make the program try to load table.pcd located in data folder which will be used for segmenting object above the table. If the program fails to get the table.pcd or this arg set to false, It will redo the table training. Default: `true`
-
-saveTable	:	Setting this arg true will update table.pcd with new table convex hull. If the code successfully load table.pcd, this arg will have no effect. Default: `true`
-
-tableTF		:	The name of TF frame that represents the center of table. This arg only used if the program fails to load table.pcd. The program will make box segmentation with box size 1 meters cubic around the TF position. Default: `tableTF`
-
-gripperTF   :   The name of TF frame of the gripper where the object would approximately be when grabbed. Default: `endpoint_marker`
-
-useTF       :   Use TF frames instead of pose array for object pose representation. Default: `true`
+- pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
+- pcl_out		:	Output point cloud topic name. Default: ```/SPSegmenterNode/points_out```
+- data_path	:	Location of data folder. Default: ```$(find sp_segmenter)/data```
+- svm_path	:	SVM folder directory in data folder to be loaded. Default: ```UR5_drill_svm```
+- loadTable	:	Setting this arg true will make the program try to load table.pcd located in data folder which will be used for segmenting object above the table. If the program fails to get the table.pcd or this arg set to false, It will redo the table training. Default: `true`
+- saveTable	:	Setting this arg true will update table.pcd with new table convex hull. If the code successfully load table.pcd, this arg will have no effect. Default: `true`
+- tableTF		:	The name of TF frame that represents the center of table. This arg only used if the program fails to load table.pcd. The program will make box segmentation with box size 1 meters cubic around the TF position. Default: `tableTF`
+- gripperTF   :   The name of TF frame of the gripper where the object would approximately be when grabbed. Default: `endpoint_marker`.
+- useTF       :   Use TF frames instead of pose array for object pose representation. Default: `true`
 
 Example:
 
@@ -225,62 +212,75 @@ roslaunch sp_segmenter SPServerNode.launch visualization:=true
 
 ## Python Binding
 In addition to using ros for training and doing semantic segmentation, we can also uses python.
-See the sample codes for training in python_binding/sample_training.py and sample code for semantic segmentation in python_binding/sample_segmentation.py
+
+We provided a sample code for training in `python_binding/sample_training.py` and a sample code for semantic segmentation in `python_binding/sample_segmentation.py`
 
 ### SpCompact parameters
 SpCompact is our main library we use for generating svm model.
 There are various parameters that can be set for SpCompact:
-setInputPathSIFT	:	Set the path that contains the SIFT dictionary
-setInputPathSHOT	:	Set the path that contains the SHOT dictionary
-setInputPathFPFH	:	Set the path that contains the FPFH dictionary
-setInputTrainingPath	:	Setting the path that contains the object model folder that each contains point clouds
-setObjectNames	:	Set a list of object class names to be trained. This library will load all point cloud files located in training_path/object_names[1..n]/*.pcd
-setBackgroundNames	:	Set a list of background class names to be trained. This library will load all point cloud files located in training_path/background_name[1..n]/*.pcd
-setOutputDirectoryPathFEA	:	Set the relative location of output directory for extracted Features. This library will automatically generates the output directory if it does not exists or overwrite the contents if it already exists.
-setOutputDirectoryPathSVM	:	Set the relative location of output directory for SVM model. This library will automatically generates the output directory if it does not exists or overwrite the contents if it already exists.
-setForegroundCC(foregroundBackgroundCC)	:	Set the foreground/background CC value
-setMultiCC(multiclassCC)	:	Set the inter-object class CC value.
-setBackgroundSampleNumber
-setObjectSampleNumber
-setCurOrderMax
-setSkipFeaExtraction	:	Skip feature extraction. Never enable this unless you just want to repeat SVM classification with the same Feature extration parameters. (Optional)
-setSkipBackgroundSVM	:	Enable/Disable building foreground/background SVM classification model. (Optional)
-setSkipMultiSVM	:	Enable/Disable building multiclass SVM classification if it is not needed (Optional)
-startTrainingSVM	:	Starting the feature extraction followed by training when all parameters has been set properly
+
+- setInputPathSIFT	:	Set the path that contains the SIFT dictionary
+- setInputPathSHOT	:	Set the path that contains the SHOT dictionary
+- setInputPathFPFH	:	Set the path that contains the FPFH dictionary
+- setInputTrainingPath	:	Setting the path that contains the object model folder that each contains point clouds
+- setObjectNames	:	Set a list of object class names to be trained. This library will load all point cloud files located in `training_path/object_names[1..n]/*.pcd`
+- setBackgroundNames	:	Set a list of background class names to be trained. This library will load all point cloud files located in `training_path/background_name[1..n]/*.pcd`
+- setOutputDirectoryPathFEA	:	Set the relative location of output directory for extracted features. 
+	- This library will automatically generates the output directory if it does not exists or overwrite the contents if it already exists.
+- setOutputDirectoryPathSVM	:	Set the relative location of output directory for SVM model. 
+	- This library will automatically generates the output directory if it does not exists or overwrite the contents if it already exists.
+- setForegroundCC	:	Set the foreground/background CC value
+- setMultiCC	:	Set the inter-object class CC value.
+- setBackgroundSampleNumber
+- setObjectSampleNumber
+- setCurOrderMax
+- setSkipFeaExtraction	:	Skip feature extraction. Never enable this unless you just want to repeat SVM classification with the same Feature extration parameters. (Optional)
+- setSkipBackgroundSVM	:	Enable/Disable building foreground/background SVM classification model. (Optional)
+- setSkipMultiSVM	:	Enable/Disable building multiclass SVM classification if it is not needed (Optional)
+- startTrainingSVM	:	Starting the feature extraction followed by training. Call this method when all parameters has been set properly.
 
 ### SemanticSegmentation parameters
-SemanticSegmentation is our main library we use for labeling point cloud and possibly calculating object poses if ObjRecRANSAC is used. It contains various parameters that can be costumized to suit user's specific needs.
+SemanticSegmentation is our main library we use for labeling point cloud and possibly calculating object poses if `ObjRecRANSAC` is used. It contains various parameters that can be costumized to suit user's specific needs.
 
 Main parameters that needs to be set for point cloud classification:
-setDirectorySHOT	:	Set the directory path that contains SHOT dictionary
-setUseMultiClassSVM	:	Enable/Disable using multiclass SVM classification.
-setUseBinarySVM	:	Enable/Disable using foreground/background SVM classification
-setDirectorySVM	:	Set the directory path that contains the binary and/or multiclass SVM model.
-setPointCloudDownsampleValue	:	Set the pointcloud downsampling value when doing classification.
-setHierFeaRatio	:	Set hier fea ratio.
-setUseVisualization	:	Enable/Disable pcl visualization. This will visualize all point cloud modification step by step from the raw data. Press q / close window in every step to continue the program.
+
+- setDirectorySHOT	:	Set the directory path that contains SHOT dictionary
+- setUseMultiClassSVM	:	Enable/Disable using multiclass SVM classification.
+- setUseBinarySVM	:	Enable/Disable using foreground/background SVM classification
+- setDirectorySVM	:	Set the directory path that contains the binary and/or multiclass SVM model.
+- setPointCloudDownsampleValue	:	Set the pointcloud downsampling value when doing classification.
+- setHierFeaRatio	:	Set hier fea ratio.
+- setUseVisualization	:	Enable/Disable pcl visualization. Enabling this will visualize all point cloud modification step by step from the raw data. Press q / close window in every step to continue the program. (Optional)
 
 Optional parameters for modifying point cloud before doing classification with SVM model:
-setUseCropBox	:	Enable/Disable creating a box at a certain pose. The points outside of this box will be deleted.
-setCropBoxSize	:	Set the crop box size (in meters)
-setCropBoxPose	:	Set the crop box pose relative to the camera.
-setUseTableSegmentation	:	Enable/Disable table segmentation. If table segmentation is used, the library will use a convex hull generated from table segmentation to construct a prism. The points outside of this prism will be deleted.
-setCropAboveTableBoundary	:	Set the convex hull extrusion parameter (min and max value above the convex hull).
-loadTableFromFile	:	Load a particular table convex hull point cloud from a file.
-setTableSegmentationParameters	:	Set the plane segmentation parameters (distance threshold, angular threshold, min inliers) for generating a table convex hull. See pcl plane segmentation for more details regarding these parameters.
-getTableSurfaceFromPointCloud	:	Generate the table convex hull from an input point cloud based on table segmentation parameters.
 
-The point cloud modification is processed in this following order: Raw point cloud -> Crop boxed point cloud -> Table segmented point cloud -> Foreground/Background SVM -> Multiclass SVM -> Object Pose computation
+- setUseCropBox	:	Enable/Disable creating a box at a certain pose. Points located outside of this box will be deleted.
+- setCropBoxSize	:	Set the crop box size (in meters)
+- setCropBoxPose	:	Set the crop box pose relative to the camera.
+- setUseTableSegmentation	:	Enable/Disable table segmentation
+	-  If table segmentation is used, the library will use a convex hull generated from table segmentation to construct a prism. Points located outside of this prism will be deleted.
+- setCropAboveTableBoundary	:	Set the convex hull extrusion parameter (min and max value above the convex hull).
+- loadTableFromFile	:	Load a particular table convex hull point cloud from a file.
+- setTableSegmentationParameters	:	Set the plane segmentation parameters (`distance threshold`, `angular threshold`, `min inliers`) for generating a table convex hull. See pcl plane segmentation for more details regarding these parameters.
+- getTableSurfaceFromPointCloud	:	Generate the table convex hull from an input point cloud based on table segmentation parameters.
+
+The point cloud modification is processed in this following order: 
+Raw point cloud -> Crop boxed point cloud -> Table segmented point cloud -> Foreground/Background SVM -> Multiclass SVM -> Object Pose computation
 
 Main parameters that needs to be set for pose computation:
-setUseComputePose	:	Enable/Disable pose computation. If multi class svm is disabled, ObjRecRANSAC will calculate the poses from foreground point clouds with all models loaded into one ObjRecRANSAC class. Otherwise, ObjRecRANSAC will only calculate poses from an object point cloud with that object model.
-setUseCuda	:	Enable/Disable Cuda for ObjRecRANSAC. Has no effect if there is no cuda library installed in the machine.
-setModeObjRecRANSAC	:	Set the ObjRecRANSAC mode. [0 = "STANDARD_BEST", 1 = "STANDARD_RECOGNIZE", 2 = "GREEDY_RECOGNIZE"]
-setMinConfidenceObjRecRANSAC	:	Set the minimum ObjRecRANSAC confidence to be considered as a valid pose.
-addModel	:	Add the model and with a certain ObjRecRANSAC parameters(pair_width, voxel_size, scene_visibility, object_visibility). The object model is loaded from "mesh_folder/object_name.vtk" and "mesh_folder/object_name.obj". IMPORTANT: Please make sure that the models are added following the ordering of svm name. For example, for "hammer_nail_drill_svm", addModel needs to be called with hammer model first, then nail model, and finally drill model. Adding the model with wrong order will cause invalid pose computation result.
+
+- setUseComputePose	:	Enable/Disable pose computation
+	-  If multi class svm is disabled, ObjRecRANSAC will calculate the poses from foreground point clouds with all models loaded into one ObjRecRANSAC class. Otherwise, ObjRecRANSAC will only calculate poses from an object point cloud with that object model.
+- setUseCuda	:	Enable/Disable Cuda for ObjRecRANSAC. Has no effect if there is no cuda library installed in the machine.
+- setModeObjRecRANSAC	:	Set the ObjRecRANSAC mode. [0 = `STANDARD_BEST`, 1 = `STANDARD_RECOGNIZE`, 2 = `GREEDY_RECOGNIZE`]
+- setMinConfidenceObjRecRANSAC	:	Set the minimum ObjRecRANSAC confidence to be considered as a valid pose.
+- addModel	:	Add the model and with a certain ObjRecRANSAC parameters(`pair_width`, `voxel_size`, `scene_visibility`, `object_visibility`). The object model is loaded from `mesh_folder/object_name.vtk` and `mesh_folder/object_name.obj`. 
+	- IMPORTANT: Please make sure that the models are added following the ordering of svm name. For example, for `hammer_nail_drill_svm`, `addModel` needs to be called to load hammer model first, then nail model, and finally drill model. Adding the model with wrong order will cause invalid pose computation result.
 
 Optional parameters that can be set for pose computation:
-setUseObjectPersistence	:	Enable/Disable retaining orientation from previous object detection. Useful if object has some symmetric properties.
-setUsePreferredOrientation	:	Enable/Disable reorienting the object orientation as close as possible to a preffered orientation. Useful if object has some symmetric properties.
-setPreferredOrientation	:	Set the quaternion of the preferred orientation.
-addModelSymmetricProperty	:	Set the model symmetric property for object symmetric orientation realignment. For example, a cube will has symmetry for every 90 degrees in each axes. Therefore, the symmetric property is (90,90,90,"preferred step value(unused parameter)","preferred axis(unused parameter)"). If it is not set, the object is assumed to have no symmetry.
+
+- setUseObjectPersistence	:	Enable/Disable retaining orientation from previous object detection. Useful if object has some symmetric properties.
+- setUsePreferredOrientation	:	Enable/Disable reorienting the object orientation as close as possible to a preffered orientation. Useful if object has some symmetric properties.
+- setPreferredOrientation	:	Set the quaternion of the preferred orientation.
+- addModelSymmetricProperty	:	Set the model symmetric property for object symmetric orientation realignment. 
+	- For example, a cube will has symmetry for every 90 degrees in each axes. Therefore, the symmetric property is (90,90,90,"preferred step value(unused parameter)","preferred axis(unused parameter)"). If it is not set, the object is assumed to have no symmetry.
