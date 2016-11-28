@@ -9,9 +9,10 @@ from sensor_msgs.msg import JointState
 import tf_conversions.posemath as pm
 import numpy as np
 
-from dvrk import psm
-
+# from dvrk import psm
+import dvrk
 import PyKDL
+
 import urdf_parser_py
 from urdf_parser_py.urdf import URDF
 from pykdl_utils.kdl_parser import kdl_tree_from_urdf_model
@@ -43,21 +44,26 @@ class CostarPSMDriver(CostarArm):
         end_link = 'PSM1_tool_tip_link'
         planning_group = 'manipulator'
 
-        self.dvrk_arm = psm('psm1')
+        self.dvrk_arm = dvrk.psm('PSM1')
+        # dvrk_arm.home()
 
         super(CostarPSMDriver, self).__init__(base_link,end_link,planning_group, dof=6)
 
-    def home(self, req):
-        if self.dvrk_arm.home():
-            return 'SUCCESS'
-        else:
-            return 'FAILURE'
+    def home(self):
+        print "home function"
+        self.dvrk_arm.home()
+        # if self.dvrk_arm.home():
+        #     return 'SUCCESS'
+        # else:
+        #     return 'FAILURE'
 
-    def insert_tool(self,req):
-        if self.dvrk_arm.insert_tool(0.1):
-            return 'SUCCESS'
-        else:
-            return 'FAILURE'
+    def insert_tool(self):
+        print "insert tool function"
+        self.dvrk_arm.insert_tool(0.1)
+        # if self.dvrk_arm.insert_tool(0.1):
+        #     return 'SUCCESS'
+        # else:
+        #     return 'FAILURE'
 
     '''
     Send a whole joint trajectory message to a robot...
