@@ -290,6 +290,9 @@ class InverseKinematicsUR5:
 		return Q
 
 	def findClosestIK(self,forward_kinematics,current_joint_configuration):
+		if current_joint_configuration is None:
+			return None
+		
 		current_joint = np.array(current_joint_configuration)
 		Q = self.solveIK(forward_kinematics)
 		if Q is not None:

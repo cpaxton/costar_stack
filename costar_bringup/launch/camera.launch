@@ -44,6 +44,7 @@
   <include file="$(find moveit_collision_environment)/launch/collision_env.launch">
     <arg name="tableTF" value="$(arg table_frame)"/>
     <arg name="file_extension" value="stl"/>
+    <arg name="renewTable" value="false"/>
   </include>
 
 </launch>
