@@ -1,0 +1,46 @@
+Introduction
+============
+
+This extension of liblinear supports multi-core parallel learning by OpenMP.
+We applied efficient implementations to train models for multi-core machines.
+Currently, -s 0 (solving primal LR), -s 2 (solving primal l2-loss SVM)
+and -s 11 (solving primal l2-loss SVR) are supported.
+
+Usage
+=====
+
+The usage is the same as liblinear except for the additional option:
+
+-n nr_thread: use nr_thread threads for training (only for -s 0, -s 2 and -s 11)
+
+Examples
+========
+
+> ./train -s 0 -n 8 heart_scale
+
+will run L2-regularized logistic regression primal solver with 8 threads.
+
+Differences from LIBLINEAR
+==========================
+
+The major changes are to do matrix-vector multiplications in
+parallel. Details could be seen in the reference.
+
+Experiment Results
+==================
+
+dataset              1-thread  4-threads  12-threads
+rcv1_test.binary      16.7155     4.8318      2.1458
+url_combined         109.0823    35.1745     19.8355
+epsilon_normalized   173.2903    43.5245     20.3161
+webspam(trigram)     854.1597   202.9488    126.0235
+
+Reference
+=========
+
+M.-C. Lee, W.-L. Chiang, and C.-J. Lin.  
+Fast matrix-vector multiplications for large-scale logistic regression on shared-memory systems.  
+Technical report, National Taiwan University, 2015
+
+For any questions and comments, please email
+cjlin@csie.ntu.edu.tw
