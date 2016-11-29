@@ -78,13 +78,10 @@ roslaunch instructor_core instructor.launch
   * Bringup: launch files, RVIZ configurations, et cetera
   * [Librarian](costar_librarian/Readme.md): file management
   * [Predicator](costar_predicator/Readme.md): robot knowledge management
+  * [Perception](costar_perception/Readme.md): semantic segmentation and object detection via [SP Segmenter](https://github.com/jhu-lcsr/sp_segmenter)
   * Gripper: utilities for integrating different grippers into UI
   * Robot: utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Tools: packages used for data collection, maintaining MoveIt planning scene, and other purposes
-
-### Other Requirements
-
-  * [SP Segmenter](https://github.com/jhu-lcsr/sp_segmenter)
 
 ### Proprietary Code
 
@@ -93,38 +90,10 @@ roslaunch instructor_core instructor.launch
 
   Due to licensing issues these have not yet been made open source.
 
-## CoSTAR Tools
-
-This section includes the code to manage the MoveIt collision detection and a few other utilities that provide useful services for creating powerful robot programs.
-
-**MoveIt collision detection**: creates a PlanningScene based on detected objects, plus adds a table.
-
-Run with:
-```
-roslaunch moveit_collision_environment colision_env.launch mesh_source:=$(find moveit_collision_environment)/data/mesh tableTFname:=ar_marker_2 defineParent:=true parentFrameName:=/world
-```
-
-**Recording point clouds**: this is used to collect data and scan objects. Run with:
-
-```
-rosrun point_cloud_recorder point_cloud_recorder.py _id:=$OBJECT_NAME _camera:=$CAMERA_ID
-```
-
-This will expose the ``/record_camera`` rosservice which can be called from a UI node. Files will be created wherever you ran the point cloud recorder.
-
-Roslaunch would look something like:
-
-```xml
-<node name="point_cloud_recorder" pkg="point_cloud_recorder" type="point_cloud_recorder.py">
-  <param name="id" value="NameOfMyObject"/>
-  <param name="camera" value="kinect2"/>
-</node>
-```
-
-## Gripper
-
-  * ***Simple S Model Server***: This is a part of our CoSTAR UI -- cross platform robot graphical user interface for teaching complex behaviors to industrial robots. This wraps a couple simple 3-finger gripper commands, which we can then expose as UI behaviors.=
-
 ## Contact
 
-CoSTAR is maintained by Chris Paxton (cpaxton3@jhu.edu)
+CoSTAR is maintained by Chris Paxton (cpaxton@jhu.edu).
+
+Other core contributors include:
+  * Felix Jonathan
+  * Andrew Hundt

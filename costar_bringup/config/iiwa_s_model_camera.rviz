@@ -101,42 +101,8 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        00 HOME:
-          Value: true
-        001:
-          Value: true
-        003 node to link assemble init:
-          Value: true
-        01 pickup:
-          Value: false
-        01 place1:
-          Value: false
-        01 place2:
-          Value: false
-        01 workspace:
-          Value: false
-        01 ws down:
-          Value: false
-        02 place1:
-          Value: false
-        02 place2:
-          Value: false
-        03 place1:
-          Value: true
-        03 place1b:
-          Value: true
-        03 place2:
-          Value: true
-        03 place2b:
-          Value: true
         All Enabled: false
-        TEST:
-          Value: false
-        app1:
-          Value: false
         ar_marker_0:
-          Value: true
-        ar_marker_3:
           Value: true
         base_link:
           Value: true
@@ -150,8 +116,6 @@ Visualization Manager:
           Value: false
         camera_rgb_optical_frame:
           Value: false
-        down:
-          Value: false
         ee_link:
           Value: false
         endpoint:
@@ -160,35 +124,11 @@ Visualization Manager:
           Value: false
         forearm_link:
           Value: false
-        g1:
-          Value: false
-        grab:
-          Value: false
+        gripper_center:
+          Value: true
         gripper_link:
           Value: false
-        node_over:
-          Value: false
-        node_pick:
-          Value: false
-        obj_link_uniform_1:
-          Value: false
-        obj_node_uniform_1:
-          Value: false
-        obj_node_uniform_2:
-          Value: false
-        obj_node_uniform_3:
-          Value: false
-        obj_node_uniform_4:
-          Value: false
-        objects/link_uniform/1:
-          Value: true
-        objects/node_uniform/1:
-          Value: true
-        objects/node_uniform/2:
-          Value: true
-        objects/node_uniform/3:
-          Value: false
-        objects/node_uniform/4:
+        marker_link:
           Value: false
         preferred_orientation:
           Value: false
@@ -218,51 +158,7 @@ Visualization Manager:
             camera_rgb_optical_frame:
               ar_marker_0:
                 {}
-              ar_marker_3:
-                {}
-              obj_link_uniform_1:
-                {}
-              obj_node_uniform_1:
-                {}
-              obj_node_uniform_2:
-                {}
-              obj_node_uniform_3:
-                {}
-              obj_node_uniform_4:
-                {}
           world:
-            00 HOME:
-              {}
-            001:
-              {}
-            003 node to link assemble init:
-              {}
-            01 pickup:
-              {}
-            01 place1:
-              {}
-            01 place2:
-              {}
-            01 workspace:
-              {}
-            01 ws down:
-              {}
-            02 place1:
-              {}
-            02 place2:
-              {}
-            03 place1:
-              {}
-            03 place1b:
-              {}
-            03 place2:
-              {}
-            03 place2b:
-              {}
-            TEST:
-              {}
-            app1:
-              {}
             base_link:
               preferred_orientation:
                 {}
@@ -276,28 +172,12 @@ Visualization Manager:
                             endpoint:
                               endpoint_marker:
                                 {}
+                              gripper_center:
+                                {}
                             gripper_link:
                               {}
-            down:
-              {}
-            g1:
-              {}
-            grab:
-              {}
-            node_over:
-              {}
-            node_pick:
-              {}
-            objects/link_uniform/1:
-              {}
-            objects/node_uniform/1:
-              {}
-            objects/node_uniform/2:
-              {}
-            objects/node_uniform/3:
-              {}
-            objects/node_uniform/4:
-              {}
+                            marker_link:
+                              {}
       Update Interval: 0
       Value: true
     - Alpha: 0.4
@@ -325,6 +205,11 @@ Visualization Manager:
           Show Trail: false
           Value: true
         gripper_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        marker_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -437,6 +322,11 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
+          marker_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           shoulder_link:
             Alpha: 1
             Show Axes: false
@@ -490,6 +380,11 @@ Visualization Manager:
           Show Trail: false
           Value: true
         gripper_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        marker_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -629,6 +524,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        marker_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         shoulder_link:
           Alpha: 1
           Show Axes: false
@@ -688,22 +588,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.949995
+      Distance: 0.635357
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.536911
-        Y: -0.141238
-        Z: 0.103179
+        X: 0.493224
+        Y: -0.176719
+        Z: 0.316604
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.224796
+      Pitch: -0.080204
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.165122
+      Yaw: 1.24512
     Saved: ~
 Window Geometry:
   Displays:

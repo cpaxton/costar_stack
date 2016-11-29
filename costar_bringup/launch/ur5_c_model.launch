@@ -8,7 +8,7 @@
   <arg name="start_camera" default="true"/>
   <arg name="start_move_group" default="true"/>
   <arg name="start_alvar" default="true" />
-  <arg name="start_robotiq_force_sensor" default="true" doc="(bool) Launch robotiq force sensor."/>
+  <arg name="start_robotiq_force_sensor" default="false" doc="(bool) Launch robotiq force sensor."/>
 
   <arg name="table_frame" default="ar_marker_2"/>
 
@@ -16,6 +16,7 @@
   <param name="base_frame" value="base_link"/>
 
   <include file="$(find costar_bringup)/launch/utilities.launch">
+    <!-- TODO: start_robotiq_force_sensor is making the camera very slow --> 
     <arg name="start_robotiq_force_sensor" value="$(arg start_robotiq_force_sensor)"/>
   </include>
   <include file="$(find costar_bringup)/launch/predicator_nodes.launch"/>

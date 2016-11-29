@@ -1,11 +1,27 @@
 <launch>
 
   <arg name="model" default="ur5"/>
+  <arg name="prefix" default="" />
+  <arg name="robot_ip" default="192.168.1.155"/>
+  <arg name="min_payload"  default="1.0"/>
+  <arg name="max_payload"  default="5.0"/>
+  <arg name="servoj_time" default="0.02" />
 
   <!--<include file="$(find ur_description)/launch/$(arg model)_upload.launch"/>-->
   <include file="$(find ur5_moveit_config)/launch/planning_context.launch">
     <arg name="limited" value="true"/>
     <arg name="load_robot_description" value="true"/>
+  </include>
+  <!--<include file="$(find ur_modern_driver)/launch/ur5_bringup.launch" >
+    <arg name="robot_ip" value="192.168.1.155"/>
+    <arg name="limited" value="true"/>
+  </include>-->
+  <include file="$(find ur_modern_driver)/launch/ur_common.launch">
+    <arg name="prefix"  value="$(arg prefix)" />
+    <arg name="robot_ip" value="$(arg robot_ip)"/>
+    <arg name="min_payload"  value="$(arg min_payload)"/>
+    <arg name="max_payload"  value="$(arg max_payload)"/>
+    <arg name="servoj_time" value="$(arg servoj_time)"/>
   </include>
 
   <!--<node pkg="tf" type="static_transform_publisher" name="world_to_base_link" args=" 0 0 0 -1.5707 0 0 /world /base_link 100"/>-->
@@ -14,6 +30,6 @@
 
   <node pkg="costar_robot_manager" name="simple_ur5_driver_node" type="ur5_driver.py" output="screen"/>
   
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/> -->
 
 </launch>

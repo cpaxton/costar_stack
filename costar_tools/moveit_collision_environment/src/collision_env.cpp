@@ -99,17 +99,21 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
     segmentedObjects->clear();
     
     bool updateTable;
+    // Renew table param determine whether the table will be updated after it is detected for the first time
     nh.param("renewTable", updateTable, true);
     if (updateTable) {
         // update table and add it to list of collision objects
         if (getTable())
             segmentedObjects->push_back(this->tableObject);
     }
-    else
-        // use previous table data if available
-        if (hasTableTF) {
+    else {
+        // use previous table data if available. If it is not available, get new table
+        if (!hasTableTF) getTable();
+
+        if (hasTableTF)
             segmentedObjects->push_back(this->tableObject);
-        }
+    }
+        
     
     if (debug)
         std::cerr << "Number of object after add table: " << segmentedObjects->size() <<std::endl;

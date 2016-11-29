@@ -85,6 +85,7 @@ class GetWaypointsService:
         #print poses
         new_poses = []
         new_names = []
+        objects = []
 
         for match in res.matching:
             try:
@@ -93,6 +94,7 @@ class GetWaypointsService:
                     #resp.waypoints.poses.append(pm.toMsg(pose * pm.fromTf((trans,rot))))
                     new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * pose))
                     new_names.append(match + "/" + name)
+                    objects.append(match)
 
                     # Create extra poses for symmetries around the Z axis
                     if frame_type in self.obj_symmetries:
@@ -103,10 +105,25 @@ class GetWaypointsService:
                                 tform = pm.Frame(pm.Rotation.RotZ(theta))
                                 #print tform
                                 new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
-                                new_names.append(match + "/" + name + "/" + str(i))
+                                new_names.append(match + "/" + name + "/z" + str(i))
+                                objects.append(match)
+                        if self.obj_symmetries[frame_type].y_symmetries > 1:
+                            for i in xrange(1, self.obj_symmetries[frame_type].y_symmetries):
+                                theta = i * self.obj_symmetries[frame_type].y_rotation
+                                tform = pm.Frame(pm.Rotation.RotY(theta))
+                                new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                                new_names.append(match + "/" + name + "/y" + str(i))
+                                objects.append(match)
+                        if self.obj_symmetries[frame_type].x_symmetries > 1:
+                            for i in xrange(1, self.obj_symmetries[frame_type].x_symmetries):
+                                theta = i * self.obj_symmetries[frame_type].x_rotation
+                                tform = pm.Frame(pm.Rotation.RotX(theta))
+                                new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                                new_names.append(match + "/" + name + "/x" + str(i))
+                                objects.append(match)
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
         
-        return (new_poses, new_names)
+        return (new_poses, new_names, objects)
         
