@@ -18,6 +18,9 @@
 #include <costar_objrec_msgs/DetectedObjectList.h>
 #endif
 
+#ifdef USE_TRACKING
+#include "sp_segmenter/tracker.h"
+#endif
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -48,6 +51,10 @@ public:
     bool serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 #ifdef COSTAR
     bool serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response);
+#endif
+
+#ifdef USE_TRACKING
+    void setEnableTracking(const bool &tracking_flag);
 #endif
 
 protected:
@@ -93,5 +100,10 @@ protected:
     Eigen::Vector3f crop_box_size, crop_box_gripper_size;
     Eigen::Affine3d crop_box_pose_table_;
     bool has_crop_box_pose_table_, use_crop_box_ ;
+
+#ifdef USE_TRACKING
+    boost::shared_ptr<Tracker> tracker_;
+    bool use_tracking_;
+#endif
 };
 #endif

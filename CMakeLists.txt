@@ -6,6 +6,7 @@ SET(CMAKE_BUILD_TYPE "Release")
 OPTION(BUILD_ROS_BINDING "Build ROS Binding" ON)
 OPTION(BUILD_USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
 OPTION(BUILD_PYTHON_BINDING "Build Python Binding" ON)
+OPTION(BUILD_ENABLE_TRACKING "Build Enable Tracking Keypoints (EXPERIMENTAL)" OFF)
 
 # Enable C++11
 include(CheckCXXCompilerFlag)
@@ -153,19 +154,30 @@ ELSE()
                 ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} ${Boost_LIBRARIES})
 ENDIF()
 
+
+
 # Sample code for training and doing segmentation
 add_executable(sp_compact src/main_sp_compact.cpp)
 add_executable(sample_semantic_segmenter src/main_sample_semantic_segmentation.cpp)
 target_link_libraries(sample_semantic_segmenter SemanticSegmentation)
 
 IF (BUILD_ROS_BINDING)
+
   message(STATUS "ROS Binding enabled")
   add_library(RosSemanticSegmentation
     include/sp_segmenter/ros_semantic_segmentation.h
     src/ros_semantic_segmentation.cpp)
 
-  target_link_libraries(RosSemanticSegmentation ${catkin_LIBRARIES} SemanticSegmentation Utility DataParser PoolLib
-                  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+  IF (BUILD_ENABLE_TRACKING)
+    ADD_DEFINITIONS( -DUSE_TRACKING)
+    add_library(Tracking src/tracker.cpp src/klttracker.cpp src/PnPUtil.cpp)
+    target_link_libraries(Tracking ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
+    target_link_libraries(RosSemanticSegmentation ${catkin_LIBRARIES} Tracking SemanticSegmentation Utility DataParser PoolLib
+                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+  ELSE()
+    target_link_libraries(RosSemanticSegmentation ${catkin_LIBRARIES} SemanticSegmentation Utility DataParser PoolLib
+                ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS})
+  ENDIF()
 
   add_executable(SPSegmenterServer src/sp_segmenter_server.cpp)
   target_link_libraries(SPSegmenterServer RosSemanticSegmentation) 

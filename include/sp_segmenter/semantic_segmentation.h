@@ -172,6 +172,13 @@ public:
     void setUseObjectPersistence(const bool &use_object_persistence);
 #endif
 
+#ifdef USE_TRACKING
+    std::vector<ModelT> getMeshSet() const
+    {
+        return this->mesh_set_;
+    }
+#endif
+
 protected:
     void cropPointCloud(pcl::PointCloud<PointT>::Ptr &cloud_input, 
         const Eigen::Affine3f &camera_transform_in_target, 
@@ -206,10 +213,10 @@ protected:
     // Point Cloud Segmentation Parameters
     float pcl_downsample_;
     float hier_radius_, hier_ratio_;
-    bool compute_pose_;
-    bool use_cuda_;
 
     // ObjRecRANSAC Parameters
+    bool compute_pose_;
+    bool use_cuda_;
     int objRecRANSAC_mode_;
     double min_objrecransac_confidence;
 
