@@ -1,6 +1,7 @@
 #ifndef SP_SEGMENTER_PLANE
 #define SP_SEGMENTER_PLANE
 
+inline
 pcl::PointCloud<PointT>::Ptr getPlane (const pcl::PointCloud<PointT>::Ptr &inputCloud, const pcl::PointCloud<PointT>::Ptr & scene, const float &T)
 {
     pcl::ModelCoefficients::Ptr plane_coef(new pcl::ModelCoefficients);
@@ -25,6 +26,7 @@ pcl::PointCloud<PointT>::Ptr getPlane (const pcl::PointCloud<PointT>::Ptr &input
     return scene_projected;
 }
 
+inline
 pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr & scene, const double aboveTable=0.025,const float T = 0.02)
 {
     //Downsample the point cloud for faster plane segmentation
@@ -40,7 +42,7 @@ pcl::PointCloud<PointT>::Ptr removePlane(const pcl::PointCloud<PointT>::Ptr & sc
     pcl::PointCloud<PointT>::iterator it_proj = scene_projected->begin();
     
     pcl::PointCloud<PointT>::Ptr scene_f(new pcl::PointCloud<PointT>());
-    for( int base = 0 ; it_ori < scene->end(), it_proj < scene_projected->end() ; it_ori++, it_proj++, base++ )
+    for( int base = 0 ; it_ori < scene->end() && it_proj < scene_projected->end() ; it_ori++, it_proj++, base++ )
     {
         float diffx = it_ori->x-it_proj->x;
         float diffy = it_ori->y-it_proj->y;

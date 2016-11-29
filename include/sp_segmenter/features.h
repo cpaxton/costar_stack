@@ -38,7 +38,7 @@ void extFlannIndexBuild(cv::flann::Index &result,cv::InputArray _data, const cv:
 
 void setObjID(std::map<std::string, int> &model_name_map);
 
-static bool Hypo_comp( const Hypo &hp1, const Hypo &hp2 ){  return hp1.score < hp2.score;  }
+inline bool Hypo_comp( const Hypo &hp1, const Hypo &hp2 ){  return hp1.score < hp2.score;  }
 
 bool overlap(const Hypo &hp1, const Hypo &hp2, float ratio = IN_OVERLAP_RATIO);
 
@@ -348,7 +348,7 @@ private:
     std::vector<float> segs_max_score;
     std::vector< std::vector<float> > class_responses;
     
-    bool max_pool_flag;
+    // bool max_pool_flag;
     
     size_t sp_num;
 };

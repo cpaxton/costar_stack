@@ -313,8 +313,8 @@ void ComputeCentroid(pcl::PointCloud<PointT>::Ptr cloud, pcl::PointCloud<myPoint
 {
     pcl::PointXYZ centroid;
     double cx=0, cy=0, cz=0;
-    std::size_t num = cloud->points.size();
-    for(std::size_t i=0; i < num ; i++ )
+    int num = cloud->points.size();
+    for(int i=0; i < num ; i++ )
     {
         cx += cloud->points[i].x;
         cy += cloud->points[i].y;
@@ -573,8 +573,8 @@ cv::Mat cshot_cloud_uni(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::Poi
     shot.compute(*descriptors);
     
     std::vector<cv::Mat> fea_pool;
-    std::size_t num = descriptors->size();
-    for( std::size_t i = 0 ; i < num ; i++ )
+    int num = descriptors->size();
+    for( int i = 0 ; i < num ; i++ )
     {
         cv::Mat cur_fea = cv::Mat::zeros(1, 1344, CV_32FC1);
         float temp = descriptors->at(i).descriptor[0];  // check whether descriptor is valid
@@ -667,12 +667,12 @@ void RefineCloud(pcl::PointCloud<PointT>::Ptr cloud, pcl::PointCloud<PointT>::Pt
 
 void ExtractHue(pcl::PointCloud<PointT>::Ptr cloud, pcl::PointCloud<pcl::PointXYZHSV>::Ptr cloud_hue)
 {
-    std::size_t num = cloud->points.size();
+    int num = cloud->points.size();
     pcl::copyPointCloud<PointT>(*cloud, *cloud_hue);
     //#pragma omp parallel for firstprivate(cloud_hue)
-    for(std::size_t j = 0 ; j < num ; j++ )
+    for(int j = 0 ; j < num ; j++ )
     {
-            pcl::PointXYZHSV &temp = cloud_hue->points[j];
+            // pcl::PointXYZHSV &temp = cloud_hue->points[j];
             int rgb[3] = { cloud->points[j].r, cloud->points[j].g, cloud->points[j].b };
             float hsi[3];
             RGBToHSI(rgb, hsi);
@@ -1203,9 +1203,9 @@ pcl::PointCloud<myPointXYZ>::Ptr uniformSampleCloud(const pcl::PointCloud<myPoin
 
 std::vector<int> getOneClique(const Eigen::MatrixXi &adj_mat, const std::vector<int> &active_idx)
 {
-    std::size_t num = active_idx.size();
+    int num = active_idx.size();
     bool **adj = new bool*[num];
-    for(std::size_t i = 0 ; i < num ; i++ )
+    for(int i = 0 ; i < num ; i++ )
     {
         adj[i] = new bool[num];
         int r = active_idx[i];
@@ -2010,14 +2010,14 @@ cv::Mat getHSIHist(const pcl::PointCloud<PointT>::Ptr ori_cloud, cv::flann::Inde
     kdtree->setInputCloud(cloud);
     
     cv::Mat diff = cv::Mat::zeros(cloud->size(), len, CV_32FC1);
-    for( int i = 0 ; i < cloud->size() ; i++ )
+    for( std::size_t i = 0 ; i < cloud->size() ; i++ )
     {
         std::vector<int> ind;
         std::vector<float> dist;
         kdtree->radiusSearch(cloud->at(i), 0.01, ind, dist, cloud->size());
         
         cv::Mat this_code = cv::Mat::zeros(1, len, CV_32FC1);
-        for( int j = 0 ; j < ind.size() ; j++ )
+        for( std::size_t j = 0 ; j < ind.size() ; j++ )
         {
             uint32_t tmp = cloud->at(ind[j]).rgba;
             int rgba[3];

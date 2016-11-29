@@ -1,5 +1,35 @@
 # Choose the axis that needs to be consistent between runs
 # by setting preferred.
+
+# Pair width should be roughly half the extent of the visible object
+# part. This means, for each object point p there should be (at least) one
+# point q (from the same object) such that ||p - q|| <= 'pairwidth'.
+# TRADEOFF: Smaller values allow for detection in occluded scenes but lead
+# to more imprecise alignment.  Bigger values lead to better alignment but
+# require large visible object parts.
+
+# Voxel size is the size of the leafs of the octree, i.e., the "size" of
+# the discretization. TRADEOFF: High values lead to less computation time
+# but ignore object details, e.g., the method could not distinguish
+# between a cylinder and an Amicelli box. Small values allow to better
+# distinguish between objects, but will introduce more holes in the
+# resulting "voxel-surface" (especially for a sparsely sampled scene) and
+# thus will make normal computation unreliable. Processing time, of
+# course, will increase with smaller voxel size.
+
+# sceneVisibility aka Relative object size is the expected fraction of the scene points
+# which belong to an object. For example a value of 0.05 means that each
+# object represented in the scene will contain at least 5% of all scene
+# points. TRADEOFF: lower values lead to more computation time and to
+# higher success probability.
+
+# Object visibility is the expected visible object part expressed as
+# fraction of the hole object. For example 'objectVisibility = 0.1' means
+# that 10% of the object surface is visible in the scene. Note that the
+# visibility can not be more than 0.5 since a typical camera can not see
+# more than the half of the object. TRADEOFF: smaller values allow for a
+# detection in occluded scenes but also lead to more false positives since
+# object hypotheses with small alignment with the scene will be accepted.
 node_uniform:
   x: 90.0
   y: 90.0
@@ -8,9 +38,23 @@ node_uniform:
   preferred: "z"
   preferred_step: 90.0
 
+  pair_width: 0.05
+
 link_uniform:
   x: 180.0
   y: 180.0
   z: 90.0
   preferred: "z"
   preferred_step: 90.0
+
+  pair_width: 0.122
+
+sander_makita:
+  pair_width: 0.16
+
+default_object_param:
+# Contains default parameter for ObjRecRANSAC
+  pair_width: 0.05
+  voxel_size: 0.004
+  scene_visibility: 0.1
+  object_visibility: 0.1

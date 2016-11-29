@@ -119,7 +119,7 @@ cv::Mat Pooler_L0::PoolOneDomain(const cv::Mat &domain, const cv::Mat &fea_code,
         std::cerr << "domain.rows != fea_code.rows" << std::endl;
         exit(0);
     }
-    int len;
+    int len = 0;
     switch(pool_type)
     {
         case 0:     //xyz-pooling domain
@@ -202,7 +202,7 @@ std::vector<cv::Mat> Pooler_L0::PoolOneDomain_Raw(const cv::Mat &domain, const c
         std::cerr << "domain.rows != fea_code.rows" << std::endl;
         exit(0);
     }
-    int len;
+    int len = 0;
     switch(pool_type)
     {
         case 0:     //xyz-pooling domain

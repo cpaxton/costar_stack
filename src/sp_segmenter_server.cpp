@@ -1,5 +1,6 @@
-//#include <ros/ros.h>
-#include "sp_segmenter/semanticSegmentation.h"
+#include <ros/ros.h>
+#include "sp_segmenter/ros_semantic_segmentation.h"
+// #include "sp_segmenter/semantic_segmentation.h"
 
 int main(int argc, char** argv)
 {
@@ -7,7 +8,8 @@ int main(int argc, char** argv)
     ros::init(argc,argv,"sp_segmenter_server");    
     ros::NodeHandle nh("~");
     ros::Rate r(10); //10Hz
-    semanticSegmentation segmenter(argc, argv, nh);
+    // SemanticSegmentation test;
+    RosSemanticSegmentation segmenter(nh);
     
     while (ros::ok())
     {

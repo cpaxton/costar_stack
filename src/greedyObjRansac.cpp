@@ -165,16 +165,13 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
     for ( list< boost::shared_ptr<PointSetShape> >::iterator it = detectedObjects.begin() ; it != detectedObjects.end() ; ++it )
     {
         boost::shared_ptr<PointSetShape> shape = (*it);
-        if ( shape->getUserData() ){
-            printf("\t%s, confidence: %lf\n", shape->getUserData()->getLabel(), shape->getConfidence());
-        }
 
         if (shape->getConfidence() < minConfidence){
             printf("Skipping shape, confidence too low\n");
             std::cerr << "Skipping shape: " << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() <<" is too low\n";
             continue;
         }
-	else std::cerr << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() << std::endl;
+    	else std::cerr << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() << std::endl;
         double **mat4x4 = mat_alloc(4, 4);
         shape->getHomogeneousRigidTransform(mat4x4);
         
@@ -348,7 +345,12 @@ void greedyObjRansac::ICP(std::vector<poseT> &poses, const pcl::PointCloud<myPoi
                 guess.block<3,3>(0,0) = it->rotation.toRotationMatrix();
                 
                 pcl::PointCloud<myPointXYZ>::Ptr Final(new pcl::PointCloud<myPointXYZ>());
+
+#if PCL_VERSION_COMPARE(<, 1, 7, 0)
                 icp.setInputCloud(rec[i]);
+#else
+                icp.setInputSource(rec[i]);
+#endif
                 icp.align(*Final, guess);
                 
                 Eigen::Matrix4f tran = icp.getFinalTransformation();
@@ -370,7 +372,7 @@ void greedyObjRansac::ICP(std::vector<poseT> &poses, const pcl::PointCloud<myPoi
 void greedyObjRansac::genHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, list<AcceptedHypothesis> &acc_hypotheses)
 {
     vtkSmartPointer<vtkPolyData> vtk_scene = PolyDataFromPointCloud(scene_xyz);
-    vtkPoints* scene = vtk_scene->GetPoints();
+    // vtkPoints* scene = vtk_scene->GetPoints();
     
     //vtkPoints* scene = PolyDataFromPointCloud(scene_xyz);
     
@@ -386,7 +388,7 @@ void greedyObjRansac::genHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene
 void greedyObjRansac::mergeHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, list<AcceptedHypothesis> &acc_hypotheses, std::vector<poseT> &poses)
 {
     vtkSmartPointer<vtkPolyData> vtk_scene = PolyDataFromPointCloud(scene_xyz);
-    vtkPoints* scene = vtk_scene->GetPoints();
+    // vtkPoints* scene = vtk_scene->GetPoints();
     
     //vtkPoints* scene = PolyDataFromPointCloud(scene_xyz);
     
