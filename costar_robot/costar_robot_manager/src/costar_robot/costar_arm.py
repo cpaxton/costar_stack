@@ -95,8 +95,8 @@ class CostarArm(object):
         # Note that while the waypoint manager is currently a part of CostarArm
         # If we wanted to set this up for multiple robots it should be treated
         # as an independent component.
-        #self.waypoint_manager = WaypointManager(service=True,
-        #        broadcaster=self.broadcaster)
+        self.waypoint_manager = WaypointManager(service=True,
+                broadcaster=self.broadcaster)
 
         # Set up services
         # The CostarArm services let the UI put it into teach mode or anything else

@@ -7,4 +7,7 @@
     <arg name="arm" value="$(arg arm)"/>
     <arg name="config" value="$(arg psm_config)"/>
   </include>
+
+  <include file="$(find costar_bringup)/launch/utilities.launch"/>
+
 </launch>
