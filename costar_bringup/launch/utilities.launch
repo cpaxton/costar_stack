@@ -1,0 +1,32 @@
+<launch>
+
+    <arg name="start_robotiq_force_sensor" default="false" doc="(bool) Launch robotiq force sensor."/>
+
+    <!-- Librarian -->
+    <node pkg="librarian_core" type="core.py" name="librarian_core"/>
+
+    <!-- Predicator -->
+    <include file="$(find predicator_bringup)/launch/core.launch">
+    </include>
+   
+    <!-- Moveit Environment -->
+    <!--<arg name ="tableTFname" default="ar_marker_0" />
+    <include file="$(find moveit_collision_environment)/launch/collision_env.launch">
+    	<arg name="tableTFname" value ="$(arg tableTFname)"/>
+    </include>-->
+
+    <node pkg="point_cloud_recorder" type="point_cloud_recorder.py" name="point_cloud_recorder_service">
+      <param name="id" value="costar"/>
+    </node>
+
+    <!-- Force sensor -->
+    <node if="$(arg start_robotiq_force_sensor)" pkg="robotiq_force_torque_sensor" type="rq_sensor" name="robotiq_force_torque_sensor"/>
+
+    <!--
+    publish new tf frames for any detected objects!
+    these should be alternate goals that we may need to deal with
+    -->
+    <!--<node pkg="object_symmetry_republisher" type="symmetry_republisher.py" name="object_symmetry_republisher_node">
+      <remap from="/detected_object_list" to="SPServer/detected_object_list"/>
+    </node>-->
+</launch>

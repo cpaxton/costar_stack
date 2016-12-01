@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot name="iiwa14" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find iiwa_description)/urdf/materials.xacro" />
+  <!--Import the lbr iiwa macro -->
+  <xacro:include filename="$(find iiwa_description)/urdf/iiwa14.xacro"/>
+
+  <xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_articulated.urdf"/>
+  <xacro:include filename="$(find robotiq_s_model_visualization)/cfg/s-model_mesh.urdf"/>
+
+  <!-- Fix to world just for testing -->
+  <link name="world"/>
+
+  <!--iiwa-->
+  <!-- PositionJointInterface -->
+  <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="world">
+    <origin xyz="0 0 0.0" rpy="0 0 0" />
+  </xacro:iiwa14>
+
+</robot>

@@ -1,0 +1,8 @@
+# name of the message to look up
+string name
+---
+# joint states (only populated if found)
+sensor_msgs/JointState joint_states
+
+# descriptive message
+string ack
