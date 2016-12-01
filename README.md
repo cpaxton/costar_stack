@@ -1,8 +1,16 @@
 # Instructor
 
-This is a package for creating and saving robot behaviors using a user interface for behavior trees.  This code also includes support for maintaining workspace waypoints, as well as a series of plugins for different robot capabilities.  Right now these plugins are geared towards different operations of the UR5 robot.
+This is a package for creating and saving robot behaviors using a user interface for behavior trees.  This code also includes support for maintaining workspace waypoints, as well as a series of plugins for different robot capabilities.  Right now these plugins are geared towards different operations of the UR5 and LBR robots.
 
-Modified by Chris Paxton to support the LBR "CoSTAR" project.
+If you find this code useful, please cite:
+```
+@article{paxton2016costar,
+  title={CoSTAR: Instructing Collaborative Robots with Behavior Trees and Vision},
+  author={Paxton, Chris and Hundt, Andrew and Jonathan, Felix and Guerin, Kelleher and Hager, Gregory D},
+  journal={arXiv preprint arXiv:1611.06145},
+  year={2016}
+}
+```
 
 ## Marlin Demo
 
