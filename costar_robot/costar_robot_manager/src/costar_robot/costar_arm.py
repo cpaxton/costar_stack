@@ -447,8 +447,6 @@ class CostarArm(object):
     '''
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
-            self.send_q(self.q0,0.1,0.1)
-
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':

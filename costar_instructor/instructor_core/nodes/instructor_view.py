@@ -1484,7 +1484,7 @@ class Instructor(QWidget):
             self.regenerate_tree()
 
 # Run and Stop -----------------------------------------------------------------
-    def servo_button_cb():
+    def servo_button_cb(self):
         if self.running__ == True:
             self.stop_tree()
             self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}''')
