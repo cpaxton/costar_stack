@@ -137,7 +137,7 @@ class CostarArm(object):
 
         self.closed_form_IK_solver = InverseKinematicsUR5()
         # self.closed_form_ur5_ik.enableDebugMode()
-        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.5])
+        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.2])
         self.closed_form_IK_solver.setEERotationOffsetROS()
         self.closed_form_IK_solver.setJointWeights(self.joint_weights)
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
@@ -295,7 +295,7 @@ class CostarArm(object):
                 q_new = self.ik(pm.toMatrix(T),self.q0)
                 if q_new is not None:
                     dq = np.absolute(q_new - self.q0) * self.joint_weights
-                    print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * np.sum(dq), ' dq6: ', dq[-1]
+                    # print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * np.sum(dq), ' dq6: ', dq[-1]
                     dists.append((T.p - T_fwd.p).Norm() + self.rotation_weight * np.sum(dq))
                 
             if len(Ts) == 0:
@@ -305,8 +305,8 @@ class CostarArm(object):
                 possible_goals.sort()
 
                 for (dist,T,obj,name) in possible_goals:
-                    rospy.logwarn("Trying to move to frame at distance %f"%(dist))
-
+                    rospy.logwarn("Trying to move to frame at distance %f" % dist)
+                    
                     # plan to T
                     (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
                     msg = self.send_and_publish_planning_result(res,acceleration,velocity)
@@ -358,8 +358,8 @@ class CostarArm(object):
             pt = JointTrajectoryPoint()
             pose = pm.fromMsg(req.target)
             (code,res) = self.planner.getPlan(pose,self.q0)
-
-            print "DONE PLANNING: " + str((code, res))
+            print "DONE PLANNING"
+            # print "DONE PLANNING: " + str((code, res))
             return self.send_and_publish_planning_result(res,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
