@@ -1,0 +1,45 @@
+<library path="src">
+  <class name="Builder" type="instructor_core.builder.Builder" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A GUI for building beetree behavior trees
+    </description>
+    <qtgui>
+      <group>
+        <label>Instructor</label>
+      </group>
+      <label>Instructor</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Build Beetree Behavior Trees.</statustip>
+    </qtgui>
+  </class>
+
+  <class name="InstructorCalibrationUI" type="instructor_core.instructor_calibration_ui.CalibrationUI" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A GUI for calibrating two cameras on the robot
+    </description>
+    <qtgui>
+      <group>
+        <label>Instructor</label>
+      </group>
+      <label>Instructor Calibration</label>
+      <icon type="theme">system-help</icon>
+      <statustip>UI for calibrating the robot's cameras.</statustip>
+    </qtgui>
+  </class>
+
+  <class name="InstructorWorkspaceUI" type="instructor_core.instructor_workspace_ui.WorkspaceUI" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A GUI for adding workspace fiducials to the system
+    </description>
+    <qtgui>
+      <group>
+        <label>Instructor</label>
+      </group>
+      <label>Instructor Workspace</label>
+      <icon type="theme">system-help</icon>
+      <statustip>UI for adding workspace fiducials to the system.</statustip>
+    </qtgui>
+  </class>
+
+</library>
+

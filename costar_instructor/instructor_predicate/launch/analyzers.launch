@@ -1,0 +1,3 @@
+<launch>
+        <node pkg="instructor_predicate" type="gripper_analyzer.py" name="gripper_analyzer"/>
+</launch>
