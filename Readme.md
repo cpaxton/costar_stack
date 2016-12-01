@@ -14,10 +14,17 @@ To fully take advantage of these capabilities you will need:
 
   - sp_segmenter: object detection and pose estimation library
   - instructor: our custom user interface
-  - a KUKA LBR iiwa
-  - a Robotiq 3-finger gripper
-
-Note that unfortunately the CoSTAR UI is not open source, so email me at cpaxton3@jhu.edu if you are interested in it.
+  - a KUKA LBR iiwa or Universal Robots UR5
+  - a Robotiq 3-finger gripper or 2-finger gripper
+If you find this code useful, please cite:
+```
+@article{paxton2016costar,
+  title={CoSTAR: Instructing Collaborative Robots with Behavior Trees and Vision},
+  author={Paxton, Chris and Hundt, Andrew and Jonathan, Felix and Guerin, Kelleher and Hager, Gregory D},
+  journal={arXiv preprint arXiv:1611.06145},
+  year={2016}
+}
+```
 
 ## Installation
 
