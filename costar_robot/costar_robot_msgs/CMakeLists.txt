@@ -52,6 +52,7 @@ add_service_files(
   ServoToJointState.srv
   SmartMove.srv
   EmptyCommand.srv
+  DoubleCommand.srv
   SaveFrame.srv
   LookupJointStates.srv
   GetList.srv

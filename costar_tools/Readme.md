@@ -25,3 +25,20 @@ Roslaunch would look something like:
   <param name="camera" value="kinect2"/>
 </node>
 ```
+
+
+## Data Collection Instructions
+
+1. open Terminal
+2. `roscore`
+3. 'For setting up all sensor component' roslaunch costar_bringup ur5_c_model.launch
+4. 'For starting up the UI to control the robot' roslaunch instructor_core instructor.launch
+5. 'For vizualization run'  roslaunch costar_bringup rviz.launch
+6. 'For data collection' roslaunch object_on_table_segmenter object_on_table_segmenter.launch
+
+Setting up parameters (For example for setting up package `object_on_table_segmenter` parameter):
+1. Check the list of parameter from the .launch file by:
+	1. roscd <name of package>
+	2. cd launch
+	3. check parameter list for the package in .launch file
+2. Do: "roslaunch <name of package> <name of .launch file> <param>:='type from the param' "

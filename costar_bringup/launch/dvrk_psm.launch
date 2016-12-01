@@ -1,0 +1,13 @@
+<launch>
+  <arg name="arm" default="PSM1"/>
+  <arg name="cisst_root" default="$(env HOME)/catkin_ws/src/cisst-saw"/>
+  <arg name="psm_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/console-PSM1_KIN_SIMULATED.json"/>
+
+  <include file="$(find dvrk_robot)/launch/dvrk_arm_rviz.launch">
+    <arg name="arm" value="$(arg arm)"/>
+    <arg name="config" value="$(arg psm_config)"/>
+  </include>
+
+  <include file="$(find costar_bringup)/launch/utilities.launch"/>
+
+</launch>
