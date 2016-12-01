@@ -1,0 +1,26 @@
+<launch>
+
+    <!-- Parameters possible to change-->
+    <arg name="camera_1_id" default="#1" /><!-- here you can change 2@0 by the serial number -->
+    <arg name="camera_2_id" default="#2" /><!-- here you can change 2@0 by the serial number -->
+    <arg name="camera_1_name" default="camera_1" />
+    <arg name="camera_2_name" default="camera_2" />    
+
+    <include file="$(find instructor_core)/launch/dual_camera/shoulder_camera.launch">
+        <!-- <arg name="camera_1_id" value="$(camera_1_id)" /> -->
+        <!-- <arg name="camera_2_id" value="$(camera_2_id)" /> -->
+        <!-- <arg name="camera_1_name" value="$(camera_1_name)" /> -->
+        <!-- <arg name="camera_2_name" value="$(camera_2_name)" /> -->
+    </include>
+
+    <include file="$(find instructor_core)/launch/dual_camera/shoulder_alvar.launch">
+        <!-- <arg name="camera_1_name" default="$(camera_1_name)" /> -->
+        <!-- <arg name="camera_2_name" default="$(camera_2_name)" /> -->
+    </include>
+
+    <include file="$(find instructor_core)/launch/dual_camera/shoulder_semi_static.launch">
+        <!-- <arg name="camera_1_name" default="$(camera_1_name)" /> -->
+        <!-- <arg name="camera_2_name" default="$(camera_2_name)" /> -->
+    </include>
+
+</launch>

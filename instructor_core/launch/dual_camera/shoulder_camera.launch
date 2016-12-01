@@ -1,0 +1,16 @@
+<launch>
+
+  <arg name="camera_2_id" default="1212150023" /> 
+  <arg name="depth_registration" default="true" />
+  <arg name="camera_2_name" default="camera_2" />
+
+  <include file="$(find openni2_launch)/launch/openni2.launch">
+      <arg name="device_id" value="$(arg camera_2_id)" />
+      <arg name="camera" value="$(arg camera_2_name)" />
+      <arg name="depth_registration" value="$(arg depth_registration)" />
+  </include>
+
+  <include file="$(find instructor_core)/launch/dual_camera/shoulder_semi_static.launch">
+  </include>
+
+</launch>
