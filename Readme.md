@@ -2,7 +2,7 @@
 
 ***Collaborative System for Task Automation and Recognition***
 
-This is a project by a few members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. Our goal is to build a system which facilitates end-user instruction of industrial robots to performa a variety of different tasks. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more.
+Our goal is to build a system which facilitates end-user instruction of robots to perform a a variety of different tasks. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more. Tasks are represented as Behavior Trees.
 
 [![Collaborative Assembly Example](https://img.youtube.com/vi/QS0cOPJFIDg/0.jpg)](https://youtu.be/QS0cOPJFIDg)
 
@@ -16,7 +16,8 @@ To fully take advantage of these capabilities you will need:
   - instructor: our custom user interface
   - a KUKA LBR iiwa or Universal Robots UR5
   - a Robotiq 3-finger gripper or 2-finger gripper
-If you find this code useful, please cite:
+
+This is a project by members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. If you find this code useful, please cite:
 ```
 @article{paxton2016costar,
   title={CoSTAR: Instructing Collaborative Robots with Behavior Trees and Vision},
