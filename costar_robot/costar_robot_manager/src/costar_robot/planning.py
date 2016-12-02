@@ -19,7 +19,6 @@ from pykdl_utils.kdl_kinematics import KDLKinematics
 
 from trajectory_msgs.msg import JointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
-from inverseKinematicsUR5 import InverseKinematicsUR5
 from shape_msgs.msg import SolidPrimitive
 ModeJoints = 'joints'
 ModeCart = 'cartesian'

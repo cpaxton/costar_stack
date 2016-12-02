@@ -1,0 +1,22 @@
+<launch>
+
+<!--     <arg name="camera_1_name" default="wrist" />
+    <arg name="camera_2_name" default="shoudler" />
+ -->
+<!--     <node pkg="tf" type="static_transform_publisher" name="world_to_camera_1_link" args=" 0 0 2 0 0 0  /world /camera_1_link 10"/>
+    <node pkg="tf" type="static_transform_publisher" name="world_to_camera_2_link" args=" 0 0 1 0 0 0  /world /camera_2_link 10"/>
+ -->
+
+<!--     <node pkg="semi_static_transform_publisher" 
+          type="semi_transform_publisher.py" 
+          name="world_to_camera_2_link"  
+          args="world_to_camera_2_link 0 0 0 0 0 0  /world /camera_2_link 10" /> -->
+    <node pkg="semi_static_transform_publisher" 
+          type="semi_transform_publisher.py" 
+          name="base_link_to_camera_2_link"  
+          args="base_link_to_camera_2_link 0 0 0 0 0 0  /base_link /camera_2_link 10" />          
+<!-- output="screen" -->
+
+
+
+</launch>

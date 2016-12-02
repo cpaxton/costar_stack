@@ -2,16 +2,11 @@
 # There might still be some issues.
 # Some code is covered by patents.
 
-# Robot description
-# NOTE: this is specific to the CIRL UR5
-- git: {version: hydro-devel, local-name: universal_robot, uri: 'git@github.com:jhu-lcsr-forks/universal_robot.git'}
-
 # main
 - git: {version: master, local-name: costar_stack, uri: 'git@github.com:cpaxton/costar_stack.git'}
 - git: {version: master, local-name: sp_segmenter, uri: 'git@github.com:jhu-lcsr/sp_segmenter.git'}
 
-# user interface
-- git: {version: working, local-name: beetree, uri: 'git@github.com:futureneer/beetree.git'}
+# Robot description
 - git: {version: working, local-name: robotiq, uri: 'https://github.com/ros-industrial/robotiq.git'}
 
 # object detection
@@ -20,7 +15,3 @@
 # motion
 - git: {version: master, local-name: dmp, uri: 'git@github.com:cpaxton/dmp.git'}
 - git: {version: master, local-name: ur_modern_driver, uri: 'git@github.com:ThomasTimm/ur_modern_driver.git'}
-
-# proprietary
-- git: {version: ui-improvements, local-name: instructor, uri: 'git@git.lcsr.jhu.edu:snap/snap_instructor.git'}
-- git: {version: master, local-name: instructor, uri: 'git@git.lcsr.jhu.edu:nri/instructor.git'}

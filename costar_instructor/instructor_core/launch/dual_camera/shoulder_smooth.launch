@@ -1,0 +1,3 @@
+<launch>
+  <node name="ar_smooth" pkg="instructor_core" type="instructor_ar_smooth.py"/>
+</launch>

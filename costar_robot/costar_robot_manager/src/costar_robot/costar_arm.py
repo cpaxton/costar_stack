@@ -24,8 +24,6 @@ from predicator_landmark import GetWaypointsService
 from smart_waypoint_manager import SmartWaypointManager
 from waypoint_manager import WaypointManager
 
-from inverseKinematicsUR5 import InverseKinematicsUR5
-
 class CostarArm(object):
 
     def __init__(self,
@@ -135,19 +133,13 @@ class CostarArm(object):
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
 
-        self.closed_form_IK_solver = InverseKinematicsUR5()
-        # self.closed_form_ur5_ik.enableDebugMode()
-        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.5])
-        self.closed_form_IK_solver.setEERotationOffsetROS()
-        self.closed_form_IK_solver.setJointWeights(self.joint_weights)
-        self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
         self.rotation_weight = 0.05
 
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
-            closed_form_IK_solver=self.closed_form_IK_solver)
+            closed_form_IK_solver=closed_form_IK_solver)
 
     '''
     js_cb
