@@ -17,6 +17,9 @@ from control_msgs.msg import FollowJointTrajectoryAction
 from control_msgs.msg import FollowJointTrajectoryActionGoal
 from control_msgs.msg import FollowJointTrajectoryGoal
 
+# Use IK solver by Felix Jonathan
+from inverseKinematicsUR5 import InverseKinematicsUR5
+
 mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm', 'IDLE':'PauseArm'}
 urscript_commands = {'TEACH':'set robotmode freedrive','SERVO':'set robotmode run'}
 
@@ -38,11 +41,18 @@ class CostarUR5Driver(CostarArm):
         base_link = "base_link"
         end_link = "ee_link"
         planning_group = "manipulator"
+
+        closed_form_IK_solver = InverseKinematicsUR5()
+        joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.5])
+        closed_form_IK_solver.setEERotationOffsetROS()
+        closed_form_IK_solver.setJointWeights(self.joint_weights)
+        closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
+
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
             steps_per_meter=10,
             base_steps=10,
             dof=6,
-            closed_form_IK_solver=True)
+            closed_form_IK_solver=closed_form_IK_solver)
 
         self.client = client = actionlib.SimpleActionClient('follow_joint_trajectory',FollowJointTrajectoryAction)
 
