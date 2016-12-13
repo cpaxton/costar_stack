@@ -46,11 +46,9 @@ How to bring this robot up on our own platform:
 ```
 # core features and UI
 roslaunch costar_bringup iiwa14_s_model.launch
-roslaunch instructor_core instructor.launch
 
 # object detection and moveit planning scene
 roslaunch sp_segmenter SPServerStructureAssembly.launch
-
 ```
 
 You also need to launch the GRL KUKA ROS Driver. GRL is the [Generic Robot Library](https://github.com/ahundt/grl), which provides a low-level control interface for the KUKA LBR.
@@ -71,32 +69,24 @@ You can test CoSTAR in a simulation now. The basic launch procedure for a simula
 ```
 roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false
 roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=false
-roslaunch instructor_core instructor.launch
 ```
 
 You can then use the Instructor UI to move the robot around in simulation. If you want to bring up Gazebo and all the drivers at once instead of separately, launch as:
 
 ```
 roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=true
-roslaunch instructor_core instructor.launch
 ```
 
 ## CoSTAR Packages
 
   * Bringup: launch files, RVIZ configurations, et cetera
+  * [Instructor](costar_instructor/Readme.md): user interface
   * [Librarian](costar_librarian/Readme.md): file management
   * [Predicator](costar_predicator/Readme.md): robot knowledge management
   * [Perception](costar_perception/Readme.md): semantic segmentation and object detection via [SP Segmenter](https://github.com/jhu-lcsr/sp_segmenter)
+  * [Robot](costar_robot/Readme.md): utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Gripper: utilities for integrating different grippers into UI
-  * Robot: utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Tools: packages used for data collection, maintaining MoveIt planning scene, and other purposes
-
-### Proprietary Code
-
-  * Instructor: Behavior Tree-based user interface (built on [Beetree](https://github.com/futureneer/beetree/))
-  * Ready Air: drives the current tool attachment and provides services
-
-  Due to licensing issues these have not yet been made open source.
 
 ## Contact
 
