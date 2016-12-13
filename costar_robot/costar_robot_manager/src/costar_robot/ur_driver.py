@@ -42,17 +42,18 @@ class CostarUR5Driver(CostarArm):
         end_link = "ee_link"
         planning_group = "manipulator"
 
-        closed_form_IK_solver = InverseKinematicsUR5()
-        joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.5])
-        closed_form_IK_solver.setEERotationOffsetROS()
-        closed_form_IK_solver.setJointWeights(self.joint_weights)
-        closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
+        self.closed_form_IK_solver = InverseKinematicsUR5()
+        # self.closed_form_ur5_ik.enableDebugMode()
+        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.2])
+        self.closed_form_IK_solver.setEERotationOffsetROS()
+        self.closed_form_IK_solver.setJointWeights(self.joint_weights)
+        self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
 
         super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
             steps_per_meter=10,
             base_steps=10,
             dof=6,
-            closed_form_IK_solver=closed_form_IK_solver)
+            closed_form_IK_solver=self.closed_form_IK_solver)
 
         self.client = client = actionlib.SimpleActionClient('follow_joint_trajectory',FollowJointTrajectoryAction)
 

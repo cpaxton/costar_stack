@@ -133,6 +133,7 @@ class CostarArm(object):
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
 
+        # how important is it to choose small rotations in goal poses
         self.rotation_weight = 0.05
 
         self.planner = SimplePlanning(self.robot,base_link,end_link,
@@ -287,7 +288,7 @@ class CostarArm(object):
                 q_new = self.ik(pm.toMatrix(T),self.q0)
                 if q_new is not None:
                     dq = np.absolute(q_new - self.q0) * self.joint_weights
-                    print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * np.sum(dq), ' dq6: ', dq[-1]
+                    # print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * np.sum(dq), ' dq6: ', dq[-1]
                     dists.append((T.p - T_fwd.p).Norm() + self.rotation_weight * np.sum(dq))
                 
             if len(Ts) == 0:
@@ -297,8 +298,8 @@ class CostarArm(object):
                 possible_goals.sort()
 
                 for (dist,T,obj,name) in possible_goals:
-                    rospy.logwarn("Trying to move to frame at distance %f"%(dist))
-
+                    rospy.logwarn("Trying to move to frame at distance %f" % dist)
+                    
                     # plan to T
                     (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
                     msg = self.send_and_publish_planning_result(res,acceleration,velocity)
@@ -350,8 +351,8 @@ class CostarArm(object):
             pt = JointTrajectoryPoint()
             pose = pm.fromMsg(req.target)
             (code,res) = self.planner.getPlan(pose,self.q0)
-
-            print "DONE PLANNING: " + str((code, res))
+            print "DONE PLANNING"
+            # print "DONE PLANNING: " + str((code, res))
             return self.send_and_publish_planning_result(res,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')

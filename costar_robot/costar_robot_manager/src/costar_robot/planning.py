@@ -20,6 +20,7 @@ from pykdl_utils.kdl_kinematics import KDLKinematics
 from trajectory_msgs.msg import JointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 from shape_msgs.msg import SolidPrimitive
+from geometry_msgs.msg import Pose
 ModeJoints = 'joints'
 ModeCart = 'cartesian'
 
@@ -221,32 +222,41 @@ class SimplePlanning:
                   goal.joint_constraints.append(joint)
 
           else:
+            print 'Cartesian Constraint', self.base_link, self.end_link
             # TODO: Try to fix this again. Something is wrong
-            cartesian_costraint = PositionConstraint()
-            cartesian_costraint.header.frame_id = 'base_link'
-            cartesian_costraint.link_name = self.joint_names[-1]
-            cartesian_costraint.target_point_offset = frame.p
-            bounding_volume = BoundingVolume()
+            position_costraint = PositionConstraint()
+            position_costraint.link_name = self.end_link
+            position_costraint.target_point_offset.x = 0.0
+            position_costraint.target_point_offset.y = 0.0
+            position_costraint.target_point_offset.z = 0.0
+            
             sphere_bounding = SolidPrimitive()
             sphere_bounding.type = sphere_bounding.SPHERE;
-            # constrain position with sphere 1 mm around target
-            sphere_bounding.dimensions.append(0.01)
+            sphere_bounding.dimensions.append(0.005)
+            position_costraint.constraint_region.primitives.append(sphere_bounding)
 
-            bounding_volume.primitives.append(sphere_bounding)
-            cartesian_costraint.constraint_region = bounding_volume
-            cartesian_costraint.weight = 1.0
-            goal.position_constraints.append(cartesian_costraint)
+            sphere_pose = Pose()
+            sphere_pose.position = frame.p
+            sphere_pose.orientation.x = 0.0
+            sphere_pose.orientation.y = 0.0
+            sphere_pose.orientation.z = 0.0
+            sphere_pose.orientation.w = 1.0 
+            position_costraint.constraint_region.primitive_poses.append(sphere_pose)
+
+            position_costraint.weight = 1.0
+            position_costraint.header.frame_id = '/world'
+            goal.position_constraints.append(position_costraint)
+
 
             orientation_costraint = OrientationConstraint()
-            orientation_costraint.header.frame_id = 'base_link'
-            orientation_costraint.link_name = self.joint_names[-1]
+            orientation_costraint.link_name = self.end_link
+            orientation_costraint.header.frame_id = '/world'
             orientation_costraint.orientation = frame.M.GetQuaternion()
             orientation_costraint.absolute_x_axis_tolerance = 0.005
             orientation_costraint.absolute_y_axis_tolerance = 0.005
             orientation_costraint.absolute_z_axis_tolerance = 0.005
             orientation_costraint.weight = 1.0
             goal.orientation_constraints.append(orientation_costraint)
-        
         return(None, goal)
 
 
