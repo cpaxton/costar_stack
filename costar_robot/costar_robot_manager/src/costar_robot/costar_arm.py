@@ -24,8 +24,6 @@ from predicator_landmark import GetWaypointsService
 from smart_waypoint_manager import SmartWaypointManager
 from waypoint_manager import WaypointManager
 
-from inverseKinematicsUR5 import InverseKinematicsUR5
-
 class CostarArm(object):
 
     def __init__(self,
@@ -135,19 +133,15 @@ class CostarArm(object):
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
 
-        self.closed_form_IK_solver = InverseKinematicsUR5()
-        # self.closed_form_ur5_ik.enableDebugMode()
-        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.5])
-        self.closed_form_IK_solver.setEERotationOffsetROS()
-        self.closed_form_IK_solver.setJointWeights(self.joint_weights)
-        self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
+        self.closed_form_IK_solver = closed_form_IK_solver
+        # how important is it to choose small rotations in goal poses
         self.rotation_weight = 0.05
 
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
-            closed_form_IK_solver=self.closed_form_IK_solver)
+            closed_form_IK_solver=closed_form_IK_solver)
 
     '''
     js_cb
@@ -447,7 +441,8 @@ class CostarArm(object):
     '''
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
-            self.send_q(self.q0,0.1,0.1)
+            if self.q0 is not None:
+                self.send_q(self.q0,0.1,0.1)
 
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'

@@ -30,6 +30,4 @@
 
   <node pkg="costar_robot_manager" name="simple_ur5_driver_node" type="ur5_driver.py" output="screen"/>
   
-  <!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/> -->
-
 </launch>

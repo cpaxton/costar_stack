@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args=" -0.022 -0.005 0.093 3.14159 -1.5707 3.14159  /endpoint /endpoint_marker 10"/>
+    <!--<node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args=" 0 0 0.03 3.1415 -1.5707 -1.5707  /endpoint /endpoint_marker 10"/>-->
+</launch>

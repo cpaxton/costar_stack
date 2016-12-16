@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<package>
+  <name>instructor_plugins</name>
+  <version>0.0.0</version>
+  <description>A set of beetree plugins for NRI/instructor</description>
+  <maintainer email="futureneer@gmail.com">KelGuerin</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>beetree</build_depend>
+  <build_depend>instructor_core</build_depend>
+  <build_depend>message_generation</build_depend>
+  <run_depend>beetree</run_depend>
+  <run_depend>instructor_core</run_depend>
+  <run_depend>message_runtime</run_depend>
+
+  <export>
+    <!-- Beetree Action Plugins -->
+    <instructor plugin="instructor.NodeActionSleepGUI" type="ACTION" group="TIMING" description="Instructor Sleep Action" name="Sleep"/>
+
+    <instructor plugin="instructor.NodeActionWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Waypoint Action" name="Move to Waypoint"/>
+    <instructor plugin="instructor.NodeActionRelativeWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Relative Waypoint" name="Move Relative"/>
+    <instructor plugin="instructor.NodePlanWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Plan to Waypoint Action" name="Plan to Waypoint"/>
+    <instructor plugin="instructor.NodePlanRelativeWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Plan to Relative Waypoint" name="Plan Relative"/>
+    
+    <instructor plugin="instructor.NodeActionSGripperOpenGUI" type="ACTION" group="GRIPPER" description="gripper_open" name="Open Gripper"/>
+    <instructor plugin="instructor.NodeActionSGripperCloseGUI" type="ACTION" group="GRIPPER" description="gripper_close" name="Close Gripper"/>
+    <instructor plugin="instructor.NodeActionSGripperBasicModeGUI" type="ACTION" group="GRIPPER" description="gripper_basic_mode" name="Basic Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperScissorModeGUI" type="ACTION" group="GRIPPER" description="gripper_scissor_mode" name="Scissor Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperWideModeGUI" type="ACTION" group="GRIPPER" description="gripper_wide_mode" name="Wide Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperPinchModeGUI" type="ACTION" group="GRIPPER" description="gripper_pinch_mode" name="Pinch Grasp"/>
+
+    <instructor plugin="instructor.NodeActionSmartmoveGUI" type="ACTION" group="ROBOT" description="Instructor Smart Move" name="Smart Move"/>
+
+    <instructor plugin="instructor.NodeKnowledgeTestGUI" type="CONDITION" group="SYSTEM" description="Knowledge Test" name="Knowledge Test" />
+    <instructor plugin="instructor.NodePublishMessageGUI" type="CONDITION" group="SYSTEM" description="publish_message" name="Publish Message" />
+    <instructor plugin="instructor.NodeActionDetectObjectsGUI" type="CONDITION" group="VISION" description="sp_segmenter_detect" name="Detect Objects"/>
+    <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI" type="CONDITION" group="VISION" description="update_planning_scene" name="Update Scene"/>
+  </export>
+
+</package>
