@@ -2,6 +2,11 @@
 
 This code is the CoSTAR robot manager. It provides simple services for instantiating high-level actions on different robots. It's a work in progress, but has all the features needed for the Hannover Messe demos.
 
+## Dependencies
+  - To use a dvrk, install ros package from https://github.com/jhu-dvrk/dvrk-ros
+  - To use a ur5, install ros package from https://github.com/ThomasTimm/ur_modern_driver
+  - To use a iiwa, install ros package from https://github.com/SalvoVirga/iiwa_stack. OPTIONAL: It is possible to use grl too in addition to iiwa-stack for faster  communication to the iiwa. https://github.com/ahundt/grl
+
 ## Useful Commands
 
   - To launch CoSTAR simulation:  
