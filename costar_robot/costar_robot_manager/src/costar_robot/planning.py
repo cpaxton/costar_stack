@@ -68,7 +68,7 @@ class SimplePlanning:
     '''
     TODO: finish this
     '''
-    def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, time_multiplier=10):
+    def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, steps_per_radians = 4, time_multiplier=2):
 
       # interpolate between start and goal
       pose = pm.fromMatrix(self.kdl_kin.forward(q0))
@@ -78,21 +78,38 @@ class SimplePlanning:
       
       goal_rpy = np.array(frame.M.GetRPY())
       goal_xyz = np.array(frame.p)
+      delta_rpy = np.linalg.norm(goal_rpy - cur_rpy)
+      delta_translation = (pose.p - frame.p).Norm()
 
-
-      steps = base_steps + int((pose.p - frame.p).Norm() * steps_per_meter)
+      steps = base_steps + int(delta_translation * steps_per_meter) + int(delta_rpy * steps_per_radians)
       print " -- Computing %f steps"%steps
-
-      ts = (pose.p - frame.p).Norm() / steps * time_multiplier
+      min_time = 0.5 #seconds
+      ts = ((min_time/time_multiplier + delta_translation + delta_rpy) / steps ) * time_multiplier
       traj = JointTrajectory()
       traj.points.append(JointTrajectoryPoint(positions=q0,
           	velocities=[0]*len(q0),
           	accelerations=[0]*len(q0)))
 
       # compute IK
-      for i in range(1,steps+1):
-        xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
-        rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
+      for i in range(1,steps+4):
+        xyz = None
+        rpy = None
+        if i >= steps:
+          # slow down at 3 final step: at 50% 25% 10% speed before stopping
+          incremental_step = None
+          if i == steps:
+            incremental_step = 0.5
+          elif i == steps + 1:
+            incremental_step = 0.75
+          elif i == steps + 2:
+            incremental_step = 0.9
+          else:
+            incremental_step = 1.0
+          xyz = cur_xyz + ((steps-1)+incremental_step)/steps * (goal_xyz - cur_xyz)
+          rpy = cur_rpy + ((steps-1)+incremental_step)/steps * (goal_rpy - cur_rpy)
+        else:
+          xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
+          rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
 
         frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
         #q = self.kdl_kin.inverse(frame,q0)
