@@ -439,6 +439,8 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     {
         std::cerr<<"Visualize after segmentation"<<std::endl;
         visualizeLabels(label_cloud, viewer, color_label);
+        viewer->spin();
+        viewer->removePointCloud("label_cloud");
     }
     result = label_cloud;
 
@@ -544,6 +546,15 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
     }
 
     std::vector<poseT> all_poses;
+
+    if( viewer )
+    {
+        std::cerr<<"Visualize after pose computation"<<std::endl;
+        viewer->setWindowName("Computed Pose");
+        viewer->removeAllPointClouds();
+        visualizeLabels(labelled_point_cloud, viewer, color_label);
+    }
+
     if (use_multi_class_svm_)
     {
         // cloud_set contains separated clouds based on the labelled cloud
@@ -578,18 +589,30 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
                         std::cerr << "Unsupported objRecRANSACdetector!\n";
                 }
 
+                if (viewer)
+                {
+                    individual_ObjRecRANSAC_[j-1]->visualize(viewer, tmp_poses, color_label[j]);
+                }
+
                 #pragma omp critical
                 {
                     all_poses.insert(all_poses.end(), tmp_poses.begin(), tmp_poses.end());
                 }
             }
         }
+
+        if (viewer)
+        {
+            viewer->spin();
+            for(size_t j = 1 ; j <= number_of_added_models_; j++ )
+                individual_ObjRecRANSAC_[j-1]->clearMesh(viewer, all_poses);
+            viewer->removeAllPointClouds();
+        }
     }
     else 
     {
         pcl::PointCloud<pcl::PointXYZ>::Ptr scene_xyz(new pcl::PointCloud<pcl::PointXYZ>());
         pcl::copyPointCloud(*labelled_point_cloud,*scene_xyz);
-        std::vector<poseT> tmp_poses;
         switch (objRecRANSAC_mode_)
         {
             case STANDARD_BEST:
@@ -604,7 +627,16 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
             default:
                 std::cerr << "Unsupported objRecRANSACdetector!\n";
         }
+
+        if (viewer)
+        {
+            combined_ObjRecRANSAC_->visualize_m(viewer, all_poses, model_name_map_, color_label);
+            viewer->spin();
+            combined_ObjRecRANSAC_->clearMesh(viewer, all_poses);
+            viewer->removeAllPointClouds();
+        }
     }
+
     std::map<std::string, unsigned int> object_class_transform_index_no_persistence = object_class_transform_index_;
     std::map<std::string, unsigned int> &tmpTFIndex = object_class_transform_index_;
     double current_time = time(0);

@@ -129,8 +129,6 @@ void visualizeLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, pcl::visua
     }
     
     viewer->addPointCloud(view_cloud, "label_cloud");
-    viewer->spin();
-    viewer->removePointCloud("label_cloud");
 }
 
 pcl::PointCloud<PointLT>::Ptr densifyLabels(const pcl::PointCloud<PointLT>::Ptr label_cloud, const pcl::PointCloud<PointT>::Ptr ori_cloud)

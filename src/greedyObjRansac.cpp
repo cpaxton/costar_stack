@@ -228,7 +228,7 @@ void greedyObjRansac::AddModel(std::string name, std::string label)
     models.push_back(LoadMesh(name,label));
 }
 
-void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, int color[3])
+void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, uchar color[3])
 {
     std::vector<pcl::PointCloud<myPointXYZ>::Ptr> rec;
     for( std::vector<ModelT>::iterator it = models.begin() ; it < models.end() ; it++ )
@@ -264,7 +264,7 @@ void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, c
     }
 }
 
-void greedyObjRansac::visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, std::map<std::string, int> &model_name_map, uchar model_color[11][3])
+void greedyObjRansac::visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, std::map<std::string, std::size_t> &model_name_map, uchar model_color[11][3])
 {
     std::vector<pcl::PointCloud<myPointXYZ>::Ptr> rec;
     for( std::vector<ModelT>::iterator it = models.begin() ; it < models.end() ; it++ )
@@ -288,7 +288,7 @@ void greedyObjRansac::visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer,
                 ss << count;
 
                 viewer->addPolygonMesh<myPointXYZ>(cur_cloud, models[i].model_mesh->polygons, it->model_name+"_"+ss.str());
-                int id = model_name_map[it->model_name];
+                std::size_t id = model_name_map[it->model_name];
                 viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, model_color[id][0]/255.0, model_color[id][1]/255.0, model_color[id][2]/255.0, it->model_name+"_"+ss.str());
                 //if( it->model_name == "1" )
                 //    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.55, 0.05, it->model_name+"_"+ss.str());
