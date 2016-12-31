@@ -185,6 +185,22 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     std::cerr << "This class will only publish the segmented cloud.\n";
 #endif
 
+#ifdef USE_TRACKING
+    this->nh.param("enableTracking",use_tracking_,false);
+    if (use_tracking_)
+    {
+        tracker_ = boost::shared_ptr<Tracker>(new Tracker());
+        std::vector<ModelT> mesh_set = this->getMeshSet();
+        for(ModelT& model : mesh_set)
+        {
+            if(!tracker_->addTracker(model))
+            {
+                std::cout << "Warning: tried to add duplicate model name to tracker" << std::endl;
+            }
+        }
+    }
+#endif
+
     this->initializeSemanticSegmentation();
 
     // ---------------------- SETTING UP ROS SPECIFIC PARAMETERS --------------------------------------
@@ -512,6 +528,18 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
 
         ROS_INFO("Found %lu objects",object_transform_result.size());
         ROS_INFO("Segmentation Done.");
+
+#ifdef USE_TRACKING
+        if(use_tracking_)
+        {
+            std::vector<poseT> all_poses;
+            for (std::vector<objectTransformInformation>::const_iterator it = object_transform_result.begin(); it!=object_transform_result.end(); ++it)
+            {
+                all_poses.push_back(it->asPoseT());
+            }
+            tracker_->generateTrackingPoints(inputCloud.header.stamp, all_poses);
+        }
+#endif
 
         if (object_transform_result.size() < 1) 
         {

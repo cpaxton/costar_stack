@@ -52,7 +52,7 @@ training.setObjectSampleNumber(objSampleNum);
 training.setCurOrderMax(3);
 
 training.setSkipFeaExtraction(skip_fea);
-training.setSkipBackgroundSVM(!train_bg_flag);
+training.setSkipBackgroundSVM(not train_bg_flag);
 training.setSkipMultiSVM(!train_multi_flag);
 
 # Do Feature extraction and SVM Training
