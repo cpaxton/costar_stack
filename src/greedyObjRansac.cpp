@@ -30,9 +30,6 @@ poseT greedyObjRansac::getBestModel(list< boost::shared_ptr<PointSetShape> >& de
     {
         boost::shared_ptr<PointSetShape> shape = (*it);
         
-        //if ( shape->getUserData() )
-        //    printf("\t%s, confidence: %lf\n", shape->getUserData()->getLabel(), shape->getConfidence());
-        
         if( shape->getConfidence() > max_confidence )
         {
             max_confidence = shape->getConfidence();
@@ -49,6 +46,7 @@ poseT greedyObjRansac::getBestModel(list< boost::shared_ptr<PointSetShape> >& de
 
             new_pose.shift = Eigen::Vector3f (mat4x4[0][3], mat4x4[1][3], mat4x4[2][3]);
             new_pose.rotation = rot;
+            new_pose.confidence = max_confidence;
         }
     }
     
@@ -71,6 +69,7 @@ poseT greedyObjRansac::recognizeOne(const pcl::PointCloud<myPointXYZ>::Ptr scene
         poseT dummy_pose;
         return dummy_pose;
     }
+
     poseT new_pose = getBestModel(detectedObjects);
     
     pcl::PointCloud<myPointXYZ>::Ptr trans_model(new pcl::PointCloud<myPointXYZ>());
@@ -94,21 +93,27 @@ void greedyObjRansac::GreedyRecognize(const pcl::PointCloud<myPointXYZ>::Ptr sce
 {
     poses.clear();
     pcl::PointCloud<myPointXYZ>::Ptr cur_scene = scene_xyz;
+
     int iter = 0;
     while(true)
     {
-        //std::cerr<< "Recognizing Attempt --- " << iter << std::endl;
+        std::cerr<< "Recognizing Attempt --- " << iter << std::endl;
+        std::cerr << "Scene point cloud size: " << cur_scene->size() << std::endl;
         pcl::PointCloud<myPointXYZ>::Ptr filtered_scene(new pcl::PointCloud<myPointXYZ>());
         poseT new_pose = recognizeOne(cur_scene, filtered_scene);
         
         if( filtered_scene->empty() == true )
+        {
+            std::cerr << "Iteration #" << iter << ": No object detected anymore from this point cloud.\n";
             break;
-        
+        }
+
         poses.push_back(new_pose);
         cur_scene = filtered_scene;
         iter++;
+
     }
-    //std::cerr<< "Recognizing Done!!!" << std::endl;
+    std::cerr<< "Recognizing Done!!!" << std::endl;
 
 }
 
