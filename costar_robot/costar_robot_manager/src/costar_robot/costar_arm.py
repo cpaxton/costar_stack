@@ -457,12 +457,11 @@ class CostarArm(object):
     '''
     # TODO: Modify this part
     def handle_tick(self):
-        rospy.logerr("Function 'handle_tick' not implemented for base class!")
-        # print('This is new code for publishing tf')
-        # publish from
         # print self.end_link, "/endpoint",  "trans = ", (0,0,0), "rot = ", (0,0,0)
         br = tf.TransformBroadcaster()
-        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),self.end_link,"/endpoint")
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
+
     '''
     call this when "spinning" to keep updating things
     '''

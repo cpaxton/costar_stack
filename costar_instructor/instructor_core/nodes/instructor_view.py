@@ -359,7 +359,7 @@ class WaypointManagerDialog(QWidget):
                 try:
                     F_waypoint = tf_c.fromTf(self.listener_.lookupTransform('/world','/endpoint',rospy.Time(0)))
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                    rospy.logerr('Could not find the tf frame for the robot endpoint')
+                    rospy.logerr('Could not find the tf frame for the robot endpoint: %s'%str(e))
                     return
                 try:
                     rospy.wait_for_service('/instructor_core/AddWaypoint',2)
