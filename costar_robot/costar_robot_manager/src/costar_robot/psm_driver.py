@@ -64,6 +64,23 @@ class CostarPSMDriver(CostarArm):
         else:
             return 'FAILURE'
 
+    def handle_tick(self):
+      raise NotImplementedError('your code here')
+      if self.driver_status == 'SHUTDOWN':
+        if not self.simulation: # this may not be correct
+          # close connection to robot
+          pass
+	pass
+      elif self.driver_status == 'SERVO':
+	pass
+      elif self.driver_status == 'IDLE':
+	pass
+      elif self.driver_status == 'TEACH':
+	pass
+        # use interactive marker to publish robot /endpoint
+        # then we can use instructor to save these positions for the robot
+        print "HANDLING TEACH MODE"
+
     '''
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.

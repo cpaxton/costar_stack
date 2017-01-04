@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   
   <!-- In rosparam ../robot_description I see robot name="dvrk_psm" -->

@@ -1,4 +1,3 @@
-
 import tf
 import rospy
 from costar_robot_msgs.srv import *
@@ -420,12 +419,9 @@ class CostarArm(object):
     '''
     def set_teach_mode_call(self,req):
         if req.enable == True:
-
-            # self.rob.set_freedrive(True)
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
         else:
-            # self.rob.set_freedrive(False)
             self.driver_status = 'IDLE'
             return 'SUCCESS - teach mode disabled'
 
@@ -459,9 +455,14 @@ class CostarArm(object):
     '''
     robot-specific logic to update state every "tick"
     '''
+    # TODO: Modify this part
     def handle_tick(self):
         rospy.logerr("Function 'handle_tick' not implemented for base class!")
-
+        # print('This is new code for publishing tf')
+        # publish from
+        # print self.end_link, "/endpoint",  "trans = ", (0,0,0), "rot = ", (0,0,0)
+        br = tf.TransformBroadcaster()
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),self.end_link,"/endpoint")
     '''
     call this when "spinning" to keep updating things
     '''
