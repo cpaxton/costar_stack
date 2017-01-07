@@ -64,22 +64,6 @@ class CostarPSMDriver(CostarArm):
         else:
             return 'FAILURE'
 
-    '''
-    set teach mode
-    '''
-    '''
-    def set_teach_mode_call(self,req):
-        if req.enable == True:
-　　　　　　　　　　　 # happens when you switch to teach mode
-            # start interactive marker at the end of the PSM
-            # name of frame produced by marker should be self.teach_frame
-            self.driver_status = 'TEACH'
-            return 'SUCCESS - teach mode enabled'
-        else:
-            self.driver_status = 'IDLE'
-            return 'SUCCESS - teach mode disabled'
-    '''
-
     def handle_tick(self):
       raise NotImplementedError('your code here')
       if self.driver_status == 'SHUTDOWN':
@@ -87,16 +71,15 @@ class CostarPSMDriver(CostarArm):
           # close connection to robot
           pass
 	pass
+      elif self.driver_status == 'SERVO':
+	pass
+      elif self.driver_status == 'IDLE':
+	pass
       elif self.driver_status == 'TEACH':
 	pass
         # use interactive marker to publish robot /endpoint
         # then we can use instructor to save these positions for the robot
         print "HANDLING TEACH MODE"
-        # must publish position of /endpoint 
-      else:
-        # If PSM is executing, just publish endpoint as normal (from the end of
-        # the robot's kinematic chain).
-        super(CostarPSMDriver, self).handle_tick()
 
     '''
     Send a whole joint trajectory message to a robot...

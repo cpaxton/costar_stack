@@ -27,7 +27,6 @@ class CostarArm(object):
 
     def __init__(self,
             base_link, end_link, planning_group,
-            # TODO: teach_frame="/teach_frame",
             world="/world",
             listener=None,
             broadcaster=None,
@@ -50,7 +49,6 @@ class CostarArm(object):
         self.end_link = end_link
         self.planning_group = planning_group
         self.dof = dof
-        # self.teach_frame = teach_frame # TODO
 
         self.base_steps = base_steps
         self.steps_per_meter = steps_per_meter
@@ -459,11 +457,10 @@ class CostarArm(object):
     '''
     # TODO: Modify this part
     def handle_tick(self):
-        rospy.logerr("Function 'handle_tick' not implemented for base class!")
         # print self.end_link, "/endpoint",  "trans = ", (0,0,0), "rot = ", (0,0,0)
-        # br = tf.TransformBroadcaster()
-        # br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
-        # br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
+        br = tf.TransformBroadcaster()
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
 
     '''
     call this when "spinning" to keep updating things
