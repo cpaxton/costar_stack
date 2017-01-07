@@ -1,4 +1,6 @@
+<?xml version="1.0"?>
 <launch>
+  <!-- dvrk bringup -->
   <arg name="arm" default="PSM1"/>
   <arg name="cisst_root" default="$(env HOME)/catkin_ws/src/cisst-saw"/>
   <arg name="psm_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/console-PSM1_KIN_SIMULATED.json"/>
@@ -8,6 +10,17 @@
     <arg name="config" value="$(arg psm_config)"/>
   </include>
 
+
+  <!-- CoSTAR bringup -->
   <include file="$(find costar_bringup)/launch/utilities.launch"/>
+
+  <arg name="model" default="dvrk_psm"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="outer_yaw_to_base_link" args=" 0 0 0 0 0 0 1 /PSM1_psm_base_link /base_link 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="shaft_link_to_tool_tip" args=" 0 0 0 0 0 0 1 /PSM1_tool_tip_link /endpoint 1000"/>
+
+  <node pkg="costar_robot_manager" name="simple_psm_driver_node" type="psm_driver.py" output="screen">
+    <remap from="robot_description" to="/dvrk/PSM1/robot_description"/>
+  </node> 
 
 </launch>
