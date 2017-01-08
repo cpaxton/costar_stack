@@ -1,22 +1,10 @@
 <?xml version="1.0"?>
 <launch>
   
-  <!-- In rosparam ../robot_description I see robot name="dvrk_psm" -->
   <arg name="model" default="dvrk_psm"/>
 
-  <!--what is this line used for? The syntax here is a little confusing-->
-  <!--<include file="$(find psm_description)/launch/$(arg model)_upload.launch"/>-->
-
-  <!--for "name" and "args" I just modified according to my understanding of rosparam ../robot_description-->
-  <node pkg="tf" type="static_transform_publisher" name="outer_yaw_to_base_link" args=" 0 0 0 0 0 0 1 /PSM1_psm_base_link /base_link 1000"/>
-  <node pkg="tf" type="static_transform_publisher" name="shaft_link_to_tool_tip" args=" 0 0 0 0 0 0 1 /PSM1_tool_tip_link /endpoint 1000"/>
-
   <node pkg="costar_robot_manager" name="simple_psm_driver_node" type="psm_driver.py" output="screen">
-    <remap from="robot_description" to="/dvrk/PSM1/robot_description"/>
-  </node>
-  
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-    <remap from="robot_description" to="/dvrk/PSM1/robot_description"/>
+  <remap from="robot_description" to="/dvrk/PSM1/robot_description"/>
   </node>
 
 </launch>

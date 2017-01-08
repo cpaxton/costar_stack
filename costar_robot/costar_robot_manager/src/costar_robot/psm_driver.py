@@ -29,7 +29,6 @@ from predicator_landmark import GetWaypointsService
 class CostarPSMDriver(CostarArm):
 
     def __init__(self,
-            name="psm1",
             world="/world",
             listener=None,
             traj_step_t=0.1,
@@ -45,6 +44,8 @@ class CostarPSMDriver(CostarArm):
         planning_group = 'manipulator'
 
         self.dvrk_arm = dvrk.psm('PSM1')
+        # dvrk_arm.home()
+	# dvrk_arm.insert_tool()
 
         super(CostarPSMDriver, self).__init__(base_link,end_link,planning_group, dof=6)
 
@@ -64,29 +65,30 @@ class CostarPSMDriver(CostarArm):
         else:
             return 'FAILURE'
 
-    def handle_tick(self):
-      raise NotImplementedError('your code here')
-      if self.driver_status == 'SHUTDOWN':
-        if not self.simulation: # this may not be correct
-          # close connection to robot
-          pass
-	pass
-      elif self.driver_status == 'SERVO':
-	pass
-      elif self.driver_status == 'IDLE':
-	pass
-      elif self.driver_status == 'TEACH':
-	pass
-        # use interactive marker to publish robot /endpoint
-        # then we can use instructor to save these positions for the robot
-        print "HANDLING TEACH MODE"
+    # def handle_tick(self):
+    #   raise NotImplementedError('your code here')
+    #   if self.driver_status == 'SHUTDOWN':
+    #     if not self.simulation: # this may not be correct
+    #       # close connection to robot
+    #       pass
+    # pass
+    #   elif self.driver_status == 'SERVO':
+    # pass
+    #   elif self.driver_status == 'IDLE':
+    # pass
+    #   elif self.driver_status == 'TEACH':
+    # pass
+    #     # use interactive marker to publish robot /endpoint
+    #     # then we can use instructor to save these positions for the robot
+    #     print "HANDLING TEACH MODE"
 
     '''
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
     def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False, linear=False):
-        traj_way_point = PyKDL.Vector(traj.points[0].positions[0],traj.points[0].positions[1],traj.points[0].positions[2])
-
-        print "waypoint [0]: " + str(traj_way_point)
-        self.dvrk_arm.move(traj_way_point)
+	pass
+    #    traj_way_point = PyKDL.Vector(traj.points[0].positions[0],traj.points[0].positions[1],traj.points[0].positions[2])
+    #
+    #    print "waypoint [0]: " + str(traj_way_point)
+    #    self.dvrk_arm.move(traj_way_point)
