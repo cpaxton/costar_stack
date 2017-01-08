@@ -18,13 +18,6 @@ It is suggested to download all required packages before building your catkin wo
 
 `cd path/to/your/catkin_ws/src`
 
-Download interface package snap_instructor from [LCSR git website](https://git.lcsr.jhu.edu/), or (JHU users) use the following command to download (username and password requested are the same as JHED account):
-
-```
-git clone https://git.lcsr.jhu.edu/snap/snap_instructor.git  
-git clone https://git.lcsr.jhu.edu/snap/ready_air.git  
-```
-
 Download the CoSTAR main package and ROS-dependencies from GitHub: 
 
 ```
