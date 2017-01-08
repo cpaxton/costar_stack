@@ -19,7 +19,6 @@ from pykdl_utils.kdl_kinematics import KDLKinematics
 
 from trajectory_msgs.msg import JointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
-from inverseKinematicsUR5 import InverseKinematicsUR5
 from shape_msgs.msg import SolidPrimitive
 ModeJoints = 'joints'
 ModeCart = 'cartesian'
@@ -49,21 +48,15 @@ class SimplePlanning:
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
-        
-        self.closed_form_ur5_ik = InverseKinematicsUR5()
-        # self.closed_form_ur5_ik.enableDebugMode()
-        self.closed_form_ur5_ik.setEERotationOffsetROS()
-        self.closed_form_ur5_ik.setJointWeights([6,5,4,3,2,1])
-        self.closed_form_ur5_ik.setJointLimits(-np.pi, np.pi)
     
     '''
     ik: handles calls to KDL inverse kinematics
     '''
     def ik(self, T, q0, dist=0.5):
       q = None
-      if self.closed_form_IK_solver:
+      if self.closed_form_IK_solver is not None:
       #T = pm.toMatrix(F)
-        q = self.closed_form_ur5_ik.findClosestIK(T,q0)
+        q = self.closed_form_IK_solver.findClosestIK(T,q0)
       else:
         q = self.kdl_kin.inverse(T,q0)
 
@@ -75,7 +68,7 @@ class SimplePlanning:
     '''
     TODO: finish this
     '''
-    def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, time_multiplier=10):
+    def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, steps_per_radians = 4, time_multiplier=2):
 
       # interpolate between start and goal
       pose = pm.fromMatrix(self.kdl_kin.forward(q0))
@@ -85,21 +78,38 @@ class SimplePlanning:
       
       goal_rpy = np.array(frame.M.GetRPY())
       goal_xyz = np.array(frame.p)
+      delta_rpy = np.linalg.norm(goal_rpy - cur_rpy)
+      delta_translation = (pose.p - frame.p).Norm()
 
-
-      steps = base_steps + int((pose.p - frame.p).Norm() * steps_per_meter)
+      steps = base_steps + int(delta_translation * steps_per_meter) + int(delta_rpy * steps_per_radians)
       print " -- Computing %f steps"%steps
-
-      ts = (pose.p - frame.p).Norm() / steps * time_multiplier
+      min_time = 0.5 #seconds
+      ts = ((min_time/time_multiplier + delta_translation + delta_rpy) / steps ) * time_multiplier
       traj = JointTrajectory()
       traj.points.append(JointTrajectoryPoint(positions=q0,
           	velocities=[0]*len(q0),
           	accelerations=[0]*len(q0)))
 
       # compute IK
-      for i in range(1,steps+1):
-        xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
-        rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
+      for i in range(1,steps+4):
+        xyz = None
+        rpy = None
+        if i >= steps:
+          # slow down at 3 final step: at 50% 25% 10% speed before stopping
+          incremental_step = None
+          if i == steps:
+            incremental_step = 0.5
+          elif i == steps + 1:
+            incremental_step = 0.75
+          elif i == steps + 2:
+            incremental_step = 0.9
+          else:
+            incremental_step = 1.0
+          xyz = cur_xyz + ((steps-1)+incremental_step)/steps * (goal_xyz - cur_xyz)
+          rpy = cur_rpy + ((steps-1)+incremental_step)/steps * (goal_rpy - cur_rpy)
+        else:
+          xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
+          rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
 
         frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
         #q = self.kdl_kin.inverse(frame,q0)
@@ -162,10 +172,8 @@ class SimplePlanning:
           if i == 0:
             previous_q = q
 
-          print i, frame, joints, previous_q
           joints = self.ik(pm.toMatrix(frame),previous_q)
 
-          print joints
           if joints is not None:
             previous_q = joints
           else:
@@ -219,15 +227,8 @@ class SimplePlanning:
           #             goal.joint_constraints.append(joint)
 
           #     return (ik_resp, goal)
-
-          print "========================="
-          print mode
-          print joints
-          print self.joint_names
           if mode == ModeJoints:
             for i in range(0,len(self.joint_names)):
-                  print self.joint_names[i]
-                  print joints[i]
                   joint = JointConstraint()
                   joint.joint_name = self.joint_names[i]
                   joint.position = joints[i] 
@@ -323,7 +324,7 @@ class SimplePlanning:
         #  return (1,None)
 
         print 'IK error code: ', ik_resp
-        print goal
+        # print goal
 
         motion_req.goal_constraints.append(goal)
         motion_req.group_name = self.group
@@ -348,7 +349,5 @@ class SimplePlanning:
 
         if obj is not None:
           self.updateAllowedCollisions(obj,False);
-
-        #print res
 
         return (res.error_code.val, res)

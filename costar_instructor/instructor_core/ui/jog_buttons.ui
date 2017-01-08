@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>438</width>
+    <height>429</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color:#222222</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="0" column="0">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="2">
+      <widget class="QPushButton" name="btn_pitch_down">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_pitch_down{ background-color:#8E44AD;color:#ffffff;border:none }
+QPushButton#btn_pitch_down:hover:!pressed{ background-color:#8E44AD;color:#ffffff;border:none }
+QPushButton#btn_pitch_down:hover { background-color:#8E44AD;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>PITCH DOWN</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2" rowspan="2">
+      <widget class="QPushButton" name="btn_plus_x">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_plus_x{ background-color:#22A7F0;color:#ffffff;border:none }\\nQPushButton#btn_plus_x:hover:!pressed{ background-color:#22A7F0;color:#ffffff;border:none }\\nQPushButton#btn_plus_x:hover { background-color:#22A7F0;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>+X</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QPushButton" name="btn_plus_z">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_plus_z{ background-color:#22A7F0;color:#ffffff;border:none }\\\\nQPushButton#btn_plus_z:hover:!pressed{ background-color:#22A7F0;color:#ffffff;border:none }\\\\nQPushButton#btn_plus_z:hover { background-color:#22A7F0;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>+Z</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QPushButton" name="btn_plus_y">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_plus_y{ background-color:#22A7F0;color:#ffffff;border:none }\\\\nQPushButton#btn_plus_y:hover:!pressed{ background-color:#22A7F0;color:#ffffff;border:none }\\\\nQPushButton#btn_plus_y:hover { background-color:#22A7F0;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>+Y</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" rowspan="2">
+      <widget class="QPushButton" name="btn_minus_x">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_minus_x{ background-color:#22A7F0;color:#ffffff;border:none }\\\\nQPushButton#btn_minus_x:hover:!pressed{ background-color:#22A7F0;color:#ffffff;border:none }\\\\nQPushButton#btn_minus_x:hover { background-color:#22A7F0;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>-X</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QPushButton" name="btn_minus_z">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_minus_z{ background-color:#22A7F0;color:#ffffff;border:none }\\\\\\\\\\\\\\\\nQPushButton#btn_minus_z:hover:!pressed{ background-color:#22A7F0;color:#ffffff;border:none }\\\\\\\\\\\\\\\\nQPushButton#btn_minus_z:hover { background-color:#22A7F0;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>-Z</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QPushButton" name="btn_minus_y">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_minus_y{ background-color:#22A7F0;color:#ffffff;border:none }\\\\\\\\nQPushButton#btn_minus_y:hover:!pressed{ background-color:#22A7F0;color:#ffffff;border:none }\\\\\\\\nQPushButton#btn_minus_y:hover { background-color:#22A7F0;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>-Y</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QPushButton" name="btn_yaw_right">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_yaw_right{ background-color:#8E44AD;color:#ffffff;border:none }\\nQPushButton#btn_yaw_right:hover:!pressed{ background-color:#8E44AD;color:#ffffff;border:none }\\nQPushButton#btn_yaw_right:hover { background-color:#8E44AD;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>YAW RIGHT</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="btn_pitch_up">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_pitch_up{ background-color:#8E44AD;color:#ffffff;border:none }\nQPushButton#btn_pitch_up:hover:!pressed{ background-color:#8E44AD;color:#ffffff;border:none }\nQPushButton#btn_pitch_up:hover { background-color:#8E44AD;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>PITCH UP</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QPushButton" name="btn_yaw_left">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_yaw_left{ background-color:#8E44AD;color:#ffffff;border:none }\nQPushButton#btn_yaw_left:hover:!pressed{ background-color:#8E44AD;color:#ffffff;border:none }\nQPushButton#btn_yaw_left:hover { background-color:#8E44AD;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>YAW LEFT</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QPushButton" name="btn_ok">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>20</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_ok { background-color:#26A65B;color:#ffffff;border:none }
+QPushButton#btn_ok:hover:!pressed{ background-color:#26A65B;color:#ffffff;border:none }
+QPushButton#btn_ok:hover { background-color:#26A65B;color:#ffffff;border:none }
+</string>
+       </property>
+       <property name="text">
+        <string>OK</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QPushButton" name="btn_roll_left">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_roll_left { background-color:#8E44AD;color:#ffffff;border:none }
+QPushButton#btn_roll_left:hover:!pressed{ background-color:#8E44AD;color:#ffffff;border:none }
+QPushButton#btn_roll_left:hover { background-color:#8E44AD;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>ROLL LEFT</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QPushButton" name="btn_roll_right">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_roll_right { background-color:#8E44AD;color:#ffffff;border:none }
+QPushButton#btn_roll_right:hover:!pressed{ background-color:#8E44AD;color:#ffffff;border:none }
+QPushButton#btn_roll_right:hover { background-color:#8E44AD;color:#ffffff;border:none }</string>
+       </property>
+       <property name="text">
+        <string>ROLL RIGHT</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="3">
+      <widget class="QPushButton" name="btn_speed">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#btn_speed { background-color:#26A65B;color:#ffffff;border:none }
+QPushButton#btn_speed:hover:!pressed{ background-color:#26A65B;color:#ffffff;border:none }
+QPushButton#btn_speed:hover { background-color:#26A65B;color:#ffffff;border:none }
+</string>
+       </property>
+       <property name="text">
+        <string>JOG SPEED: LOW</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

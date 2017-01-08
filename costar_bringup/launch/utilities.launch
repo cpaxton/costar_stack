@@ -1,6 +1,7 @@
 <launch>
 
-    <arg name="start_robotiq_force_sensor" default="false" doc="(bool) Launch robotiq force sensor."/>
+  <arg name="start_robotiq_force_sensor" default="false" doc="(bool) Launch robotiq force sensor."/>
+  <arg name="start_instructor" default="true" doc="(bool) Launch user interface."/>
 
     <!-- Librarian -->
     <node pkg="librarian_core" type="core.py" name="librarian_core"/>
@@ -21,6 +22,9 @@
 
     <!-- Force sensor -->
     <node if="$(arg start_robotiq_force_sensor)" pkg="robotiq_force_torque_sensor" type="rq_sensor" name="robotiq_force_torque_sensor"/>
+
+    <!-- User interface -->
+    <include if="$(arg start_instructor)" file="$(find instructor_core)/launch/instructor.launch"/>
 
     <!--
     publish new tf frames for any detected objects!

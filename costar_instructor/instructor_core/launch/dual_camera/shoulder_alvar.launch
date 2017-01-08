@@ -1,0 +1,22 @@
+<launch>
+
+  <!-- Default camera parameters-->
+  <arg name="camera_2_name" default="camera_2" />
+
+  <!-- ALVAR Parameters-->
+  <arg name="marker_size" default="4.4" />
+  <arg name="max_track_error" default="0.05" />
+  <arg name="max_new_marker_error" default="0.02" />
+
+
+    <!-- Launching ar tag program #2-->
+  <group ns="$(arg camera_2_name)">
+    <arg name="cam_image_topic2" value="/$(arg camera_2_name)/depth_registered/points" />
+    <arg name="cam_info_topic2" value="/$(arg camera_2_name)/rgb/camera_info" /> 
+    <arg name="output_frame2" value="/$(arg camera_2_name)_rgb_optical_frame" />
+    <node name="ar_track_alvar_2" pkg="ar_track_alvar" type="individualMarkers" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic2) $(arg cam_info_topic2) $(arg output_frame2)" />
+  </group>
+
+  <!-- <node name="ar_smooth" pkg="instructor_core" type="instructor_ar_smooth.py"/> -->
+
+</launch>

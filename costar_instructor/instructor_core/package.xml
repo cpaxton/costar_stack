@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<package>
+  <name>instructor_core</name>
+  <version>0.0.0</version>
+  <description>A GUI for building beetree behavior trees</description>
+  <maintainer email="futureneer@gmail.com">KelGuerin</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>beetree</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>librarian_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>message_runtime</build_depend>
+  <run_depend>xdot</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>rqt_gui</run_depend>
+  <run_depend>rqt_gui_py</run_depend>
+  <run_depend>beetree</run_depend>
+  <run_depend>actionlib_msgs</run_depend>
+  <run_depend>librarian_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>message_generation</run_depend>
+  <run_depend>message_runtime</run_depend>
+
+  <export>
+    <rqt_gui plugin="${prefix}/plugin.xml"/>
+    <!-- Beetree Logic Plugins -->
+    <instructor plugin="instructor_core.NodeRootGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Root Logic Node" name="Root"/>
+    <!-- <instructor plugin="instructor_core.NodeParallelOneGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Parallel One Logic Node" name="Parallel One"/> -->
+    <!-- <instructor plugin="instructor_core.NodeParallelRemoveGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Parallel Remove Logic Node" name="Parallel Remove"/> -->
+    <!-- <instructor plugin="instructor_core.NodeParallelAllGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Parallel All Logic Node" name="Parallel All"/> -->
+    <instructor plugin="instructor_core.NodeSequenceGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Sequence Logic Node" name="Sequence"/>
+    <!-- <instructor plugin="instructor_core.NodeIteratorGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Iterator Logic Node" name="Iterator"/> -->
+    <instructor plugin="instructor_core.NodeSelectorGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Selector Logic Node" name="Selector"/>
+    <instructor plugin="instructor_core.NodeDecoratorRepeatGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Repeat Decorator Node" name="Repeat"/>
+    <instructor plugin="instructor_core.NodeDecoratorResetGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Reset Decorator Node" name="Reset"/>
+    <instructor plugin="instructor_core.NodeDecoratorWaitForSuccessGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Wait for Success Decorator Node" name="Wait for Success"/>
+  </export>
+
+</package>

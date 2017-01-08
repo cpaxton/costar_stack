@@ -38,8 +38,9 @@ class CostarArm(object):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
             start_js_cb=True,
-            base_steps=10,
-            steps_per_meter=100,
+            base_steps=2,
+            steps_per_meter=300,
+            steps_per_radians=4,
             closed_form_IK_solver = None,
             dof=7,
             perception_ns="/SPServer"):
@@ -52,6 +53,7 @@ class CostarArm(object):
 
         self.base_steps = base_steps
         self.steps_per_meter = steps_per_meter
+        self.steps_per_radians = steps_per_radians
 
         self.MAX_ACC = max_acc
         self.MAX_VEL = max_vel
@@ -65,7 +67,8 @@ class CostarArm(object):
         self.at_goal = True
         self.near_goal = True
         self.moving = False
-        self.q0 = None #[0] * self.dof
+        self.q0 = None
+        #[0] * self.dof
         self.old_q0 = [0] * self.dof
 
         self.cur_stamp = 0
@@ -131,6 +134,11 @@ class CostarArm(object):
         self.ee_pose = None
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
+
+        self.closed_form_IK_solver = closed_form_IK_solver
+        # how important is it to choose small rotations in goal poses
+        self.rotation_weight = 0.05
+
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
@@ -210,6 +218,22 @@ class CostarArm(object):
       self.waypoint_manager.save_frame(self.q0)
 
       return 'SUCCESS - '
+    
+    '''
+    ik: handles calls to KDL inverse kinematics
+    '''
+    def ik(self, T, q0, dist=0.5):
+      q = None
+      if self.closed_form_IK_solver is not None:
+      #T = pm.toMatrix(F)
+        q = self.closed_form_IK_solver.findClosestIK(T,q0)
+      else:
+        q = self.kdl_kin.inverse(T,q0)
+
+      # NOTE: this results in unsafe behavior; do not use without checks
+      #if q is None:
+      #    q = self.kdl_kin.inverse(T)
+      return q
 
     '''
     Find any valid object that meets the requirements.
@@ -238,15 +262,6 @@ class CostarArm(object):
 
         (poses,names,objects) = res
 
-        print req.obj_class
-        print req.predicates
-        print names
-        print objects
-
-        print len(poses)
-        print len(objects)
-        print len(names)
-
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
         if not poses is None:
@@ -273,32 +288,25 @@ class CostarArm(object):
                 Ts.append(T)
 
                 # TODO(cpaxton) update this to include rotation
-                dists.append((T.p - T_fwd.p).Norm())
-
+                q_new = self.ik(pm.toMatrix(T),self.q0)
+                if q_new is not None:
+                    dq = np.absolute(q_new - self.q0) * self.joint_weights
+                    print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * np.sum(dq), ' dq6: ', dq[-1]
+                    dists.append((T.p - T_fwd.p).Norm() + self.rotation_weight * np.sum(dq))
+                
             if len(Ts) == 0:
                 msg = 'FAILURE - no objects found!'
             else:
-
                 possible_goals = zip(dists,Ts,objects,names)
                 possible_goals.sort()
-                print len(Ts)
-                print len(dists)
-                print len(objects)
-                print len(names)
+
                 for (dist,T,obj,name) in possible_goals:
-
-                    print "================ to obj = " + str(obj) + " at " + str(name)
-
-                    #req = ServoToPoseRequest(target=pm.toMsg(T))
-                    #print req
-                    #return self.plan_to_pose_call(req)
-
                     rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
                     # plan to T
                     (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
                     msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-                    print 'msg ======================\n', msg
+
                     if msg[0:7] == 'SUCCESS':
                         break
 
@@ -322,7 +330,6 @@ class CostarArm(object):
             self.display_pub.publish(disp)
 
             traj = res.planned_trajectory.joint_trajectory
-            print res.planned_trajectory.joint_trajectory
             
             return self.send_trajectory(traj,acceleration,velocity,cartesian=False)
 
@@ -375,7 +382,7 @@ class CostarArm(object):
             (acceleration, velocity) = self.check_req_speed_params(req) 
 
             # inverse kinematics
-            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
+            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.steps_per_radians)
             #if len(traj.points) == 0:
             #    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
             #    if not res is None:
@@ -436,7 +443,8 @@ class CostarArm(object):
     '''
     def set_servo_mode_call(self,req):
         if req.mode == 'SERVO':
-            self.send_q(self.q0,0.1,0.1)
+            if self.q0 is not None:
+                self.send_q(self.q0,0.1,0.1)
 
             self.driver_status = 'SERVO'
             return 'SUCCESS - servo mode enabled'
@@ -465,3 +473,79 @@ class CostarArm(object):
         # publish TF messages to display frames
         self.waypoint_manager.publish_tf()
         
+    '''
+    TODO: 
+    '''
+    def attach(self, object_name):
+        # attach the collision object to the gripper
+
+        self.planning_group.attachObject(object_name, self.end_link)
+        # self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        # planning_scene_diff = PlanningScene(is_diff=True)
+        # # remove original collision object, then add it to the gripper
+        # remove_object = CollisionObject()
+        # remove_object.id = object_name
+        # remove_object.header.frame_id = self.link_names[0]
+        # remove_object.operation = remove_object.REMOVE
+        # del planning_scene_diff.world.collision_objects[:];
+        # planning_scene_diff.world.collision_objects.append(remove_object);
+
+        # attached_object = AttachedCollisionObject()
+        # attached_object.object = remove_object
+        # attached_object.link_name = self.link_names[-1]
+        # attached_object.object.header.frame_id = self.joint_names[-1]
+        # attached_object.object.operation = attached_object.object.ADD
+        # del planning_scene_diff.robot_state.attached_collision_objects[:];
+        # planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
+
+        # self.planning_scene_publisher.publish(planning_scene_diff)
+
+    def detach(self, object_name):
+        # detach the collision object to the gripper
+
+        self.planning_group.detachObject(object_name, self.end_link)
+
+        # self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        # planning_scene_diff = PlanningScene(is_diff=True)
+        # # remove object from the gripper, then add the original collision object
+        # detach_object = AttachedCollisionObject()
+        # detach_object.object.id = object_name
+        # attached_object.link_name = self.link_names[-1]
+        # detach_object.object.operation = detach_object.object.REMOVE
+        # del planning_scene_diff.robot_state.attached_collision_objects[:];
+        # planning_scene_diff.robot_state.attached_collision_objects.append(detach_object);
+
+        # add_object = CollisionObject()
+        # add_object = detach_object.object
+        # add_object.header.frame_id = self.link_names[0]
+        # add_object.operation = add_object.ADD
+        # del planning_scene_diff.world.collision_objects[:];
+        # planning_scene_diff.world.collision_objects.append(add_object);
+
+        # self.planning_scene_publisher.publish(planning_scene_diff)
+
+    def select(self, predicates):
+        # Get the best object to manipulate, just like smart move, but without the actual movement
+        # This will check robot collision and reachability on all possible object grasp position based on its symmetry.
+        # Then, it will returns one of the best symmetry to work with for grasp and release.
+        # it will be put on parameter server
+        validity = GetStateValidity()
+        validity.group = self.planning_group
+        
+        joint = JointState()
+        # joint.position = self.ik(T,self.q0)
+        pass
+
+    def grasp(self, list_of_waypoints, object_name):
+        # Execute the list of waypoints to the selected object
+        # It receive one object frame from select, and do motion planning for that
+        # close gripper
+        self.attach(object_name)
+        pass
+
+    def release(self, list_of_waypoints, object_name):
+        # Execute the list of waypoints to the selected object
+        # open gripper
+        self.detach(object_name)
+        pass
+
