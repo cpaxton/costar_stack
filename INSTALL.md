@@ -23,15 +23,10 @@ sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full libur
 
 ## Step 1. Get Packages From Git`
 
-We suggest that you download all the required packages before building your catkin workspace. First, change directory to the src directory in your catkin workspace. 
+We suggest that you download all the required packages before building your catkin workspace. First, change directory to the src directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub: 
 
 ```
 cd path/to/your/catkin_ws/src
-``
-
-Download the main CoSTAR stack and its ROS dependencies from GitHub: 
-
-```
 git clone https://github.com/cpaxton/costar_stack.git  
 git clone https://github.com/SalvoVirga/iiwa_stack.git  
 git clone https://github.com/ros-industrial/robotiq.git  
