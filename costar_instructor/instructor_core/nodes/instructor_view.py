@@ -2068,8 +2068,8 @@ color:#ffffff}''')
             if self.left_selected_node == None:
               rospy.logerr('There is no left sibling node selected')
             else:
-                
-                if not self.current_node_types[self.left_selected_node] == 'LOGIC':
+                parent_node_name = self.current_tree[self.left_selected_node].get_parent().get_node_name()
+                if not self.plugins[parent_node_name]['type'] == 'LOGIC':
                     rospy.logwarn('Parent must be a logic node')
                     return
 
@@ -2116,8 +2116,10 @@ color:#ffffff}''')
                 self.regenerate_tree()
                 self.close_drawer()
                 # self.save_state()
-                if self.current_node_types[current_name] == 'LOGIC':
-                    self.node_leftclick_cb(current_name)
+                if current_name in self.current_node_types:   
+                    if self.current_node_types[current_name] == 'LOGIC':
+                        self.node_leftclick_cb(current_name)
+
             else:
                 rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
 
@@ -2127,8 +2129,8 @@ color:#ffffff}''')
             if self.left_selected_node == None:
               rospy.logerr('There is no left sibling node selected')
             else:
-                
-                if not self.current_node_types[self.left_selected_node] == 'LOGIC':
+                parent_node_name = self.current_tree[self.left_selected_node].get_parent().get_node_name()
+                if not self.plugins[parent_node_name]['type'] == 'LOGIC':
                     rospy.logwarn('Parent must be a logic node')
                     return
 

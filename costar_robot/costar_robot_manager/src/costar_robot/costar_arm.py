@@ -38,8 +38,9 @@ class CostarArm(object):
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
             start_js_cb=True,
-            base_steps=10,
-            steps_per_meter=100,
+            base_steps=2,
+            steps_per_meter=300,
+            steps_per_radians=4,
             closed_form_IK_solver = None,
             dof=7,
             perception_ns="/SPServer"):
@@ -52,6 +53,7 @@ class CostarArm(object):
 
         self.base_steps = base_steps
         self.steps_per_meter = steps_per_meter
+        self.steps_per_radians = steps_per_radians
 
         self.MAX_ACC = max_acc
         self.MAX_VEL = max_vel
@@ -383,7 +385,7 @@ class CostarArm(object):
             (acceleration, velocity) = self.check_req_speed_params(req) 
 
             # inverse kinematics
-            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter)
+            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.steps_per_radians)
             #if len(traj.points) == 0:
             #    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
             #    if not res is None:
