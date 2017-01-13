@@ -22,10 +22,11 @@ print "All parameter required for point cloud segmentation has been loaded."
 if compute_pose:
     segmenter.setUseComputePose(True);
     segmenter.setUseCuda(False);
+    segmenter.setUseCombinedObjRecRANSAC(False)
     segmenter.setModeObjRecRANSAC(ObjRecRANSAC_mode_dict["STANDARD_RECOGNIZE"]);
     segmenter.setMinConfidenceObjRecRANSAC(0.15);
     node_param = ModelObjRecRANSACParameter(0.05,0.004,0.1,0.1);
-    link_param  = ModelObjRecRANSACParameter(0.122,0.004,0.1,0.1);
+    link_param  = ModelObjRecRANSACParameter(0.05,0.004,0.1,0.1);
     # The order of adding mesh should be consistent to the name of svm.
     # For example, in this sample code, the svm file is link_node_svm, so link should be added before node)
     segmenter.addModel("../data/mesh", "link_uniform", link_param);

@@ -105,6 +105,7 @@ BOOST_PYTHON_MODULE(SemanticSegmentationPy)
 #ifdef USE_OBJRECRANSAC
         .def("setUseComputePose", &SemanticSegmentation::setUseComputePose)
         .def("setUseCuda", &SemanticSegmentation::setUseCuda)
+        .def("setUseCombinedObjRecRANSAC", &SemanticSegmentation::setUseCombinedObjRecRANSAC)
         .def("setModeObjRecRANSAC", &SemanticSegmentation::setModeObjRecRANSAC)
         .def("setMinConfidenceObjRecRANSAC", &SemanticSegmentation::setMinConfidenceObjRecRANSAC<double>)
         .def("setMinConfidenceObjRecRANSAC", &SemanticSegmentation::setMinConfidenceObjRecRANSAC<float>)

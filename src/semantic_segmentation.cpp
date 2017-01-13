@@ -42,7 +42,7 @@ bool objectTransformInformation::operator==(const objectTransformInformation& ot
 
 SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_flag_(false), use_crop_box_(false), 
     use_binary_svm_(true), use_multi_class_svm_(false), number_of_added_models_(0), use_table_segmentation_(false), 
-    pcl_downsample_(0.003), hier_ratio_(0.1), compute_pose_(false), use_cuda_(false)
+    pcl_downsample_(0.003), hier_ratio_(0.1), compute_pose_(false), use_combined_objRecRANSAC_(false), use_cuda_(false)
 {
     uchar color_label_tmp[11][3] =
     { 
@@ -477,6 +477,11 @@ void SemanticSegmentation::setUseCuda(const bool &use_cuda)
     this->use_cuda_ = use_cuda;
 }
 
+void SemanticSegmentation::setUseCombinedObjRecRANSAC(const bool &use_combined_objRecRANSAC)
+{
+    this->use_combined_objRecRANSAC_ = use_combined_objRecRANSAC;
+}
+
 void SemanticSegmentation::addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter)
 {
     bool success = checkFolderExist(path_to_model_directory);
@@ -489,15 +494,15 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
     if (model_path.back() != '/')
         model_path += "/";
 
-    if (!use_multi_class_svm_)
+    if (use_combined_objRecRANSAC_ || !use_multi_class_svm_)
     {
         std::cerr << "Using combined ObjRecRANSAC.\n";
         if (combined_ObjRecRANSAC_ == NULL)
         {
             combined_ObjRecRANSAC_ = boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_));
+            combined_ObjRecRANSAC_->setParams(parameter.object_visibility_,parameter.scene_visibility_);
+            combined_ObjRecRANSAC_->setUseCUDA(use_cuda_);
         }
-        combined_ObjRecRANSAC_->setParams(parameter.object_visibility_,parameter.scene_visibility_);
-        combined_ObjRecRANSAC_->setUseCUDA(use_cuda_);
         combined_ObjRecRANSAC_->AddModel(model_path + model_name, model_name);
         this->number_of_added_models_++;
     }
@@ -555,7 +560,7 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
         visualizeLabels(labelled_point_cloud, viewer, color_label);
     }
 
-    if (use_multi_class_svm_)
+    if (use_multi_class_svm_ && !use_combined_objRecRANSAC_)
     {
         // cloud_set contains separated clouds based on the labelled cloud
         std::vector< pcl::PointCloud<pcl::PointXYZ>::Ptr > cloud_set(number_of_added_models_+1);

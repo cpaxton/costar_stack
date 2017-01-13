@@ -126,6 +126,7 @@ public:
 #ifdef USE_OBJRECRANSAC
     void setUseComputePose(const bool &compute_pose);
     void setUseCuda(const bool &use_cuda);
+    void setUseCombinedObjRecRANSAC(const bool &use_combined_objRecRANSAC);
     void setModeObjRecRANSAC(const int &mode);
     template <typename NumericType>
         void setMinConfidenceObjRecRANSAC(const NumericType &min_confidence);
@@ -216,6 +217,7 @@ protected:
 
     // ObjRecRANSAC Parameters
     bool compute_pose_;
+    bool use_combined_objRecRANSAC_;
     bool use_cuda_;
     int objRecRANSAC_mode_;
     double min_objrecransac_confidence;
