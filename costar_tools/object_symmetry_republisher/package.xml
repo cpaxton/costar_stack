@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>object_symmetry_republisher</name>
-  <version>0.0.0</version>
+  <version>0.1.5</version>
   <description>The object_symmetry_republisher package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

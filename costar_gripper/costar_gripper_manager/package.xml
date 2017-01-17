@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>costar_gripper_manager</name>
-  <version>0.0.0</version>
+  <version>0.1.5</version>
   <description>The costar_gripper_manager package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
