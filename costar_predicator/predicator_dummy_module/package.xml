@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>predicator_dummy_module</name>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <description>The predicator_dummy_module package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

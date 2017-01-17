@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>predicator_occupancy_module</name>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <description>Detects whether an object is in a specified volume </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
