@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>moveit_collision_environment</name>
-  <version>0.1.6</version>
+  <version>0.1.7</version>
   <description>The moveit_collision_environment package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

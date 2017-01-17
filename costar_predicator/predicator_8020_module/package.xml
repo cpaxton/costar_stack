@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>predicator_8020_module</name>
-  <version>0.1.6</version>
+  <version>0.1.7</version>
   <description>Detects whether 8020 pieces are on a table </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

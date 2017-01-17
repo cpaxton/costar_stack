@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>costar_robot_manager</name>
-  <version>0.1.6</version>
+  <version>0.1.7</version>
   <description>The costar_robot_manager package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
