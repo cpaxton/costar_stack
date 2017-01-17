@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>predicator_fake_classification</name>
-  <version>0.1.7</version>
+  <version>0.1.8</version>
   <description>The predicator_fake_classification package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
