@@ -4,20 +4,24 @@ import rospy
 
 from interactive_markers.interactive_marker_server import *
 from visualization_msgs.msg import *
+from geometry_msgs.msg import Point
 
 def processFeedback(feedback):
     p = feedback.pose.position
     print feedback.marker_name + " is now at " + str(p.x) + ", " + str(p.y) + ", " + str(p.z)
 
 if __name__=="__main__":
+    # marker_name = rospy.get_param("/int_marker_name")
+    
     rospy.init_node("instructor_marker")
     
-    # create an interactive marker server on the topic namespace simple_marker
+    # create an interactive marker server on the topic namespace
     server = InteractiveMarkerServer("instructor_marker")
     
     # create an interactive marker for our server
     int_marker = InteractiveMarker()
-    int_marker.header.frame_id = "world"
+    int_marker.header.frame_id = "PSM1_tool_tip_link"
+    int_marker.pose.position = Point(0,0,0.1)
     int_marker.name = "instructor_marker"
     int_marker.description = "6-DOF Interactive Marker"
     int_marker.scale = 0.15
