@@ -22,7 +22,7 @@
 
 class feaExtractor{
 public:
-    feaExtractor(): radius_(0.02), down_ss_(0.003), ratio_(0.1), order_(2) {};
+    feaExtractor(): radius_(0.02), down_ss_(0.003), ratio_(0.1), order_(2), use_shot_(true), use_fpfh_(false), use_sift_(false) {};
     feaExtractor(const std::string &shot_path, const std::string &sift_path, const std::string &fpfh_path);
     ~feaExtractor(){};
 
@@ -41,6 +41,10 @@ public:
     {
         order_ = order;
     }
+
+    void setUseSHOT(const bool &use_shot) { use_shot_ = use_shot; }
+    void setUseFPFH(const bool &use_fpfh) { use_fpfh_ = use_fpfh; }
+    void setUseSIFT(const bool &use_sift) { use_sift_ = use_sift; }
 
     // the in_path stores the organized point cloud data for one object or background class
     // the vector final_fea stores the computed features for the in_path class at different orders
@@ -65,6 +69,8 @@ protected:
     int order_;      //2,        order degree for training
     // int box_num;    //10,       number of supervoxels extracted from each object data
     ///////////////////////////////////////////////////////////////////////////////
+
+    bool use_shot_, use_fpfh_, use_sift_;
 };
 
 class SpCompact{
@@ -72,7 +78,8 @@ public:
     SpCompact(): trainining_directory_("data/training"), sift_directory_("data/UW_sift_dict"),
         shot_directory_("data/UW_shot_dict"), fpfh_directory_("data/UW_fpfh_dict"),
         binary_cc_(0.001), multi_cc_(0.001), background_sample_num_(66), foreground_sample_num_(100),
-        skip_fea_(false), skip_background_(false), skip_multi_(false), cur_order_max_(3)
+        skip_fea_(false), skip_background_(false), skip_multi_(false), cur_order_max_(3), 
+        use_shot_(true), use_fpfh_(false), use_sift_(false) 
     {
         pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
     }
@@ -84,6 +91,10 @@ public:
     bool setInputPathSIFT(const std::string &directory_path);
     bool setInputPathSHOT(const std::string &directory_path);
     bool setInputPathFPFH(const std::string &directory_path);
+
+    void setUseSHOT(const bool &use_shot) { use_shot_ = use_shot; }
+    void setUseFPFH(const bool &use_fpfh) { use_fpfh_ = use_fpfh; }
+    void setUseSIFT(const bool &use_sift) { use_sift_ = use_sift; }
 
     // Setting up training directory locations. Return false if directory is not exist
     bool setInputTrainingPath(const std::string &directory_path);
@@ -139,4 +150,5 @@ protected:
     bool skip_fea_, skip_background_, skip_multi_;
     unsigned int cur_order_max_;
 
+    bool use_shot_, use_fpfh_, use_sift_;
 };

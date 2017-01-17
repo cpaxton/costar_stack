@@ -9,8 +9,15 @@ compute_pose = True and have_objrecransac
 
 ObjRecRANSAC_mode_dict = {"STANDARD_BEST":0, "STANDARD_RECOGNIZE":1, "GREEDY_RECOGNIZE":2}
 # Setting up segmenter's parameters
-    
-segmenter.setDirectorySHOT("../data/UW_shot_dict");
+
+segmenter.setDirectorySHOT("../data/UW_shot_dict")
+segmenter.setDirectoryFPFH("../data/UW_sift_dict")
+segmenter.setDirectorySIFT("../data/UW_fpfh_dict")
+
+segmenter.setUseSHOT(True)
+segmenter.setUseFPFH(False)
+segmenter.setUseSIFT(False)
+
 segmenter.setUseMultiClassSVM(True);
 segmenter.setUseBinarySVM(False);
 segmenter.setDirectorySVM("../data/link_node_svm");

@@ -27,6 +27,11 @@ BOOST_PYTHON_MODULE(SpCompactPy)
         .def("setInputPathSIFT", &SpCompact::setInputPathSIFT)
         .def("setInputPathSHOT", &SpCompact::setInputPathSHOT)
         .def("setInputPathFPFH", &SpCompact::setInputPathFPFH)
+
+        .def("setUseSHOT", &SpCompact::setUseSHOT)
+        .def("setUseFPFH", &SpCompact::setUseFPFH)
+        .def("setUseSIFT", &SpCompact::setUseSIFT)
+
         .def("setInputTrainingPath", &SpCompact::setInputTrainingPath)
 
         .def("setObjectNames", &SpCompact::setObjectNames)

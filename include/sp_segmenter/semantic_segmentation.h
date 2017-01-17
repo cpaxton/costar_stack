@@ -112,6 +112,13 @@ public:
     void convertPointCloudLabelToRGBA(const pcl::PointCloud<pcl::PointXYZL>::Ptr &input, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &output) const;
 // --------------------------------- MAIN PARAMETERS for point cloud segmentation that needs to be set before initializeSemanticSegmentation ----------------------------------------
     void setDirectorySHOT(const std::string &path_to_shot_directory);
+    void setDirectoryFPFH(const std::string &path_to_fpfh_directory);
+    void setDirectorySIFT(const std::string &path_to_sift_directory);
+
+    void setUseSHOT(const bool &use_shot) { use_shot_ = use_shot; }
+    void setUseFPFH(const bool &use_fpfh) { use_fpfh_ = use_fpfh; }
+    void setUseSIFT(const bool &use_sift) { use_sift_ = use_sift; }
+    
     void setDirectorySVM(const std::string &path_to_svm_directory);
     void setDirectorySVM(const std::string &path_to_svm_directory, const bool &use_binary_svm, const bool &use_multi_class_svm);
     void setUseMultiClassSVM(const bool &use_multi_class_svm);
@@ -197,7 +204,7 @@ protected:
     Eigen::Affine3f crop_box_target_pose_;
 
     // Training File Informations
-    bool svm_loaded_, shot_loaded_;
+    bool svm_loaded_, shot_loaded_, fpfh_loaded_, sift_loaded_;
     bool use_binary_svm_, use_multi_class_svm_;
     std::vector<model*> binary_models_, multi_models_;
     std::vector<ModelT> mesh_set_;
@@ -238,9 +245,15 @@ protected:
     objectRtree segmented_object_tree_;
 #endif
     pcl::visualization::PCLVisualizer::Ptr viewer;
-    Hier_Pooler hie_producer;
+    boost::shared_ptr<Hier_Pooler>  hie_producer;
+    std::vector< boost::shared_ptr<Pooler_L0> > sift_pooler_set;
+    std::vector< boost::shared_ptr<Pooler_L0> > fpfh_pooler_set;
     std::vector< boost::shared_ptr<Pooler_L0> > lab_pooler_set;
     
+    std::vector<cv::SiftFeatureDetector*> sift_det_vec;
+
+    bool use_shot_, use_fpfh_, use_sift_;
+
     uchar color_label[11][3];
 };
 

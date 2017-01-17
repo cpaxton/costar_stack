@@ -1,7 +1,7 @@
 #include "sp_segmenter/sp_compact.h"
 
 feaExtractor::feaExtractor(const std::string &shot_path, const std::string &sift_path, const std::string &fpfh_path) : radius_(0.02), 
-    down_ss_(0.003), ratio_(0.1),order_(2)
+    down_ss_(0.003), ratio_(0.1),order_(2), use_shot_(true), use_fpfh_(false), use_sift_(false) 
 {
     this->setPaths(shot_path,sift_path,fpfh_path);   
 }
@@ -17,7 +17,7 @@ void feaExtractor::setPaths(const std::string &shot_path, const std::string &sif
     sift_pooler_set.clear();
     sift_pooler_set.resize(2);
     sift_pooler_set[1] = boost::shared_ptr<Pooler_L0> (new Pooler_L0(-1));
-    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sifstd::vector<std::string> feaExtractor::readData(std::string path)t_L0_400.cvmat"); 
+    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sift_L0_400.cvmat"); 
     
     fpfh_pooler_set.clear();
     fpfh_pooler_set.resize(2);
@@ -114,47 +114,49 @@ int feaExtractor::computeFeature(std::string in_path, std::vector< std::vector<s
     #pragma omp parallel for schedule(dynamic, 1)
     for( int j = 0 ; j < train_num ; j++ )
     {
-    	pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
+        pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
         pcl::io::loadPCDFile(file_names[j], *full_cloud);
-        if( full_cloud->size() > 30 )	// process cloud more than 30 pts
+        // process cloud more than 30 pts
+        if( full_cloud->size() > 30 )
         {
-	        // pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
-			std::cerr << "Processing (" << j + 1 << "/" << train_num <<")\n";
-	        
-	        // disable sift and fpfh pooling for now
-	        spPooler triple_pooler;
-	        triple_pooler.lightInit(full_cloud, *hie_producer, radius_, down_ss_);
-	        triple_pooler.build_SP_LAB(lab_pooler_set, false);
-	//        triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius, false);
-	//        triple_pooler.build_SP_SIFT(sift_pooler_set, hie_producer, sift_det_vec, false);
-	        
-	        for( int ll = 0 ; ll <= order_ ; ll++ )
-	        {
-	            std::vector<cv::Mat> sp_fea = triple_pooler.sampleSPFea(ll, box_num, false, true);
-	            for( std::vector<cv::Mat>::iterator it = sp_fea.begin(); it < sp_fea.end() ; it++ )
-	            {
-	                if( train_dim > 0 && it->cols != train_dim )
-	                {
-	                    std::cerr << "Error: fea_dim > 0 && cur_final.cols != fea_dim   " << train_dim << " " << it->cols << std::endl;
-	                    exit(0);
-	                }
-	                else if( train_dim < 0 )
-	                {
-	                    #pragma omp critical
-	                    {
-	                        train_dim = it->cols;
-	                        std::cerr << "Fea Dim: " << train_dim << std::endl;
-	                    }
-	                }	
-	                std::vector< sparseVec> this_sparse;
-	                sparseCvMat(*it, this_sparse);
-	                #pragma omp critical
-	                {
-	                    final_fea[ll].push_back(this_sparse[0]);
-	                }
-	            }
-	        }
-    	}
+            // pcl::PointCloud<PointT>::Ptr full_cloud = train_objects[0][j].cloud;
+            std::cerr << "Processing (" << j + 1 << "/" << train_num <<")\n";
+            
+            spPooler triple_pooler;
+            if (use_sift_) triple_pooler.init(full_cloud, *hie_producer, radius_, down_ss_);
+            else triple_pooler.lightInit(full_cloud, *hie_producer, radius_, down_ss_);
+            
+            if (use_shot_) triple_pooler.build_SP_LAB(lab_pooler_set, false);
+            if (use_fpfh_) triple_pooler.build_SP_FPFH(fpfh_pooler_set, radius_, false);
+            if (use_sift_) triple_pooler.build_SP_SIFT(sift_pooler_set, *hie_producer, sift_det_vec, false);
+            
+            for( int ll = 0 ; ll <= order_ ; ll++ )
+            {
+                std::vector<cv::Mat> sp_fea = triple_pooler.sampleSPFea(ll, box_num, false, true);
+                for( std::vector<cv::Mat>::iterator it = sp_fea.begin(); it < sp_fea.end() ; it++ )
+                {
+                    if( train_dim > 0 && it->cols != train_dim )
+                    {
+                        std::cerr << "Error: fea_dim > 0 && cur_final.cols != fea_dim   " << train_dim << " " << it->cols << std::endl;
+                        exit(0);
+                    }
+                    else if( train_dim < 0 )
+                    {
+                        #pragma omp critical
+                        {
+                            train_dim = it->cols;
+                            std::cerr << "Fea Dim: " << train_dim << std::endl;
+                        }
+                    }    
+                    std::vector< sparseVec> this_sparse;
+                    sparseCvMat(*it, this_sparse);
+                    #pragma omp critical
+                    {
+                        final_fea[ll].push_back(this_sparse[0]);
+                    }
+                }
+            }
+        }
     }
     train_objects.clear();
     
@@ -290,6 +292,14 @@ void SpCompact::extractFea()
     
     object_ext.setFeaOrder(cur_order_max_ - 1);
     background_ext.setFeaOrder(cur_order_max_ - 1);
+
+    object_ext.setUseSHOT(use_shot_);
+    object_ext.setUseFPFH(use_fpfh_);
+    object_ext.setUseSIFT(use_sift_);
+
+    background_ext.setUseSHOT(use_shot_);
+    background_ext.setUseFPFH(use_fpfh_);
+    background_ext.setUseSIFT(use_sift_);
 
     for( size_t i = 0 ; i < object_names_.size() ; i++ )
     {

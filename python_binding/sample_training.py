@@ -32,6 +32,11 @@ training = SpCompact()
 training.setInputPathSIFT(sift_path)
 training.setInputPathSHOT(shot_path)
 training.setInputPathFPFH(fpfh_path)
+
+training.setUseSHOT(True)
+training.setUseFPFH(False)
+training.setUseSIFT(False)
+
 training.setInputTrainingPath(training_folder_path);
 
 # The class will load the pcd files from directory_path/object_name[1 .. n]/*.pcd

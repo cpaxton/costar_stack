@@ -87,7 +87,7 @@ void getSHOTCode_ss(const MulInfoT &data, const cv::Mat dict, cv::flann::Index &
 
 cv::Mat getColorDiff(const pcl::PointCloud<PointT>::Ptr cloud);
 
-//std::vector<cv::KeyPoint> extSIFTKeys(const cv::Mat &cur_gray, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec);
+std::vector<cv::KeyPoint> extSIFTKeys(const cv::Mat &cur_gray, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec);
 
 class Pooler_L0{
 public:
@@ -296,7 +296,7 @@ public:
     
     void build_SP_LAB(const std::vector< boost::shared_ptr<Pooler_L0> > &lab_pooler_set, bool max_pool_flag = false);
     void build_SP_FPFH(const std::vector< boost::shared_ptr<Pooler_L0> > &fpfh_pooler_set, float radius, bool max_pool_flag = false);
-    //void build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &sift_pooler_set, Hier_Pooler &cshot_producer,  const std::vector<cv::SiftFeatureDetector*> &sift_det_vec, bool max_pool_flag = false);
+    void build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &sift_pooler_set, Hier_Pooler &cshot_producer,  const std::vector<cv::SiftFeatureDetector*> &sift_det_vec, bool max_pool_flag = false);
     
 //    pcl::PointCloud<PointT>::Ptr semanticSegment(const std::vector<model*> &model_set, int level);
     std::vector<cv::Mat> gethardNegtive(const model *model_set, int level, bool max_pool = false);
@@ -313,7 +313,7 @@ public:
     
     void init(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler &cshot_producer, float radius, float ss_ = 0.005);
     // If not use SIFT pooling!!! Use this light version.
-    void lightInit(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler& cshot_producer, float radius, float down_ss = 0.005);
+    void lightInit(const pcl::PointCloud<PointT>::Ptr cloud, Hier_Pooler &cshot_producer, float radius, float down_ss = 0.005);
     void reset();
     
     void extractForeground(bool constrained_flag);

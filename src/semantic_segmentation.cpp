@@ -42,7 +42,8 @@ bool objectTransformInformation::operator==(const objectTransformInformation& ot
 
 SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_flag_(false), use_crop_box_(false), 
     use_binary_svm_(true), use_multi_class_svm_(false), number_of_added_models_(0), use_table_segmentation_(false), 
-    pcl_downsample_(0.003), hier_ratio_(0.1), compute_pose_(false), use_combined_objRecRANSAC_(false), use_cuda_(false)
+    pcl_downsample_(0.003), hier_ratio_(0.1), compute_pose_(false), use_combined_objRecRANSAC_(false), use_cuda_(false),
+    use_shot_(true), use_fpfh_(false), use_sift_(false)
 {
     uchar color_label_tmp[11][3] =
     { 
@@ -67,6 +68,8 @@ SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_f
     this->min_objrecransac_confidence = 0.0;
     this->base_rotation_.setIdentity();
     this->shot_loaded_ = false;
+    this->fpfh_loaded_ = false;
+    this->sift_loaded_ = false;
     this->svm_loaded_ = false;
     this->table_distance_threshold_ = 0.02;
     this->table_angular_threshold_ =  2.0;
@@ -89,11 +92,72 @@ void SemanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_dire
     if (shot_path.back() != '/')
         shot_path += "/";
 
-    hie_producer = Hier_Pooler(hier_radius_);
-    hie_producer.LoadDict_L0(shot_path, "200", "200");
-    hie_producer.setRatio(hier_ratio_);
+    hie_producer = boost::shared_ptr<Hier_Pooler> (new Hier_Pooler(hier_radius_));
+    hie_producer->LoadDict_L0(shot_path, "200", "200");
+    hie_producer->setRatio(hier_ratio_);
     std::cerr << "Done.\n";
 }
+
+void SemanticSegmentation::setDirectoryFPFH(const std::string &path_to_fpfh_directory)
+{
+    bool success = checkFolderExist(path_to_fpfh_directory);
+    if (!success)
+    {
+        std::cerr << "setDirectoryFPFH failed" << std::endl;
+        this->fpfh_loaded_ = false;
+        return;
+    }
+    this->fpfh_loaded_ = true;
+    std::cerr << "Loading FPFH...\n";
+
+    std::string fpfh_path = path_to_fpfh_directory;
+    if (fpfh_path.back() != '/')
+        fpfh_path += "/";
+
+    fpfh_pooler_set.clear();
+    fpfh_pooler_set.resize(2);
+    fpfh_pooler_set[1] = boost::shared_ptr<Pooler_L0> (new Pooler_L0(-1));
+    fpfh_pooler_set[1]->LoadSeedsPool(fpfh_path+"dict_fpfh_L0_400.cvmat");
+    std::cerr << "Done.\n";
+}
+
+void SemanticSegmentation::setDirectorySIFT(const std::string &path_to_sift_directory)
+{
+    bool success = checkFolderExist(path_to_sift_directory);
+    if (!success)
+    {
+        std::cerr << "setDirectorySIFT failed" << std::endl;
+        this->sift_loaded_ = false;
+        return;
+    }
+    this->sift_loaded_ = true;
+    std::cerr << "Loading SIFT...\n";
+
+    std::string sift_path = path_to_sift_directory;
+    if (sift_path.back() != '/')
+        sift_path += "/";
+
+    sift_pooler_set.clear();
+    sift_pooler_set.resize(2);
+    sift_pooler_set[1] = boost::shared_ptr<Pooler_L0> (new Pooler_L0(-1));
+    sift_pooler_set[1]->LoadSeedsPool(sift_path+"dict_sift_L0_400.cvmat"); 
+    
+    // sift paramters can be fixed like this, it won't change too much, to 
+    // speed up you can reduce the range like [0.7, 1.6] to [0.8, 0.9]
+    for( float sigma = 0.7 ; sigma <= 1.61 ; sigma += 0.1 )
+    {   
+        cv::SiftFeatureDetector *sift_det = new cv::SiftFeatureDetector(
+            0, // nFeatures
+            4, // nOctaveLayers
+            -10000, // contrastThreshold 
+            100000, //edgeThreshold
+            sigma//sigma
+            );
+        sift_det_vec.push_back(sift_det);   
+    }
+    std::cerr << "Done.\n";
+}
+
 
 void SemanticSegmentation::setUseMultiClassSVM(const bool &use_multi_class_svm)
 {
@@ -257,6 +321,7 @@ void SemanticSegmentation::initializeSemanticSegmentation()
         }
     }
 
+    // Initialize lab pooler
     lab_pooler_set.resize(6);
     for( size_t i = 1 ; i < lab_pooler_set.size() ; i++ )
     {
@@ -393,9 +458,13 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     }
 
     spPooler triple_pooler;
-    triple_pooler.lightInit(full_cloud, hie_producer, hier_radius_, pcl_downsample_);
+    if (sift_loaded_  && use_sift_) triple_pooler.init(full_cloud, *hie_producer, hier_radius_, pcl_downsample_);
+    else triple_pooler.lightInit(full_cloud, *hie_producer, hier_radius_, pcl_downsample_);
+    
     std::cerr << "LAB Pooling!" << std::endl;
-    triple_pooler.build_SP_LAB(lab_pooler_set, false);
+    if (shot_loaded_ && use_shot_) triple_pooler.build_SP_LAB(lab_pooler_set, false);
+    if (fpfh_loaded_ && use_fpfh_) triple_pooler.build_SP_FPFH(fpfh_pooler_set, hier_radius_, false);
+    if (sift_loaded_ && use_sift_) triple_pooler.build_SP_SIFT(sift_pooler_set, *hie_producer, sift_det_vec, false);
 
     if(use_binary_svm_)
     {

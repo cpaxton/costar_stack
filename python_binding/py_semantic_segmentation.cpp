@@ -23,13 +23,6 @@ void printAllObjectTransformInformation(std::vector<objectTransformInformation> 
 
 void (SemanticSegmentation::*setCropBoxSize_d)(const double &,const double &,const double &) = &SemanticSegmentation::setCropBoxSize;
 void (SemanticSegmentation::*setCropBoxSize_f)(const float &,const float &,const float &) = &SemanticSegmentation::setCropBoxSize;
-// template <typename NumericType>
-//     void (SemanticSegmentation::*setCropBoxSize_2)(const Eigen::Matrix<NumericType, 3, 1> &) = &SemanticSegmentation::setCropBoxSize;
-// template <typename NumericType>
-//     void (SemanticSegmentation::*addModelSymmetricProperty_1)(
-//         const std::string, NumericType, NumericType, NumericType, NumericType, const std::string
-//         ) = &SemanticSegmentation::addModelSymmetricProperty;
-// void (SemanticSegmentation::*addModelSymmetricProperty_2)(const std::map<std::string, objectSymmetry> ) = &SemanticSegmentation::addModelSymmetricProperty;
 void (SemanticSegmentation::*setDirectorySVM_1)(const std::string &) =  &SemanticSegmentation::setDirectorySVM;
 void (SemanticSegmentation::*setDirectorySVM_2)(const std::string &, const bool &, const bool &) =  &SemanticSegmentation::setDirectorySVM;
 
@@ -79,6 +72,11 @@ BOOST_PYTHON_MODULE(SemanticSegmentationPy)
         .def("getTableSurfaceFromPointCloud",&SemanticSegmentation::getTableSurfaceFromPointCloud)
         .def("convertPointCloudLabelToRGBA",&SemanticSegmentation::convertPointCloudLabelToRGBA)
         .def("setDirectorySHOT",&SemanticSegmentation::setDirectorySHOT)
+        .def("setDirectoryFPFH",&SemanticSegmentation::setDirectoryFPFH)
+        .def("setDirectorySIFT",&SemanticSegmentation::setDirectorySIFT)
+        .def("setUseSHOT",&SemanticSegmentation::setUseSHOT)
+        .def("setUseFPFH",&SemanticSegmentation::setUseFPFH)
+        .def("setUseSIFT",&SemanticSegmentation::setUseSIFT)
         .def("setDirectorySVM",setDirectorySVM_1)
         .def("setDirectorySVM",setDirectorySVM_2)
         .def("setUseMultiClassSVM",&SemanticSegmentation::setUseMultiClassSVM)
