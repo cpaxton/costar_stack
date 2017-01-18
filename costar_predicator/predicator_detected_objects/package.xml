@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>predicator_detected_objects</name>
-  <version>0.1.8</version>
+  <version>0.6.0</version>
   <description>The predicator_detected_objects package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
