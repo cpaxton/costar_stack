@@ -3,8 +3,9 @@
 Thank you for your interest at our semantic segmentation software.
 
 This software implements a modified version of the algorithm described in the papers:
-  - C. Li, A. Reiter, and G. D. Hager, “Beyond spatial pooling: Fine-grained representation learning in multiple domains,” 2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2015.
-  - C. Li, J. Boheren, and G. D. Hager, "Bridging the Robot Perception Gap With Mid-Level Vision," 2015 International Symposium on Robotics Research (ISRR), 2015.
+  - C. Li, Jonathan Bohren, Eric Carlson, and G. D. Hager, “Hierarchical Semantic Parsing for Object Pose Estimation in Densely Cluttered Scenes,” IEEE International Conference on Robotics Automation (ICRA) , 2016.
+  - C. Li, A. Reiter, and G. D. Hager, “Beyond spatial pooling: Fine-grained representation learning in multiple domains,” IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2015.
+  - C. Li, J. Boheren, and G. D. Hager, "Bridging the Robot Perception Gap With Mid-Level Vision," International Symposium on Robotics Research (ISRR), 2015.
 
 If you find this software useful, please site the aforementioned papers above in any resulting publication.
 
