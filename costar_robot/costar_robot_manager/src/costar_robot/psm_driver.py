@@ -100,6 +100,8 @@ class CostarPSMDriver(CostarArm):
             #                  (self.last_marker_rot.x, self.last_marker_rot.y, self.last_marker_rot.z, self.last_marker_rot.w),
             #                  rospy.Time.now(),"/endpoint",self.end_link)
             br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(),"/endpoint",self.end_link)
+            # br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(), "/endpoint", "/world")
+            print "<<<<<", self.last_marker_trans, self.last_marker_rot, ">>>>>"
 
     '''
     Send a whole joint trajectory message to a robot...
@@ -120,3 +122,44 @@ class CostarPSMDriver(CostarArm):
     #
     #    print "waypoint [0]: " + str(traj_way_point)
     #    self.dvrk_arm.move(traj_way_point)
+
+    def js_cb(self,msg):
+        pass
+        # print "js_cb is called", self.dof
+        # if len(msg.position) is self.dof:
+        #     pass
+        #     self.old_q0 = self.q0
+        #     self.q0 = np.array(msg.position)
+        #     print "q0 in js_cb:", self.q0
+        # else:
+        #     rospy.logwarn('Incorrect joint dimensionality')
+
+    def servo_to_pose_call(self,req):
+        if self.driver_status == 'SERVO':
+            T = pm.fromMsg(req.target)
+            print "This is the target pose: ", T
+            self.dvrk_arm.move(T)
+            return 'SUCCESS - moved to pose'
+            # T = pm.fromMsg(req.target)
+            #
+            # # Check acceleration and velocity limits
+            # (acceleration, velocity) = self.check_req_speed_params(req)
+            # print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", T
+            #
+            # # inverse kinematics
+            # traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.steps_per_radians)
+            # #if len(traj.points) == 0:
+            # #    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
+            # #    if not res is None:
+            # #        traj = res.planned_trajectory.joint_trajectory
+            #
+            # # Send command
+            # if len(traj.points) > 0:
+            #     rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
+            #     return self.send_trajectory(traj,acceleration,velocity,cartesian=False,linear=True)
+            # else:
+            #     rospy.logerr('SIMPLE DRIVER -- IK failed')
+            #     return 'FAILURE - not in servo mode'
+        else:
+            rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
+            return 'FAILURE - not in servo mode'

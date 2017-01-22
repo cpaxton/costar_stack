@@ -149,11 +149,12 @@ class CostarArm(object):
     listen to robot joint state information
     '''
     def js_cb(self,msg):
-
+        print "js_cb is called", self.dof
         if len(msg.position) is self.dof:
             pass
             self.old_q0 = self.q0
             self.q0 = np.array(msg.position)
+            print "q0 in js_cb:", self.q0
         else:
             rospy.logwarn('Incorrect joint dimensionality')
 
@@ -378,7 +379,8 @@ class CostarArm(object):
             T = pm.fromMsg(req.target)
 
             # Check acceleration and velocity limits
-            (acceleration, velocity) = self.check_req_speed_params(req) 
+            (acceleration, velocity) = self.check_req_speed_params(req)
+            print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", T
 
             # inverse kinematics
             traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.steps_per_radians)
