@@ -68,7 +68,6 @@ class CostarArm(object):
         self.near_goal = True
         self.moving = False
         self.q0 = None
-        #[0] * self.dof
         self.old_q0 = [0] * self.dof
 
         self.cur_stamp = 0
@@ -225,14 +224,9 @@ class CostarArm(object):
     def ik(self, T, q0, dist=0.5):
       q = None
       if self.closed_form_IK_solver is not None:
-      #T = pm.toMatrix(F)
         q = self.closed_form_IK_solver.findClosestIK(T,q0)
       else:
         q = self.kdl_kin.inverse(T,q0)
-
-      # NOTE: this results in unsafe behavior; do not use without checks
-      #if q is None:
-      #    q = self.kdl_kin.inverse(T)
       return q
 
     '''
@@ -316,6 +310,17 @@ class CostarArm(object):
             msg = 'FAILURE - no matching moves for specified predicates'
             return msg
 
+    '''
+    SmartMove Pickup
+    Go to a particular position and move to that goal.
+    '''
+    def smart_pickup(self,req):
+        raise NotImplementedError('smart_pickup not yet implemented')
+
+    '''
+    Set movement goal. This is used in the callback to handle continuous
+    motions, and in the callback so we know when motions are finished.
+    '''
     def set_goal(self,q):
         self.at_goal = False
         self.near_goal = False
@@ -339,11 +344,9 @@ class CostarArm(object):
 
 
     '''
-    Definitely do a planned motion.
+    Perform a planned move to a given destination.
     '''
     def plan_to_pose_call(self,req): 
-        #rospy.loginfo('Recieved servo to pose request')
-        #print req
         if self.driver_status == 'SERVO':
             T = pm.fromMsg(req.target)
 
