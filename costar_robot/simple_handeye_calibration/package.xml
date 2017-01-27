@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>simple_handeye_calibration</name>
-  <version>0.6.0</version>
+  <version>0.4.0</version>
   <description>The simple_handeye_calibration package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

@@ -1,6 +1,6 @@
 <package>
   <name>c_model_srvs</name>
-  <version>0.6.0</version>
+  <version>0.4.0</version>
   <description>Package to control a C-Model Gripper from Robotiq inc.</description>
   <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
   <license>BSD</license>

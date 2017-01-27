@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>smart_waypoint_manager</name>
-  <version>0.6.0</version>
+  <version>0.4.0</version>
   <description>The smart_waypoint_manager package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
