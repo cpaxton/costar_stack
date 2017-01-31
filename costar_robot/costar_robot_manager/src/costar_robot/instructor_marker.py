@@ -4,7 +4,7 @@ import rospy
 
 from interactive_markers.interactive_marker_server import *
 from visualization_msgs.msg import *
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Quaternion
 
 def processFeedback(feedback):
     p = feedback.pose.position
@@ -20,18 +20,19 @@ if __name__=="__main__":
     
     # create an interactive marker for our server
     int_marker = InteractiveMarker()
-    int_marker.header.frame_id = "PSM1_tool_tip_link"
-    int_marker.pose.position = Point(0,0,0.1)
+    int_marker.header.frame_id = "/world"
+    int_marker.pose.position = Point(-0.25,0,0.3)
+    int_marker.pose.orientation = Quaternion(-0.7071, 0.7071, 0, 0)
     int_marker.name = "instructor_marker"
     int_marker.description = "6-DOF Interactive Marker"
-    int_marker.scale = 0.15
+    int_marker.scale = 0.05
 
     # create a grey box marker
     box_marker = Marker()
-    box_marker.type = Marker.CUBE
-    box_marker.scale.x = 0.1
-    box_marker.scale.y = 0.1
-    box_marker.scale.z = 0.1
+    box_marker.type = Marker.SPHERE
+    box_marker.scale.x = 0.03
+    box_marker.scale.y = 0.03
+    box_marker.scale.z = 0.03
     box_marker.color.r = 0.5
     box_marker.color.g = 0.5
     box_marker.color.b = 0.5

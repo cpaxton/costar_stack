@@ -10,11 +10,6 @@ from visualization_msgs.msg import *
 import tf_conversions.posemath as pm
 import numpy as np
 
-# for interactively show instructor marker when switching to TEACH
-import dynamic_reconfigure.client
-from subprocess import call
-
-# from dvrk import psm
 import dvrk
 import PyKDL
 
@@ -45,13 +40,11 @@ class CostarPSMDriver(CostarArm):
 
         # TODO: correct these
         base_link = 'PSM1_psm_base_link'
-        end_link = 'PSM1_tool_tip_link'
+        end_link = 'PSM1_tool_wrist_sca_ee_link_0'
         planning_group = 'manipulator'
 
         self.dvrk_arm = dvrk.psm('PSM1')
         self.psm_initialized = False
-        # dvrk_arm.home()
-	    # dvrk_arm.insert_tool()
 
         rospy.Subscriber("/instructor_marker/feedback", InteractiveMarkerFeedback, self.marker_callback)
         self.last_marker_frame = PyKDL.Frame(PyKDL.Rotation.RPY(0,0,0),PyKDL.Vector(0,0,0))
@@ -78,29 +71,27 @@ class CostarPSMDriver(CostarArm):
 
     def marker_callback(self,data):
         (self.last_marker_trans,self.last_marker_rot) = pm.toTf(pm.fromMsg(data.pose))
-        # self.last_marker_trans = data.pose.position
-        # self.last_marker_rot = data.pose.orientation
 
     def handle_tick(self):
         br = tf.TransformBroadcaster()
         br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "/base_link",
                          self.base_link)
+        br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(-1.5708, 1.5708, 0), rospy.Time.now(),
+                         "/PSM1_tool_tip_link_virtual", 'PSM1_tool_wrist_sca_ee_link_0')
+        # The above: add tip link with the orientation offset to represent the frame of our concern
         if self.driver_status == 'SHUTDOWN':
             pass
         elif self.driver_status == 'SERVO':
+            br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(),
+                             "/endpoint", self.end_link)
             print "HANDLING SERVO MODE"
-            # call(["rosrun", "costar_robot_manager", "instructor_marker.py"])
         elif self.driver_status == 'IDLE':
             br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(),
                              "/endpoint",self.end_link)
             print "DRIVER IN IDLE"
         elif self.driver_status == 'TEACH':
             print "HANDLING TEACH MODE"
-            # br.sendTransform((self.last_marker_trans.x, self.last_marker_trans.y, self.last_marker_trans.z),
-            #                  (self.last_marker_rot.x, self.last_marker_rot.y, self.last_marker_rot.z, self.last_marker_rot.w),
-            #                  rospy.Time.now(),"/endpoint",self.end_link)
-            br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(),"/endpoint",self.end_link)
-            # br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(), "/endpoint", "/world")
+            br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(), "/endpoint", "/world")
             print "<<<<<", self.last_marker_trans, self.last_marker_rot, ">>>>>"
 
     '''
@@ -108,58 +99,31 @@ class CostarPSMDriver(CostarArm):
     that is listening to individual joint states.
     '''
     def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False, linear=False):
-        # pass
         if self.psm_initialized != True:
             self.dvrk_arm.home()
             self.dvrk_arm.insert_tool(0.1)
             self.psm_initialized = True
             print "PSM Initialized"
             return
-        print "Msg from send_trajectory"
-
-
-    #    traj_way_point = PyKDL.Vector(traj.points[0].positions[0],traj.points[0].positions[1],traj.points[0].positions[2])
-    #
-    #    print "waypoint [0]: " + str(traj_way_point)
-    #    self.dvrk_arm.move(traj_way_point)
 
     def js_cb(self,msg):
         pass
-        # print "js_cb is called", self.dof
-        # if len(msg.position) is self.dof:
-        #     pass
-        #     self.old_q0 = self.q0
-        #     self.q0 = np.array(msg.position)
-        #     print "q0 in js_cb:", self.q0
-        # else:
-        #     rospy.logwarn('Incorrect joint dimensionality')
+    # clear the issues with base class
+
+    def save_frame_call(self,req):
+      rospy.logwarn('Save frame does not check to see if your frame already exists!')
+      print "save_frame_call is called, and ee_pose is:", self.ee_pose
+      self.waypoint_manager.save_frame(self.ee_pose, self.world)
+
+      return 'SUCCESS - '
 
     def servo_to_pose_call(self,req):
         if self.driver_status == 'SERVO':
             T = pm.fromMsg(req.target)
-            print "This is the target pose: ", T
+            print "This is the target pose: ", req.target
             self.dvrk_arm.move(T)
             return 'SUCCESS - moved to pose'
-            # T = pm.fromMsg(req.target)
-            #
-            # # Check acceleration and velocity limits
-            # (acceleration, velocity) = self.check_req_speed_params(req)
-            # print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", T
-            #
-            # # inverse kinematics
-            # traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.steps_per_radians)
-            # #if len(traj.points) == 0:
-            # #    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
-            # #    if not res is None:
-            # #        traj = res.planned_trajectory.joint_trajectory
-            #
-            # # Send command
-            # if len(traj.points) > 0:
-            #     rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
-            #     return self.send_trajectory(traj,acceleration,velocity,cartesian=False,linear=True)
-            # else:
-            #     rospy.logerr('SIMPLE DRIVER -- IK failed')
-            #     return 'FAILURE - not in servo mode'
+
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILURE - not in servo mode'
