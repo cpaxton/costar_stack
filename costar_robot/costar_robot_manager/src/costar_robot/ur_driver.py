@@ -154,8 +154,9 @@ class CostarUR5Driver(CostarArm):
         #  cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
         #  self.ur.movel(cmd,wait=True,acc=acceleration,vel=velocity)
 
-    def handle_tick(self):
 
+     def handle_tick(self):
+ 
         # send out the joint states
         #self.current_joint_positions = self.ur.getj_all()
         #self.q0 = np.array(self.current_joint_positions[0])
@@ -168,9 +169,9 @@ class CostarUR5Driver(CostarArm):
         #  velocity=self.q_v0,
         #  effort=self.q_a0))
         #self.update_position()
-
+ 
         if self.driver_status in mode.keys():
-
+ 
             if self.driver_status == 'SHUTDOWN':
                 # self.ur.cleanup()
                 # self.ur.shutdown()
@@ -181,7 +182,7 @@ class CostarUR5Driver(CostarArm):
                 pass
             elif self.driver_status == 'TEACH':
                 pass
-
+ 
         else:
             #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
             pass

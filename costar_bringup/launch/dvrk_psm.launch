@@ -1,4 +1,6 @@
+<?xml version="1.0"?>
 <launch>
+  <!-- dvrk bringup -->
   <arg name="arm" default="PSM1"/>
   <arg name="cisst_root" default="$(env HOME)/catkin_ws/src/cisst-saw"/>
   <arg name="psm_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/console-PSM1_KIN_SIMULATED.json"/>
@@ -8,6 +10,11 @@
     <arg name="config" value="$(arg psm_config)"/>
   </include>
 
+  <!-- CoSTAR bringup -->
   <include file="$(find costar_bringup)/launch/utilities.launch"/>
+  <include file="$(find costar_robot_manager)/launch/simple_psm_driver.launch"/>
+
+  <!-- Interactive Marker -->
+  <node name="instructor_marker" pkg="costar_robot_manager" type="instructor_marker.py"/>
 
 </launch>

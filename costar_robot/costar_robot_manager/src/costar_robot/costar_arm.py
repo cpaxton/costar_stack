@@ -150,7 +150,7 @@ class CostarArm(object):
     listen to robot joint state information
     '''
     def js_cb(self,msg):
-
+ 	
         if len(msg.position) is self.dof:
             pass
             self.old_q0 = self.q0
@@ -379,7 +379,7 @@ class CostarArm(object):
             T = pm.fromMsg(req.target)
 
             # Check acceleration and velocity limits
-            (acceleration, velocity) = self.check_req_speed_params(req) 
+            (acceleration, velocity) = self.check_req_speed_params(req)
 
             # inverse kinematics
             traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.steps_per_radians)
@@ -420,12 +420,9 @@ class CostarArm(object):
     '''
     def set_teach_mode_call(self,req):
         if req.enable == True:
-
-            # self.rob.set_freedrive(True)
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
         else:
-            # self.rob.set_freedrive(False)
             self.driver_status = 'IDLE'
             return 'SUCCESS - teach mode disabled'
 
@@ -459,8 +456,12 @@ class CostarArm(object):
     '''
     robot-specific logic to update state every "tick"
     '''
+    # TODO: Modify this part
     def handle_tick(self):
-        rospy.logerr("Function 'handle_tick' not implemented for base class!")
+        # print self.end_link, "/endpoint",  "trans = ", (0,0,0), "rot = ", (0,0,0)
+        br = tf.TransformBroadcaster()
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
 
     '''
     call this when "spinning" to keep updating things
