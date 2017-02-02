@@ -4,7 +4,6 @@ import rospy, sys
 from std_msgs.msg import * 
 from sensor_msgs.msg import * 
 from geometry_msgs.msg import *
-from razer_hydra.msg import *
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import *
