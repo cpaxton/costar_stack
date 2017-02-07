@@ -1,5 +1,0 @@
-string predicate
----
-string[] source
-string[] assignments
-int32 length

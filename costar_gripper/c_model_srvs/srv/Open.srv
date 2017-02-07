@@ -1,4 +1,0 @@
-bool state
-bool wait
----
-string ack

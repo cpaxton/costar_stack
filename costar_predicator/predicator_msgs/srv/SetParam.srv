@@ -1,6 +1,0 @@
-predicator_msgs/PredicateStatement param
----
-byte result
-
-byte SUCCESS=1
-byte FAILURE=0

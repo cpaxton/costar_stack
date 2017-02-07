@@ -1,9 +1,0 @@
-<launch>
-
-  <arg name="output" default="screen"/>
-  <arg name="params" default="true"/>
-
-  <!-- predicator core: test to determine if something has happened -->
-  <node name="predicator_core" pkg="predicator_core" type="core.py" output="$(arg output)"/>
-
-</launch>

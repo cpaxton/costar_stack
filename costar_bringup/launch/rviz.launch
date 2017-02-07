@@ -1,9 +1,0 @@
-<launch>
-
-  <arg name="sim" default="false"/>
-  <arg name="rviz_config" default="$(find costar_bringup)/config/iiwa_s_model_camera.rviz" doc="(string) rviz config file for user interface"/>
-
-  <!-- start rviz and load the appropriate rviz configuration if desired -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_config)" />
-
-</launch>

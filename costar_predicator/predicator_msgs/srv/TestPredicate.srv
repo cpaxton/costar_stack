@@ -1,5 +1,0 @@
-# Define the statement that should be tested on the server
-predicator_msgs/PredicateStatement statement
----
-# returns true if a statement matching the given predicate exists on the server
-bool found

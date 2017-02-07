@@ -1,5 +1,0 @@
-sensor_msgs/JointState target
-float32 accel
-float32 vel
----
-string ack

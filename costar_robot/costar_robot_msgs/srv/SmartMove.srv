@@ -1,7 +1,0 @@
-predicator_msgs/PredicateStatement[] predicates # predicates to match when moving
-geometry_msgs/Pose pose # offset to move to
-string obj_class # class to move to
-float32 accel
-float32 vel
----
-string ack # what happened

@@ -1,5 +1,0 @@
-geometry_msgs/Pose target
-float32 accel
-float32 vel
----
-string ack
