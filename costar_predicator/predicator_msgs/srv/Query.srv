@@ -1,6 +1,0 @@
-# set of predicates to be true or whatever
-predicator_msgs/PredicateStatement[] predicates
----
-# set of valid results
-string[] matching
-bool found

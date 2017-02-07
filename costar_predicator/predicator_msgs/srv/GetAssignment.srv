@@ -1,7 +1,0 @@
-# define a predicate
-predicator_msgs/PredicateStatement statement
----
-# was the statement found?
-bool found
-
-predicator_msgs/PredicateStatement[] values

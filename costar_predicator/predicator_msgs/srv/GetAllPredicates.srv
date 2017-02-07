@@ -1,7 +1,0 @@
-# id to match for predicates
-string id
----
-# matching predicates
-predicator_msgs/PredicateStatement[] predicates
-# whether or not it is true
-bool[] is_true

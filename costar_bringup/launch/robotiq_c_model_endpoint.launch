@@ -1,9 +1,0 @@
-<launch>
-
-  <arg name="ee_frame" default="/endpoint"/>
-
-  <node pkg="tf" type="static_transform_publisher" name="endpoint_to_align0" args=" 0.05 0 0 0 1.5707 0  $(arg ee_frame) /endpoint_align0 10"/>
-  <node pkg="tf" type="static_transform_publisher" name="endpoint_to_align" args=" 0 0 0 1.5707 0 0  /endpoint_align0 /endpoint_align 10"/>
-  <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args=" 0.022 -0.005 0.093 3.14159 -1.5707 0  /endpoint_align /endpoint_marker 10"/>
-
-</launch>
