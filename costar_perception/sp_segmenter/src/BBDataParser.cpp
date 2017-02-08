@@ -281,7 +281,7 @@ void BBStreamingNormal(std::string path, std::string sub_path, float radius, int
         std::string workspace(path +"/" + class_name + "/" + sub_path);
         std::vector<std::string> pcd_files;
         getNonNormalPCDFiles(workspace, pcd_files);
-        int count = 0;
+        // int count = 0;
         for( std::vector<std::string>::iterator it = pcd_files.begin() ; it < pcd_files.end() ; it++ )
         {
             pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());

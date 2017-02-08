@@ -3,7 +3,7 @@
 int readSeqID_JHU(std::string name)
 {
     int id = -1;
-    int underscore_count = 0;
+    // int underscore_count = 0;
     for( int i = name.size() - 1 ; i >= 0 ; i-- )
     {
         if( name[i] == '_' )
@@ -35,7 +35,7 @@ void PreProcess_JHU(std::string in_path, std::string out_path, pcl::visualizatio
         pcl::io::loadPCDFile(in_path + "/" + (*it), *cur_cloud);
         
         int cur_w = cur_cloud->width;
-        int cur_h = cur_cloud->height;
+        // int cur_h = cur_cloud->height;
         
         std::vector<int> idx_f;
         pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
@@ -76,7 +76,7 @@ void PreProcess_JHU(std::string in_path, std::string out_path, pcl::visualizatio
         pcl::PointCloud<PointT>::iterator it_proj = cloud_proj->begin();
         pcl::PointCloud<PointT>::Ptr cloud_object(new pcl::PointCloud<PointT>());
         std::vector<int> in_idx;
-        for( int base = 0 ; it_ori < cloud->end(), it_proj < cloud_proj->end() ; it_ori++, it_proj++, base++ )
+        for( int base = 0 ; it_ori < cloud->end() && it_proj < cloud_proj->end() ; it_ori++, it_proj++, base++ )
         {
             float diffx = (*it_ori).x-(*it_proj).x;
             float diffy = (*it_ori).y-(*it_proj).y;
