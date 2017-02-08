@@ -35,7 +35,8 @@ def clear_cmd():
 
 def load_instructor_plugins():
     # Using roslib.rospack even though it is deprecated, because this function in rospkg is broken
-    to_check = rospack.rospack_depends_on_1('beetree')
+    #to_check = rospack.rospack_depends_on_1('beetree')
+    to_check = ['instructor_plugins']
     rp = rospkg.RosPack()
     # to_check = rospack.get_depends_on('beetree', implicit=False)
     clear_cmd()
@@ -51,6 +52,7 @@ def load_instructor_plugins():
         p_types = m.get_export('instructor', 'type')
         p_descriptions = m.get_export('instructor', 'description')
         p_names = m.get_export('instructor', 'name')
+        print p_modules, p_types, p_descriptions, p_names
         # p_descriptions = manifest.get_export('rcommander', 'tab')
         if not p_modules:
             continue
@@ -144,6 +146,8 @@ class Instructor(QWidget):
     def parse_plugin_info(self):
         rospy.logwarn('INSTRUCTOR: LOADING PLUGINS')
         self.plugins = {}
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print "PLUGINS LOAD"
         plugins, plugin_descriptions, plugin_names, plugin_types = load_instructor_plugins()
         for plug,desc,name,typ in zip(plugins,plugin_descriptions,plugin_names,plugin_types):
             self.plugins[name] = {'module':plug, 'type':typ, 'name':name, 'description':desc, 'generator_type':str(type(plug()))}

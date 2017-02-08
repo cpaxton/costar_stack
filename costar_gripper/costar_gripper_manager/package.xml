@@ -39,11 +39,14 @@
   <!--   <run_depend>message_runtime</run_depend> -->
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
+
+  <!-- Comment these dependencies for dvrk branch catkin build
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>robotiq_s_model_control</build_depend>
   <run_depend>robotiq_s_model_control</run_depend>
   <build_depend>predicator_robotiq</build_depend>
   <run_depend>predicator_robotiq</run_depend>
+  -->
 
 
   <!-- The export tag contains other, unspecified, tags -->

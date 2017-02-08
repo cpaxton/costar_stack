@@ -787,7 +787,10 @@ def clear_cmd():
     pass
 
 def load_instructor_plugins():
-    to_check = rospack.rospack_depends_on_1('beetree')
+    #to_check = rospack.rospack_depends_on_1('beetree')
+    rospy.logwarn("LOADING PLUGINS?")
+    rospy.logwarn("=======================")
+    to_check = ['instructor_plugins']
     rp = rospkg.RosPack()
     # to_check = rospack.get_depends_on('beetree', implicit=False)
     clear_cmd()
@@ -805,6 +808,7 @@ def load_instructor_plugins():
         p_descriptions = m.get_export('instructor', 'description')
         p_names = m.get_export('instructor', 'name')
         p_groups = m.get_export('instructor', 'group')
+
         if not p_modules:
             continue
         if p_modules == []:
@@ -821,6 +825,11 @@ def load_instructor_plugins():
             types.append(p_type)
             groups.append(p_group)                
 
+    rospy.logwarn(plugins)
+    rospy.logwarn(descriptions)
+    rospy.logwarn(names)
+    rospy.logwarn(types)
+    rospy.logwarn(groups)
     return plugins, descriptions, names, types, groups
 
 class Instructor(QWidget):
