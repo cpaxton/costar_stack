@@ -30,9 +30,6 @@ poseT greedyObjRansac::getBestModel(list< boost::shared_ptr<PointSetShape> >& de
     {
         boost::shared_ptr<PointSetShape> shape = (*it);
         
-        //if ( shape->getUserData() )
-        //    printf("\t%s, confidence: %lf\n", shape->getUserData()->getLabel(), shape->getConfidence());
-        
         if( shape->getConfidence() > max_confidence )
         {
             max_confidence = shape->getConfidence();
@@ -49,6 +46,7 @@ poseT greedyObjRansac::getBestModel(list< boost::shared_ptr<PointSetShape> >& de
 
             new_pose.shift = Eigen::Vector3f (mat4x4[0][3], mat4x4[1][3], mat4x4[2][3]);
             new_pose.rotation = rot;
+            new_pose.confidence = max_confidence;
         }
     }
     
@@ -71,6 +69,7 @@ poseT greedyObjRansac::recognizeOne(const pcl::PointCloud<myPointXYZ>::Ptr scene
         poseT dummy_pose;
         return dummy_pose;
     }
+
     poseT new_pose = getBestModel(detectedObjects);
     
     pcl::PointCloud<myPointXYZ>::Ptr trans_model(new pcl::PointCloud<myPointXYZ>());
@@ -94,21 +93,27 @@ void greedyObjRansac::GreedyRecognize(const pcl::PointCloud<myPointXYZ>::Ptr sce
 {
     poses.clear();
     pcl::PointCloud<myPointXYZ>::Ptr cur_scene = scene_xyz;
+
     int iter = 0;
     while(true)
     {
-        //std::cerr<< "Recognizing Attempt --- " << iter << std::endl;
+        std::cerr<< "Recognizing Attempt --- " << iter << std::endl;
+        std::cerr << "Scene point cloud size: " << cur_scene->size() << std::endl;
         pcl::PointCloud<myPointXYZ>::Ptr filtered_scene(new pcl::PointCloud<myPointXYZ>());
         poseT new_pose = recognizeOne(cur_scene, filtered_scene);
         
         if( filtered_scene->empty() == true )
+        {
+            std::cerr << "Iteration #" << iter << ": No object detected anymore from this point cloud.\n";
             break;
-        
+        }
+
         poses.push_back(new_pose);
         cur_scene = filtered_scene;
         iter++;
+
     }
-    //std::cerr<< "Recognizing Done!!!" << std::endl;
+    std::cerr<< "Recognizing Done!!!" << std::endl;
 
 }
 
@@ -165,16 +170,13 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
     for ( list< boost::shared_ptr<PointSetShape> >::iterator it = detectedObjects.begin() ; it != detectedObjects.end() ; ++it )
     {
         boost::shared_ptr<PointSetShape> shape = (*it);
-        if ( shape->getUserData() ){
-            printf("\t%s, confidence: %lf\n", shape->getUserData()->getLabel(), shape->getConfidence());
-        }
 
         if (shape->getConfidence() < minConfidence){
-            printf("Skipping shape, confidence too low\n");
+            // printf("Skipping shape, confidence too low\n");
             std::cerr << "Skipping shape: " << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() <<" is too low\n";
             continue;
         }
-	else std::cerr << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() << std::endl;
+    	else std::cerr << shape->getUserData()->getLabel() << " confidence: " << shape->getConfidence() << std::endl;
         double **mat4x4 = mat_alloc(4, 4);
         shape->getHomogeneousRigidTransform(mat4x4);
         
@@ -226,7 +228,7 @@ void greedyObjRansac::AddModel(std::string name, std::string label)
     models.push_back(LoadMesh(name,label));
 }
 
-void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, int color[3])
+void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, uchar color[3])
 {
     std::vector<pcl::PointCloud<myPointXYZ>::Ptr> rec;
     for( std::vector<ModelT>::iterator it = models.begin() ; it < models.end() ; it++ )
@@ -262,7 +264,7 @@ void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, c
     }
 }
 
-void greedyObjRansac::visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, std::map<std::string, int> &model_name_map, uchar model_color[11][3])
+void greedyObjRansac::visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, std::map<std::string, std::size_t> &model_name_map, uchar model_color[11][3])
 {
     std::vector<pcl::PointCloud<myPointXYZ>::Ptr> rec;
     for( std::vector<ModelT>::iterator it = models.begin() ; it < models.end() ; it++ )
@@ -286,7 +288,7 @@ void greedyObjRansac::visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer,
                 ss << count;
 
                 viewer->addPolygonMesh<myPointXYZ>(cur_cloud, models[i].model_mesh->polygons, it->model_name+"_"+ss.str());
-                int id = model_name_map[it->model_name];
+                std::size_t id = model_name_map[it->model_name];
                 viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, model_color[id][0]/255.0, model_color[id][1]/255.0, model_color[id][2]/255.0, it->model_name+"_"+ss.str());
                 //if( it->model_name == "1" )
                 //    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.55, 0.05, it->model_name+"_"+ss.str());
@@ -348,7 +350,12 @@ void greedyObjRansac::ICP(std::vector<poseT> &poses, const pcl::PointCloud<myPoi
                 guess.block<3,3>(0,0) = it->rotation.toRotationMatrix();
                 
                 pcl::PointCloud<myPointXYZ>::Ptr Final(new pcl::PointCloud<myPointXYZ>());
+
+#if PCL_VERSION_COMPARE(<, 1, 7, 0)
                 icp.setInputCloud(rec[i]);
+#else
+                icp.setInputSource(rec[i]);
+#endif
                 icp.align(*Final, guess);
                 
                 Eigen::Matrix4f tran = icp.getFinalTransformation();
@@ -370,7 +377,7 @@ void greedyObjRansac::ICP(std::vector<poseT> &poses, const pcl::PointCloud<myPoi
 void greedyObjRansac::genHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, list<AcceptedHypothesis> &acc_hypotheses)
 {
     vtkSmartPointer<vtkPolyData> vtk_scene = PolyDataFromPointCloud(scene_xyz);
-    vtkPoints* scene = vtk_scene->GetPoints();
+    // vtkPoints* scene = vtk_scene->GetPoints();
     
     //vtkPoints* scene = PolyDataFromPointCloud(scene_xyz);
     
@@ -386,7 +393,7 @@ void greedyObjRansac::genHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene
 void greedyObjRansac::mergeHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, list<AcceptedHypothesis> &acc_hypotheses, std::vector<poseT> &poses)
 {
     vtkSmartPointer<vtkPolyData> vtk_scene = PolyDataFromPointCloud(scene_xyz);
-    vtkPoints* scene = vtk_scene->GetPoints();
+    // vtkPoints* scene = vtk_scene->GetPoints();
     
     //vtkPoints* scene = PolyDataFromPointCloud(scene_xyz);
     

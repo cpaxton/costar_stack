@@ -351,7 +351,7 @@ cv::Mat fpfh_cloud(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::PointClo
     //std::cerr<<fpfhs->size()<<" "<<cloud_filtered->size()<<std::endl;
     //system("pause");
     cv::Mat fea = cv::Mat::zeros(fpfhs->size(), 33, CV_32FC1);
-    for( int i = 0 ; i < fpfhs->size() ; i++ )
+    for( std::size_t i = 0 ; i < fpfhs->size() ; i++ )
     {
         float *ptr = (float *)fea.row(i).data;
         memcpy(ptr, fpfhs->at(i).histogram, sizeof(float)*33);
@@ -468,7 +468,7 @@ cv::Mat shot_cloud_ss(const pcl::PointCloud<PointT>::Ptr cloud, const pcl::Point
 
     shot.compute(*descriptors);
     cv::Mat fea = cv::Mat::zeros(descriptors->size(), 352, CV_32FC1);
-    for( int i = 0 ; i < descriptors->size() ; i++ )
+    for( std::size_t i = 0 ; i < descriptors->size() ; i++ )
     {
         float *ptr = (float *)fea.row(i).data;
         float temp = descriptors->at(i).descriptor[0];  // check whether descriptor is valid
@@ -672,7 +672,7 @@ void ExtractHue(pcl::PointCloud<PointT>::Ptr cloud, pcl::PointCloud<pcl::PointXY
     //#pragma omp parallel for firstprivate(cloud_hue)
     for(int j = 0 ; j < num ; j++ )
     {
-            pcl::PointXYZHSV &temp = cloud_hue->points[j];
+            // pcl::PointXYZHSV &temp = cloud_hue->points[j];
             int rgb[3] = { cloud->points[j].r, cloud->points[j].g, cloud->points[j].b };
             float hsi[3];
             RGBToHSI(rgb, hsi);
@@ -743,7 +743,7 @@ void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "off_key_pt2");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "off_key_pt2");
 	//*
-	for (int j = 0; j < key_pt1->size (); j++)
+	for (std::size_t j = 0; j < key_pt1->size (); j++)
 	{
 		std::stringstream ss_line;
 		ss_line << "corr_line" << j;
@@ -757,11 +757,11 @@ void showCorrs(const std::vector<keyT> &key1, const std::vector<keyT> &key2, pcl
 		viewer->addLine<myPointXYZ, myPointXYZ> (model_point, scene_point, 0, 255, 0, ss_line.str ());
 	}
 	//*
-	for(int i = 0 ; i < key1.size(); i++ )
+	for(std::size_t i = 0 ; i < key1.size(); i++ )
 	{
             if( key1[i].shift_vec.empty() == false)
             {
-                for( int j = 0 ; j < key1[i].shift_vec.size() ; j++ )
+                for( std::size_t j = 0 ; j < key1[i].shift_vec.size() ; j++ )
                 {
                     std::stringstream ss_line;
                     ss_line << "proj_line" << i <<" " <<j;
@@ -1146,7 +1146,7 @@ pcl::PointCloud<myPointXYZ>::Ptr GenNormalPt(const pcl::PointCloud<myPointXYZ>::
     pcl::PointCloud<myPointXYZ>::Ptr combined_cloud(new pcl::PointCloud<myPointXYZ>());
     if( cloud->size() != cloud_normals->size() )    //one to one correspondence
         return combined_cloud;
-    for( int i = 0 ; i < cloud->size() ; i++ )
+    for( std::size_t i = 0 ; i < cloud->size() ; i++ )
     {
         myPointXYZ pt = cloud->at(i);
         NormalT pt_normal = cloud_normals->at(i);
@@ -2010,14 +2010,14 @@ cv::Mat getHSIHist(const pcl::PointCloud<PointT>::Ptr ori_cloud, cv::flann::Inde
     kdtree->setInputCloud(cloud);
     
     cv::Mat diff = cv::Mat::zeros(cloud->size(), len, CV_32FC1);
-    for( int i = 0 ; i < cloud->size() ; i++ )
+    for( std::size_t i = 0 ; i < cloud->size() ; i++ )
     {
         std::vector<int> ind;
         std::vector<float> dist;
         kdtree->radiusSearch(cloud->at(i), 0.01, ind, dist, cloud->size());
         
         cv::Mat this_code = cv::Mat::zeros(1, len, CV_32FC1);
-        for( int j = 0 ; j < ind.size() ; j++ )
+        for( std::size_t j = 0 ; j < ind.size() ; j++ )
         {
             uint32_t tmp = cloud->at(ind[j]).rgba;
             int rgba[3];

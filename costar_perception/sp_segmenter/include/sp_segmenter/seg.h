@@ -29,7 +29,7 @@
 #define CENTER_Y 232.1443718048976
 #endif
 
-static bool mycomp(const PointT &p1, const PointT &p2)
+inline bool mycomp(const PointT &p1, const PointT &p2)
 {
     return p1.z <= p2.z;
 }
@@ -37,21 +37,7 @@ static bool mycomp(const PointT &p1, const PointT &p2)
 struct segT{
     pcl::PointCloud<PointT>::Ptr cloud;
     std::vector<int> indices;   //index in original cloud
-};   
-       
-static uchar model_color[11][3] = 
-{ {0, 0, 0}, 
-  {255, 0, 0},
-  {0, 255, 0},
-  {0, 0, 255},
-  {255, 255, 0},
-  {255, 0, 255},
-  {0, 255, 255},
-  {255, 128, 0},
-  {255, 0, 128},
-  {0, 128, 255},
-  {128, 0, 255},
-}; 
+};
 
 vtkSmartPointer<vtkPolyData> PolyDataFromPointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 //vtkSmartPointer<vtkPolyData> PolyDataFromPointCloud(const pcl::PointCloud<PointT>::Ptr cloud);
