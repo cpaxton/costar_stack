@@ -78,7 +78,7 @@ class CostarUR5Driver(CostarArm):
                         self.send_cart(pt.positions,acceleration,velocity) ##
                     self.set_goal(pt.positions)
 
-                    print " -- %s"%(str(pt.positions))
+                    # print " -- %s"%(str(pt.positions))
                     start_t = rospy.Time.now()
 
                     if self.cur_stamp > stamp:
@@ -87,7 +87,7 @@ class CostarUR5Driver(CostarArm):
                     rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
                     t = pt.time_from_start
 
-            print " -- GOAL: %s"%(str(traj.points[-1].positions))
+            # print " -- GOAL: %s"%(str(traj.points[-1].positions))
             if not cartesian:
                 self.send_q(traj.points[-1].positions,acceleration,velocity)
             else:
@@ -103,10 +103,10 @@ class CostarUR5Driver(CostarArm):
                 rate.sleep()
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
-        print goal
+        # print goal
         self.client.send_goal(goal)
         self.client.wait_for_result()
-        print self.client.get_result()
+        # print self.client.get_result()
 
         if self.at_goal:
             return 'SUCCESS - moved to pose'

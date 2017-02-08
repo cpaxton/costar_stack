@@ -65,9 +65,6 @@ class SimplePlanning:
       #    q = self.kdl_kin.inverse(T)
       return q
 
-    '''
-    TODO: finish this
-    '''
     def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, steps_per_radians = 4, time_multiplier=2):
 
       # interpolate between start and goal
@@ -163,10 +160,10 @@ class SimplePlanning:
 
 
           if is_list_of_frame:
-            print "is a list of frames"
+            # print "is a list of frames"
             frame = frames[i]
           else:
-            "just one frame"
+            # "just one frame"
             frame = frames
 
           if i == 0:
@@ -316,14 +313,12 @@ class SimplePlanning:
         # TODO: change this to use cart goal(s)
         # - frame: take a list of frames
         # - returns: goal contraints
-
+        constrain_mode = ModeJoints
         if compute_ik:
-          (ik_resp, goal) = self.getGoalConstraints(frame,q,mode=ModeJoints)
+          (ik_resp, goal) = self.getGoalConstraints(frame,q,mode=constrain_mode)
         
         #if (ik_resp.error_code.val > 0):
         #  return (1,None)
-
-        print 'IK error code: ', ik_resp
         # print goal
 
         motion_req.goal_constraints.append(goal)
@@ -332,8 +327,15 @@ class SimplePlanning:
         motion_req.allowed_planning_time = 4.0
         motion_req.planner_id = "RRTConnectkConfigDefault"
         
-        if goal is None or len(motion_req.goal_constraints[0].joint_constraints) == 0 or (not ik_resp is None and ik_resp.error_code.val < 0):
-            return (-31, None)
+        if goal is None:
+          print 'Error: goal is None'
+          return (-31, None)
+        elif constrain_mode == ModeJoints and motion_req is not None and len(motion_req.goal_constraints[0].joint_constraints) == 0:
+          print 'Error: joint constraints length is 0'
+          return (-31, None)
+        elif ((not ik_resp is None and ik_resp.error_code.val < 0) or (not ik_resp is None and ik_resp.error_code.val < 0)):
+          print 'Error: ik resp failure'
+          return (-31, None)
 
         goal = MoveGroupGoal()
         goal.planning_options = planning_options
