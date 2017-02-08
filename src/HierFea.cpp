@@ -352,7 +352,7 @@ std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L1(const std::vector<cv::Mat> rawf
     for( int j = 0 ; j < pool_type_num ; j++ )
     {
         cv::flann::Index *fea_tree;
-        int fea_len, feaK;
+        int fea_len = 0, feaK;
         if( pool_flag[j] == true)
         {
             switch(j)
@@ -395,7 +395,7 @@ std::vector<cv::Mat> Hier_Pooler::EncodeLayer_L2(const std::vector<cv::Mat> rawf
     for( int j = 0 ; j < pool_type_num ; j++ )
     {
         cv::flann::Index *fea_tree;
-        int fea_len, feaK;
+        int fea_len = 0, feaK;
         if( pool_flag[j] == true)
         {
             switch(j)

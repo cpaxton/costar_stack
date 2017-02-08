@@ -232,12 +232,12 @@ void sweepNaN(std::string path, int c1, int c2)
 
 int readFrameID(std::string name)
 {
-    int e_idx, s_idx;
+    int e_idx = 0, s_idx = 0;
     for( int i = name.size() - 1 ; i >= 0 ; i-- )
     {
         if( name[i] == '.' )
             e_idx = i;
-        if( name[i] == '_' )
+        else if( name[i] == '_' )
         {
             s_idx = i;
             break;
@@ -464,10 +464,11 @@ void readUWInstWithImg(std::string path, ObjectSet &train_set, ObjectSet &test_s
             std::ifstream fp;
             fp.open(lfile.c_str());
             
-            int topleft_x, dump, topleft_y;
+            int topleft_x, topleft_y;
             char tmp;
             fp >> topleft_x;
             fp >> tmp;
+            // int dump;
 //            fp >> dump;
             fp >> topleft_y;
 //            std::cerr << workspace+rgb_files[j].substr(0, rgb_files[j].size() - 9)+"_loc.txt" << std::endl;
@@ -638,10 +639,11 @@ void readUWInstTwo(std::string path_img, std::string path_cloud, ObjectSet &trai
             std::ifstream fp;
             fp.open(lfile.c_str());
             
-            int topleft_x, dump, topleft_y;
+            int topleft_x, topleft_y;
             char tmp;
             fp >> topleft_x;
             fp >> tmp;
+            // int dump;
 //            fp >> dump;
             fp >> topleft_y;
 //            std::cerr << workspace+rgb_files[j].substr(0, rgb_files[j].size() - 9)+"_loc.txt" << std::endl;

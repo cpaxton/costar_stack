@@ -454,17 +454,15 @@ void spPooler::build_SP_FPFH(const std::vector< boost::shared_ptr<Pooler_L0> > &
 //    std::cerr << count << " " << sp_num << std::endl;
 }
 
-#if 0
 void spPooler::build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &sift_pooler_set, Hier_Pooler &cshot_producer, const std::vector<cv::SiftFeatureDetector*> &sift_det_vec, bool max_pool_flag)
 {
-/*
-//    cv::SiftFeatureDetector *sift_det = new cv::SiftFeatureDetector(
-//        0, // nFeatures
-//        4, // nOctaveLayers
-//        -10000, // contrastThreshold 
-//        100000, //edgeThreshold
-//        sigma//sigma
-//        );
+    // cv::SiftFeatureDetector *sift_det = new cv::SiftFeatureDetector(
+    //    0, // nFeatures
+    //    4, // nOctaveLayers
+    //    -10000, // contrastThreshold 
+    //    100000, //edgeThreshold
+    //    sigma//sigma
+    //    );
     
     cv::SiftDescriptorExtractor * sift_ext = new cv::SiftDescriptorExtractor();
     
@@ -480,8 +478,8 @@ void spPooler::build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &
     tree->setInputCloud(data.down_cloud);
     
     std::vector<cv::KeyPoint> sift_keys = extSIFTKeys(cur_rgb, sift_det_vec);
-//    std::vector<cv::KeyPoint> sift_keys;
-//    sift_det->detect(cur_gray, sift_keys);
+    // std::vector<cv::KeyPoint> sift_keys;
+    // sift_det->detect(cur_gray, sift_keys);
     
     std::vector<MulInfoT> data_set(sp_num);
     std::vector<bool> active_flag(sp_num, false);
@@ -497,7 +495,7 @@ void spPooler::build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &
         col = col >= width? width : col;
         
         int tmp_idx = row*width + col;
-//        std::cerr << sift_keys[k].pt.y << " " << sift_keys[k].pt.x << " " << sift_keys[k].angle << " " << sift_keys[k].response << std::endl;
+        // std::cerr << sift_keys[k].pt.y << " " << sift_keys[k].pt.x << " " << sift_keys[k].angle << " " << sift_keys[k].response << std::endl;
         if( pcl_isfinite(full_cloud->at(tmp_idx).z) == false)
             continue;
         
@@ -521,14 +519,14 @@ void spPooler::build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &
     raw_sp_sift.clear();
     raw_sp_sift.resize(sp_num);
     
-//    int count = 0;
+    // int count = 0;
     #pragma omp parallel for schedule(dynamic, 1)
     for( size_t k = 0 ; k < sp_num ; k++ )
     {
         if( in_sift_keys[k].empty() == true )
             continue;
         
-//        count++;
+        // count++;
         cv::Mat cur_sift_descr;
         sift_ext->compute(cur_gray, in_sift_keys[k], cur_sift_descr);
         for(int r = 0 ; r < cur_sift_descr.rows ; r++ )
@@ -544,12 +542,9 @@ void spPooler::build_SP_SIFT(const std::vector< boost::shared_ptr<Pooler_L0> > &
     	}
         
     }
-//    std::cerr << count << " " << sp_num << std::endl;
-//    delete sift_det;
+    // std::cerr << count << " " << sp_num << std::endl;
     delete sift_ext;
-*/
 }
-#endif
 
 pcl::PointCloud<PointT>::Ptr spPooler::refineScene(const pcl::PointCloud<PointT>::Ptr scene)
 {

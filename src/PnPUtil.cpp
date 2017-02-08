@@ -9,7 +9,7 @@ using namespace cv;
 std::vector<Point3f> PnPUtil::BackprojectPts(const std::vector<Point2f>& pts, const Eigen::Matrix4f& camTf, const Eigen::Matrix3f& K, const Mat& depth)
 {
   std::vector<Point3f> pts3d;
-  for(int i = 0; i < pts.size(); i++)
+  for(std::size_t i = 0; i < pts.size(); i++)
   {
     Point2f pt = pts[i];
     Eigen::Vector3f hkp(pt.x, pt.y, 1);
@@ -45,7 +45,7 @@ bool PnPUtil::RansacPnP(const std::vector<Point3f>& matchPts3d, const std::vecto
   const int m = 4; // points per sample
   const int inlier_ratio_cutoff = 0.4; 
   std::vector<int> ind;
-  for(unsigned int i = 0; i < matchPts.size(); i++)
+  for(std::size_t i = 0; i < matchPts.size(); i++)
   {
     ind.push_back(i);
   }
@@ -84,7 +84,7 @@ bool PnPUtil::RansacPnP(const std::vector<Point3f>& matchPts3d, const std::vecto
     std::vector<Point2f> reprojPts;
     projectPoints(matchPts3d, ran_Rvec, ran_t, Kcv, distcoeffcvPnp, reprojPts);
     std::vector<int> inliersIdx;
-    for(unsigned int j = 0; j < reprojPts.size(); j++)
+    for(std::size_t j = 0; j < reprojPts.size(); j++)
     {
       double reprojError = sqrt((reprojPts[j].x-matchPts[j].x)*(reprojPts[j].x-matchPts[j].x) + (reprojPts[j].y-matchPts[j].y)*(reprojPts[j].y-matchPts[j].y));
 
@@ -120,7 +120,7 @@ bool PnPUtil::RansacPnP(const std::vector<Point3f>& matchPts3d, const std::vecto
 
   std::vector<Point3f> inlierPts3d;
   std::vector<Point2f> inlierPts2d;
-  for(unsigned int i = 0; i < bestInliersIdx.size(); i++)
+  for(std::size_t i = 0; i < bestInliersIdx.size(); i++)
   {
     inlierPts3d.push_back(matchPts3d[bestInliersIdx[i]]);
     inlierPts2d.push_back(matchPts[bestInliersIdx[i]]);
@@ -135,7 +135,7 @@ bool PnPUtil::RansacPnP(const std::vector<Point3f>& matchPts3d, const std::vecto
     std::vector<Point2f> reprojPts;
     Mat J;
     projectPoints(inlierPts3d, Rvec, t, Kcv, distcoeffcvPnp, reprojPts, J);
-    for(unsigned int j = 0; j < reprojPts.size(); j++)
+    for(std::size_t j = 0; j < reprojPts.size(); j++)
     {
       double reprojError = sqrt((reprojPts[j].x-inlierPts2d[j].x)*(reprojPts[j].x-inlierPts2d[j].x) + (reprojPts[j].y-inlierPts2d[j].y)*(reprojPts[j].y-inlierPts2d[j].y));
       *avgReprojError += reprojError/reprojPts.size();

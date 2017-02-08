@@ -97,7 +97,7 @@ class Maxclique {
     }
   };
   Vertices V;
-  ColorClass *C, QMAX, Q;
+  ColorClass *C, Q, QMAX;
   class StepCount {
     int i1, i2;
   public:
