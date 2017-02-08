@@ -137,7 +137,8 @@ class CostarArm(object):
 
         self.closed_form_IK_solver = closed_form_IK_solver
         # how important is it to choose small rotations in goal poses
-        self.rotation_weight = 0.05
+        self.rotation_weight = 0.5
+        self.joint_space_weight = 0.05
 
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
@@ -288,12 +289,19 @@ class CostarArm(object):
                 Ts.append(T)
 
                 # TODO(cpaxton) update this to include rotation
+                quaternion_dot = np.dot(np.array(T_fwd.M.GetQuaternion()),np.array(T.M.GetQuaternion()))
+                # print 'quaternion_dot^2: ', quaternion_dot ** 2, ' arccos: ', 2 * quaternion_dot ** 2 - 1
+                # if abs(quaternion_dot) > 1:
+                # 	quaternion_dot = np.sign(quaternion_dot)
+                delta_rotation = np.arccos(2 * quaternion_dot ** 2 - 1) 
                 q_new = self.ik(pm.toMatrix(T),self.q0)
                 if q_new is not None:
                     dq = np.absolute(q_new - self.q0) * self.joint_weights
-                    print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * np.sum(dq), ' dq6: ', dq[-1]
-                    dists.append((T.p - T_fwd.p).Norm() + self.rotation_weight * np.sum(dq))
-                
+                    combined_distance = (T.p - T_fwd.p).Norm() + self.rotation_weight * delta_rotation + self.joint_space_weight * np.sum(dq)
+                    print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * delta_rotation, 'dq6', dq[-1] , 'dist: ', combined_distance
+                    # print 'q_new: ', q_new
+                    dists.append(combined_distance)
+
             if len(Ts) == 0:
                 msg = 'FAILURE - no objects found!'
             else:
@@ -355,7 +363,7 @@ class CostarArm(object):
             pose = pm.fromMsg(req.target)
             (code,res) = self.planner.getPlan(pose,self.q0)
 
-            print "DONE PLANNING: " + str((code, res))
+            print "DONE PLANNING: " + str(code)
             return self.send_and_publish_planning_result(res,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')

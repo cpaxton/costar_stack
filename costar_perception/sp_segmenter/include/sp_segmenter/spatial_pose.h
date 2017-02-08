@@ -20,8 +20,6 @@
 namespace bg = boost::geometry;
 namespace bgi = boost::geometry::index;
 
-double maxDeltaTime = 60; //1 minute delta time max
-
 struct objectPose {
     poseT pose;
     double timestamp;
@@ -59,17 +57,20 @@ struct is_correct_model
     std::string model_name_;
 };
 
+inline
 std::string getTFname (const value &Node)
 {
     return std::get<1>(Node).tfName;
 }
 
+inline
 point3d generatePoint(const poseT &pose)
 {
     point3d point(pose.shift.x(),pose.shift.y(),pose.shift.z());
     return point;
 }
 
+inline
 box generateBox(const poseT &pose, const double &distance)
 {
     point3d pointA(pose.shift.x()-distance,pose.shift.y()-distance,pose.shift.z()-distance),
@@ -77,6 +78,7 @@ box generateBox(const poseT &pose, const double &distance)
     return box(pointA,pointB);
 }
 
+inline
 void treeInsert(objectRtree &rtree, const std::vector<poseT> &all_poses, const double &timestamp, 
     std::map<std::string, unsigned int> &objectTFindex)
 {
@@ -93,6 +95,7 @@ void treeInsert(objectRtree &rtree, const std::vector<poseT> &all_poses, const d
     }
 }
 
+inline
 void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<std::string, objectSymmetry> &objectDict, 
     std::vector<poseT> &all_poses, const double &timestamp, 
     std::map<std::string, unsigned int> &objectTFindex, 
@@ -152,6 +155,7 @@ void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<s
   std::cerr << "New rtree size: " << rtree.size() << std::endl;
 }
 
+inline
 void createTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> &objectDict, std::vector<poseT> &all_poses, 
     const double &timestamp, std::map<std::string, unsigned int> &objectTFindex, 
     const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0)) {
@@ -162,6 +166,7 @@ void createTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
     treeInsert(rtree, all_poses, timestamp, objectTFindex);
 }
 
+inline
 void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> &objectDict, const std::vector<poseT> &all_poses,
     const double &timestamp, std::map<std::string, unsigned int> &objectTFindex, 
     const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0))
@@ -221,6 +226,7 @@ void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> 
     std::cerr << "New rtree size: " << rtree.size() << std::endl;
 }
 
+inline
 std::vector<value> getAllNodes (const objectRtree &rtree)
 {
     std::vector<value> nodes;
@@ -228,6 +234,7 @@ std::vector<value> getAllNodes (const objectRtree &rtree)
     return nodes;
 }
 
+inline
 std::vector<poseT> getAllPoses (const objectRtree &rtree)
 {
     std::vector<value> nodes = getAllNodes(rtree);
