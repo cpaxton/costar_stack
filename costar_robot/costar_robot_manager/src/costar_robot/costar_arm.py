@@ -42,6 +42,7 @@ class CostarArm(object):
             steps_per_meter=300,
             steps_per_radians=4,
             closed_form_IK_solver = None,
+            default_distance = 0.05,
             dof=7,
             perception_ns="/SPServer"):
 
@@ -50,6 +51,7 @@ class CostarArm(object):
         self.end_link = end_link
         self.planning_group = planning_group
         self.dof = dof
+        self.default_distance = default_distance
 
         self.base_steps = base_steps
         self.steps_per_meter = steps_per_meter
@@ -109,6 +111,9 @@ class CostarArm(object):
         self.js_servo = rospy.Service('/costar/ServoToJointState',ServoToJointState,self.servo_to_joints_call)
         self.save_frame = rospy.Service('/costar/SaveFrame',SaveFrame,self.save_frame_call)
         self.save_joints = rospy.Service('/costar/SaveJointPosition',SaveFrame,self.save_joints_call)
+        self.smartmove_release_srv = rospy.Service('/costar/SmartRelease',SmartMove,self.smartmove_release_cb)
+        self.smartmove_grasp_srv = rospy.Service('/costar/SmartGrasp',SmartMove,self.smartmove_grasp_cb)
+        self.smartmove_query_srv = rospy.Service('/costar/Query',SmartMove,self.query_cb)
         self.get_waypoints_srv = GetWaypointsService(world=world,
                                                      service=False,
                                                      ns=perception_ns)
@@ -513,7 +518,6 @@ class CostarArm(object):
         # detach the collision object to the gripper
 
         self.planning_group.detachObject(object_name, self.end_link)
-
         # self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
         # planning_scene_diff = PlanningScene(is_diff=True)
         # # remove object from the gripper, then add the original collision object
@@ -533,7 +537,7 @@ class CostarArm(object):
 
         # self.planning_scene_publisher.publish(planning_scene_diff)
 
-    def select(self, predicates):
+    def query(self, predicates):
         # Get the best object to manipulate, just like smart move, but without the actual movement
         # This will check robot collision and reachability on all possible object grasp position based on its symmetry.
         # Then, it will returns one of the best symmetry to work with for grasp and release.
@@ -545,16 +549,56 @@ class CostarArm(object):
         # joint.position = self.ik(T,self.q0)
         pass
 
-    def grasp(self, list_of_waypoints, object_name):
+    def smartmove_grasp(self, list_of_waypoints, distance):
         # Execute the list of waypoints to the selected object
         # It receive one object frame from select, and do motion planning for that
         # close gripper
         self.attach(object_name)
         pass
 
-    def release(self, list_of_waypoints, object_name):
+    '''
+    SmartMove Release:
+    - takes list of waypoints and loops over them
+    - moves in some distance (hard coded initially?)
+    - open gripper
+    - move back
+    '''
+    def smartmove_release(self, list_of_waypoints, distance):
         # Execute the list of waypoints to the selected object
         # open gripper
         self.detach(object_name)
         pass
 
+    # =========================================================================
+
+    '''
+    Wrapper for the RELEASE service
+    '''
+    def smartmove_release_cb(self, req):
+    	list_of_waypoints = query(req)
+    	if len(list_of_waypoints) == 0:
+    		return "FAILURE -- no suitable points found"
+    	distance = self.default_distance
+    	return self.smartmove_release(list_of_waypoints, distance)
+
+    '''
+    Wrapper for the GRASP service
+    '''
+    def smartmove_grasp_cb(self, req):
+    	list_of_waypoints = query(req)
+        if len(list_of_waypoints) == 0:
+        	return "FAILURE -- no suitable points found"
+        distance = self.default_distance
+        return self.smartmove_grasp(list, distance)
+
+    '''
+    Wrapper for the QUERY service
+    '''
+   	def query_cb(self,req):
+   		list_of_waypoints = self.query(req)
+   		if len(list_of_waypoints) == 0:
+   			return "FAILURE"
+   		else:
+   			# set param and publish TF frame appropriately under reserved name
+   			pass
+   			return "SUCCESS"
