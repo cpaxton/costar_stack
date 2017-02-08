@@ -154,26 +154,16 @@ class CostarUR5Driver(CostarArm):
         #  cmd = list(T.p) + [angle*axis[0],angle*axis[1],angle*axis[2]]
         #  self.ur.movel(cmd,wait=True,acc=acceleration,vel=velocity)
 
+
+    '''
+    The basic handle_tick function just needs to deal with the parents.
+    '''
     def handle_tick(self):
+        super(CostarUR5Driver, self).handle_tick()
 
-        # send out the joint states
-        #self.current_joint_positions = self.ur.getj_all()
-        #self.q0 = np.array(self.current_joint_positions[0])
-        #self.q_v0 = np.array(self.current_joint_positions[1])
-        #self.q_a0 = np.array(self.current_joint_positions[2])
-        #self.js_publisher.publish(JointState(
-        #  header=Header(stamp=rospy.Time.now()),
-        #  name=self.joint_names,
-        #  position=self.q0,
-        #  velocity=self.q_v0,
-        #  effort=self.q_a0))
-        #self.update_position()
-
+        # TODO(cpaxton) or TODO(fjonath): any necessary handling here?
         if self.driver_status in mode.keys():
-
             if self.driver_status == 'SHUTDOWN':
-                # self.ur.cleanup()
-                # self.ur.shutdown()
                 pass
             elif self.driver_status == 'SERVO':
                 pass
@@ -181,8 +171,5 @@ class CostarUR5Driver(CostarArm):
                 pass
             elif self.driver_status == 'TEACH':
                 pass
-
-        else:
-            #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
-            pass
+ 
 

@@ -92,6 +92,7 @@ class CostarIIWADriver(CostarArm):
             return 'FAILURE - did not reach destination'
 
     def handle_tick(self):
+        super(CostarIIWADriver,self).handle_tick()
         if self.driver_status in mode.keys():
             self.iiwa_mode_publisher.publish(mode[self.driver_status])
         else:
