@@ -60,7 +60,7 @@
     <param name="cropBoxX" type="double" value="0.35"/>
     <param name="cropBoxY" type="double" value="0.35"/>
     <param name="cropBoxZ" type="double" value="0.35"/>
-    <param name="cropBoxTableZ" type="double" value="0.01"/>
+    <param name="cropBoxTableZ" type="double" value="0.02"/>
 
     <param name="cropBoxGripperX" type="double" value="0.05"/>
     <param name="cropBoxGripperY" type="double" value="0.125"/>

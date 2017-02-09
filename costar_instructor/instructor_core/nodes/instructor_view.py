@@ -872,7 +872,9 @@ class Instructor(QWidget):
         self.move(self.settings.value('pos', QPoint(50, 50), type=QPoint))
         # self.showMaximized()
 
-        self.sound_pub = rospy.Publisher('/audri/sound/sound_player', String)
+        self.sound_pub = rospy.Publisher('/audri/sound/sound_player',
+            String,
+            queue_size=1000)
 
         ### ROBOT ###
         # Robot Buttons #
@@ -922,7 +924,6 @@ class Instructor(QWidget):
         self.lib_load_service = rospy.ServiceProxy('/librarian/load', librarian_msgs.srv.Load)
         self.lib_list_service = rospy.ServiceProxy('/librarian/list', librarian_msgs.srv.List)
         self.lib_delete_service = rospy.ServiceProxy('/librarian/delete', librarian_msgs.srv.Delete)
-        rospy.logwarn('INSTRUCTOR: CREATED LIBRARIAN SERVICES')
         self.lib_set_type_service('instructor_node')
         self.lib_set_type_service('instructor_subtree')
         self.set_up_gui()
@@ -945,7 +946,6 @@ class Instructor(QWidget):
     def refresh_available_plugins(self):
         if self.is_set_up:
             changed = False
-            # rospy.logwarn('INSTRUCTOR: REFRESHING COMPONENTS')
             costar_attachment_namespace = '/costar/component/ui/'
             required_plugins = []
             if rospy.has_param(costar_attachment_namespace):
@@ -1038,14 +1038,11 @@ class Instructor(QWidget):
             self.all_generators[name] = plugin['module']()
 
     def splitter_moved(self,pos,index):
-        # rospy.logwarn(pos)
-        # rospy.logwarn(self.container_widget.geometry())
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
         self.drawer.move(self.container_widget.geometry().left()-360,50)
         self.drawer.hide()
 
     def window_resized(self,event):
-        rospy.logwarn(event.size())
         visible = self.drawer.isVisible()
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
         self.drawer.move(self.container_widget.geometry().left()-360,50)
@@ -1152,9 +1149,7 @@ class Instructor(QWidget):
         self.waypoint_btn.clicked.connect(self.show_waypoint_manager)
         self.waypoint_dialog_saved_geom = None
 
-        # JOG Dialog
-        self.jog_dialog = JogDialog(self.show_jog)
-        self.jog_dialog.hide()
+        # SMARTMOVE DIALOG
         self.smartmove_dialog = SmartMoveDialog(self.show_smartmove)
         self.smartmove_button.clicked.connect(self.show_smartmove)
 
@@ -1372,17 +1367,6 @@ class Instructor(QWidget):
         self.menu_visible = False
         self.menu_widget.hide()
 
-    def show_jog(self):
-        if self.jog_dialog.isVisible():
-            self.jog_dialog.saved_geom = self.jog_dialog.geometry()
-            self.jog_dialog.hide()
-        else:
-            if self.jog_dialog.saved_geom is not None:
-                self.jog_dialog.move(self.jog_dialog.saved_geom.x(),self.jog_dialog.saved_geom.y())
-            else:
-                self.jog_dialog.move(self.geometry().x()+self.geometry().width()/2-self.jog_dialog.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.jog_dialog.geometry().height()/2)
-            self.jog_dialog.show()
-
     def show_smartmove(self):
         if self.smartmove_dialog.isVisible():
             self.smartmove_dialog.saved_geom = self.smartmove_dialog.geometry()
@@ -1492,7 +1476,7 @@ class Instructor(QWidget):
             self.toast('ABORTED: Robot is no longer in servo')
             
     def run_tree(self):
-         rospy.logwarn(self.robot_.driver_status)
+         #rospy.logwarn(self.robot_.driver_status)
          if 'servo' not in str(self.robot_.driver_status).lower():
              self.toast('Robot is NOT in SERVO MODE')
              return 
@@ -1516,7 +1500,7 @@ class Instructor(QWidget):
 
     def run(self):
         result = self.root_node.execute()
-        rospy.logwarn(result)
+        #rospy.logwarn(result)
         # self.regenerate_tree()
         if result == 'SUCCESS':
             rospy.logwarn('INSTRUCTOR: Task Tree FINISHED WITH SUCCESS')
@@ -1626,8 +1610,7 @@ class Instructor(QWidget):
                 tree = self.walk_tree(self.current_tree[self.left_selected_node]) # this should start from the selected node
                 # tree = self.walk_tree(self.root_node) #this will always start from root
                 D = yaml.dump({'name':self.save_name,'tree':tree})
-                rospy.logwarn('SAVING SUBTREE')
-                rospy.logwarn(D)
+                rospy.logwarn('SAVING SUBTREE to %s'%self.save_name)
                 print self.lib_save_service(id=self.save_name,type='instructor_subtree',text=D)
                 # Hide on successful save    
                 #self.subtree_save_widget.hide()
