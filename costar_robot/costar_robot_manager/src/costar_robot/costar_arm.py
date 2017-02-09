@@ -43,6 +43,7 @@ class CostarArm(object):
             steps_per_radians=4,
             closed_form_IK_solver = None,
             default_distance = 0.05,
+            state_validity_penalty = 1e5,
             dof=7,
             perception_ns="/SPServer"):
 
@@ -141,6 +142,7 @@ class CostarArm(object):
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
 
         self.closed_form_IK_solver = closed_form_IK_solver
+        self.state_validity_penalty = state_validity_penalty
         # how important is it to choose small rotations in goal poses
         self.rotation_weight = 0.5
         self.joint_space_weight = 0.05
@@ -156,7 +158,7 @@ class CostarArm(object):
     listen to robot joint state information
     '''
     def js_cb(self,msg):
- 	
+     
         if len(msg.position) is self.dof:
             pass
             self.old_q0 = self.q0
@@ -253,81 +255,22 @@ class CostarArm(object):
 
         # Check acceleration and velocity limits
         (acceleration, velocity) = self.check_req_speed_params(req) 
+        possible_goals = self.query(req)
 
-        # Find possible poses
-        res = self.get_waypoints_srv.get_waypoints(
-                req.obj_class, # object class to move to
-                req.predicates, # predicates to match
-                [req.pose], # offset/transform from each member of the class
-                [req.name] # placeholder name
-                )
+        if len(possible_goals) == 0:
+            return 'FAILURE -- no valid poses found'
 
-        if res is None:
-            msg = 'FAILURE - no objects found that meet predicate conditions!'
-            return msg
+        for (dist,T,obj,name) in possible_goals:
+            rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
-        (poses,names,objects) = res
+            # plan to T
+            (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
+            msg = self.send_and_publish_planning_result(res,acceleration,velocity)
 
-        T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
+            if msg[0:7] == 'SUCCESS':
+                break
 
-        if not poses is None:
-            msg = 'FAILURE - no valid objects found!'
-            dists = []
-            Ts = []
-            for (pose,name,obj) in zip(poses,names,objects):
-
-                # figure out which tf frame we care about
-                tf_path = name.split('/')
-                tf_frame = ''
-                for part in tf_path:
-                    if len(part) > 0:
-                        tf_frame = part
-                        break
-
-                if len(tf_frame) == 0:
-                    continue
-
-                # try to move to the pose until one succeeds
-                T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
-                T = T_base_world.Inverse()*pm.fromMsg(pose)
-
-                Ts.append(T)
-
-                # TODO(cpaxton) update this to include rotation
-                quaternion_dot = np.dot(np.array(T_fwd.M.GetQuaternion()),np.array(T.M.GetQuaternion()))
-                # print 'quaternion_dot^2: ', quaternion_dot ** 2, ' arccos: ', 2 * quaternion_dot ** 2 - 1
-                # if abs(quaternion_dot) > 1:
-                # 	quaternion_dot = np.sign(quaternion_dot)
-                delta_rotation = np.arccos(2 * quaternion_dot ** 2 - 1) 
-                q_new = self.ik(pm.toMatrix(T),self.q0)
-                if q_new is not None:
-                    dq = np.absolute(q_new - self.q0) * self.joint_weights
-                    combined_distance = (T.p - T_fwd.p).Norm() + self.rotation_weight * delta_rotation + self.joint_space_weight * np.sum(dq)
-                    print 'translation: ', (T.p - T_fwd.p).Norm(), ' rotation: ', self.rotation_weight * delta_rotation, 'dq6', dq[-1] , 'dist: ', combined_distance
-                    # print 'q_new: ', q_new
-                    dists.append(combined_distance)
-
-            if len(Ts) == 0:
-                msg = 'FAILURE - no objects found!'
-            else:
-                possible_goals = zip(dists,Ts,objects,names)
-                possible_goals.sort()
-
-                for (dist,T,obj,name) in possible_goals:
-                    rospy.logwarn("Trying to move to frame at distance %f"%(dist))
-
-                    # plan to T
-                    (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
-                    msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-
-                    if msg[0:7] == 'SUCCESS':
-                        break
-
-            return msg
-
-        else:
-            msg = 'FAILURE - no matching moves for specified predicates'
-            return msg
+        return msg
 
     def set_goal(self,q):
         self.at_goal = False
@@ -474,7 +417,7 @@ class CostarArm(object):
         # print self.end_link, "/endpoint",  "trans = ", (0,0,0), "rot = ", (0,0,0)
         br = tf.TransformBroadcaster()
         br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
-        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
+        # br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
 
     '''
     call this when "spinning" to keep updating things
@@ -537,23 +480,122 @@ class CostarArm(object):
 
         # self.planning_scene_publisher.publish(planning_scene_diff)
 
-    def query(self, predicates):
+    def query(self, req):
         # Get the best object to manipulate, just like smart move, but without the actual movement
         # This will check robot collision and reachability on all possible object grasp position based on its symmetry.
         # Then, it will returns one of the best symmetry to work with for grasp and release.
         # it will be put on parameter server
-        validity = GetStateValidity()
-        validity.group = self.planning_group
-        
+
+        state_validity_service = rospy.ServiceProxy("/check_state_validity", GetStateValidity)
+        get_state_validity_req = GetStateValidityRequest()
+        get_state_validity_req.group_name = self.planning_group
+        robot_state = RobotState()
+        robot_state.joint_state.name = self.joint_names
+
+        # Find possible poses
+        res = self.get_waypoints_srv.get_waypoints(
+                req.obj_class, # object class to move to
+                req.predicates, # predicates to match
+                [req.pose], # offset/transform from each member of the class
+                [req.name] # placeholder name
+                )
+
+        if res is None:
+            # no poses found that meet the query!
+            return []
+
+        (poses,names,objects) = res
+        if poses is None:
+            return []
+
+        dists = []
+        Ts = []
+        T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
+        for (pose,name,obj) in zip(poses,names,objects):
+
+            # figure out which tf frame we care about
+            tf_path = name.split('/')
+            tf_frame = ''
+            for part in tf_path:
+                if len(part) > 0:
+                    tf_frame = part
+                    break
+
+            if len(tf_frame) == 0:
+                continue
+
+            # try to move to the pose until one succeeds
+            T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
+            T = T_base_world.Inverse()*pm.fromMsg(pose)
+
+            Ts.append(T)
+
+            quaternion_dot = np.dot(np.array(T_fwd.M.GetQuaternion()),np.array(T.M.GetQuaternion()))
+            delta_rotation = np.arccos(2 * quaternion_dot ** 2 - 1) 
+            
+            multiple_q_solution = False
+            q_new = list()
+
+            if self.closed_form_IK_solver == None:
+                q_new.append(self.ik(pm.toMatrix(T),self.q0))
+            else:
+                q_new = self.closed_form_IK_solver.solveIK(pm.toMatrix(T))
+
+            if q_new is not None:
+                message_print = ''
+                message_print_invalid = ''
+                ik_joint_solution_validity = ''
+                best_dist = float('inf')
+                best_invalid = float('inf')
+
+                for q_i in q_new:
+                    dq = np.absolute(q_i - self.q0) * self.joint_weights
+                    combined_distance = (T.p - T_fwd.p).Norm() + \
+                          self.rotation_weight * delta_rotation + \
+                          self.joint_space_weight * np.sum(dq)
+
+                    robot_state.joint_state.position = q_i.tolist()
+                    get_state_validity_req.robot_state = robot_state
+                    result = state_validity_service.call(get_state_validity_req)
+                    ik_joint_solution_validity += '%s ' % result.valid
+
+                    if result.valid and combined_distance < best_dist:
+                        best_dist = combined_distance
+                        message_print = 'valid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
+                         ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
+
+                    elif not result.valid and combined_distance < best_invalid:
+                        best_invalid = combined_distance 
+                        message_print_invalid = 'invalid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
+                         ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
+
+                if message_print != '':
+                    print message_print
+                    dists.append(best_dist)
+                else:
+                    print message_print_invalid
+                    dists.append(best_invalid + self.state_validity_penalty)
+                    # if len(q_new) != 1:
+                    #     print 'List of IK solution validity test result: ', ik_joint_solution_validity
+
+
+        if len(Ts) == 0:
+            possible_goals = []
+        else:
+            possible_goals = zip(dists,Ts,objects,names)
+            possible_goals.sort()
+
         joint = JointState()
         # joint.position = self.ik(T,self.q0)
-        pass
+        return possible_goals
+
 
     def smartmove_grasp(self, list_of_waypoints, distance):
         # Execute the list of waypoints to the selected object
         # It receive one object frame from select, and do motion planning for that
         # close gripper
         self.attach(object_name)
+        
         pass
 
     '''
@@ -575,30 +617,30 @@ class CostarArm(object):
     Wrapper for the RELEASE service
     '''
     def smartmove_release_cb(self, req):
-    	list_of_waypoints = query(req)
-    	if len(list_of_waypoints) == 0:
-    		return "FAILURE -- no suitable points found"
-    	distance = self.default_distance
-    	return self.smartmove_release(list_of_waypoints, distance)
+        list_of_waypoints = query(req)
+        if len(list_of_waypoints) == 0:
+            return "FAILURE -- no suitable points found"
+        distance = self.default_distance
+        return self.smartmove_release(list_of_waypoints, distance)
 
     '''
     Wrapper for the GRASP service
     '''
     def smartmove_grasp_cb(self, req):
-    	list_of_waypoints = query(req)
+        list_of_waypoints = query(req)
         if len(list_of_waypoints) == 0:
-        	return "FAILURE -- no suitable points found"
+            return "FAILURE -- no suitable points found"
         distance = self.default_distance
-        return self.smartmove_grasp(list, distance)
+        return self.smartmove_grasp(list_of_waypoints, distance)
 
     '''
     Wrapper for the QUERY service
     '''
-   	def query_cb(self,req):
-   		list_of_waypoints = self.query(req)
-   		if len(list_of_waypoints) == 0:
-   			return "FAILURE"
-   		else:
-   			# set param and publish TF frame appropriately under reserved name
-   			pass
-   			return "SUCCESS"
+    def query_cb(self,req):
+       list_of_waypoints = self.query(req)
+       if len(list_of_waypoints) == 0:
+           return "FAILURE"
+       else:
+           # set param and publish TF frame appropriately under reserved name
+           pass
+           return "SUCCESS"
