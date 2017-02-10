@@ -2,7 +2,7 @@
 <package>
   <name>librarian_plugins</name>
   <version>0.4.0</version>
-  <description>Set of beetree plugins for Librarian</description>
+  <description>Set of plugins for Librarian</description>
 
   <maintainer email="chris.paxton.cs@gmail.com">Chris Paxton</maintainer>
   <author email="chris.paxton.cs@gmail.com">Chris Paxton</author>
@@ -16,11 +16,9 @@
   <!-- <url type="website">http://wiki.ros.org/predicator_plugins</url> -->
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>beetree</build_depend>
   <build_depend>instructor_core</build_depend>
   <build_depend>librarian_msgs</build_depend>
   <build_depend>message_generation</build_depend>
-  <run_depend>beetree</run_depend>
   <run_depend>instructor_core</run_depend>
   <run_depend>librarian_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
