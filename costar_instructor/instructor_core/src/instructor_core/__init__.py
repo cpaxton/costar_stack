@@ -17,6 +17,8 @@ __all__ += ['NodeDecoratorIgnoreFailGUI']
 __all__ += ['NodeDecoratorWaitForSuccessGUI']
 __all__ += ['NamedField']
 __all__ += ['NamedComboBox']
+__all__ += ['JogDialog']
+__all__ += ['SmartMoveDialog']
 
 # NodeGUI Base Classes
 from instructor_core_nodes import NodeGUI
