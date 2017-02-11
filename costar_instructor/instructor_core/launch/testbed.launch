@@ -1,4 +1,0 @@
-<launch>
-    <node pkg="instructor_core" type="instructor_v2_testbed.py" name="instructor_v2_testbed"/>
-</launch>
-
