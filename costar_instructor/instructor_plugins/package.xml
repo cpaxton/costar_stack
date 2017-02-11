@@ -32,6 +32,7 @@
 
     <instructor plugin="instructor.NodeActionSmartmoveGUI" type="ACTION" group="ROBOT" description="Instructor Smart Move" name="Smart Move"/>
 
+    <instructor plugin="instructor.NodeActionQueryGUI" type="CONDITION" group="SYSTEM" description="Waypoint Query" name="Query"/>
     <instructor plugin="instructor.NodeKnowledgeTestGUI" type="CONDITION" group="SYSTEM" description="Knowledge Test" name="Knowledge Test" />
     <instructor plugin="instructor.NodePublishMessageGUI" type="CONDITION" group="SYSTEM" description="publish_message" name="Publish Message" />
     <instructor plugin="instructor.NodeActionDetectObjectsGUI" type="CONDITION" group="VISION" description="sp_segmenter_detect" name="Detect Objects"/>
