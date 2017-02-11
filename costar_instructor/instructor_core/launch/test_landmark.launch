@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-
-  <node name="target_frame_broadcaster" pkg="lcsr_tf_tools" type="interactive_transform_publisher" args=".10915 -.4225 1.344 -1.5707 0 0 /world /target_frame 10"/>
-  
-  <node name="landmark_frame_broadcaster" pkg="lcsr_tf_tools" type="interactive_transform_publisher" args=".5 -.5 1.5 0 0 0 /world /test_landmark 10"/>
-  
-</launch>
