@@ -67,7 +67,7 @@ def clear_cmd():
 '''
 Load the plugins that become elements we can add to instructor.
 '''
-def load_instructor_plugins():
+def load_instructor_plugins(case=""):
     # NOTE: we no longer need to use this, at least for the time being.
     #to_check = rospack.rospack_depends_on_1('beetree')
     to_check = ["instructor_core", "instructor_plugins"]
@@ -110,11 +110,32 @@ class Instructor(QWidget):
     toast_signal = pyqtSignal()
     def __init__(self,app):
         super(Instructor,self).__init__()
-        rospy.logwarn('INSTRUCTOR: STARTING UP...')
+        #rospy.logwarn('INSTRUCTOR: STARTING UP...')
         self.app_ = app
-        self.types__ = ['LOGIC', 'ACTION', 'CONDITION', 'QUERY', 'PROCESS', 'SERVICE','VARIABLE']
-        self.colors__ = ['blue', 'green', 'purple', 'orange', 'pink', 'gray','gray']
-        self.labels__ = ['BUILDING BLOCKS', 'ROBOT ACTIONS', 'SYSTEM KNOWLEDGE', 'QUERIES', 'PROCESSES','SERVICE','VARIABLES']
+        self.types__ = ['LOGIC',
+                'ACTION',
+                'CONDITION',
+                'QUERY',
+                'PROCESS',
+                'SERVICE',
+                'VARIABLE']
+        self.colors__ = ['blue',
+                'green',
+                'purple',
+                'orange',
+                'pink',
+                'gray',
+                'gray']
+        self.labels__ = ['BUILDING BLOCKS',
+                'ROBOT ACTIONS',
+                'SYSTEM KNOWLEDGE',
+                'QUERIES',
+                'PROCESSES',
+                'SERVICE',
+                'VARIABLES']
+
+        self.case = rospy.get_param("case","")
+
         # Load the ui attributes into the main widget
         self.rospack__ = rospkg.RosPack()
         ui_path = self.rospack__.get_path('instructor_core') + '/ui/view.ui'
@@ -143,11 +164,6 @@ class Instructor(QWidget):
         self.toast_timer_.setSingleShot(True)
         self.toast_signal.connect(self.toast_update)
 
-        # self.refresh_ui_plugins_timer = QTimer(self)
-        # self.connect(self.refresh_ui_plugins_timer, QtCore.SIGNAL("timeout()"), self.refresh_available_plugins)
-        # self.refresh_ui_plugins_timer.start(1000)
-
-        
         # Load Settings
         self.settings = QSettings('settings.ini', QSettings.IniFormat)
         self.settings.setFallbacksEnabled(False) 
@@ -239,7 +255,6 @@ class Instructor(QWidget):
 
                 # rospy.logwarn('Available Plugins: ' + str(self.available_plugins))
                 # rospy.logwarn('Core Plugins: ' + str(self.core_plugins))
-
                 
                 # Check which plugins to enable
                 for i in required_plugins:
@@ -266,30 +281,10 @@ class Instructor(QWidget):
                 description = p['description']
                 if description in self.current_plugins:
                     if description not in self.active_plugin_widgets:
-                        rospy.logwarn('Adding widget for plugin: ['+description+']')
+                        #rospy.logwarn('Adding widget for plugin: ['+description+']')
                         changed = True
                         self.component_widgets[p['type']].add_item_to_group(p['name'],p['group'])
                         self.active_plugin_widgets.append(description)
-
-            # Remove plugins that are no longer required
-            for p in self.plugins.itervalues():
-                description = p['description']
-                if description in self.current_plugins:
-                    if description not in required_plugins:
-                        if description not in self.core_plugins:
-                            rospy.logwarn('Removing widget for plugin: ['+description+']')
-                            changed = True
-                            self.current_plugins.remove(description)
-                            self.component_widgets[p['type']].remove_item_from_group(p['name'],p['group'])
-                            self.active_plugin_widgets.remove(description)
-
-            # for n in self.plugins.itervalues():
-            #     item = n['name']
-            #     group = n['group']
-            #     description = n['description']
-
-            #     if description in self.current_plugins:
-            #     self.component_widgets[n['type']].add_item_to_group(item,group)
 
             for c in self.component_widgets.values():
                 if len(c.items) == 0:
@@ -304,14 +299,12 @@ class Instructor(QWidget):
         rospy.logwarn('INSTRUCTOR: LOADING PLUGINS')
         self.plugins = {}
         self.node_counter = {}
-        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins()
+        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.case)
         for plug,desc,name,typ,grp in zip(plugins,plugin_descriptions,plugin_names,plugin_types, plugin_groups):
             self.plugins[name] = {'module':plug, 'type':typ, 'name':name, 'group':grp, 'description':desc, 'generator_type':str(type(plug()))}
         
         self.available_plugins = plugin_descriptions
-        # rospy.logwarn(self.available_plugins)
         for p in self.plugins.itervalues():
-            # rospy.logwarn(str(p['group']))
             if any(['SYSTEM' in p['group'], 'ROBOT' in p['group']]):
                 self.core_plugins.append(p['description'])
                 self.current_plugins.append(p['description'])
@@ -422,7 +415,7 @@ class Instructor(QWidget):
         self.regenerate_btn.clicked.connect(self.regenerate_node)
         self.drawer.button_layout.addWidget(self.regenerate_btn,3,0,1,2)
         self.regenerate_btn.hide()
-        self.add_node_cancel_btn = InterfaceButton('CANCEL',colors['red'])
+        self.add_node_cancel_btn = InterfaceButton('CLOSE',colors['red'])
         self.add_node_cancel_btn.clicked.connect(self.close_drawer)
         self.drawer.button_layout.addWidget(self.add_node_cancel_btn,4,0,1,2)
 
