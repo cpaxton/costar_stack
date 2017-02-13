@@ -47,6 +47,10 @@ class SimplePlanning:
         self.group = group
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
+
+        rospy.wait_for_service('/compute_cartesian_path')
+        self.cartesian_path_plan = rospy.ServiceProxy('/compute_cartesian_path',GetCartesianPath)
+
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
     
@@ -272,7 +276,7 @@ class SimplePlanning:
 
 
     def updateAllowedCollisions(self,obj,allowed):
-        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
         rospy.wait_for_service('/get_planning_scene', 10.0)
         get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene)
         request = PlanningSceneComponents(components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
@@ -360,3 +364,34 @@ class SimplePlanning:
           self.updateAllowedCollisions(obj,False);
 
         return (res.error_code.val, res)
+
+    def getPlanWaypoints(self,waypoints_in_kdl_frame,q,obj=None):
+      cartesian_path_req = GetCartesianPathRequest()
+      cartesian_path_req.header.frame_id = self.base_link
+      cartesian_path_req.start_state = RobotState()
+      cartesian_path_req.start_state.joint_state.name = self.joint_names
+      if type(q) is list:
+        cartesian_path_req.start_state.joint_state.position = q
+      else:
+        cartesian_path_req.start_state.joint_state.position = q.tolist()
+      cartesian_path_req.group_name = self.group
+      cartesian_path_req.link_name = self.joint_names[-1]
+      cartesian_path_req.avoid_collisions = False
+      cartesian_path_req.max_step = 50
+      cartesian_path_req.jump_threshold = 0
+      # cartesian_path_req.path_constraints = Constraints()
+
+      if obj is not None:
+        self.updateAllowedCollisions(obj,True)
+      
+      cartesian_path_req.waypoints = list()
+
+      for T in waypoints_in_kdl_frame:
+        cartesian_path_req.waypoints.append(pm.toMsg(T))
+
+      res = self.cartesian_path_plan.call(cartesian_path_req)
+
+      if obj is not None:
+        self.updateAllowedCollisions(obj,False)
+
+      return (res.error_code.val, res)

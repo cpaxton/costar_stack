@@ -22,6 +22,7 @@ from librarian_msgs.srv import *
 import time
 from copy import deepcopy
 
+from costar_robot_msgs.srv import *
 
 color_options = ColorOptions()
 colors = color_options.colors

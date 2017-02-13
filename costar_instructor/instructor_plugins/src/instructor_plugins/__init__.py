@@ -31,6 +31,8 @@ __all__ += ['NodePlanRelativeWaypointGUI']
 __all__ += ['NodeActionUpdatePlanningSceneGUI']
 __all__ += ['NodeActionRecordDataGUI']
 __all__ += ['NodeActionSmartmoveGUI']
+__all__ += ['NodeActionSmartmoveGraspGUI']
+__all__ += ['NodeActionSmartmoveReleaseGUI']
 __all__ += ['NodePublishMessageGUI']
 __all__ += ['NodeActionQueryGUI']
 
@@ -71,5 +73,7 @@ from instructor_action_foot_pedal import NodeActionPedalGUI
 from instructor_action_stop import NodeActionStopGUI
 
 from instructor_action_smartmove import NodeActionSmartmoveGUI
+from smartmove_multipurpose import NodeActionSmartmoveGraspGUI
+from smartmove_multipurpose import NodeActionSmartmoveReleaseGUI
 
 from query import NodeActionQueryGUI

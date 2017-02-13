@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>395</width>
-    <height>510</height>
+    <height>568</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -603,7 +603,7 @@ QSlider::sub-page:horizontal {
       </spacer>
      </item>
      <item>
-      <widget class="QLineEdit" name="vel_field_2">
+      <widget class="QLineEdit" name="backoff_field">
        <property name="minimumSize">
         <size>
          <width>50</width>

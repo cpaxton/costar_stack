@@ -32,7 +32,7 @@ from copy import deepcopy
 # SRVs
 import costar_robot_msgs
 from costar_robot_msgs.srv import *
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty as EmptySrv
 
 ### TIMER ###################################################
 global tic_time
@@ -623,7 +623,7 @@ class Instructor(QWidget):
             return
         # Make servo call to robot
         try:
-            service_cmd_proxy = rospy.ServiceProxy(service_name,Empty)
+            service_cmd_proxy = rospy.ServiceProxy(service_name,EmptySrv)
             result = service_cmd_proxy()
             return
         except (rospy.ServiceException), e:

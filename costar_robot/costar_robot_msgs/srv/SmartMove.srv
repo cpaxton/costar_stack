@@ -4,6 +4,6 @@ string obj_class # class to move to
 string name # name of the requested motion
 float32 accel
 float32 vel
-float32 backup # distance to move back when doing grasp or release
+float32 backoff # distance to move back when doing grasp or release
 ---
 string ack # what happened

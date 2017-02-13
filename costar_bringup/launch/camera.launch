@@ -25,7 +25,7 @@
     <arg name="cam_image_topic2" value="/$(arg camera_name)/depth_registered/points" />
     <arg name="cam_info_topic2" value="/$(arg camera_name)/rgb/camera_info" /> 
     <arg name="output_frame2" value="/$(arg camera_name)_rgb_optical_frame" />
-    <node if="$(arg start_alvar)" name="ar_track_alvar_$(arg camera_name)" pkg="ar_track_alvar" type="individualMarkers" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic2) $(arg cam_info_topic2) $(arg output_frame2)" />
+    <node if="$(arg start_alvar)" name="ar_track_alvar_$(arg camera_name)" pkg="ar_track_alvar" type="individualMarkers" respawn="true" output="log" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic2) $(arg cam_info_topic2) $(arg output_frame2)" />
   </group>
 
   <!-- publish preferred orientation -->
