@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('instructor_core')
+
+#import roslib; roslib.load_manifest('instructor_core')
+#from roslib import rospack
+
 import rospy
 from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
@@ -21,7 +24,6 @@ import tf_conversions as tf_c
 from instructor_core.instructor_qt import *
 # Using roslib.rospack even though it is deprecated
 import threading
-from roslib import rospack
 import yaml
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
@@ -62,8 +64,14 @@ def clear_cmd():
     os.system(['clear','cls'][os.name == 'nt'])
     pass
 
+'''
+Load the plugins that become elements we can add to instructor.
+'''
 def load_instructor_plugins():
-    to_check = rospack.rospack_depends_on_1('beetree')
+    # NOTE: we no longer need to use this, at least for the time being.
+    #to_check = rospack.rospack_depends_on_1('beetree')
+    to_check = ["instructor_core", "instructor_plugins"]
+
     rp = rospkg.RosPack()
     # to_check = rospack.get_depends_on('beetree', implicit=False)
     clear_cmd()
@@ -87,7 +95,6 @@ def load_instructor_plugins():
             pass
 
         for p_module, p_description, p_name, p_type, p_group in zip(p_modules,p_descriptions,p_names,p_types,p_groups):
-            roslib.load_manifest(pkg)
             package = __import__(pkg)
             sub_mod = p_module.split('.')[1:][0]
             module = getattr(package, sub_mod)
