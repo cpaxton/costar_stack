@@ -754,7 +754,6 @@ class CostarArm(object):
 
         return self.smartmove_multipurpose_gripper(possible_goals, distance, self.detach, velocity, acceleration)
 
-    # =========================================================================
 
     '''
     Wrapper for the RELEASE service
@@ -785,8 +784,6 @@ class CostarArm(object):
            return "FAILURE"
        else:
            # set param and publish TF frame appropriately under reserved name
-           pass
-
            if self.last_query is not None and self.last_query == req:
                # return idx + 1
                self.last_query_idx += 1
@@ -795,12 +792,8 @@ class CostarArm(object):
            else:
                self.last_query = req
                self.last_query_idx = 0
-
            
-           dist,T,object_t,name = list_of_waypoints[self.last_query_idx]
-           
+           dist,T,object_t,name = list_of_waypoints[self.last_query_idx]          
            self.query_frame = pm.toTf(T)
-           print '======================='
-           print self.query_frame
 
            return "SUCCESS"

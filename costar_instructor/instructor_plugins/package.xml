@@ -15,30 +15,132 @@
   <run_depend>message_runtime</run_depend>
 
   <export>
-    <!-- Beetree Action Plugins -->
-    <instructor plugin="instructor.NodeActionSleepGUI" type="ACTION" group="TIMING" description="Sleep Action" name="Sleep"/>
 
-    <instructor plugin="instructor.NodeActionWaypointGUI" type="ACTION" group="ROBOT" description="Waypoint Action" name="Move to Waypoint"/>
-    <instructor plugin="instructor.NodeActionRelativeWaypointGUI" type="ACTION" group="ROBOT" description="Relative Waypoint" name="Move Relative"/>
-    <instructor plugin="instructor.NodePlanWaypointGUI" type="ACTION" group="ROBOT" description="Plan to Waypoint Action" name="Plan to Waypoint"/>
-    <instructor plugin="instructor.NodePlanRelativeWaypointGUI" type="ACTION" group="ROBOT" description="Plan to Relative Waypoint" name="Plan Relative"/>
-    
-    <instructor plugin="instructor.NodeActionSGripperOpenGUI" type="ACTION" group="GRIPPER" description="gripper_open" name="Open Gripper"/>
-    <instructor plugin="instructor.NodeActionSGripperCloseGUI" type="ACTION" group="GRIPPER" description="gripper_close" name="Close Gripper"/>
-    <instructor plugin="instructor.NodeActionSGripperBasicModeGUI" type="ACTION" group="GRIPPER" description="gripper_basic_mode" name="Basic Grasp"/>
-    <instructor plugin="instructor.NodeActionSGripperScissorModeGUI" type="ACTION" group="GRIPPER" description="gripper_scissor_mode" name="Scissor Grasp"/>
-    <instructor plugin="instructor.NodeActionSGripperWideModeGUI" type="ACTION" group="GRIPPER" description="gripper_wide_mode" name="Wide Grasp"/>
-    <instructor plugin="instructor.NodeActionSGripperPinchModeGUI" type="ACTION" group="GRIPPER" description="gripper_pinch_mode" name="Pinch Grasp"/>
+    <!-- BASIC ACTION COMMANDS -->
+    <instructor plugin="instructor.NodeActionSleepGUI"
+      type="ACTION"
+      group="TIMING"
+      description="Sleep Action"
+      cases="baseline"
+      name="Sleep"/>
+    <instructor plugin="instructor.NodeActionWaypointGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Waypoint Action"
+      cases=""
+      name="Move to Waypoint"/>
+    <instructor plugin="instructor.NodeActionRelativeWaypointGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Instructor Relative Waypoint"
+      cases=""
+      name="Move Relative"/>
+    <instructor plugin="instructor.NodePlanWaypointGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Instructor Plan to Waypoint Action"
+      cases="baseline"
+      name="Plan to Waypoint"/>
+    <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
+      type="ACTION" group="ROBOT"
+      description="Instructor Plan to Relative Waypoint"
+      cases="perception"
+      name="Plan Relative"/>
 
-    <instructor plugin="instructor.NodeActionSmartmoveGUI" type="ACTION" group="ROBOT" description="Smart Move" name="Smart Move"/>
-    <instructor plugin="instructor.NodeActionSmartmoveGraspGUI" type="ACTION" group="ROBOT" description="Smart Grasp" name="Smart Grasp"/>
-    <instructor plugin="instructor.NodeActionSmartmoveReleaseGUI" type="ACTION" group="ROBOT" description="Smart Release" name="Smart Release"/>
+    <!-- BASIC GRASPING COMMANDS -->
+    <instructor plugin="instructor.NodeActionSGripperOpenGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Open Gripper"
+      cases="baseline"
+      name="Open Gripper"/>
+    <instructor plugin="instructor.NodeActionSGripperCloseGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Close Gripper"
+      cases="baseline"
+      name="Close Gripper"/>
 
-    <instructor plugin="instructor.NodeActionQueryGUI" type="CONDITION" group="SYSTEM" description="Waypoint Query" name="Query"/>
-    <instructor plugin="instructor.NodeKnowledgeTestGUI" type="CONDITION" group="SYSTEM" description="Knowledge Test" name="Knowledge Test" />
-    <instructor plugin="instructor.NodePublishMessageGUI" type="CONDITION" group="SYSTEM" description="publish_message" name="Publish Message" />
-    <instructor plugin="instructor.NodeActionDetectObjectsGUI" type="CONDITION" group="VISION" description="sp_segmenter_detect" name="Detect Objects"/>
-    <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI" type="CONDITION" group="VISION" description="update_planning_scene" name="Update Scene"/>
+    <!-- GRASPING MODE COMMANDS -->
+    <instructor plugin="instructor.NodeActionSGripperBasicModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch to Basic Grasp Mode"
+      cases=""
+      name="Basic Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperScissorModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch to Scissor Grasp Mode"
+      cases=""
+      name="Scissor Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperWideModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch tp Wide Grasp Mode"
+      cases=""
+      name="Wide Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperPinchModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch to Pinch Grasp Mode"
+      cases=""
+      name="Pinch Grasp"/>
+
+    <!-- SMART MOVE OPERATIONS -->
+    <instructor plugin="instructor.NodeActionSmartmoveGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Instructor Smart Move"
+      cases=""
+      name="Smart Move"/>
+    <instructor plugin="instructor.NodeActionSmartmoveGraspGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Smart Grasp"
+      cases="smartmove"
+      name="Smart Grasp"/>
+    <instructor plugin="instructor.NodeActionSmartmoveReleaseGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Smart Release"
+      cases="smartmove"
+      name="Smart Release"/>
+
+    <!-- GENERAL KNOWLEDGE OPERATIONS -->
+    <instructor plugin="instructor.NodeKnowledgeTestGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="Knowledge Test"
+      cases=""
+      name="Knowledge Test" />
+    <instructor plugin="instructor.NodePublishMessageGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="publish_message"
+      cases=""
+      name="Publish Message" />
+    <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
+      type="CONDITION"
+      group="VISION"
+      description="update_planning_scene"
+      cases=""
+      name="Update Scene"/>
+    <instructor plugin="instructor.NodeActionQueryGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="Waypoint Query"
+      cases=""
+      name="Query"/>
+
+    <!-- SP SEGMENTER OPERATIONS -->
+    <instructor plugin="instructor.NodeActionDetectObjectsGUI"
+      type="CONDITION"
+      group="VISION"
+      description="sp_segmenter_detect"
+      cases="planning"
+      name="Detect Objects"/>
+
   </export>
 
 </package>

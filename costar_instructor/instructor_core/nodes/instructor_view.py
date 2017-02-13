@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('instructor_core')
+
+#import roslib; roslib.load_manifest('instructor_core')
+#from roslib import rospack
+
 import rospy
 from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
@@ -21,7 +24,6 @@ import tf_conversions as tf_c
 from instructor_core.instructor_qt import *
 # Using roslib.rospack even though it is deprecated
 import threading
-from roslib import rospack
 import yaml
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
@@ -62,12 +64,16 @@ def clear_cmd():
     os.system(['clear','cls'][os.name == 'nt'])
     pass
 
-def load_instructor_plugins():
-    to_check = rospack.rospack_depends_on_1('beetree')
+'''
+Load the plugins that become elements we can add to instructor.
+'''
+def load_instructor_plugins(cases=[]):
+    # NOTE: we no longer need to use this, at least for the time being.
+    #to_check = rospack.rospack_depends_on_1('beetree')
+    to_check = ["instructor_core", "instructor_plugins"]
     rp = rospkg.RosPack()
     # to_check = rospack.get_depends_on('beetree', implicit=False)
     clear_cmd()
-    print 'Found packages that have beetree dependency...'
     # print to_check
     plugins = []    
     descriptions = []
@@ -81,21 +87,33 @@ def load_instructor_plugins():
         p_descriptions = m.get_export('instructor', 'description')
         p_names = m.get_export('instructor', 'name')
         p_groups = m.get_export('instructor', 'group')
+        p_cases = m.get_export('instructor', 'cases')
         if not p_modules:
             continue
         if p_modules == []:
             pass
 
-        for p_module, p_description, p_name, p_type, p_group in zip(p_modules,p_descriptions,p_names,p_types,p_groups):
-            roslib.load_manifest(pkg)
-            package = __import__(pkg)
-            sub_mod = p_module.split('.')[1:][0]
-            module = getattr(package, sub_mod)
-            plugins.append(module)
-            descriptions.append(p_description)
-            names.append(p_name)               
-            types.append(p_type)
-            groups.append(p_group)                
+        for p_module, p_description, p_name, p_type, p_group, p_case in zip(p_modules,p_descriptions,p_names,p_types,p_groups,p_cases):
+            if len(cases) == 0:
+                include = True
+            else:
+                include = False
+                allowed_cases = p_case.split(',')
+                #rospy.logerr("allowed for " + p_name + ": " + str(allowed_cases))
+                for case in cases:
+                    if case in allowed_cases:
+                        include = True
+                        break
+
+            if include:
+                package = __import__(pkg)
+                sub_mod = p_module.split('.')[1:][0]
+                module = getattr(package, sub_mod)
+                plugins.append(module)
+                descriptions.append(p_description)
+                names.append(p_name)               
+                types.append(p_type)
+                groups.append(p_group)
 
     return plugins, descriptions, names, types, groups
 
@@ -103,11 +121,37 @@ class Instructor(QWidget):
     toast_signal = pyqtSignal()
     def __init__(self,app):
         super(Instructor,self).__init__()
-        rospy.logwarn('INSTRUCTOR: STARTING UP...')
+        #rospy.logwarn('INSTRUCTOR: STARTING UP...')
         self.app_ = app
-        self.types__ = ['LOGIC', 'ACTION', 'CONDITION', 'QUERY', 'PROCESS', 'SERVICE','VARIABLE']
-        self.colors__ = ['blue', 'green', 'purple', 'orange', 'pink', 'gray','gray']
-        self.labels__ = ['BUILDING BLOCKS', 'ROBOT ACTIONS', 'SYSTEM KNOWLEDGE', 'QUERIES', 'PROCESSES','SERVICE','VARIABLES']
+        self.types__ = ['LOGIC',
+                'ACTION',
+                'CONDITION',
+                'QUERY',
+                'PROCESS',
+                'SERVICE',
+                'VARIABLE']
+        self.colors__ = ['blue',
+                'green',
+                'purple',
+                'orange',
+                'pink',
+                'gray',
+                'gray']
+        self.labels__ = ['BUILDING BLOCKS',
+                'ROBOT ACTIONS',
+                'SYSTEM KNOWLEDGE',
+                'QUERIES',
+                'PROCESSES',
+                'SERVICE',
+                'VARIABLES']
+
+        self.cases = rospy.get_param("~cases","")
+        if len(self.cases) > 0:
+            self.cases = self.cases.split(',')
+        else:
+            self.cases = []
+        #rospy.logerr(str(self.cases))
+
         # Load the ui attributes into the main widget
         self.rospack__ = rospkg.RosPack()
         ui_path = self.rospack__.get_path('instructor_core') + '/ui/view.ui'
@@ -136,11 +180,6 @@ class Instructor(QWidget):
         self.toast_timer_.setSingleShot(True)
         self.toast_signal.connect(self.toast_update)
 
-        # self.refresh_ui_plugins_timer = QTimer(self)
-        # self.connect(self.refresh_ui_plugins_timer, QtCore.SIGNAL("timeout()"), self.refresh_available_plugins)
-        # self.refresh_ui_plugins_timer.start(1000)
-
-        
         # Load Settings
         self.settings = QSettings('settings.ini', QSettings.IniFormat)
         self.settings.setFallbacksEnabled(False) 
@@ -232,7 +271,6 @@ class Instructor(QWidget):
 
                 # rospy.logwarn('Available Plugins: ' + str(self.available_plugins))
                 # rospy.logwarn('Core Plugins: ' + str(self.core_plugins))
-
                 
                 # Check which plugins to enable
                 for i in required_plugins:
@@ -259,30 +297,10 @@ class Instructor(QWidget):
                 description = p['description']
                 if description in self.current_plugins:
                     if description not in self.active_plugin_widgets:
-                        rospy.logwarn('Adding widget for plugin: ['+description+']')
+                        #rospy.logwarn('Adding widget for plugin: ['+description+']')
                         changed = True
                         self.component_widgets[p['type']].add_item_to_group(p['name'],p['group'])
                         self.active_plugin_widgets.append(description)
-
-            # Remove plugins that are no longer required
-            for p in self.plugins.itervalues():
-                description = p['description']
-                if description in self.current_plugins:
-                    if description not in required_plugins:
-                        if description not in self.core_plugins:
-                            rospy.logwarn('Removing widget for plugin: ['+description+']')
-                            changed = True
-                            self.current_plugins.remove(description)
-                            self.component_widgets[p['type']].remove_item_from_group(p['name'],p['group'])
-                            self.active_plugin_widgets.remove(description)
-
-            # for n in self.plugins.itervalues():
-            #     item = n['name']
-            #     group = n['group']
-            #     description = n['description']
-
-            #     if description in self.current_plugins:
-            #     self.component_widgets[n['type']].add_item_to_group(item,group)
 
             for c in self.component_widgets.values():
                 if len(c.items) == 0:
@@ -297,14 +315,12 @@ class Instructor(QWidget):
         rospy.logwarn('INSTRUCTOR: LOADING PLUGINS')
         self.plugins = {}
         self.node_counter = {}
-        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins()
+        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.cases)
         for plug,desc,name,typ,grp in zip(plugins,plugin_descriptions,plugin_names,plugin_types, plugin_groups):
             self.plugins[name] = {'module':plug, 'type':typ, 'name':name, 'group':grp, 'description':desc, 'generator_type':str(type(plug()))}
         
         self.available_plugins = plugin_descriptions
-        # rospy.logwarn(self.available_plugins)
         for p in self.plugins.itervalues():
-            # rospy.logwarn(str(p['group']))
             if any(['SYSTEM' in p['group'], 'ROBOT' in p['group']]):
                 self.core_plugins.append(p['description'])
                 self.current_plugins.append(p['description'])
@@ -415,7 +431,7 @@ class Instructor(QWidget):
         self.regenerate_btn.clicked.connect(self.regenerate_node)
         self.drawer.button_layout.addWidget(self.regenerate_btn,3,0,1,2)
         self.regenerate_btn.hide()
-        self.add_node_cancel_btn = InterfaceButton('CANCEL',colors['red'])
+        self.add_node_cancel_btn = InterfaceButton('CLOSE',colors['red'])
         self.add_node_cancel_btn.clicked.connect(self.close_drawer)
         self.drawer.button_layout.addWidget(self.add_node_cancel_btn,4,0,1,2)
 
@@ -1080,7 +1096,8 @@ class Instructor(QWidget):
         if event == 'none':
             # Update Context Menu
             self.context_popup.hide()
-            self.root_node.reset()
+            if self.root_node is not None:
+                self.root_node.reset()
             # Update Selected Node
             self.left_selected_node = None
             self.selected_node_field.setText('SELECTED NODE: NONE')
