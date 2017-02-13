@@ -15,14 +15,14 @@
   <run_depend>message_runtime</run_depend>
 
   <export>
-    <!-- Beetree Action Plugins -->
+
+    <!-- BASIC ACTION COMMANDS -->
     <instructor plugin="instructor.NodeActionSleepGUI"
       type="ACTION"
       group="TIMING"
       description="Sleep Action"
       cases="baseline"
       name="Sleep"/>
-
     <instructor plugin="instructor.NodeActionWaypointGUI"
       type="ACTION"
       group="ROBOT"
@@ -87,6 +87,7 @@
       cases=""
       name="Pinch Grasp"/>
 
+    <!-- SMART MOVE OPERATIONS -->
     <instructor plugin="instructor.NodeActionSmartmoveGUI"
       type="ACTION"
       group="ROBOT"
@@ -94,6 +95,7 @@
       cases="smartmove"
       name="Smart Move"/>
 
+    <!-- GENERAL KNOWLEDGE OPERATIONS -->
     <instructor plugin="instructor.NodeKnowledgeTestGUI"
       type="CONDITION"
       group="SYSTEM"
@@ -112,13 +114,21 @@
       description="update_planning_scene"
       cases=""
       name="Update Scene"/>
+    <instructor plugin="instructor.NodeActionQueryGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="Waypoint Query"
+      cases=""
+      name="Query"/>
 
+    <!-- SP SEGMENTER OPERATIONS -->
     <instructor plugin="instructor.NodeActionDetectObjectsGUI"
       type="CONDITION"
       group="VISION"
       description="sp_segmenter_detect"
       cases="planning"
       name="Detect Objects"/>
+
   </export>
 
 </package>

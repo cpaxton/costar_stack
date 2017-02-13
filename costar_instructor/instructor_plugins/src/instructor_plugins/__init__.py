@@ -32,6 +32,7 @@ __all__ += ['NodeActionUpdatePlanningSceneGUI']
 __all__ += ['NodeActionRecordDataGUI']
 __all__ += ['NodeActionSmartmoveGUI']
 __all__ += ['NodePublishMessageGUI']
+__all__ += ['NodeActionQueryGUI']
 
 ### Sample Nodes
 from sample_nodes import NodeActionSampleGUI
@@ -70,3 +71,5 @@ from instructor_action_foot_pedal import NodeActionPedalGUI
 from instructor_action_stop import NodeActionStopGUI
 
 from instructor_action_smartmove import NodeActionSmartmoveGUI
+
+from query import NodeActionQueryGUI
