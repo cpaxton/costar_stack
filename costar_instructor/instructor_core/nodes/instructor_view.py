@@ -1087,7 +1087,8 @@ class Instructor(QWidget):
         if event == 'none':
             # Update Context Menu
             self.context_popup.hide()
-            self.root_node.reset()
+            if self.root_node is not None:
+                self.root_node.reset()
             # Update Selected Node
             self.left_selected_node = None
             self.selected_node_field.setText('SELECTED NODE: NONE')

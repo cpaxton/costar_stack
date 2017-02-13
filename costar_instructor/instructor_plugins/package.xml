@@ -16,26 +16,109 @@
 
   <export>
     <!-- Beetree Action Plugins -->
-    <instructor plugin="instructor.NodeActionSleepGUI" type="ACTION" group="TIMING" description="Instructor Sleep Action" name="Sleep"/>
+    <instructor plugin="instructor.NodeActionSleepGUI"
+      type="ACTION"
+      group="TIMING"
+      description="Sleep Action"
+      cases="baseline"
+      name="Sleep"/>
 
-    <instructor plugin="instructor.NodeActionWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Waypoint Action" name="Move to Waypoint"/>
-    <instructor plugin="instructor.NodeActionRelativeWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Relative Waypoint" name="Move Relative"/>
-    <instructor plugin="instructor.NodePlanWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Plan to Waypoint Action" name="Plan to Waypoint"/>
-    <instructor plugin="instructor.NodePlanRelativeWaypointGUI" type="ACTION" group="ROBOT" description="Instructor Plan to Relative Waypoint" name="Plan Relative"/>
-    
-    <instructor plugin="instructor.NodeActionSGripperOpenGUI" type="ACTION" group="GRIPPER" description="gripper_open" name="Open Gripper"/>
-    <instructor plugin="instructor.NodeActionSGripperCloseGUI" type="ACTION" group="GRIPPER" description="gripper_close" name="Close Gripper"/>
-    <instructor plugin="instructor.NodeActionSGripperBasicModeGUI" type="ACTION" group="GRIPPER" description="gripper_basic_mode" name="Basic Grasp"/>
-    <instructor plugin="instructor.NodeActionSGripperScissorModeGUI" type="ACTION" group="GRIPPER" description="gripper_scissor_mode" name="Scissor Grasp"/>
-    <instructor plugin="instructor.NodeActionSGripperWideModeGUI" type="ACTION" group="GRIPPER" description="gripper_wide_mode" name="Wide Grasp"/>
-    <instructor plugin="instructor.NodeActionSGripperPinchModeGUI" type="ACTION" group="GRIPPER" description="gripper_pinch_mode" name="Pinch Grasp"/>
+    <instructor plugin="instructor.NodeActionWaypointGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Waypoint Action"
+      cases=""
+      name="Move to Waypoint"/>
+    <instructor plugin="instructor.NodeActionRelativeWaypointGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Instructor Relative Waypoint"
+      cases=""
+      name="Move Relative"/>
+    <instructor plugin="instructor.NodePlanWaypointGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Instructor Plan to Waypoint Action"
+      cases="baseline"
+      name="Plan to Waypoint"/>
+    <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
+      type="ACTION" group="ROBOT"
+      description="Instructor Plan to Relative Waypoint"
+      cases="baseline"
+      name="Plan Relative"/>
 
-    <instructor plugin="instructor.NodeActionSmartmoveGUI" type="ACTION" group="ROBOT" description="Instructor Smart Move" name="Smart Move"/>
+    <!-- BASIC GRASPING COMMANDS -->
+    <instructor plugin="instructor.NodeActionSGripperOpenGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Open Gripper"
+      cases="baseline"
+      name="Open Gripper"/>
+    <instructor plugin="instructor.NodeActionSGripperCloseGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Close Gripper"
+      cases="baseline"
+      name="Close Gripper"/>
 
-    <instructor plugin="instructor.NodeKnowledgeTestGUI" type="CONDITION" group="SYSTEM" description="Knowledge Test" name="Knowledge Test" />
-    <instructor plugin="instructor.NodePublishMessageGUI" type="CONDITION" group="SYSTEM" description="publish_message" name="Publish Message" />
-    <instructor plugin="instructor.NodeActionDetectObjectsGUI" type="CONDITION" group="VISION" description="sp_segmenter_detect" name="Detect Objects"/>
-    <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI" type="CONDITION" group="VISION" description="update_planning_scene" name="Update Scene"/>
+    <!-- GRASPING MODE COMMANDS -->
+    <instructor plugin="instructor.NodeActionSGripperBasicModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch to Basic Grasp Mode"
+      cases=""
+      name="Basic Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperScissorModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch to Scissor Grasp Mode"
+      cases=""
+      name="Scissor Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperWideModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch tp Wide Grasp Mode"
+      cases=""
+      name="Wide Grasp"/>
+    <instructor plugin="instructor.NodeActionSGripperPinchModeGUI"
+      type="ACTION"
+      group="GRIPPER"
+      description="Switch to Pinch Grasp Mode"
+      cases=""
+      name="Pinch Grasp"/>
+
+    <instructor plugin="instructor.NodeActionSmartmoveGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Instructor Smart Move"
+      cases="smartmove"
+      name="Smart Move"/>
+
+    <instructor plugin="instructor.NodeKnowledgeTestGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="Knowledge Test"
+      cases=""
+      name="Knowledge Test" />
+    <instructor plugin="instructor.NodePublishMessageGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="publish_message"
+      cases=""
+      name="Publish Message" />
+    <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
+      type="CONDITION"
+      group="VISION"
+      description="update_planning_scene"
+      cases=""
+      name="Update Scene"/>
+
+    <instructor plugin="instructor.NodeActionDetectObjectsGUI"
+      type="CONDITION"
+      group="VISION"
+      description="sp_segmenter_detect"
+      cases="perception"
+      name="Detect Objects"/>
   </export>
 
 </package>
