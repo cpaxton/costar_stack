@@ -590,7 +590,7 @@ class CostarArm(object):
         else:
             return False, float('inf'), float('inf'), 'No valid IK solution', 'No valid IK solution', list()
 
-    def query(self, req):
+    def query(self, req, disable_target_object_collision = False):
         # Get the best object to manipulate, just like smart move, but without the actual movement
         # This will check robot collision and reachability on all possible object grasp position based on its symmetry.
         # Then, it will returns one of the best symmetry to work with for grasp and release.
@@ -636,8 +636,12 @@ class CostarArm(object):
             T = T_base_world.Inverse()*pm.fromMsg(pose)
 
             Ts.append(T)
-
+            if disable_target_object_collision:
+	            self.planner.updateAllowedCollisions(obj,True)
             valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0)
+            if disable_target_object_collision:
+	            self.planner.updateAllowedCollisions(obj,False)
+
             if len(best_q) == 0:
                 print message_print
                 continue
@@ -662,7 +666,7 @@ class CostarArm(object):
     def smartmove_multipurpose_gripper(self, possible_goals, distance, gripper_function, velocity, acceleration):
         print 'Start multipurpose gripper'
         list_of_valid_sequence = list()
-        list_of_sequence = list()
+        list_of_invalid_sequence = list()
         self.backoff_waypoints = []
 
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
@@ -676,56 +680,38 @@ class CostarArm(object):
            if len(best_q) == 0:
               continue
 
-           list_of_sequence.append((backup_waypoint,T,self.q0,best_q,name))
            if valid_pose:
-               list_of_sequence.append((backup_waypoint,T,self.q0,best_q,name))
+               list_of_valid_sequence.append((backup_waypoint,T,self.q0,best_q,name))
+           else:
+		       list_of_invalid_sequence.append((backup_waypoint,T,self.q0,best_q,name))
 
         sequence_to_execute = list()
         if len(list_of_valid_sequence) > 0:
-            sequence_to_execute = list_of_valid_sequence
-            print 'There is %i valid sequence to try'%len(list_of_valid_sequence)
+            sequence_to_execute = list_of_valid_sequence + list_of_invalid_sequence
+            print 'There is %i valid sequence and %i invalid sequence to try'%(len(list_of_valid_sequence),len(list_of_invalid_sequence))
         else:
             rospy.logwarn("WARNING -- no sequential valid grasp action found")
-            sequence_to_execute = list_of_sequence
+            sequence_to_execute = list_of_invalid_sequence
 
         print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
         for sequence_number, (backup_waypoint,T,self.q0,best_q,name) in enumerate(sequence_to_execute,1):
             rospy.logwarn("Trying sequence number %i"%(sequence_number))
-
-        #     (code,res) = self.planner.getPlanWaypoints([backup_waypoint,T],self.q0,obj)
-        #     rospy.logwarn("Planning for sequence number %i is done"%sequence_number)
-        #     if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
-        #         msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-        #         if msg[0:7] == 'SUCCESS':
-        #             gripper_function(name)
-        #             (code2,res2) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
-        #             msg2 = self.send_and_publish_planning_result(res2,acceleration,velocity)
-        #             return msg,msg2
-        #     else:
-        #         rospy.logwarn("Backoff pose in sequence %i does not work" % sequence_number)
-        # return msg, msg2
-
             # plan to T
             (code,res) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
             if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
-
-                #q_2 = res.planned_trajectory.joint_trajectory.points[-1].positions
-                #(code2,res2) = self.planner.getPlan(T,q_2,obj=obj)
-                # rospy.logwarn(str(backup_waypoint) + ", " + str(T))
-                # msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-                if True or ((not res2 is None) and len(res2.planned_trajectory.joint_trajectory.points) > 0):
+                q_2 = res.planned_trajectory.joint_trajectory.points[-1].positions
+                (code2,res2) = self.planner.getPlan(T,q_2,obj=obj)
+                if ((not res2 is None) and len(res2.planned_trajectory.joint_trajectory.points) > 0):
                     msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-
                     rospy.sleep(0.1)
                     (code2,res2) = self.planner.getPlan(T,self.q0,obj=obj)
-
-                    # rospy.logwarn("at goal?" + str(self.at_goal))
                     if msg[0:7] == 'SUCCESS':
-                    	#rospy.logwarn(str(q_2) + str(self.q0))
                         msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
                         if msg[0:7] == 'SUCCESS':
                             gripper_function(name)
+
+                            rospy.sleep(0.1)
                             (code3,res3) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
                             msg = self.send_and_publish_planning_result(res3,acceleration,velocity)
                             return msg
@@ -757,7 +743,7 @@ class CostarArm(object):
     - open gripper
     - move back
     '''
-    def smartmove_release(self, list_of_waypoints, distance, velocity, acceleration):
+    def smartmove_release(self, possible_goals, distance, velocity, acceleration):
         # Execute the list of waypoints to the selected object
         # open gripper
 
@@ -774,7 +760,7 @@ class CostarArm(object):
     Wrapper for the RELEASE service
     '''
     def smartmove_release_cb(self, req):
-        list_of_waypoints = self.query(req)
+        list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
             return "FAILURE -- no suitable points found"
         distance = req.backoff
@@ -784,7 +770,7 @@ class CostarArm(object):
     Wrapper for the GRASP service
     '''
     def smartmove_grasp_cb(self, req):
-        list_of_waypoints = self.query(req)
+        list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
             return "FAILURE -- no suitable points found"
         distance = req.backoff

@@ -234,8 +234,8 @@ class SimplePlanning:
                   joint = JointConstraint()
                   joint.joint_name = self.joint_names[i]
                   joint.position = joints[i] 
-                  joint.tolerance_below = 0.005
-                  joint.tolerance_above = 0.005
+                  joint.tolerance_below = 0.01
+                  joint.tolerance_above = 0.01
                   joint.weight = 1.0
                   goal.joint_constraints.append(joint)
 
@@ -305,7 +305,7 @@ class SimplePlanning:
         planning_options.replan_delay = 0.1
         planning_options.planning_scene_diff.is_diff = True
         planning_options.planning_scene_diff.robot_state.is_diff = True
-
+        
         if obj is not None:
           self.updateAllowedCollisions(obj,True);
 
