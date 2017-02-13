@@ -3,7 +3,7 @@
 // Bullet stuffs
 #include "obj_convex_decomposition.h"
 
-ObjConvexDecomposition::ObjConvexDecomposition(size_t n_clusters, double concavity, bool invert, bool add_extra_distance_points, 
+ObjConvexDecomposition::ObjConvexDecomposition(size_t n_clusters, btScalar concavity, bool invert, bool add_extra_distance_points, 
 		bool add_neighbours_distance_points, bool add_faces_points, size_t max_hull_vertices):
 	n_clusters_(n_clusters),
 	concavity_(concavity),

@@ -162,7 +162,7 @@ add_library(OpenGLSupport ${OpenGLSupport})
 set(ObjConvexDecomposition tool/obj_convex_decomposition.cpp)
 add_library(objConvexDecomposition ${ObjConvexDecomposition})
 
-set(ObjectDataProperty src/object_data_property.cpp)
+set(ObjectDataProperty src/object_data_property.cpp  src/scene_physics_penalty.cpp)
 add_library(objectDataProperty ${ObjectDataProperty})
 
 set(PhysicsEngine src/scene_physics_engine.cpp)

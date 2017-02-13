@@ -2,10 +2,12 @@
 #include <math.h>
 
 #include "scene_physics_engine.h"
+#include "scene_physics_penalty.h"
 
 PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), rendering_launched_(false), use_background_normal_as_gravity_(false)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
+	simulation_step_ = 1/120.f; // 120 Hz
 	this->initPhysics();
 }
 void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center)
@@ -150,7 +152,7 @@ void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 		<< gravity_corrected_magnitude[1] << ", " 
 		<< gravity_corrected_magnitude[2] << std::endl;
 	m_dynamicsWorld->setGravity(gravity_corrected_magnitude);
-
+	this->gravity_magnitude_ = gravity_corrected_magnitude.norm();
 	// mtx_.unlock();
 }
 
@@ -175,6 +177,8 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's world.\n";
 		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
 
+		object_penalty_parameter_database_by_id_[it->getID()] = (*object_penalty_parameter_database_)[it->getObjectClass()];
+		
 		if (this->debug_messages_)
 		{
 			std::cerr << "Object " << it->getID() <<", address: " << this->rigid_body_[it->getID()]  <<": \n";
@@ -206,12 +210,15 @@ void PhysicsEngine::simulate()
 
 	if (this->rendering_launched_)
 	{
-		this->in_simulation_ = true;
 		this->counter_ = 0;
-		while (this->in_simulation_ && this->counter_ < 100 )
+		this->object_velocity_.clear();
+		this->object_acceleration_.clear();
+		this->in_simulation_ = true;
+		while (this->in_simulation_ && this->counter_ < 200 )
 		{
 			// Do nothing;
-			boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+
+			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 			this->counter_++;
 		}
 		this->in_simulation_ = false;
@@ -220,7 +227,17 @@ void PhysicsEngine::simulate()
 	{
 		for (int i = 0; i < 600; i++)
 		{
-			m_dynamicsWorld->stepSimulation(1 / 120.f, 10);
+			this->cacheObjectVelocities();
+			for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+			it != this->rigid_body_.end(); ++it)
+			{
+				if (keyExistInConstantMap(it->first,this->object_acceleration_)){
+					std::cerr << it->first << " ";
+					calculateStabilityPenalty(this->object_acceleration_[it->first], 
+						object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
+				}
+			}
+			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
 			if (this->checkSteadyState()) break;
 		}
 	}
@@ -291,6 +308,25 @@ void PhysicsEngine::resetObjects()
 	// mtx_.unlock();
 }
 
+void PhysicsEngine::cacheObjectVelocities()
+{
+	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
+	{
+		btVector3 current_lin_vel = it->second->getLinearVelocity(),
+			current_ang_vel = it->second->getAngularVelocity();
+		std::cerr << it->first <<": " << current_lin_vel.x() << ", " << current_lin_vel.y() << ", " << current_lin_vel.z() << std::endl;
+		if (keyExistInConstantMap(it->first,this->object_velocity_))
+		{
+			btVector3 avg_lin_acc = (current_lin_vel - object_velocity_[it->first].linear_)/ simulation_step_,
+				avg_ang_acc = (current_ang_vel - object_velocity_[it->first].angular_)/ simulation_step_;
+
+			this->object_acceleration_[it->first].setValue(avg_lin_acc, avg_ang_acc);
+		}
+		this->object_velocity_[it->first].setValue(current_lin_vel, current_ang_vel);
+	}
+}
+
 void PhysicsEngine::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
@@ -359,8 +395,17 @@ void PhysicsEngine::clientMoveAndDisplay()
 	if (m_dynamicsWorld)
 	{
 		if (this->in_simulation_){
-			// m_dynamicsWorld->stepSimulation(ms / 1000000.f);
-			m_dynamicsWorld->stepSimulation(1 / 120.f, 10);
+			this->cacheObjectVelocities();
+			for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+			it != this->rigid_body_.end(); ++it)
+			{
+				if (keyExistInConstantMap(it->first,this->object_acceleration_)){
+					std::cerr << it->first << " ";
+					calculateStabilityPenalty(this->object_acceleration_[it->first], 
+						object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
+				}
+			}
+			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
 			if (this->checkSteadyState()) this->in_simulation_ = false;
 		}
 		//optional but useful: debug drawing
@@ -405,5 +450,10 @@ void PhysicsEngine::setCameraPositionAndTarget(btVector3 cam_position, btVector3
 	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalize();
 	this->m_ele = 90 - acos(target_to_cam_direction[1]) * 57.29577951308232;
 	this->m_azi = atan2(-target_to_cam_direction[0],-target_to_cam_direction[2]) * 57.29577951308232;
+}
+
+void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database)
+{
+	this->object_penalty_parameter_database_ = penalty_database;
 }
 

@@ -14,6 +14,7 @@
 
 // Contains variety of tools for handling conversion and getting content from one datatype to another
 #include "utility.h"
+#include "scene_physics_penalty.h"
 
 // World scaling for better precision, since we are dealing with small objects (centimeter sized instead of meter sized object)
 // Will be applied to collision shapes, gravity, and transforms (in physics engine world. In real world, it will be rescaled again appropriately)
@@ -30,6 +31,7 @@ struct PhysicalProperties
 	btScalar friction_;
 	btScalar rolling_friction_;
 	btVector3 inertia_;
+
 	PhysicalProperties() : mass_(1.0), friction_(1.0), rolling_friction_(1.0) {};
 
 	// template constructor
@@ -100,11 +102,13 @@ protected:
 class ObjectWithID : public Object{
 public:
 	void assignPhysicalPropertyFromObject(const Object &input);
-	void assignData(const std::string &object_id, const btTransform &transform);
+	void assignData(const std::string &object_id, const btTransform &transform, const std::string &object_class);
 	std::string getID() const;
+	std::string getObjectClass() const;
 	btRigidBody* generateRigidBodyForWorld() const;
 private:
 	std::string id_;
+	std::string object_class_;
 	btTransform  transform_;
 };
 
@@ -119,7 +123,7 @@ private:
 // 	bool has_generated_pcl_mesh;
 // };
 
-struct ObjectDatabase
+class ObjectDatabase
 {
 public:
 	ObjectDatabase() : debug_messages_(false) {};
@@ -139,12 +143,33 @@ public:
 	std::size_t loadDatabase(const std::map<std::string, PhysicalProperties> &physical_properties_database);
 	Object getObjectProperty(std::string object_name) const;
 	bool objectExistInDatabase(std::string) const;
+	std::map<std::string, ObjectPenaltyParameters> * getObjectPenaltyDatabase();
 
 private:
 	bool debug_messages_;
 	std::map<std::string, Object> database_;
 	std::map<std::string, PhysicalProperties> physical_properties_database_;
+	std::map<std::string, ObjectPenaltyParameters> object_penalty_parameter_database_;
 	std::string file_location_;
+};
+
+struct ObjectPairProperty
+{
+	btTransform relative_transform_;
+	btVector3 linear_limit_;
+	btVector3 angular_limit_;
+
+	ObjectPairProperty() : relative_transform_(btTransform::getIdentity() ) {};
+	ObjectPairProperty(btTransform relative_transform) : relative_transform_(relative_transform) {};
+	ObjectPairProperty(btTransform relative_transform, btVector3  linear_limit, btVector3 angular_limit) : 
+		relative_transform_(relative_transform), linear_limit_(linear_limit), angular_limit_(angular_limit) {};
+	
+	ObjectPairProperty getInverse() const;
+};
+
+class ObjectPairDatabase
+{
+	std::map< std::pair<std::string,std::string>, btTransform > pairRelativeTransform;
 };
 
 #endif

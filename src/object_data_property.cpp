@@ -74,16 +74,22 @@ void ObjectWithID::assignPhysicalPropertyFromObject(const Object &input)
 	this->shallowCopy(input);
 }
 
-void ObjectWithID::assignData(const std::string &object_id, const btTransform &transform)
+void ObjectWithID::assignData(const std::string &object_id, const btTransform &transform, const std::string &object_class)
 {
 	this->id_ = object_id;
 	this->transform_ = transform;
+	this->object_class_ = object_class;
 }
 
 // inline
 std::string ObjectWithID::getID() const
 {
 	return this->id_;
+}
+
+std::string ObjectWithID::getObjectClass() const
+{
+	return this->object_class_;
 }
 
 btRigidBody* ObjectWithID::generateRigidBodyForWorld() const
@@ -112,10 +118,14 @@ bool ObjectDatabase::addObjectToDatabase(const std::string &object_name)
 	{
 		Object new_object;
 		PhysicalProperties new_property = getContentOfConstantMap(object_name,this->physical_properties_database_);
+		ObjectPenaltyParameters new_penalty_params;
+		new_penalty_params.maximum_angular_acceleration_ = getObjectMaximumAngularAcceleration(*simplified_mesh);
 
 		new_object.setPhysicalProperties(simplified_mesh, new_property);
 		this->database_[object_name].shallowCopy(new_object);
+		this->object_penalty_parameter_database_[object_name] = new_penalty_params;
 		if (this->debug_messages_) std::cerr << object_name << " successfully added to the database.\n";
+
 		return true;
 	}
 	else
@@ -165,3 +175,13 @@ bool ObjectDatabase::objectExistInDatabase(std::string object_name) const
 {
 	return keyExistInConstantMap(object_name,this->database_);
 }
+
+std::map<std::string, ObjectPenaltyParameters> * ObjectDatabase::getObjectPenaltyDatabase()
+{
+	return &this->object_penalty_parameter_database_;
+}
+
+// ObjectPairProperty ObjectPairProperty::getInverse() const
+// {
+	
+// }

@@ -24,11 +24,13 @@ int main(int argc, char* argv[])
     ros::NodeHandle nh ("~");
     ros::Rate r(10); //10Hz
     RosSceneGraph test(nh);
-    // Run this on separate thread
-    boost::thread * thr = new boost::thread(boost::bind(rosMainloop, r,boost::ref(test))); 
+    rosMainloop(r,test);
+
+
+    // Run the physics simulation on separate thread
+    // boost::thread * thr = new boost::thread(boost::bind(rosMainloop, r,boost::ref(test))); 
+    // test.callGlutMain(argc,argv);
     // ros::spin();
-    // Run the physics simulation
-    test.callGlutMain(argc,argv);
 #endif
     
 	return 0;

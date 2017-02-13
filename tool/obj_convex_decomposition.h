@@ -28,7 +28,7 @@ class ObjConvexDecomposition
 {
 public:
 	// constructor
-	ObjConvexDecomposition(size_t n_clusters, double concavity, bool invert, bool add_extra_distance_points, 
+	ObjConvexDecomposition(size_t n_clusters, btScalar concavity, bool invert, bool add_extra_distance_points, 
 		bool add_neighbours_distance_points, bool add_faces_points, size_t max_hull_vertices = 100);
 	void setOutputFilename(std::string filename);
 	void setGenerateAdditionalVRMLfile(bool vrml_flag);
@@ -51,7 +51,7 @@ private:
 	// HACD parameters
 	// Recommended parameters: 2 100 0 0 0 0 100
 	size_t n_clusters_;
-	double concavity_;
+	btScalar concavity_;
 	bool invert_;
 	bool add_extra_distance_points_;
 	bool add_neighbours_distance_points_;
@@ -61,7 +61,7 @@ private:
 	// output parameter
 	bool convex_hull_enable_polyhedral_contact_clipping_;
 	bool reduce_hull_vertices_using_BtShapeHull_;
-	float convex_hull_collision_margin_;
+	btScalar convex_hull_collision_margin_;
 	// result
 	btCompoundShape result;
 };

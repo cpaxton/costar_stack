@@ -14,7 +14,7 @@ btCollisionShape* load_bcs(const char* filename,bool verbose)   {
 	} 
 	btCollisionShape* shape = NULL;
 	if (loader.getNumCollisionShapes()>0) {
-		std::cerr << "Number of shapes in the file: " << loader.getNumCollisionShapes();
+		std::cerr << "Number of shapes in the file: " << loader.getNumCollisionShapes() << std::endl;
 		shape = loader.getCollisionShapeByIndex(0);
 	}
 	// Hope there are no leaks.

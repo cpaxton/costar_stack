@@ -19,6 +19,7 @@
 #include "debugdrawer/GLDebugDrawer.h"
 
 #include "object_data_property.h"
+#include "scene_physics_penalty.h"
 
 class PhysicsEngine : public PlatformDemoApplication
 {
@@ -43,6 +44,8 @@ public:
 	void addObjects(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, btTransform>  getUpdatedObjectPose();
 	void resetObjects();
+	void cacheObjectVelocities();
+	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
 
 	void setDebugMode(bool debug);
 	void renderingLaunched();
@@ -90,7 +93,14 @@ private:
 	// DO NOT DECLARE m_dynamicworld here. It will break OPENGL simulation
     btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
 	
+	std::map<std::string, ObjectPenaltyParameters> object_penalty_parameter_database_by_id_;
+    std::map<std::string, ObjectPenaltyParameters> * object_penalty_parameter_database_;
+    double gravity_magnitude_;
+    std::map<std::string, MovementComponent> object_velocity_;
+    std::map<std::string, MovementComponent> object_acceleration_;
+
 	btVector3 camera_coordinate_, target_coordinate_;
+	double simulation_step_;
 	boost::mutex mtx_;
 };
 

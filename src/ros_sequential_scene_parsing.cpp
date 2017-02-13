@@ -1,6 +1,64 @@
 #include <pcl/io/pcd_io.h>
 #include "ros_sequential_scene_parsing.h"
-#include "utility_ros.h"
+// #include "utility_ros.h"
+
+inline
+btTransform convertRosTFToBulletTF(const tf::Transform & input)
+{
+	double gl_matrix[15];
+	input.getOpenGLMatrix(gl_matrix);
+	btTransform bt;
+#if defined(BT_USE_DOUBLE_PRECISION)
+	bt.setFromOpenGLMatrix(gl_matrix);
+#else
+	btScalar gl_matrix_bt[15];
+	for (int i = 0; i < 15; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
+	bt.setFromOpenGLMatrix(gl_matrix_bt);
+#endif
+	// Scale the translation factor 
+	bt.setOrigin(bt.getOrigin()*SCALING);
+	return bt;
+}
+
+inline
+btTransform convertRosTFToBulletTF(const tf::StampedTransform input)
+{
+	double gl_matrix[15];
+	input.getOpenGLMatrix(gl_matrix);
+	btTransform bt;
+#if defined(BT_USE_DOUBLE_PRECISION)
+	bt.setFromOpenGLMatrix(gl_matrix);
+#else
+	btScalar gl_matrix_bt[15];
+	for (int i = 0; i < 15; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
+	bt.setFromOpenGLMatrix(gl_matrix_bt);
+#endif
+	// Scale the translation factor 
+	bt.setOrigin(bt.getOrigin()*SCALING);
+	return bt;
+}
+
+inline
+tf::Transform convertBulletTFToRosTF(const btTransform & input)
+{
+	tf::Transform tf_transform;
+	btScalar gl_matrix_bt[15];
+
+	// Scale back the translation factor
+	btTransform input_rescaled = input;
+	input_rescaled.setOrigin(input_rescaled.getOrigin()/SCALING);
+	input_rescaled.getOpenGLMatrix(gl_matrix_bt);
+
+#if defined(BT_USE_DOUBLE_PRECISION)
+	tf_transform.setFromOpenGLMatrix(gl_matrix_bt);
+#else
+	double gl_matrix[15];
+	for (int i = 0; i < 15; i++) gl_matrix[i] = double(gl_matrix_bt[i]);
+	tf_transform.setFromOpenGLMatrix(gl_matrix);
+#endif
+	return tf_transform;
+}
+
 
 RosSceneGraph::RosSceneGraph()
 {
@@ -61,7 +119,7 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 
 	this->obj_database_.setObjectFolderLocation(object_folder_location);
 	if (this->fillObjectPropertyDatabase()) this->obj_database_.loadDatabase(this->physical_properties_database_);
-
+	this->physics_engine_.setObjectPenaltyDatabase(this->obj_database_.getObjectPenaltyDatabase());
 	// sleep for caching the initial TF frames.
 	sleep(1.0);
 	this->detected_object_sub = this->nh_.subscribe(detected_object_topic,1,&RosSceneGraph::updateSceneFromDetectedObjectMsgs,this);
@@ -112,8 +170,21 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 				this->obj_database_.addObjectToDatabase(object_class))
 			{
 				obj_tmp.assignPhysicalPropertyFromObject(this->obj_database_.getObjectProperty(object_class));
-				btTransform bt = convertRosTFToBulletTF(transform);
-				obj_tmp.assignData(object_tf_frame, bt);
+				// btTransform bt = convertRosTFToBulletTF(transform);
+				double gl_matrix[15];
+				transform.getOpenGLMatrix(gl_matrix);
+				btTransform bt;
+#if defined(BT_USE_DOUBLE_PRECISION)
+				bt.setFromOpenGLMatrix(gl_matrix);
+#else
+				btScalar gl_matrix_bt[15];
+				for (int i = 0; i < 15; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
+				bt.setFromOpenGLMatrix(gl_matrix_bt);
+#endif
+				// Scale the translation factor 
+				bt.setOrigin(bt.getOrigin()*SCALING);
+
+				obj_tmp.assignData(object_tf_frame, bt, object_class);
 				objects.push_back(obj_tmp);
 			}
 			else
@@ -137,7 +208,22 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 			std::cerr << "Setting gravity direction of the physics_engine.\n";
 			tf::StampedTransform transform;
 			this->listener_.lookupTransform(this->parent_frame_,this->tf_z_is_inverse_gravity_direction_,ros::Time(0),transform);
-			btTransform bt = convertRosTFToBulletTF(transform);
+			
+			// btTransform bt = convertRosTFToBulletTF(transform);
+			double gl_matrix[15];
+			transform.getOpenGLMatrix(gl_matrix);
+			btTransform bt;
+#if defined(BT_USE_DOUBLE_PRECISION)
+			bt.setFromOpenGLMatrix(gl_matrix);
+#else
+			btScalar gl_matrix_bt[15];
+			for (int i = 0; i < 15; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
+			bt.setFromOpenGLMatrix(gl_matrix_bt);
+#endif
+			// Scale the translation factor 
+			bt.setOrigin(bt.getOrigin()*SCALING);
+
+
 			this->physics_engine_.setGravityVectorDirectionFromTfYUp(bt);
 			this->physics_gravity_direction_set_ = true;
 		}
@@ -159,7 +245,22 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	{
 		std::stringstream ss;
 		tf::Transform tf_transform;
-		tf_transform = convertBulletTFToRosTF(it->second);
+		// tf_transform = convertBulletTFToRosTF(it->second);
+		btScalar gl_matrix_bt[15];
+
+		// Scale back the translation factor
+		btTransform input_rescaled = it->second;
+		input_rescaled.setOrigin(input_rescaled.getOrigin()/SCALING);
+		input_rescaled.getOpenGLMatrix(gl_matrix_bt);
+
+#if defined(BT_USE_DOUBLE_PRECISION)
+		tf_transform.setFromOpenGLMatrix(gl_matrix_bt);
+#else
+		double gl_matrix[15];
+		for (int i = 0; i < 15; i++) gl_matrix[i] = double(gl_matrix_bt[i]);
+		tf_transform.setFromOpenGLMatrix(gl_matrix);
+#endif
+
 		ss << this->tf_publisher_initial << "/" << it -> first;
 		object_transforms_tf_[ss.str()] = tf_transform;
 	}
