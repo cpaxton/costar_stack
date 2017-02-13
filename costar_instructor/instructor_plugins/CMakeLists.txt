@@ -4,6 +4,7 @@ project(instructor_plugins)
 find_package(catkin REQUIRED COMPONENTS
   beetree
   instructor_core
+  std_msgs
   message_generation
 )
 
