@@ -168,6 +168,9 @@ class CostarArm(object):
         self.joint_space_weight = 0.05
 
         # for checking robot configuration validity
+        self.gripper_close = self.make_service('gripper/close',EmptyService,None)
+        self.gripper_open = self.make_service('gripper/open',EmptyService,None)
+        
         self.state_validity_service = rospy.ServiceProxy("/check_state_validity", GetStateValidity)
         self.robot_state = RobotState()
         self.robot_state.joint_state.name = self.joint_names
@@ -477,7 +480,7 @@ class CostarArm(object):
     '''
     def attach(self, object_name):
         # attach the collision object to the gripper
-
+        self.gripper_close.call()
         self.planning_group.attachObject(object_name, self.end_link)
         # self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
         # planning_scene_diff = PlanningScene(is_diff=True)
@@ -501,7 +504,7 @@ class CostarArm(object):
 
     def detach(self, object_name):
         # detach the collision object to the gripper
-
+        self.gripper_open.call()
         self.planning_group.detachObject(object_name, self.end_link)
         # self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
         # planning_scene_diff = PlanningScene(is_diff=True)
@@ -521,6 +524,54 @@ class CostarArm(object):
         # planning_scene_diff.world.collision_objects.append(add_object);
 
         # self.planning_scene_publisher.publish(planning_scene_diff)
+    '''
+    Calculate the best distance between current joint position to the target pose given a IK solution or list of IK solutions 
+    '''
+    def get_best_distance(self, T, T_fwd, q0):
+        quaternion_dot = np.dot(np.array(T_fwd.M.GetQuaternion()),np.array(T.M.GetQuaternion()))
+        delta_rotation = np.arccos(2 * quaternion_dot ** 2 - 1) 
+
+        q_new = list()
+
+        if self.closed_form_IK_solver == None:
+            q_new.append(self.ik(pm.toMatrix(T),self.q0))
+        else:
+            q_new = self.closed_form_IK_solver.solveIK(pm.toMatrix(T))
+
+        if q_new is not None:
+            message_print = ''
+            message_print_invalid = ''
+            ik_joint_solution_validity = ''
+            best_dist = float('inf')
+            best_invalid = float('inf')
+            best_q = None
+            best_q_invalid = None
+
+            for q_i in q_new:
+                dq = np.absolute(q_i - self.q0) * self.joint_weights
+                combined_distance = (T.p - T_fwd.p).Norm() + \
+                      self.rotation_weight * delta_rotation + \
+                      self.joint_space_weight * np.sum(dq)
+                
+                result = self.check_robot_position_validity(q_i.tolist())
+                ik_joint_solution_validity += '%s ' % result.valid
+
+                if result.valid and combined_distance < best_dist:
+                    best_q = q_i
+                    best_dist = combined_distance
+                    message_print = 'valid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
+                     ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
+
+                elif not result.valid and combined_distance < best_invalid:
+                    best_q_invalid = q_i
+                    best_invalid = combined_distance 
+                    message_print_invalid = 'invalid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
+                     ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
+            valid_pose = (best_dist is not float('inf'))
+            if not valid_pose:
+                best_q = best_q_invalid
+            return valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q
+
 
     def query(self, req):
         # Get the best object to manipulate, just like smart move, but without the actual movement
@@ -566,68 +617,14 @@ class CostarArm(object):
 
             Ts.append(T)
 
-            quaternion_dot = np.dot(np.array(T_fwd.M.GetQuaternion()),np.array(T.M.GetQuaternion()))
-            delta_rotation = np.arccos(2 * quaternion_dot ** 2 - 1) 
-            
-            multiple_q_solution = False
-            q_new = list()
-            q_closest = None
+            valid_pose, best_dist, best_invalid, message_print, message_print_invalid,_ = self.get_best_distance(T,T_fwd,self.q0)
 
-            if self.closed_form_IK_solver == None:
-                q_new.append(self.ik(pm.toMatrix(T),self.q0))
+            if valid_pose:
+                print message_print
+                dists.append(best_dist)
             else:
-                q_new = self.closed_form_IK_solver.solveIK(pm.toMatrix(T))
-                if q_new is not None:
-                    delta_Q = np.absolute(q_new - np.array(self.q0)) * self.closed_form_IK_solver.joint_weights
-                    delta_Q_weights = np.sum(delta_Q, axis=1)
-                    closest_ik_index = np.argmin(delta_Q_weights, axis = 0)
-                    q_closest = q_new[closest_ik_index,:]
-
-            if q_new is not None:
-                message_print = ''
-                message_print_invalid = ''
-                ik_joint_solution_validity = ''
-                best_dist = float('inf')
-                best_invalid = float('inf')
-                closest_validity = None
-                closest_dist = None
-
-                for q_i in q_new:
-                    dq = np.absolute(q_i - self.q0) * self.joint_weights
-                    combined_distance = (T.p - T_fwd.p).Norm() + \
-                          self.rotation_weight * delta_rotation + \
-                          self.joint_space_weight * np.sum(dq)
-                    
-                    result = self.check_robot_position_validity(q_i.tolist())
-                    ik_joint_solution_validity += '%s ' % result.valid
-
-                    if (np.linalg.norm(q_i - q_closest) < 0.001):
-                        closest_validity = result.valid
-                        closest_dist = combined_distance
-
-                    if result.valid and combined_distance < best_dist:
-                        best_dist = combined_distance
-                        message_print = 'valid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
-                         ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
-
-                    elif not result.valid and combined_distance < best_invalid:
-                        best_invalid = combined_distance 
-                        message_print_invalid = 'invalid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
-                         ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
-
-                # print 'closest_validity: ', closest_validity, ' closest_dist', closest_dist
-                if message_print != '':
-                    if closest_validity == False:
-                        print 'There is a valid pose, but it is not the closest IK solution'
-                    elif abs(closest_dist - best_dist) > 0.01:
-                        print 'The closest distance: ', closest_dist, '!= best distance: ', best_dist
-                    print message_print
-                    dists.append(best_dist)
-                else:
-                    print message_print_invalid
-                    dists.append(best_invalid + self.state_validity_penalty)
-                    # if len(q_new) != 1:
-                    #     print 'List of IK solution validity test result: ', ik_joint_solution_validity
+                print message_print_invalid
+                dists.append(best_invalid + self.state_validity_penalty)
 
 
         if len(Ts) == 0:
@@ -640,14 +637,53 @@ class CostarArm(object):
         # joint.position = self.ik(T,self.q0)
         return possible_goals
 
+    def smartmove_multipurpose_gripper(self, possible_goals, distance, gripper_function):
+        list_of_valid_sequence = list()
+        list_of_sequence = list()
+        T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
+        for (dist,T,obj,name) in possible_goals:
+           backup_waypoint = T
+           backup_waypoint.p = T.p + T.M * kdl.Vector(0.,0.,-distance)
+           valid_pose, best_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0)
+           list_of_sequence.append(backup_waypoint,T,self.q0,best_q,name)
+           if valid_pose:
+               list_of_sequence.append((backup_waypoint,T,self.q0,best_q,name))
 
-    def smartmove_grasp(self, list_of_waypoints, distance):
+           sequence_to_execute = list()
+        if len(list_of_sequence) > 0:
+            sequence_to_execute = list_of_valid_sequence
+        else:
+            rospy.logwarn("WARNING -- no sequential valid grasp action found")
+            sequence_to_execute = list_of_sequence
+
+        msg,msg2,msg3 = None, None, None
+        for (backup_waypoint,T,self.q0,best_q,name) in sequence_to_execute:
+            # rospy.logwarn("Trying to move to frame at distance %f"%(dist))
+
+            # plan to T
+            (code,res) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
+            if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
+                (code2,res2) = self.planner.getPlan(T,best_q,obj=obj)
+                if (not res2 is None) and len(res2.planned_trajectory.joint_trajectory.points) > 0:
+                    msg = self.send_and_publish_planning_result(res,acceleration,velocity)
+                    msg2 = self.send_and_publish_planning_result(res2,acceleration,velocity)
+                    if msg2[0:7] == 'SUCCESS':
+                        self.gripper_function(name)
+                        (code3,res3) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
+                        msg3 = self.send_and_publish_planning_result(res3,acceleration,velocity)
+                        break
+        return msg, msg2, msg3
+
+    def smartmove_grasp(self, possible_goals, distance):
         # Execute the list of waypoints to the selected object
         # It receive one object frame from select, and do motion planning for that
         # close gripper
-        self.attach(object_name)
 
-        pass
+        # compute backup from grasp pose in each [list of waypoints]
+        # backup transform is [0, 0, -distance]
+        # call /costar/gripper/close
+        # move back to original tform
+        return smartmove_multipurpose_gripper(self, possible_goals, distance, self.attach)
 
     '''
     SmartMove Release:
@@ -659,8 +695,13 @@ class CostarArm(object):
     def smartmove_release(self, list_of_waypoints, distance):
         # Execute the list of waypoints to the selected object
         # open gripper
-        self.detach(object_name)
-        pass
+
+        # compute backup from release pose in each [list of waypoints]
+        # backup transform is [0, 0, -distance]
+        # call /costar/gripper/open
+        # move back to original tform
+
+        return smartmove_multipurpose_gripper(self, possible_goals, distance, self.detach)
 
     # =========================================================================
 
