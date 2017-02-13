@@ -78,7 +78,7 @@ class NamedField(QWidget):
     self.title.setAlignment(Qt.AlignCenter)
     self.title.setMinimumWidth(119)
     # self.title.adjustSize()
-    self.title.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum))
+    self.title.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum,QtGui.QSizePolicy.Maximum))
     # self.title.setMaximumWidth(120)
     self.title.setMinimumHeight(31)
     self.title.setMaximumHeight(32)
