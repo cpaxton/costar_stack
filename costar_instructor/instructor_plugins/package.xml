@@ -44,7 +44,7 @@
     <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
       type="ACTION" group="ROBOT"
       description="Instructor Plan to Relative Waypoint"
-      cases="baseline"
+      cases="perception"
       name="Plan Relative"/>
 
     <!-- BASIC GRASPING COMMANDS -->
@@ -117,7 +117,7 @@
       type="CONDITION"
       group="VISION"
       description="sp_segmenter_detect"
-      cases="perception"
+      cases="planning"
       name="Detect Objects"/>
   </export>
 
