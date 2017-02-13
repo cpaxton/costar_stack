@@ -67,15 +67,13 @@ def clear_cmd():
 '''
 Load the plugins that become elements we can add to instructor.
 '''
-def load_instructor_plugins(case=""):
+def load_instructor_plugins(cases=[]):
     # NOTE: we no longer need to use this, at least for the time being.
     #to_check = rospack.rospack_depends_on_1('beetree')
     to_check = ["instructor_core", "instructor_plugins"]
-
     rp = rospkg.RosPack()
     # to_check = rospack.get_depends_on('beetree', implicit=False)
     clear_cmd()
-    print 'Found packages that have beetree dependency...'
     # print to_check
     plugins = []    
     descriptions = []
@@ -89,20 +87,33 @@ def load_instructor_plugins(case=""):
         p_descriptions = m.get_export('instructor', 'description')
         p_names = m.get_export('instructor', 'name')
         p_groups = m.get_export('instructor', 'group')
+        p_cases = m.get_export('instructor', 'cases')
         if not p_modules:
             continue
         if p_modules == []:
             pass
 
-        for p_module, p_description, p_name, p_type, p_group in zip(p_modules,p_descriptions,p_names,p_types,p_groups):
-            package = __import__(pkg)
-            sub_mod = p_module.split('.')[1:][0]
-            module = getattr(package, sub_mod)
-            plugins.append(module)
-            descriptions.append(p_description)
-            names.append(p_name)               
-            types.append(p_type)
-            groups.append(p_group)                
+        for p_module, p_description, p_name, p_type, p_group, p_case in zip(p_modules,p_descriptions,p_names,p_types,p_groups,p_cases):
+            if len(cases) == 0:
+                include = True
+            else:
+                include = False
+                allowed_cases = p_case.split(',')
+                rospy.logerr("allowed for " + p_name + ": " + str(allowed_cases))
+                for case in cases:
+                    if case in allowed_cases:
+                        include = True
+                        break
+
+            if include:
+                package = __import__(pkg)
+                sub_mod = p_module.split('.')[1:][0]
+                module = getattr(package, sub_mod)
+                plugins.append(module)
+                descriptions.append(p_description)
+                names.append(p_name)               
+                types.append(p_type)
+                groups.append(p_group)
 
     return plugins, descriptions, names, types, groups
 
@@ -134,7 +145,12 @@ class Instructor(QWidget):
                 'SERVICE',
                 'VARIABLES']
 
-        self.case = rospy.get_param("case","")
+        self.cases = rospy.get_param("~cases","")
+        if len(self.cases) > 0:
+            self.cases = self.cases.split(',')
+        else:
+            self.cases = []
+        rospy.logerr(str(self.cases))
 
         # Load the ui attributes into the main widget
         self.rospack__ = rospkg.RosPack()
@@ -299,7 +315,7 @@ class Instructor(QWidget):
         rospy.logwarn('INSTRUCTOR: LOADING PLUGINS')
         self.plugins = {}
         self.node_counter = {}
-        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.case)
+        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.cases)
         for plug,desc,name,typ,grp in zip(plugins,plugin_descriptions,plugin_names,plugin_types, plugin_groups):
             self.plugins[name] = {'module':plug, 'type':typ, 'name':name, 'group':grp, 'description':desc, 'generator_type':str(type(plug()))}
         
