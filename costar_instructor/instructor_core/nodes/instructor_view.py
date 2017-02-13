@@ -99,7 +99,7 @@ def load_instructor_plugins(cases=[]):
             else:
                 include = False
                 allowed_cases = p_case.split(',')
-                rospy.logerr("allowed for " + p_name + ": " + str(allowed_cases))
+                #rospy.logerr("allowed for " + p_name + ": " + str(allowed_cases))
                 for case in cases:
                     if case in allowed_cases:
                         include = True
@@ -150,7 +150,7 @@ class Instructor(QWidget):
             self.cases = self.cases.split(',')
         else:
             self.cases = []
-        rospy.logerr(str(self.cases))
+        #rospy.logerr(str(self.cases))
 
         # Load the ui attributes into the main widget
         self.rospack__ = rospkg.RosPack()
