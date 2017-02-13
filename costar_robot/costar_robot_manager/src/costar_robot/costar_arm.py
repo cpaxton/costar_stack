@@ -417,6 +417,7 @@ class CostarArm(object):
         # print self.end_link, "/endpoint",  "trans = ", (0,0,0), "rot = ", (0,0,0)
         br = tf.TransformBroadcaster()
         br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
+        br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
         # br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
 
     '''
