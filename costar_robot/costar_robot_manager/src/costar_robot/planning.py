@@ -20,6 +20,7 @@ from pykdl_utils.kdl_kinematics import KDLKinematics
 from trajectory_msgs.msg import JointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 from shape_msgs.msg import SolidPrimitive
+from geometry_msgs.msg import Pose
 ModeJoints = 'joints'
 ModeCart = 'cartesian'
 
@@ -46,6 +47,10 @@ class SimplePlanning:
         self.group = group
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
+
+        rospy.wait_for_service('/compute_cartesian_path')
+        self.cartesian_path_plan = rospy.ServiceProxy('/compute_cartesian_path',GetCartesianPath)
+
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
     
@@ -229,24 +234,30 @@ class SimplePlanning:
                   joint = JointConstraint()
                   joint.joint_name = self.joint_names[i]
                   joint.position = joints[i] 
-                  joint.tolerance_below = 0.005
-                  joint.tolerance_above = 0.005
+                  joint.tolerance_below = 0.01
+                  joint.tolerance_above = 0.01
                   joint.weight = 1.0
                   goal.joint_constraints.append(joint)
 
           else:
+            print 'Setting cartesian constraint'
             # TODO: Try to fix this again. Something is wrong
             cartesian_costraint = PositionConstraint()
             cartesian_costraint.header.frame_id = 'base_link'
             cartesian_costraint.link_name = self.joint_names[-1]
-            cartesian_costraint.target_point_offset = frame.p
+            # cartesian_costraint.target_point_offset = frame.p
             bounding_volume = BoundingVolume()
             sphere_bounding = SolidPrimitive()
             sphere_bounding.type = sphere_bounding.SPHERE;
             # constrain position with sphere 1 mm around target
-            sphere_bounding.dimensions.append(0.01)
+            sphere_bounding.dimensions.append(0.5)
 
             bounding_volume.primitives.append(sphere_bounding)
+            sphere_pose = Pose()
+            sphere_pose.position = frame.p
+            sphere_pose.orientation.w = 1.0
+            bounding_volume.primitive_poses.append(sphere_pose)
+
             cartesian_costraint.constraint_region = bounding_volume
             cartesian_costraint.weight = 1.0
             goal.position_constraints.append(cartesian_costraint)
@@ -255,17 +266,17 @@ class SimplePlanning:
             orientation_costraint.header.frame_id = 'base_link'
             orientation_costraint.link_name = self.joint_names[-1]
             orientation_costraint.orientation = frame.M.GetQuaternion()
-            orientation_costraint.absolute_x_axis_tolerance = 0.005
-            orientation_costraint.absolute_y_axis_tolerance = 0.005
-            orientation_costraint.absolute_z_axis_tolerance = 0.005
+            orientation_costraint.absolute_x_axis_tolerance = 0.1
+            orientation_costraint.absolute_y_axis_tolerance = 0.1
+            orientation_costraint.absolute_z_axis_tolerance = 0.1
             orientation_costraint.weight = 1.0
             goal.orientation_constraints.append(orientation_costraint)
-        
+            print 'Done'
         return(None, goal)
 
 
     def updateAllowedCollisions(self,obj,allowed):
-        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
         rospy.wait_for_service('/get_planning_scene', 10.0)
         get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene)
         request = PlanningSceneComponents(components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
@@ -294,7 +305,7 @@ class SimplePlanning:
         planning_options.replan_delay = 0.1
         planning_options.planning_scene_diff.is_diff = True
         planning_options.planning_scene_diff.robot_state.is_diff = True
-
+        
         if obj is not None:
           self.updateAllowedCollisions(obj,True);
 
@@ -353,3 +364,34 @@ class SimplePlanning:
           self.updateAllowedCollisions(obj,False);
 
         return (res.error_code.val, res)
+
+    def getPlanWaypoints(self,waypoints_in_kdl_frame,q,obj=None):
+      cartesian_path_req = GetCartesianPathRequest()
+      cartesian_path_req.header.frame_id = self.base_link
+      cartesian_path_req.start_state = RobotState()
+      cartesian_path_req.start_state.joint_state.name = self.joint_names
+      if type(q) is list:
+        cartesian_path_req.start_state.joint_state.position = q
+      else:
+        cartesian_path_req.start_state.joint_state.position = q.tolist()
+      cartesian_path_req.group_name = self.group
+      cartesian_path_req.link_name = self.joint_names[-1]
+      cartesian_path_req.avoid_collisions = False
+      cartesian_path_req.max_step = 50
+      cartesian_path_req.jump_threshold = 0
+      # cartesian_path_req.path_constraints = Constraints()
+
+      if obj is not None:
+        self.updateAllowedCollisions(obj,True)
+      
+      cartesian_path_req.waypoints = list()
+
+      for T in waypoints_in_kdl_frame:
+        cartesian_path_req.waypoints.append(pm.toMsg(T))
+
+      res = self.cartesian_path_plan.call(cartesian_path_req)
+
+      if obj is not None:
+        self.updateAllowedCollisions(obj,False)
+
+      return (res.error_code.val, res)

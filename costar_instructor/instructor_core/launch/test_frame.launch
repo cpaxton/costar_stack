@@ -1,6 +1,0 @@
-<launch>
-
-    <node pkg="tf" type="static_transform_publisher" name="world_to_base" args=" 0 0 1 0 0 0  /world /base_link 10"/>
-    <node pkg="tf" type="static_transform_publisher" name="test_base_to_endpoint" args=" 0 0 1 0 0 0  /base_link /endpoint 10"/>
-
-</launch>
