@@ -101,6 +101,8 @@ class CostarUR5Driver(CostarArm):
                 if (rospy.Time.now() - start_t).to_sec() > 3:
                     return 'FAILURE - timeout'
                 rate.sleep()
+        else:
+            self.set_goal(traj.points[-1].positions)
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
         # print goal

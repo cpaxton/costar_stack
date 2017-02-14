@@ -27,16 +27,44 @@
   <export>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
     <!-- Beetree Logic Plugins -->
-    <instructor plugin="instructor_core.NodeRootGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Root Logic Node" name="Root"/>
-    <!-- <instructor plugin="instructor_core.NodeParallelOneGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Parallel One Logic Node" name="Parallel One"/> -->
-    <!-- <instructor plugin="instructor_core.NodeParallelRemoveGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Parallel Remove Logic Node" name="Parallel Remove"/> -->
-    <!-- <instructor plugin="instructor_core.NodeParallelAllGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Parallel All Logic Node" name="Parallel All"/> -->
-    <instructor plugin="instructor_core.NodeSequenceGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Sequence Logic Node" name="Sequence"/>
-    <!-- <instructor plugin="instructor_core.NodeIteratorGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Iterator Logic Node" name="Iterator"/> -->
-    <instructor plugin="instructor_core.NodeSelectorGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Selector Logic Node" name="Selector"/>
-    <instructor plugin="instructor_core.NodeDecoratorRepeatGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Repeat Decorator Node" name="Repeat"/>
-    <instructor plugin="instructor_core.NodeDecoratorResetGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Reset Decorator Node" name="Reset"/>
-    <instructor plugin="instructor_core.NodeDecoratorWaitForSuccessGUI" type="LOGIC" group="SYSTEM" description="Instructor Core Wait for Success Decorator Node" name="Wait for Success"/>
+    <instructor plugin="instructor_core.NodeRootGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Behavior Tree Root Node"
+      cases="baseline"
+      name="Root"/>
+    <instructor plugin="instructor_core.NodeSequenceGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Sequence Logic Node"
+      cases="baseline"
+      name="Sequence"/>
+    <instructor plugin="instructor_core.NodeSelectorGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Selector Logic Node"
+      cases=""
+      name="Selector"/>
+    <instructor
+      plugin="instructor_core.NodeDecoratorRepeatGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Repeat Decorator Node"
+      cases=""
+      name="Repeat"/>
+    <instructor
+      plugin="instructor_core.NodeDecoratorResetGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Reset Decorator Node"
+      cases=""
+      name="Reset"/>
+    <instructor plugin="instructor_core.NodeDecoratorWaitForSuccessGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Wait for Success Decorator Node"
+      cases=""
+      name="Wait for Success"/>
   </export>
 
 </package>
