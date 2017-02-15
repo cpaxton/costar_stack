@@ -788,9 +788,7 @@ def clear_cmd():
 
 def load_instructor_plugins():
     #to_check = rospack.rospack_depends_on_1('beetree')
-    rospy.logwarn("LOADING PLUGINS?")
-    rospy.logwarn("=======================")
-    to_check = ['instructor_plugins']
+    to_check = ['instructor_plugins', 'instructor_core']
     rp = rospkg.RosPack()
     # to_check = rospack.get_depends_on('beetree', implicit=False)
     clear_cmd()
