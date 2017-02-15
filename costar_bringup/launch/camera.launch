@@ -1,7 +1,9 @@
 <launch>
 
   <arg name="handeye_output" default="screen"/>
-  <arg name="table_frame" default="ar_marker_3"/>
+  <arg name="table_frame" default="table_frame"/>
+  <arg name="table_ar_marker" default="ar_marker_3"/>
+  <arg name="fake_table_frame" default="true"/>
 
   <!-- setup for two optional cameras -->
   <arg name="camera_id" default="#1" /> <!-- Use device_id such as 1d27/0601@4/14 for multiple primesense--> 
@@ -39,8 +41,20 @@
     <param name="camera_link" value="camera_link"/>
   </node>
 
+  <node if="$(arg fake_table_frame)"
+    name="table_tf_publisher"
+    type="static_transform_publisher"
+    pkg="tf"
+    args="0.7 0.0 0.02 0 0 0 /base_link $(arg table_frame) 100">
+  </node>
+  <node unless="$(arg fake_table_frame)"
+    name="table_tf_publisher"
+    type="static_transform_publisher"
+    pkg="tf"
+    args="0 0 0 0 0 0 $(arg table_ar_marker) $(arg table_frame) 100">
+  </node>
+
   <!-- moveit collision environment -->
-  <!--roslaunch moveit_collision_environment collision_env.launch tableTF:=ar_marker_2-->
   <include file="$(find moveit_collision_environment)/launch/collision_env.launch">
     <arg name="tableTF" value="$(arg table_frame)"/>
     <arg name="file_extension" value="stl"/>

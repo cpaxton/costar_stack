@@ -39,6 +39,7 @@
       - ar_marker_0
       - ar_marker_1
       - ar_marker_3
+      - table_frame
       - world
     </rosparam>
 

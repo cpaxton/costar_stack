@@ -33,10 +33,12 @@ class CostarUR5Driver(CostarArm):
             max_vel=1,
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6):
+            max_q_diff = 1e-6,
+            *args,
+            **kwargs):
 
         self.simulation = simulation
-        self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
+        self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10,*args,**kwargs)
 
         base_link = "base_link"
         end_link = "ee_link"
@@ -57,17 +59,24 @@ class CostarUR5Driver(CostarArm):
 
         self.client = client = actionlib.SimpleActionClient('follow_joint_trajectory',FollowJointTrajectoryAction)
 
+    def acquire(self):
+        stamp = rospy.Time.now().to_sec()
+        if self.cur_stamp is not None:
+            self.client.cancel_goal()
+        if stamp > self.cur_stamp:
+            self.cur_stamp = stamp
+            return stamp
+        else:
+            return None
+
     '''
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False,linear=False):
+    def send_trajectory(self,traj,stamp,acceleration=0.5,velocity=0.5,cartesian=False,linear=False):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
-
-        stamp = rospy.Time.now().to_sec()
-        self.cur_stamp = stamp
 
         if self.simulation:
             if not linear:
@@ -101,19 +110,25 @@ class CostarUR5Driver(CostarArm):
                 if (rospy.Time.now() - start_t).to_sec() > 3:
                     return 'FAILURE - timeout'
                 rate.sleep()
+
+            if self.at_goal:
+                return 'SUCCESS - moved to pose'
+            else:
+                return 'FAILURE - did not reach destination'
         else:
             self.set_goal(traj.points[-1].positions)
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
-        # print goal
+
         self.client.send_goal(goal)
         self.client.wait_for_result()
-        # print self.client.get_result()
+        res = self.client.get_result()
 
-        if self.at_goal:
-            return 'SUCCESS - moved to pose'
+        if res.error_code >= 0:
+            return "SUCCESS"
         else:
-            return 'FAILURE - did not reach destination'
+            return "FAILURE - %s"%res.error_code
+
 
     '''
     set teach mode

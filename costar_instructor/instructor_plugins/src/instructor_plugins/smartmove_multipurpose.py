@@ -70,6 +70,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.waypoint_ui.backoff_slider.valueChanged.connect(self.backoff_changed)
         #self.waypoint_ui.refresh_btn.clicked.connect(self.update_relative_waypoints)
 
+        self.manager.load_all()
         self.update_regions()
         self.update_references()
         self.update_objects()
@@ -130,9 +131,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
 
     def update_objects(self):
         objects = []
-        rospy.logwarn("detecting objects")
-        objects = self.manager.get_detected_object_classes()
-        rospy.logwarn(objects)
+        objects = self.manager.get_available_object_classes()
         self.waypoint_ui.object_list.clear()
         for m in objects:
             self.waypoint_ui.object_list.addItem(QListWidgetItem(m.strip('/')))
@@ -140,11 +139,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.waypoint_ui.object_list.setCurrentRow(0)    
 
     def update_smartmoves(self):
-        smartmoves = []
-        self.manager.load_all()
-        rospy.logwarn(self.selected_object)
         smartmoves = self.manager.get_moves_for_class(self.selected_object)
-        rospy.logwarn(smartmoves)
         self.waypoint_ui.smartmove_list.clear()
         for m in smartmoves:
             self.waypoint_ui.smartmove_list.addItem(QListWidgetItem(m.strip('/')))
@@ -162,8 +157,6 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         return data
 
     def load_data(self,data):
-        rospy.logwarn(data)
-        self.manager.load_all()
         if data.has_key('region'):
             if data['region']['value']!=None:
                 self.selected_region = (data['region']['value'])

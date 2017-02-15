@@ -15,13 +15,13 @@ To use the CoSTAR system, you will need to install the following software packag
 * Catkin Build Tools
 * OpenCV 2.4 nonfree (for CoSTAR perception only)
 
-You can download all the required packages to use CoSTAR with ROS Indigo from the Ubuntu repositories with this command:: 
+You can download all the required packages to use CoSTAR with ROS Indigo from the Ubuntu repositories with this command:
 
 ```
 sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem  
 ```
 
-## Step 1. Get Packages From Git`
+## Step 1. Get Packages From Git
 
 We suggest that you download all the required packages before building your catkin workspace. First, change directory to the src directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub: 
 

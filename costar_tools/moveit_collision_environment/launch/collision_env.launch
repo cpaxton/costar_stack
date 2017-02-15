@@ -27,7 +27,7 @@
   <arg name="baseLinkName"           default="base_link" doc="The name of base link used for generating robot ground"/>
   <arg name="useBaseLinkGround"      default="true" doc="Add robot ground"/>
   <arg name="tableSize"              default="1.0" doc="Table and wall size in meters" />
-  <arg name="baseLinkWallDistance"   default="1.0" doc="Baselink to  wall distance in meters" />
+  <arg name="baseLinkWallDistance"   default="0.75" doc="Baselink to  wall distance in meters" />
 
 
   <arg name="useDetectedObjectMsgs"   default="true" doc="Use the published costar_objrec_msgs DetectedObjectList msgs to get the tf name and type of the object" />
