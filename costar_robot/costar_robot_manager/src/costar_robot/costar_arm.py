@@ -498,11 +498,6 @@ class CostarArm(object):
             trans, rot = self.query_frame
             br.sendTransform(trans, rot, rospy.Time.now(),self.query_frame_name,self.world)
 
-        #if self.backoff_waypoints is not None:
-        #    for tf_name, transform in self.backoff_waypoints:
-        #        trans, rot = pm.toTf(transform)
-        #        br.sendTransform(trans, rot, rospy.Time.now(),tf_name,self.world)
-
     '''
     call this when "spinning" to keep updating things
     '''
@@ -527,7 +522,9 @@ class CostarArm(object):
         return self.state_validity_service.call(get_state_validity_req)
 
     '''
-    TODO: 
+    Attach an object to the planning scene.
+
+    TODO(fjonath): currently attached object is missing its geometry.
     '''
     def attach(self, object_name):
         # attach the collision object to the gripper
@@ -554,6 +551,9 @@ class CostarArm(object):
 
         self.planning_scene_publisher.publish(planning_scene_diff)
 
+    '''
+    Detach an object from the planning scene.
+    '''
     def detach(self, object_name):
         # detach the collision object to the gripper
         self.gripper_open.call()

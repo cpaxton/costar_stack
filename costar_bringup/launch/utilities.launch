@@ -10,7 +10,34 @@
     <!-- Predicator -->
     <include file="$(find predicator_bringup)/launch/core.launch">
     </include>
-   
+
+    <!-- Smartmove params -->
+    <group ns="costar">
+      <group ns="smartmove">
+        <rosparam param="available_objects">
+          - sander_makita
+          - node_uniform
+          - link_uniform
+          - drill
+        </rosparam>
+        <rosparam param="regions">
+          - in_back_of
+          - in_front_of
+          - right_of
+          - left_of
+          - up_from
+          - down_from
+        </rosparam>
+        <rosparam param="references">
+          - ar_marker_0
+          - ar_marker_1
+          - ar_marker_2
+          - ar_marker_3
+          - world
+          - table_frame
+        </rosparam>
+      </group>
+    </group>
     <!-- Moveit Environment -->
     <!--<arg name ="tableTFname" default="ar_marker_0" />
     <include file="$(find moveit_collision_environment)/launch/collision_env.launch">
