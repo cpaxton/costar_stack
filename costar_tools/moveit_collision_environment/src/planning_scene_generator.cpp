@@ -101,3 +101,11 @@ moveitPlanningSceneGenerator::moveitPlanningSceneGenerator(const ros::NodeHandle
     }
     else std::cerr << "This node need service call to update the planning scene.\n";
 }
+
+bool moveitPlanningSceneGenerator::updateWithBackground(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    this->nh.setParam("renewTable", true);
+    bool result = this->updateCollisionObject(request, response);
+    this->nh.setParam("renewTable", false);
+    return result;
+}

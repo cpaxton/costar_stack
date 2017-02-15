@@ -11,6 +11,8 @@ int main(int argc, char** argv)
     
     // advertise the planning scene generator service
     ros::ServiceServer planningSceneGenerator = nh.advertiseService("planningSceneGenerator", &moveitPlanningSceneGenerator::updateCollisionObject, &planningScene);
+
+    ros::ServiceServer updatePlanningSceneBackground = nh.advertiseService("updateWithBackground", &moveitPlanningSceneGenerator::updateWithBackground, &planningScene);
     ros::spin();
 	return 1;
 }
