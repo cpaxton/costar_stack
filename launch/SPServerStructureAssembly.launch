@@ -25,7 +25,7 @@
   <arg name="aboveTableMin"     default="0.015" doc="The minimum point cloud distance from segmented table. Increase the value if some parts of table point cloud still remains after segmentation" />
   <arg name="aboveTableMax"     default="0.5" doc="The maximum point cloud distance from segmented table." />
 
-  <arg name="tableTF"        default="ar_marker_3" doc="Any TF frame located in the table can be used for table segmentation" />
+  <arg name="tableTF"        default="table_frame" doc="Any TF frame located in the table can be used for table segmentation" />
   <arg name="saveTabledir"   default="$(arg data_path)" doc="Save/Load folder for segmenting table" />
   <arg name="loadTable"      default="true" doc="load the table corner position from table.pcd in data folder. If not available or set false, spServer will get segment new table corner position around tableTF"/>
   <arg name="saveTable"      default="true" doc="Save new table corner positions in data folder if the table is not loaded/available."/>
