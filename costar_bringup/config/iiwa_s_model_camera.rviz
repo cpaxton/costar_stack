@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1
-        - /TF1/Frames1
         - /TF1/Tree1
         - /Robot Model1
         - /PlanningScene1
@@ -102,9 +101,7 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        00 HOME:
-          Value: true
-        00 Home 2:
+        00 Home:
           Value: true
         001:
           Value: true
@@ -163,8 +160,6 @@ Visualization Manager:
           Value: false
         ar_marker_0:
           Value: true
-        ar_marker_3:
-          Value: true
         base:
           Value: false
         base_link:
@@ -186,7 +181,7 @@ Visualization Manager:
         endpoint:
           Value: false
         endpoint_marker:
-          Value: false
+          Value: true
         forearm_link:
           Value: false
         gripper_center:
@@ -231,8 +226,6 @@ Visualization Manager:
           Value: true
         obj_link_uniform_3:
           Value: true
-        obj_link_uniform_4:
-          Value: true
         obj_node_uniform_1:
           Value: true
         obj_node_uniform_2:
@@ -245,13 +238,17 @@ Visualization Manager:
           Value: false
         obj_node_uniform_6:
           Value: false
+        obj_node_uniform_7:
+          Value: true
+        obj_node_uniform_8:
+          Value: true
+        obj_node_uniform_9:
+          Value: true
         objects/link_uniform/1:
           Value: false
         objects/link_uniform/2:
           Value: false
         objects/link_uniform/3:
-          Value: false
-        objects/link_uniform/4:
           Value: false
         objects/node_uniform/1:
           Value: false
@@ -265,10 +262,18 @@ Visualization Manager:
           Value: false
         objects/node_uniform/6:
           Value: false
+        objects/node_uniform/7:
+          Value: true
+        objects/node_uniform/8:
+          Value: true
+        objects/node_uniform/9:
+          Value: true
         preferred_orientation:
           Value: true
         shoulder_link:
           Value: false
+        table_frame:
+          Value: true
         test1 pos:
           Value: false
         test2 pos:
@@ -281,6 +286,8 @@ Visualization Manager:
           Value: false
         testC:
           Value: false
+        tmp:
+          Value: true
         tool0_controller:
           Value: false
         upper_arm_link:
@@ -307,15 +314,11 @@ Visualization Manager:
             camera_rgb_optical_frame:
               ar_marker_0:
                 {}
-              ar_marker_3:
-                {}
               obj_link_uniform_1:
                 {}
               obj_link_uniform_2:
                 {}
               obj_link_uniform_3:
-                {}
-              obj_link_uniform_4:
                 {}
               obj_node_uniform_1:
                 {}
@@ -329,10 +332,14 @@ Visualization Manager:
                 {}
               obj_node_uniform_6:
                 {}
+              obj_node_uniform_7:
+                {}
+              obj_node_uniform_8:
+                {}
+              obj_node_uniform_9:
+                {}
           world:
-            00 HOME:
-              {}
-            00 Home 2:
+            00 Home:
               {}
             001:
               {}
@@ -407,6 +414,8 @@ Visualization Manager:
                               {}
                             marker_link:
                               {}
+              table_frame:
+                {}
             down:
               {}
             initial_ftest:
@@ -445,8 +454,6 @@ Visualization Manager:
               {}
             objects/link_uniform/3:
               {}
-            objects/link_uniform/4:
-              {}
             objects/node_uniform/1:
               {}
             objects/node_uniform/2:
@@ -458,6 +465,12 @@ Visualization Manager:
             objects/node_uniform/5:
               {}
             objects/node_uniform/6:
+              {}
+            objects/node_uniform/7:
+              {}
+            objects/node_uniform/8:
+              {}
+            objects/node_uniform/9:
               {}
             test1 pos:
               {}
@@ -471,11 +484,13 @@ Visualization Manager:
               {}
             testC:
               {}
+            tmp:
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 0.4
       Class: rviz/RobotModel
-      Collision Enabled: true
+      Collision Enabled: false
       Enabled: true
       Links:
         All Links Enabled: true
@@ -881,22 +896,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.22007
+      Distance: 0.418192
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.42891
-        Y: 0.0981361
-        Z: 0.285299
+        X: 0.753029
+        Y: -0.222129
+        Z: 0.228513
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.194798
+      Pitch: 0.744797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.8483
+      Yaw: 5.74831
     Saved: ~
 Window Geometry:
   Displays:
@@ -916,5 +931,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1918
-  X: 96
+  X: 0
   Y: 25

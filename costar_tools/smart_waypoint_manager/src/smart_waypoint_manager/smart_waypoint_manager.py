@@ -121,8 +121,8 @@ class SmartWaypointManager:
 
     def lookup_waypoint(self,obj_class,name):
       rospy.logwarn("looking for %s"%name)
-      rospy.logwarn(self.waypoints)
-      rospy.logwarn(self.waypoint_names)
+      # rospy.logwarn(self.waypoints)
+      # rospy.logwarn(self.waypoint_names)
       return self.waypoints[obj_class][self.waypoint_names[obj_class].index(name)]
 
     def get_reference_frames(self):
