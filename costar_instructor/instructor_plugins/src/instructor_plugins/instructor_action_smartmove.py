@@ -23,7 +23,7 @@ from predicator_msgs.msg import *
 
 C = ColorOptions()
 
-global_manager = None
+GLOBAL_MANAGER = None
 
 # Node Wrappers -----------------------------------------------------------
 class NodeActionSmartmoveGUI(NodeGUI):
@@ -51,10 +51,11 @@ class NodeActionSmartmoveGUI(NodeGUI):
         self.command_acc = .75
         self.listener_ = tf.TransformListener()
 
-        global global_manager
-        if global_manager is None:
-            global_manager = SmartWaypointManager()
-        self.manager = global_manager
+        global GLOBAL_MANAGER
+        if GLOBAL_MANAGER is None:
+            rospy.logerr("creating smart waypoint manager")
+            GLOBAL_MANAGER = SmartWaypointManager()
+        self.manager = GLOBAL_MANAGER
 
         self.waypoint_ui.reference_list.itemClicked.connect(self.reference_selected_cb)
         self.waypoint_ui.region_list.itemClicked.connect(self.region_selected_cb)
@@ -65,6 +66,7 @@ class NodeActionSmartmoveGUI(NodeGUI):
         self.waypoint_ui.vel_slider.valueChanged.connect(self.vel_changed)
         #self.waypoint_ui.refresh_btn.clicked.connect(self.update_relative_waypoints)
 
+        rospy.logerr("!!!!!!!!!!!!!!!")
         self.update_regions()
         self.update_references()
         self.update_objects()
@@ -121,8 +123,7 @@ class NodeActionSmartmoveGUI(NodeGUI):
 
     def update_objects(self):
         objects = []
-        rospy.logwarn("detecting objects")
-        objects = self.manager.get_detected_object_classes()
+        objects = self.manager.get_available_object_classes()
         rospy.logwarn(objects)
         self.waypoint_ui.object_list.clear()
         for m in objects:
@@ -133,7 +134,6 @@ class NodeActionSmartmoveGUI(NodeGUI):
     def update_smartmoves(self):
         smartmoves = []
         self.manager.load_all()
-        rospy.logwarn(self.selected_object)
         smartmoves = self.manager.get_moves_for_class(self.selected_object)
         rospy.logwarn(smartmoves)
         self.waypoint_ui.smartmove_list.clear()

@@ -131,7 +131,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
     def update_objects(self):
         objects = []
         rospy.logwarn("detecting objects")
-        objects = self.manager.get_detected_object_classes()
+        objects = self.manager.get_available_object_classes()
         rospy.logwarn(objects)
         self.waypoint_ui.object_list.clear()
         for m in objects:
