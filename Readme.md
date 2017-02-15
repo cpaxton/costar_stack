@@ -2,18 +2,14 @@
 
 ***Collaborative System for Task Automation and Recognition***
 
-Our goal is to build a system which facilitates end-user instruction of robots to perform a a variety of different tasks. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more. Tasks are represented as Behavior Trees
+CoSTAR is an end-user interface for authoring robot task plans developed at Johns Hopkins University. It includes integrated perception and planning capabilities, plus a Behavior Tree based user interface.
 
-For videos of our system in action, you can check out the [CoSTAR YouTube Channel](https://www.youtube.com/playlist?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf).
+Our goal is to build a system which facilitates end-user instruction of robots to solve a variety of different problems. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more. Tasks are represented as Behavior Trees. For videos of our system in action, you can check out the [CoSTAR YouTube Channel](https://www.youtube.com/playlist?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf).
 
-To fully take advantage of these capabilities you will need:
-
-  - sp_segmenter: object detection and pose estimation library
-  - instructor: our custom user interface
-  - a supported robot:
-    - a KUKA LBR iiwa or Universal Robots UR5
-    - a Robotiq 3-finger gripper or 2-finger gripper
-    - a [Da Vinci Research Kit](https://github.com/jhu-dvrk/dvrk-ros) -- in development.
+To take full advantage of CoSTAR, you will need an RGB-D camera and supported hardware:
+  - a KUKA LBR iiwa or Universal Robots UR5
+  - a Robotiq 3-finger gripper or 2-finger gripper
+  - a [Da Vinci Research Kit](https://github.com/jhu-dvrk/dvrk-ros) -- in development.
 
 This is a project by members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. If you find this code useful, please cite:
 ```
