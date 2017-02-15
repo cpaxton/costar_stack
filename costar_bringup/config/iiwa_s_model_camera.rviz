@@ -8,8 +8,6 @@ Panels:
         - /Status1
         - /TF1
         - /TF1/Tree1
-        - /Robot Model1
-        - /PlanningScene1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /PointCloud22
@@ -457,9 +455,9 @@ Visualization Manager:
               {}
       Update Interval: 0
       Value: true
-    - Alpha: 0.4
+    - Alpha: 0.5
       Class: rviz/RobotModel
-      Collision Enabled: true
+      Collision Enabled: false
       Enabled: true
       Links:
         All Links Enabled: true
@@ -521,7 +519,7 @@ Visualization Manager:
       TF Prefix: ""
       Update Interval: 0
       Value: true
-      Visual Enabled: false
+      Visual Enabled: true
     - Alpha: 0.5
       Class: rviz/RobotModel
       Collision Enabled: true
@@ -544,20 +542,6 @@ Visualization Manager:
       Name: CALIBRATION MARKER
       Radius: 0.01
       Reference Frame: ar_marker_0
-      Value: false
-    - Class: rviz/Axes
-      Enabled: false
-      Length: 0.05
-      Name: TABLE MARKER
-      Radius: 0.01
-      Reference Frame: ar_marker_2
-      Value: false
-    - Class: rviz/Axes
-      Enabled: false
-      Length: 0.05
-      Name: PREDICTED END POINT
-      Radius: 0.01
-      Reference Frame: endpoint_marker
       Value: false
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: true
@@ -630,8 +614,8 @@ Visualization Manager:
             Show Trail: false
             Value: true
         Robot Alpha: 1
-        Show Robot Collision: true
-        Show Robot Visual: true
+        Show Robot Collision: false
+        Show Robot Visual: false
       Value: true
     - Class: moveit_rviz_plugin/Trajectory
       Enabled: true
@@ -865,22 +849,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.12721
+      Distance: 1.76659
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.51282
-        Y: -0.0978475
-        Z: 0.201262
+        X: 0.577088
+        Y: -0.0391142
+        Z: 0.194409
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.589797
+      Pitch: 0.774797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.6833
+      Yaw: 4.6783
     Saved: ~
 Window Geometry:
   Displays:
