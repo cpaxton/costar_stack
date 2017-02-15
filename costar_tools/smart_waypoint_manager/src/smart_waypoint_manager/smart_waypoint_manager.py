@@ -83,10 +83,6 @@ class SmartWaypointManager:
                 self.objs.append(obj.object_class)
           self.obj_class[obj.id] = obj.object_class
 
-
-        print self.objs
-        print self.obj_classes
-
     '''
     get all waypoints from the disk
     now including some joint space waypoints
@@ -112,6 +108,7 @@ class SmartWaypointManager:
           self.waypoints[data[1]].append(data[0])
           self.waypoint_names[data[1]].append(name)
           self.all_moves.append(data[1] + "/" + name)
+
 
     def lookup_waypoint(self,obj_class,name):
       rospy.logwarn("Smart Waypoint Manager looking for %s with class %s"%(name,obj_class))
@@ -187,13 +184,11 @@ class SmartWaypointManager:
         return wpts
 
     def publish_tf(self):
-
         for key in self.waypoints.keys():
             (poses,names) = self.get_waypoints_srv.get_waypoints(key,[],self.waypoints[key],self.waypoint_names[key])
             for (pose,name) in zip(poses,names):
                 (trans,rot) = pm.toTf(pm.fromMsg(pose))
                 self.broadcaster.sendTransform(trans,rot,rospy.Time.now(),name,self.world)
-                #print (trans, rot, name)
 
     '''
     Send any non-smart waypoints we might be managing.

@@ -33,10 +33,12 @@ class CostarUR5Driver(CostarArm):
             max_vel=1,
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6):
+            max_q_diff = 1e-6,
+            *args,
+            **kwargs):
 
         self.simulation = simulation
-        self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
+        self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10,*args,**kwargs)
 
         base_link = "base_link"
         end_link = "ee_link"
