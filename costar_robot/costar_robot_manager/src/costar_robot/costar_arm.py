@@ -100,6 +100,7 @@ class CostarArm(object):
         self.old_q0 = [0] * self.dof
 
         self.cur_stamp = 0
+        self.has_trajectory = 0
 
         # Set up TF broadcaster
         if not broadcaster is None:
@@ -190,6 +191,28 @@ class CostarArm(object):
             closed_form_IK_solver=closed_form_IK_solver)
 
     '''
+    Preemption logic -- acquire at the beginning of a trajectory.
+    This returns the next stamp, and updates the current master stamp.
+
+    Note that this is not a mutex in the ordinary sense: it doesn't wait. In fact,
+    '''
+    def acquire(self):
+        stamp = rospy.Time.now().to_sec()
+        if stamp > self.cur_stamp:
+            self.cur_stamp = stamp
+            return stamp
+        else:
+            return None
+
+    '''
+    Preemption logic -- release at the end of a trajectory.
+    By default, this does nothing. If in your specific implementation it should do something,
+    by all means implement that.
+    '''
+    def release(self):
+        self.cur_stamp = 0
+
+    '''
     js_cb
     listen to robot joint state information
     '''
@@ -215,12 +238,14 @@ class CostarArm(object):
         if self.goal is not None:
 
             #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
-            cart_diff = 0 #(self.ee_pose.p - self.goal.p).Norm()
+            cart_diff = (self.ee_pose.p - self.goal.p).Norm()
             rot_diff = 0 #self.goal_rotation_weight * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
             goal_diff = cart_diff + rot_diff
 
             if goal_diff < self.max_goal_diff:
                 self.at_goal = True
+            else:
+                self.at_goal = False
 
             if goal_diff < 10*self.max_goal_diff:
                 self.near_goal = True
@@ -324,7 +349,14 @@ class CostarArm(object):
 
             traj = res.planned_trajectory.joint_trajectory
             
-            return self.send_trajectory(traj,acceleration,velocity,cartesian=False)
+            stamp = self.acquire()
+            if stamp is not None:
+                res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
+                self.release()
+            else:
+                res = 'FAILURE - could not preempt current arm control.'
+
+            return res
 
         else:
             rospy.logerr('DRIVER -- PLANNING failed')
@@ -347,8 +379,6 @@ class CostarArm(object):
             pt = JointTrajectoryPoint()
             pose = pm.fromMsg(req.target)
             (code,res) = self.planner.getPlan(pose,self.q0)
-
-            print "DONE PLANNING: " + str(code)
             return self.send_and_publish_planning_result(res,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
@@ -375,16 +405,22 @@ class CostarArm(object):
             (acceleration, velocity) = self.check_req_speed_params(req)
 
             # inverse kinematics
-            traj = self.planner.getCartesianMove(T,self.q0,self.base_steps,self.steps_per_meter,self.steps_per_radians)
-            #if len(traj.points) == 0:
-            #    (code,res) = self.planner.getPlan(req.target,self.q0) # find a non-local movement
-            #    if not res is None:
-            #        traj = res.planned_trajectory.joint_trajectory
+            traj = self.planner.getCartesianMove(T,
+                self.q0,
+                self.base_steps,
+                self.steps_per_meter,
+                self.steps_per_radians)
 
             # Send command
             if len(traj.points) > 0:
-                rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
-                return self.send_trajectory(traj,acceleration,velocity,cartesian=False,linear=True)
+                stamp = self.acquire()
+                if stamp is not None:
+                    rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
+                    res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
+                    self.release()
+                else:
+                    res = 'FAILURE - could not preempt current arm control.'
+                return res
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
                 return 'FAILURE - not in servo mode'
@@ -437,8 +473,10 @@ class CostarArm(object):
                 self.send_q(self.q0,0.1,0.1)
 
             self.driver_status = 'SERVO'
+            self.cur_stamp = self.release()
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
+            self.cur_stamp = self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
 
@@ -451,7 +489,6 @@ class CostarArm(object):
     '''
     # TODO: Modify this part
     def handle_tick(self):
-        # print self.end_link, "/endpoint",  "trans = ", (0,0,0), "rot = ", (0,0,0)
         br = tf.TransformBroadcaster()
         br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
         if not self.base_link == "base_link":
@@ -497,48 +534,48 @@ class CostarArm(object):
         self.gripper_close.call()
 
         # self.planning_group.attachObject(object_name, self.end_link)
-        # self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
-        # planning_scene_diff = PlanningScene(is_diff=True)
-        # # remove original collision object, then add it to the gripper
-        # remove_object = CollisionObject()
-        # remove_object.id = object_name
-        # remove_object.header.frame_id = self.link_names[0]
-        # remove_object.operation = remove_object.REMOVE
-        # del planning_scene_diff.world.collision_objects[:];
-        # planning_scene_diff.world.collision_objects.append(remove_object);
+        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        planning_scene_diff = PlanningScene(is_diff=True)
+        # remove original collision object, then add it to the gripper
+        remove_object = CollisionObject()
+        remove_object.id = object_name
+        remove_object.header.frame_id = self.base_link
+        remove_object.operation = remove_object.REMOVE
+        del planning_scene_diff.world.collision_objects[:];
+        planning_scene_diff.world.collision_objects.append(remove_object);
 
-        # attached_object = AttachedCollisionObject()
-        # attached_object.object = remove_object
-        # attached_object.link_name = self.link_names[-1]
-        # attached_object.object.header.frame_id = self.joint_names[-1]
-        # attached_object.object.operation = attached_object.object.ADD
-        # del planning_scene_diff.robot_state.attached_collision_objects[:];
-        # planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
+        attached_object = AttachedCollisionObject()
+        attached_object.object = remove_object
+        attached_object.link_name = self.end_link
+        attached_object.object.header.frame_id = self.joint_names[-1]
+        attached_object.object.operation = attached_object.object.ADD
+        del planning_scene_diff.robot_state.attached_collision_objects[:];
+        planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
 
-        # self.planning_scene_publisher.publish(planning_scene_diff)
+        self.planning_scene_publisher.publish(planning_scene_diff)
 
     def detach(self, object_name):
         # detach the collision object to the gripper
         self.gripper_open.call()
         # self.planning_group.detachObject(object_name, self.end_link)
-        # self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
-        # planning_scene_diff = PlanningScene(is_diff=True)
-        # # remove object from the gripper, then add the original collision object
-        # detach_object = AttachedCollisionObject()
-        # detach_object.object.id = object_name
-        # attached_object.link_name = self.link_names[-1]
-        # detach_object.object.operation = detach_object.object.REMOVE
-        # del planning_scene_diff.robot_state.attached_collision_objects[:];
-        # planning_scene_diff.robot_state.attached_collision_objects.append(detach_object);
+        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        planning_scene_diff = PlanningScene(is_diff=True)
+        # remove object from the gripper, then add the original collision object
+        detach_object = AttachedCollisionObject()
+        detach_object.object.id = object_name
+        detach_object.link_name = self.end_link
+        detach_object.object.operation = detach_object.object.REMOVE
+        del planning_scene_diff.robot_state.attached_collision_objects[:];
+        planning_scene_diff.robot_state.attached_collision_objects.append(detach_object);
 
-        # add_object = CollisionObject()
-        # add_object = detach_object.object
-        # add_object.header.frame_id = self.link_names[0]
-        # add_object.operation = add_object.ADD
-        # del planning_scene_diff.world.collision_objects[:];
-        # planning_scene_diff.world.collision_objects.append(add_object);
+        add_object = CollisionObject()
+        add_object = detach_object.object
+        add_object.header.frame_id = self.base_link
+        add_object.operation = add_object.ADD
+        del planning_scene_diff.world.collision_objects[:];
+        planning_scene_diff.world.collision_objects.append(add_object);
 
-        # self.planning_scene_publisher.publish(planning_scene_diff)
+        self.planning_scene_publisher.publish(planning_scene_diff)
     '''
     Calculate the best distance between current joint position to the target pose given a IK solution or list of IK solutions 
     '''
@@ -698,6 +735,7 @@ class CostarArm(object):
         for sequence_number, (backup_waypoint,T,self.q0,best_q,name) in enumerate(sequence_to_execute,1):
             rospy.logwarn("Trying sequence number %i"%(sequence_number))
             # plan to T
+            rospy.sleep(0.1)
             (code,res) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
             if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
                 q_2 = res.planned_trajectory.joint_trajectory.points[-1].positions
@@ -712,6 +750,7 @@ class CostarArm(object):
                             gripper_function(name)
 
                             rospy.sleep(0.1)
+                            # TODO(fjonath) or TODO(cpaxton): use q_2 instead of waypoint here
                             (code3,res3) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
                             msg = self.send_and_publish_planning_result(res3,acceleration,velocity)
                             return msg
