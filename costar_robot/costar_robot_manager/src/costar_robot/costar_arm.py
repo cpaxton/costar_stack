@@ -65,10 +65,17 @@ class CostarArm(object):
             closed_form_IK_solver = None,
             default_distance = 0.05,
             state_validity_penalty = 1e5,
+            table_frame = "table_frame",
+            max_dist_from_table = 0.5,
             dof=7,
+            debug=False,
             perception_ns="/SPServer",):
         
+        self.debug = debug
         self.namespace = namespace
+        self.table_frame = table_frame
+        self.table_pose = None
+        self.max_dist_from_table = max_dist_from_table
 
         self.world = world
         self.base_link = base_link
@@ -481,6 +488,7 @@ class CostarArm(object):
             self.cur_stamp = self.release()
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
+            self.detach()
             self.cur_stamp = self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
@@ -502,6 +510,17 @@ class CostarArm(object):
         if self.query_frame is not None:
             trans, rot = self.query_frame
             br.sendTransform(trans, rot, rospy.Time.now(),self.query_frame_name,self.world)
+
+        if self.debug:
+            if self.backoff_waypoints is not None:
+                for tf_name, transform in self.backoff_waypoints:
+                    trans, rot = pm.toTf(transform)
+                    br.sendTransform(trans, rot, rospy.Time.now(),tf_name,self.world)
+
+        try:
+            self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
+        except tf.ExtrapolationException, e:
+            rospy.logwarn(str(e))
 
     '''
     call this when "spinning" to keep updating things
@@ -567,7 +586,7 @@ class CostarArm(object):
     '''
     Detach an object from the planning scene.
     '''
-    def detach(self, object_name):
+    def detach(self, object_name=""):
         # detach the collision object to the gripper
         self.gripper_open.call()
         # self.planning_group.detachObject(object_name, self.end_link)
@@ -707,6 +726,18 @@ class CostarArm(object):
             T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
             T = T_base_world.Inverse()*pm.fromMsg(pose)
 
+            # Ignore anything below the table: we don't need to even bother
+            # checking that position.
+            if T.p[2] < self.table_pose[0][2]:
+                rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
+                continue
+            dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
+            if dist_from_table > self.max_dist_from_table:
+                rospy.logwarn("Ignoring due to table distance: %f > %f"%(
+                    dist_from_table,
+                    self.max_dist_from_table))
+                continue
+
             Ts.append(T)
             if disable_target_object_collision:
 	            self.planner.updateAllowedCollisions(obj,True)
@@ -715,7 +746,7 @@ class CostarArm(object):
 	            self.planner.updateAllowedCollisions(obj,False)
 
             if len(best_q) == 0:
-                print message_print
+                rospy.logwarn("[QUERY] DID NOT ADD:"+message_print)
                 continue
             elif valid_pose:
                 print message_print
@@ -735,18 +766,23 @@ class CostarArm(object):
         # joint.position = self.ik(T,self.q0)
         return possible_goals
 
-    def smartmove_multipurpose_gripper(self, possible_goals, distance, gripper_function, velocity, acceleration):
-        print 'Start multipurpose gripper'
+    def smartmove_multipurpose_gripper(self, possible_goals, distance, gripper_function, velocity, acceleration, backup_in_gripper_frame):
         list_of_valid_sequence = list()
         list_of_invalid_sequence = list()
         self.backoff_waypoints = []
 
+        if self.q0 is None:
+            return "FAILURE"
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
         for (dist,T,obj,name) in possible_goals:
-           backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
-           backup_waypoint = T * backup_waypoint
-           self.backoff_waypoints.append(("%s/backoff/%f"%(obj,dist),backup_waypoint))
-           self.backoff_waypoints.append(("%s/grasp/%f"%(obj,dist),T))
+           if backup_in_gripper_frame:
+               backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
+               backup_waypoint = T * backup_waypoint
+           else:
+               backup_waypoint = kdl.Frame(kdl.Vector(0.,0.,distance))
+               backup_waypoint = backup_waypoint * T
+           self.backoff_waypoints.append(("%s/%s_backoff/%f"%(obj,name,dist),backup_waypoint))
+           self.backoff_waypoints.append(("%s/%s_grasp/%f"%(obj,name,dist),T))
 
            valid_pose, best_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0)
            if len(best_q) == 0:
@@ -818,7 +854,7 @@ class CostarArm(object):
         # backup transform is [0, 0, -distance]
         # call /costar/gripper/close
         # move back to original tform
-        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.attach, velocity, acceleration)
+        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.attach, velocity, acceleration, True)
 
     '''
     SmartMove Release:
@@ -836,7 +872,7 @@ class CostarArm(object):
         # call /costar/gripper/open
         # move back to original tform
 
-        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.detach, velocity, acceleration)
+        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.detach, velocity, acceleration, False)
 
 
     '''

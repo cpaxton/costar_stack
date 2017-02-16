@@ -34,6 +34,7 @@ class CostarUR5Driver(CostarArm):
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
+            max_dist_from_table = 0.35,
             *args,
             **kwargs):
 

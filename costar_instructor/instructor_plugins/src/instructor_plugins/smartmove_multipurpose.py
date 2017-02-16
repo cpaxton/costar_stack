@@ -157,6 +157,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         return data
 
     def load_data(self,data):
+        self.manager.load_all()
         if data.has_key('region'):
             if data['region']['value']!=None:
                 self.selected_region = (data['region']['value'])

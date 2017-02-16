@@ -92,35 +92,45 @@ class GetWaypointsService:
                 (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
                 for (pose, name) in zip(poses,names):
                     #resp.waypoints.poses.append(pm.toMsg(pose * pm.fromTf((trans,rot))))
-                    new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * pose))
-                    new_names.append(match + "/" + name)
-                    objects.append(match)
+                    # new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * pose))
+                    # new_names.append(match + "/" + name)
+                    # objects.append(match)
 
                     # Create extra poses for symmetries around the Z axis
                     if frame_type in self.obj_symmetries:
-                        if self.obj_symmetries[frame_type].z_symmetries > 1:
-                            for i in xrange(1, self.obj_symmetries[frame_type].z_symmetries):
-                                theta = i * self.obj_symmetries[frame_type].z_rotation
-                                #print "... "  + str(theta)
-                                tform = pm.Frame(pm.Rotation.RotZ(theta))
-                                #print tform
-                                new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
-                                new_names.append(match + "/" + name + "/z" + str(i))
-                                objects.append(match)
-                        if self.obj_symmetries[frame_type].y_symmetries > 1:
-                            for i in xrange(1, self.obj_symmetries[frame_type].y_symmetries):
-                                theta = i * self.obj_symmetries[frame_type].y_rotation
-                                tform = pm.Frame(pm.Rotation.RotY(theta))
-                                new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
-                                new_names.append(match + "/" + name + "/y" + str(i))
-                                objects.append(match)
-                        if self.obj_symmetries[frame_type].x_symmetries > 1:
-                            for i in xrange(1, self.obj_symmetries[frame_type].x_symmetries):
-                                theta = i * self.obj_symmetries[frame_type].x_rotation
-                                tform = pm.Frame(pm.Rotation.RotX(theta))
-                                new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
-                                new_names.append(match + "/" + name + "/x" + str(i))
-                                objects.append(match)
+                        # if self.obj_symmetries[frame_type].z_symmetries > 1:
+                        for i in xrange(0, self.obj_symmetries[frame_type].z_symmetries):
+                            for j in xrange(1, self.obj_symmetries[frame_type].y_symmetries):
+                                for k in xrange(1, self.obj_symmetries[frame_type].x_symmetries):
+                                    theta_z = i * self.obj_symmetries[frame_type].z_rotation
+                                    theta_y = i * self.obj_symmetries[frame_type].y_rotation
+                                    theta_x = i * self.obj_symmetries[frame_type].x_rotation
+                                    tform = pm.Frame(pm.Rotation.RPY(theta_x,theta_y,theta_z))
+                                    new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                                    new_names.append(match + "/" + name + "/x%dy%dz%d"%(i,j,k))
+                                    objects.append(match)
+                                # theta = i * self.obj_symmetries[frame_type].z_rotation
+                                # #print "... "  + str(theta)
+                                # tform = pm.Frame(pm.Rotation.RotZ(theta))
+                                # #print tform
+                                # new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                                # new_names.append(match + "/" + name + "/z" + str(i))
+                                # objects.append(match)
+                            # if self.obj_symmetries[frame_type].y_symmetries > 1:
+                                # for i in xrange(1, self.obj_symmetries[frame_type].y_symmetries):
+                                #     theta = i * self.obj_symmetries[frame_type].y_rotation
+                                #     tform = pm.Frame(pm.Rotation.RotY(theta))
+                                #     new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                                #     new_names.append(match + "/" + name + "/y" + str(i))
+                                #     objects.append(match)
+
+                        # if self.obj_symmetries[frame_type].x_symmetries > 1:
+                            # for i in xrange(1, self.obj_symmetries[frame_type].x_symmetries):
+                            #     theta = i * self.obj_symmetries[frame_type].x_rotation
+                            #     tform = pm.Frame(pm.Rotation.RotX(theta))
+                            #     new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                            #     new_names.append(match + "/" + name + "/x" + str(i))
+                            #     objects.append(match)
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
