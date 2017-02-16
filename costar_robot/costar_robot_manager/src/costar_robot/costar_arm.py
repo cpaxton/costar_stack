@@ -141,6 +141,8 @@ class CostarArm(object):
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
         self.smartmove_query_srv = self.make_service('Query',SmartMove,self.query_cb)
+        self.enable_collisions_srv = self.make_service('EnableCollision',Object,self.enable_collision_cb)
+        self.disable_collisions_srv = self.make_service('DisableCollision',Object,self.disable_collision_cb)
 
         self.get_waypoints_srv = GetWaypointsService(world=world,
                                                      service=False,

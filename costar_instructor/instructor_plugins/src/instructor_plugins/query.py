@@ -448,3 +448,10 @@ class NodeActionCollision(Node):
 
 
 
+class EnableCollisionGUI(CollisionGUI):
+    def __init__(self):
+        super(EnableCollisionGUI,self).__init__(True)
+
+class DisableCollisionGUI(CollisionGUI):
+    def __init__(self):
+        super(DisableCollisionGUI,self).__init__(False)

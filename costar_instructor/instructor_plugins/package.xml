@@ -122,7 +122,7 @@
       name="Publish Message" />
     <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
       type="CONDITION"
-      group="VISION"
+      group="SCENE"
       description="update_planning_scene"
       cases=""
       name="Update Scene"/>
@@ -131,6 +131,18 @@
       group="SYSTEM"
       description="Waypoint Query"
       cases=""
+      name="Query"/>
+    <instructor plugin="instructor.EnableCollisionGUI"
+      type="CONDITION"
+      group="SCENE"
+      description="Enable Collision"
+      cases="planning"
+      name="Query"/>
+    <instructor plugin="instructor.DisableCollisionGUI"
+      type="CONDITION"
+      group="SCENE"
+      description="Disable Collision"
+      cases="planning"
       name="Query"/>
 
     <!-- SP SEGMENTER OPERATIONS -->
