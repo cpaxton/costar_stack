@@ -132,6 +132,18 @@
       description="Waypoint Query"
       cases=""
       name="Query"/>
+    <instructor plugin="instructor.EnableCollisionGUI"
+      type="CONDITION"
+      group="COLLISION"
+      description="Enable Collision"
+      cases="planning"
+      name="Enable Collision"/>
+    <instructor plugin="instructor.DisableCollisionGUI"
+      type="CONDITION"
+      group="COLLISION"
+      description="Disable Collision"
+      cases="planning"
+      name="Disable Collision"/>
 
     <!-- SP SEGMENTER OPERATIONS -->
     <instructor plugin="instructor.NodeActionDetectObjectsGUI"

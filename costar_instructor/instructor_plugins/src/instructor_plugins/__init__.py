@@ -35,6 +35,8 @@ __all__ += ['NodeActionSmartmoveGraspGUI']
 __all__ += ['NodeActionSmartmoveReleaseGUI']
 __all__ += ['NodePublishMessageGUI']
 __all__ += ['NodeActionQueryGUI']
+__all__ += ['EnableCollisionGUI']
+__all__ += ['DisableCollisionGUI']
 
 ### Sample Nodes
 from sample_nodes import NodeActionSampleGUI
@@ -77,3 +79,5 @@ from smartmove_multipurpose import NodeActionSmartmoveGraspGUI
 from smartmove_multipurpose import NodeActionSmartmoveReleaseGUI
 
 from query import NodeActionQueryGUI
+from query import EnableCollisionGUI
+from query import DisableCollisionGUI
