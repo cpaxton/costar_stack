@@ -547,22 +547,22 @@ class CostarArm(object):
                 break
 
         # self.planning_group.attachObject(object_name, self.end_link)
-        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
-        planning_scene_diff = PlanningScene(is_diff=True)
-        remove_object.operation = CollisionObject.REMOVE
-        del planning_scene_diff.world.collision_objects[:];
-        planning_scene_diff.world.collision_objects.append(copy.deepcopy(remove_object));
+        if remove_object is not None:
+            self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
+            planning_scene_diff = PlanningScene(is_diff=True)
+            remove_object.operation = CollisionObject.REMOVE
+            del planning_scene_diff.world.collision_objects[:];
+            planning_scene_diff.world.collision_objects.append(copy.deepcopy(remove_object));
 
-        attached_object = AttachedCollisionObject()
-        attached_object.object = remove_object
-        attached_object.link_name = self.end_link
-        attached_object.object.header.frame_id = self.joint_names[-1]
-        attached_object.object.operation = CollisionObject.ADD
-        del planning_scene_diff.robot_state.attached_collision_objects[:];
-        planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
+            attached_object = AttachedCollisionObject()
+            attached_object.object = remove_object
+            attached_object.link_name = self.end_link
+            attached_object.object.header.frame_id = self.joint_names[-1]
+            attached_object.object.operation = CollisionObject.ADD
+            del planning_scene_diff.robot_state.attached_collision_objects[:];
+            planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
 
-        
-        self.planning_scene_publisher.publish(planning_scene_diff)
+            self.planning_scene_publisher.publish(planning_scene_diff)
 
     '''
     Detach an object from the planning scene.
@@ -785,6 +785,7 @@ class CostarArm(object):
                             gripper_function(obj)
 
                             rospy.sleep(0.1)
+
                             traj = res2.planned_trajectory.joint_trajectory
                             traj.points.reverse()
                             end_t = traj.points[0].time_from_start
