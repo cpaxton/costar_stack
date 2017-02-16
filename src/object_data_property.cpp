@@ -69,6 +69,11 @@ void Object::deepCopy(const Object& other)
 	this->physical_data_ready_ = true;
 }
 
+btVector3 Object::getInertiaVector() const
+{
+	return this->physical_properties_.inertia_;
+}
+
 void ObjectWithID::assignPhysicalPropertyFromObject(const Object &input)
 {
 	this->shallowCopy(input);
@@ -114,14 +119,16 @@ bool ObjectDatabase::addObjectToDatabase(const std::string &object_name)
 	std::string object_file_location = this->file_location_ + "/" + object_name + ".bcs";
 	btCollisionShape* simplified_mesh = load_bcs(object_file_location.c_str(), false);
 	simplified_mesh->setLocalScaling(btVector3(SCALING,SCALING,SCALING));
+
 	if (simplified_mesh != NULL)
 	{
 		Object new_object;
 		PhysicalProperties new_property = getContentOfConstantMap(object_name,this->physical_properties_database_);
 		ObjectPenaltyParameters new_penalty_params;
-		new_penalty_params.maximum_angular_acceleration_ = getObjectMaximumAngularAcceleration(*simplified_mesh);
 
 		new_object.setPhysicalProperties(simplified_mesh, new_property);
+		new_penalty_params.maximum_angular_acceleration_ = getObjectMaximumAngularAcceleration(*simplified_mesh,new_property.mass_, new_object.getInertiaVector());
+		// std::cerr << "max angular acc = " << new_penalty_params.maximum_angular_acceleration_ << std::endl;
 		this->database_[object_name].shallowCopy(new_object);
 		this->object_penalty_parameter_database_[object_name] = new_penalty_params;
 		if (this->debug_messages_) std::cerr << object_name << " successfully added to the database.\n";

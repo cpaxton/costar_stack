@@ -4,10 +4,16 @@
 #include "scene_physics_engine.h"
 #include "scene_physics_penalty.h"
 
+static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
+{ 
+	PhysicsEngine *physics_engine_world = static_cast<PhysicsEngine *>(world->getWorldUserInfo());
+	physics_engine_world->worldTickCallback(timeStep); 
+}
+
 PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), rendering_launched_(false), use_background_normal_as_gravity_(false)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
-	simulation_step_ = 1/120.f; // 120 Hz
+	simulation_step_ = 1/180.f; // 180 Hz
 	this->initPhysics();
 }
 void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center)
@@ -147,7 +153,7 @@ void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 {
 	// mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Setting physics engine gravity vector.\n";
-	btVector3 gravity_corrected_magnitude = gravity / gravity.norm() * 9.807 * SCALING;
+	btVector3 gravity_corrected_magnitude = gravity / gravity.norm() * GRAVITY_MAGNITUDE * SCALING;
 	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_corrected_magnitude[0] << ", "
 		<< gravity_corrected_magnitude[1] << ", " 
 		<< gravity_corrected_magnitude[2] << std::endl;
@@ -176,6 +182,7 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 		this->rigid_body_[it->getID()] = it->generateRigidBodyForWorld();
 		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's world.\n";
 		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
+
 
 		object_penalty_parameter_database_by_id_[it->getID()] = (*object_penalty_parameter_database_)[it->getObjectClass()];
 		
@@ -225,18 +232,8 @@ void PhysicsEngine::simulate()
 	}
 	else
 	{
-		for (int i = 0; i < 600; i++)
+		for (int i = 0; i < 300; i++)
 		{
-			this->cacheObjectVelocities();
-			for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
-			it != this->rigid_body_.end(); ++it)
-			{
-				if (keyExistInConstantMap(it->first,this->object_acceleration_)){
-					std::cerr << it->first << " ";
-					calculateStabilityPenalty(this->object_acceleration_[it->first], 
-						object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
-				}
-			}
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
 			if (this->checkSteadyState()) break;
 		}
@@ -308,18 +305,17 @@ void PhysicsEngine::resetObjects()
 	// mtx_.unlock();
 }
 
-void PhysicsEngine::cacheObjectVelocities()
+void PhysicsEngine::cacheObjectVelocities(const btScalar &timeStep)
 {
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
 		btVector3 current_lin_vel = it->second->getLinearVelocity(),
 			current_ang_vel = it->second->getAngularVelocity();
-		std::cerr << it->first <<": " << current_lin_vel.x() << ", " << current_lin_vel.y() << ", " << current_lin_vel.z() << std::endl;
 		if (keyExistInConstantMap(it->first,this->object_velocity_))
 		{
-			btVector3 avg_lin_acc = (current_lin_vel - object_velocity_[it->first].linear_)/ simulation_step_,
-				avg_ang_acc = (current_ang_vel - object_velocity_[it->first].angular_)/ simulation_step_;
+			btVector3 avg_lin_acc = (current_lin_vel - object_velocity_[it->first].linear_)/ timeStep,
+				avg_ang_acc = (current_ang_vel - object_velocity_[it->first].angular_)/ timeStep;
 
 			this->object_acceleration_[it->first].setValue(avg_lin_acc, avg_ang_acc);
 		}
@@ -349,6 +345,8 @@ void PhysicsEngine::initPhysics()
 	m_dynamicsWorld = new btDiscreteDynamicsWorld(m_dispatcher, 
 		m_broadphase, m_solver, m_collisionConfiguration);
 	m_dynamicsWorld->setDebugDrawer(&gDebugDraw);
+	
+	m_dynamicsWorld->setInternalTickCallback(_worldTickCallback,static_cast<void *>(this),true);
 }
 
 void PhysicsEngine::exitPhysics()
@@ -395,16 +393,6 @@ void PhysicsEngine::clientMoveAndDisplay()
 	if (m_dynamicsWorld)
 	{
 		if (this->in_simulation_){
-			this->cacheObjectVelocities();
-			for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
-			it != this->rigid_body_.end(); ++it)
-			{
-				if (keyExistInConstantMap(it->first,this->object_acceleration_)){
-					std::cerr << it->first << " ";
-					calculateStabilityPenalty(this->object_acceleration_[it->first], 
-						object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
-				}
-			}
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
 			if (this->checkSteadyState()) this->in_simulation_ = false;
 		}
@@ -456,4 +444,20 @@ void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenalty
 {
 	this->object_penalty_parameter_database_ = penalty_database;
 }
+
+void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
+    // printf(“The world just ticked by %f seconds\n”, (float)timeStep);
+    // calculate the scene analysis here
+    this->cacheObjectVelocities(timeStep);
+    for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
+	{
+		if (keyExistInConstantMap(it->first,this->object_acceleration_)){
+			std::cerr << it->first << " ";
+			calculateStabilityPenalty(this->object_acceleration_[it->first], 
+				object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
+		}
+	}
+}
+
 

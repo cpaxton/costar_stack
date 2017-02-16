@@ -6,6 +6,8 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "physics_world_parameters.h"
+
 struct MovementComponent
 {
 	btVector3 linear_;
@@ -20,10 +22,10 @@ struct MovementComponent
 
 struct ObjectPenaltyParameters
 {
-	double maximum_angular_acceleration_;
-	double angular_acceleration_weight_, translational_acceleration_weight_;
-	double penetration_constant_;
-	double volume_;
+	btScalar maximum_angular_acceleration_;
+	btScalar angular_acceleration_weight_, translational_acceleration_weight_;
+	btScalar penetration_constant_;
+	btScalar volume_;
 
 	ObjectPenaltyParameters() : maximum_angular_acceleration_(0.), 
 		angular_acceleration_weight_(1.), translational_acceleration_weight_(1.), volume_(0.)
@@ -31,13 +33,11 @@ struct ObjectPenaltyParameters
 
 };
 
-double getTranslationalPenalty (const btVector3 &t_acceleration, const double &gravity_magnitude);
-
-double getAngularPenalty(const btVector3 &rot_acceleration, const double &max_object_angular_acceleration);
-
 double calculateStabilityPenalty(const MovementComponent &acceleration,
 	const ObjectPenaltyParameters &penalty_params, const double &gravity_magnitude);
 
-double getObjectMaximumAngularAcceleration(const btCollisionShape &object_shape);
+btScalar getObjectMaximumGravityTorqueLength(const btCollisionShape &object_shape);
+
+btScalar getObjectMaximumAngularAcceleration(const btCollisionShape &object_shape, const btScalar &mass, const btVector3 &inertia);
 
 #endif

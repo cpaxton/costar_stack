@@ -11,14 +11,10 @@
 
 // Contains function for loading an object from file
 #include "bcs_loader.h"
-
+#include "physics_world_parameters.h"
 // Contains variety of tools for handling conversion and getting content from one datatype to another
 #include "utility.h"
 #include "scene_physics_penalty.h"
-
-// World scaling for better precision, since we are dealing with small objects (centimeter sized instead of meter sized object)
-// Will be applied to collision shapes, gravity, and transforms (in physics engine world. In real world, it will be rescaled again appropriately)
-#define SCALING 100
 
 typedef btCollisionShape* objectShapePtr;
 typedef btCollisionShape objectShape;
@@ -76,6 +72,7 @@ public:
 
 	// generate rigid body data that can be added to the bullet physics world
 	btRigidBody* generateRigidBody(const btTransform &transform) const;
+	btVector3 getInertiaVector() const;
 	// void addSpecialProperty();
 ;
 protected:

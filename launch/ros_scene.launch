@@ -8,8 +8,9 @@
   <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3"/>
   <arg name="tf_publisher_initial"           default="scene"/>
   <arg name="debug"                          default="true"/>
-  <arg name="load_table"                     default="false"/>
+  <arg name="load_table"                     default="true"/>
   <arg name="table_location"                 default="$(find sp_segmenter)/data/table.pcd"/>
+  <arg name="render_scene"                   default="true" />
 
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros" >  
     <!-- sequential_scene_ros common Node arg pass -->
@@ -24,6 +25,8 @@
     <param name="background_mode"         type="int"     value="$(arg background_mode)"/>
     <param name="table_location"          type="str"     value="$(arg table_location)"/>
     <param name="bg_normal_as_gravity"    type="bool"    value="$(arg background_normal_as_gravity)"/>
+
+    <param name="render_scene"            type="bool"    value="$(arg render_scene)"/>
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sequential_scene_parsing)/mesh/object_property_database.yaml" />

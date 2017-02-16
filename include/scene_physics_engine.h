@@ -21,6 +21,8 @@
 #include "object_data_property.h"
 #include "scene_physics_penalty.h"
 
+static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep);
+
 class PhysicsEngine : public PlatformDemoApplication
 {
 public:
@@ -44,7 +46,6 @@ public:
 	void addObjects(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, btTransform>  getUpdatedObjectPose();
 	void resetObjects();
-	void cacheObjectVelocities();
 	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
 
 	void setDebugMode(bool debug);
@@ -53,6 +54,7 @@ public:
 // Additional functions used for rendering:
     void initPhysics();
     void exitPhysics();
+    void worldTickCallback(const btScalar &timeStep);
 
     virtual void clientMoveAndDisplay();
 
@@ -73,7 +75,8 @@ public:
 private:
 	void simulate();
 	bool checkSteadyState();
-
+	void cacheObjectVelocities(const btScalar &timeStep);
+	
 	bool debug_messages_;
 	bool have_background_;
 	bool use_background_normal_as_gravity_;
