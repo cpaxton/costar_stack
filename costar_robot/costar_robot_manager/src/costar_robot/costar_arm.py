@@ -25,6 +25,8 @@ from predicator_landmark import GetWaypointsService
 from smart_waypoint_manager import SmartWaypointManager
 from waypoint_manager import WaypointManager
 
+import copy
+
 class CostarArm(object):
 
     def make_service(self, name, srv_t, callback, *args, **kwargs):
@@ -35,8 +37,11 @@ class CostarArm(object):
        pub_name = os.path.join(self.namespace, name)
        return rospy.Publisher(pub_name, msg_t, *args, **kwargs)
 
-    def make_service_proxy(self, name, srv_t):
-        service_name = os.path.join(self.namespace, name)
+    def make_service_proxy(self, name, srv_t, use_namespace = True):
+        if use_namespace:
+            service_name = os.path.join(self.namespace, name)
+        else:
+            service_name = name
         print "service name: %s"%service_name
         rospy.wait_for_service(service_name)
         return rospy.ServiceProxy(service_name,srv_t)
@@ -183,7 +188,7 @@ class CostarArm(object):
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
-
+        self.get_planning_scene = self.make_service_proxy('/get_planning_scene',GetPlanningScene)
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
@@ -530,25 +535,33 @@ class CostarArm(object):
         # attach the collision object to the gripper
         self.gripper_close.call()
 
+        # get the actual collision obj from planning scene
+        remove_object = None
+
+        res = self.get_planning_scene(components=
+            PlanningSceneComponents(components=PlanningSceneComponents.WORLD_OBJECT_GEOMETRY))
+        all_objects = res.scene.world.collision_objects
+        for col_obj in all_objects:
+            if col_obj.id == object_name:
+                remove_object = col_obj
+                break
+
         # self.planning_group.attachObject(object_name, self.end_link)
-        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
         planning_scene_diff = PlanningScene(is_diff=True)
-        # remove original collision object, then add it to the gripper
-        remove_object = CollisionObject()
-        remove_object.id = object_name
-        remove_object.header.frame_id = self.base_link
-        remove_object.operation = remove_object.REMOVE
+        remove_object.operation = CollisionObject.REMOVE
         del planning_scene_diff.world.collision_objects[:];
-        planning_scene_diff.world.collision_objects.append(remove_object);
+        planning_scene_diff.world.collision_objects.append(copy.deepcopy(remove_object));
 
         attached_object = AttachedCollisionObject()
         attached_object.object = remove_object
         attached_object.link_name = self.end_link
         attached_object.object.header.frame_id = self.joint_names[-1]
-        attached_object.object.operation = attached_object.object.ADD
+        attached_object.object.operation = CollisionObject.ADD
         del planning_scene_diff.robot_state.attached_collision_objects[:];
         planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
 
+        
         self.planning_scene_publisher.publish(planning_scene_diff)
 
     '''
@@ -560,20 +573,42 @@ class CostarArm(object):
         # self.planning_group.detachObject(object_name, self.end_link)
         self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
         planning_scene_diff = PlanningScene(is_diff=True)
-        # remove object from the gripper, then add the original collision object
-        detach_object = AttachedCollisionObject()
-        detach_object.object.id = object_name
-        detach_object.link_name = self.end_link
-        detach_object.object.operation = detach_object.object.REMOVE
-        del planning_scene_diff.robot_state.attached_collision_objects[:];
-        planning_scene_diff.robot_state.attached_collision_objects.append(detach_object);
+        T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
-        add_object = CollisionObject()
-        add_object = detach_object.object
-        add_object.header.frame_id = self.base_link
-        add_object.operation = add_object.ADD
-        del planning_scene_diff.world.collision_objects[:];
-        planning_scene_diff.world.collision_objects.append(add_object);
+        # get the actual collision obj from planning scene
+        res = self.get_planning_scene(components=
+            PlanningSceneComponents(components=PlanningSceneComponents.ROBOT_STATE_ATTACHED_OBJECTS))
+        all_objects = res.scene.robot_state.attached_collision_objects
+        for col_obj in all_objects:
+            rospy.logwarn(str(object_name)+", "+str(col_obj.link_name)+", "+str(col_obj.object.id))
+
+            # remove from attached objects
+            diff_obj = AttachedCollisionObject(
+                link_name=self.end_link,
+                object=CollisionObject(id=col_obj.object.id))
+            diff_obj.object.operation = CollisionObject.REMOVE
+            planning_scene_diff.robot_state.attached_collision_objects.append(diff_obj)
+             
+            # add into planning scene
+            add_object = col_obj.object
+            add_object.header.frame_id = self.base_link
+            add_object.operation = CollisionObject.ADD
+            for index, mesh_pose in enumerate(col_obj.object.mesh_poses):
+                add_object.mesh_poses[index] = pm.toMsg(T_fwd * pm.fromMsg(mesh_pose))
+            planning_scene_diff.world.collision_objects.append(add_object)
+
+            # if col_obj.id == object_name:
+            #     detach_object = col_obj
+            #     break
+
+        # remove object from the gripper, then add the original collision object
+        # detach_object = AttachedCollisionObject()
+        # detach_object.object.id = object_name
+        # detach_object.link_name = self.end_link
+        # detach_object.object.operation = detach_object.object.REMOVE
+        # planning_scene_diff.robot_state.attached_collision_objects.append(copy.deepcopy(detach_object));
+
+        # add_object = CollisionObject()
 
         self.planning_scene_publisher.publish(planning_scene_diff)
     '''
@@ -718,9 +753,9 @@ class CostarArm(object):
               continue
 
            if valid_pose:
-               list_of_valid_sequence.append((backup_waypoint,T,self.q0,best_q,name))
+               list_of_valid_sequence.append((backup_waypoint,T,self.q0,best_q,obj))
            else:
-		       list_of_invalid_sequence.append((backup_waypoint,T,self.q0,best_q,name))
+		       list_of_invalid_sequence.append((backup_waypoint,T,self.q0,best_q,obj))
 
         sequence_to_execute = list()
         if len(list_of_valid_sequence) > 0:
@@ -732,7 +767,7 @@ class CostarArm(object):
 
         print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
-        for sequence_number, (backup_waypoint,T,self.q0,best_q,name) in enumerate(sequence_to_execute,1):
+        for sequence_number, (backup_waypoint,T,self.q0,best_q,obj) in enumerate(sequence_to_execute,1):
             rospy.logwarn("Trying sequence number %i"%(sequence_number))
             # plan to T
             rospy.sleep(0.1)
@@ -747,12 +782,21 @@ class CostarArm(object):
                     if msg[0:7] == 'SUCCESS':
                         msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
                         if msg[0:7] == 'SUCCESS':
-                            gripper_function(name)
+                            gripper_function(obj)
 
                             rospy.sleep(0.1)
-                            # TODO(fjonath) or TODO(cpaxton): use q_2 instead of waypoint here
-                            (code3,res3) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
-                            msg = self.send_and_publish_planning_result(res3,acceleration,velocity)
+                            traj = res2.planned_trajectory.joint_trajectory
+                            traj.points.reverse()
+                            end_t = traj.points[0].time_from_start
+                            for i, pt in enumerate(traj.points):
+                                pt.velocities = [-v for v in pt.velocities]
+                                pt.accelerations = []
+                                pt.effort = []
+                                pt.time_from_start = end_t - pt.time_from_start
+                            traj.points[0].positions = self.q0
+                            traj.points[-1].velocities = [0.]*len(self.q0)
+                            
+                            msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
                             return msg
                         else:
                         	rospy.logwarn("Fail to move to grasp pose in sequence %i" % sequence_number)
