@@ -795,7 +795,7 @@ class Instructor(QWidget):
         result = self.root_node.execute()
         #rospy.logwarn(result)
         # self.regenerate_tree()
-        if result == 'SUCCESS':
+        if result[:7] == 'SUCCESS':
             rospy.logwarn('INSTRUCTOR: Task Tree FINISHED WITH SUCCESS')
             self.sound_pub.publish(String("notify_4_succeed"))
             self.run_timer_.stop()
@@ -804,7 +804,7 @@ class Instructor(QWidget):
             self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}''')
             self.run_button.setText('EXECUTE PLAN')
             self.regenerate_tree()
-        elif result == 'FAILURE':
+        elif result[:7] == 'FAILURE':
             rospy.logerr('INSTRUCTOR: Task Tree FINISHED WITH FAILURE')
             self.run_timer_.stop()
             self.running__ = False
