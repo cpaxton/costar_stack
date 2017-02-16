@@ -311,7 +311,7 @@ class NodeSelector(Node):
         for child in self.children_:
             status = child.execute()
 
-            if status != 'FAILURE':
+            if status[:7] != 'FAILURE':
                 return self.set_status(status)
 
         return self.set_status('FAILURE')
@@ -345,7 +345,7 @@ class NodeSequence(Node):
         for child in self.children_:
             status = child.execute()
 
-            if status != 'SUCCESS':
+            if status[:7] != 'SUCCESS':
                 return self.set_status(status)
 
         return self.set_status('SUCCESS')
@@ -373,7 +373,7 @@ class NodeIterator(Node):
         for child in self.children_:
             status = child.execute()
 
-            if status != 'SUCCESS' and status != 'FAILURE':
+            if status[:7] != 'SUCCESS' and status[:7] != 'FAILURE':
                 return self.set_status(status)
             
         return self.set_status('SUCCESS')       
@@ -407,12 +407,12 @@ class NodeParallelAll(Node):
             if self.child_status_ == 'NODE_ERROR':
                 self.num_success = None
                 return self.set_status('NODE_ERROR')
-            elif self.child_status_ == 'FAILURE':
+            elif self.child_status_[:7] == 'FAILURE':
                 self.num_success = None
                 return self.set_status('FAILURE')
-            elif self.child_status_ == 'RUNNING':
+            elif self.child_status_[:7] == 'RUNNING':
                 pass
-            elif self.child_status_ == 'SUCCESS':
+            elif self.child_status_[:7] == 'SUCCESS':
                 self.num_success += 1
 
         # Only return if all children succeed
@@ -454,11 +454,11 @@ class NodeParallelRemove(Node):
             self.child_status_ = C.execute()
             if self.child_status_ == 'NODE_ERROR':
                 return self.set_status('NODE_ERROR')
-            elif self.child_status_ == 'FAILURE':
+            elif self.child_status_[:7] == 'FAILURE':
                 return self.set_status('FAILURE')
-            elif self.child_status_ == 'RUNNING':
+            elif self.child_status_[:7] == 'RUNNING':
                 pass
-            elif self.child_status_ == 'SUCCESS':
+            elif self.child_status_[:7] == 'SUCCESS':
                 self.num_success += 1
                 self.exec_list_.remove(C) # remove child that succeeds
 
@@ -494,11 +494,11 @@ class NodeParallelOne(Node):
             self.child_status_ = C.execute()
             if self.child_status_ == 'NODE_ERROR':
                 return self.set_status('NODE_ERROR')
-            elif self.child_status_ == 'FAILURE':
+            elif self.child_status_[:7] == 'FAILURE':
                 return self.set_status('FAILURE')
             elif self.child_status_ == 'RUNNING':
                 pass
-            elif self.child_status_ == 'SUCCESS':
+            elif self.child_status_[:7] == 'SUCCESS':
                 return self.set_status('SUCCESS')
 
         return self.set_status('RUNNING')
@@ -528,13 +528,13 @@ class NodeDecoratorRepeat(Node):
     def execute(self):
         if self.runs_ == -1: # run forever
             self.child_status_ = self.children_[0].execute()
-            if self.child_status_ == 'SUCCESS':
+            if self.child_status_[:7] == 'SUCCESS':
                 rospy.logwarn('REPEAT DECORATOR ['+self.name_+']: SUCCEEDED, RESET')
                 self.children_[0].reset()
                 return self.set_status('RUNNING')
-            elif self.child_status_ == 'RUNNING':
+            elif self.child_status_[:7] == 'RUNNING':
                 return self.set_status('RUNNING')
-            elif self.child_status_ == 'FAILURE':
+            elif self.child_status_[:7] == 'FAILURE':
                 rospy.logwarn('REPEAT DECORATOR ['+self.name_+']: FAILED, RESET')
                 self.children_[0].reset()
                 return self.set_status('RUNNING')
@@ -542,11 +542,11 @@ class NodeDecoratorRepeat(Node):
             ### FIX ME ###
             if self.num_runs_ < self.runs_:
                 self.child_status_ = self.children_[0].execute()
-                if self.child_status_ == 'SUCCESS':
+                if self.child_status_[:7] == 'SUCCESS':
                     self.num_runs_ += 1
-                elif self.child_status_ == 'RUNNING':
+                elif self.child_status_[:7] == 'RUNNING':
                     return self.set_status('RUNNING')
-                elif self.child_status_ == 'FAILURE':
+                elif self.child_status_[:7] == 'FAILURE':
                     return self.set_status('FAILURE')
             else:
                 return self.set_status('SUCCESS')
@@ -608,7 +608,7 @@ class NodeDecoratorWaitForSuccess(Node):
                     self.timer = rospy.Timer(rospy.Duration(1.0*self.timeout), self.timed_out, oneshot=True)
                     self.started = True
                 self.child_status_ = self.children_[0].execute()
-                if self.child_status_ == 'SUCCESS':
+                if self.child_status_[:7] == 'SUCCESS':
                     rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: REPORTED SUCCESS')
                     self.needs_reset = True
                     return self.set_status('SUCCESS')
@@ -621,7 +621,7 @@ class NodeDecoratorWaitForSuccess(Node):
                     return self.set_status('RUNNING')
             else: # started
                 self.child_status_ = self.children_[0].execute()
-                if self.child_status_ == 'SUCCESS':
+                if self.child_status_[:7] == 'SUCCESS':
                     rospy.logwarn('WAIT SUCCESS DECORATOR ['+self.name_+']: REPORTED SUCCESS')
                     self.needs_reset = True
                     return self.set_status('SUCCESS')
@@ -665,22 +665,22 @@ class NodeDecoratorReset(Node):
     def execute(self):
         if self.runs_ == -1: # resets forever
             self.child_status_ = self.children_[0].execute()
-            if self.child_status_ == 'SUCCESS':
+            if self.child_status_[:7] == 'SUCCESS':
                 # self.children_[0].reset()
                 return self.set_status('SUCCESS')
-            elif self.child_status_ == 'FAILURE':
+            elif self.child_status_[:7] == 'FAILURE':
                 self.children_[0].reset()
                 return self.set_status('FAILURE')
-            elif self.child_status_ == 'RUNNING':
+            elif self.child_status_[:7] == 'RUNNING':
                 return self.set_status('RUNNING')
         else:
             if self.num_runs_ < self.runs_:
                 self.num_runs_ += 1 # always increment  
                 self.child_status_ = self.children_[0].execute()
-                if self.child_status_ == 'SUCCESS':
+                if self.child_status_[:7] == 'SUCCESS':
                     self.children_[0].reset()
                     return self.set_status('SUCCESS')
-                elif self.child_status_ == 'FAILURE':
+                elif self.child_status_[:7] == 'FAILURE':
                     self.children_[0].reset()
                     return self.set_status('FAILURE')
                 elif self.child_status_ == 'RUNNING':
