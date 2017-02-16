@@ -122,7 +122,7 @@
       name="Publish Message" />
     <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
       type="CONDITION"
-      group="SCENE"
+      group="VISION"
       description="update_planning_scene"
       cases=""
       name="Update Scene"/>
@@ -134,16 +134,16 @@
       name="Query"/>
     <instructor plugin="instructor.EnableCollisionGUI"
       type="CONDITION"
-      group="SCENE"
+      group="COLLISION"
       description="Enable Collision"
       cases="planning"
-      name="Query"/>
+      name="Enable Collision"/>
     <instructor plugin="instructor.DisableCollisionGUI"
       type="CONDITION"
-      group="SCENE"
+      group="COLLISION"
       description="Disable Collision"
       cases="planning"
-      name="Query"/>
+      name="Disable Collision"/>
 
     <!-- SP SEGMENTER OPERATIONS -->
     <instructor plugin="instructor.NodeActionDetectObjectsGUI"

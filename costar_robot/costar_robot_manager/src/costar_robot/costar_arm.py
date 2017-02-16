@@ -466,6 +466,12 @@ class CostarArm(object):
 
         self.pt_publisher.publish(pt)
 
+    def enable_collision_cb(self, msg):
+        pass
+
+    def disable_collision_cb(self, msg):
+        pass
+
     '''
     activate servo mode
     '''

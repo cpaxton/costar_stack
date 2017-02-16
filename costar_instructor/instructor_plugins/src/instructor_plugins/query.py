@@ -446,8 +446,6 @@ class NodeActionCollision(Node):
             self.finished_with_success = False
             return
 
-
-
 class EnableCollisionGUI(CollisionGUI):
     def __init__(self):
         super(EnableCollisionGUI,self).__init__(True)
