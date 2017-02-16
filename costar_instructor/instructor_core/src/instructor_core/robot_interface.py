@@ -125,6 +125,21 @@ class RobotInterface():
             rospy.logwarn('FAILED, driver is in ['+self.driver_status+'] mode.')
             self.toast('Driver is in ['+self.driver_status+'] mode!')
 
+    def stop_servo(self):
+        if self.driver_status == 'SERVO':
+            try:
+                rospy.wait_for_service('/costar/SetServoMode',2)
+            except rospy.ROSException as e:
+                print 'Could not find SetServoMode service'
+                return
+            try:
+                servo_mode_service = rospy.ServiceProxy('/costar/SetServoMode',SetServoMode)
+                result = servo_mode_service('DISABLE')
+                rospy.logwarn(result.ack)
+                self.servo_btn.set_color(colors['gray'])
+            except rospy.ServiceException, e:
+                print e
+
     def disable(self):
         try:
             rospy.wait_for_service('/costar/SetServoMode',2)

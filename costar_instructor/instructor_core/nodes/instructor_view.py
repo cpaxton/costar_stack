@@ -778,6 +778,7 @@ class Instructor(QWidget):
          else:
             if self.running__ == True:
                 self.stop_tree()
+                self.robot_.stop_servo()
                 self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}''')
                 self.run_button.setText('EXECUTE PLAN')
             else:
