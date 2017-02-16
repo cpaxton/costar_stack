@@ -421,7 +421,8 @@ class CostarArm(object):
                 self.q0,
                 self.base_steps,
                 self.steps_per_meter,
-                self.steps_per_radians)
+                self.steps_per_radians,
+                use_joint_move = True)
 
             # Send command
             if len(traj.points) > 0:

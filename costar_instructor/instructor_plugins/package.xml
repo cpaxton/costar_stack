@@ -27,13 +27,13 @@
       type="ACTION"
       group="ROBOT"
       description="Waypoint Action"
-      cases=""
+      cases="baseline"
       name="Move to Waypoint"/>
     <instructor plugin="instructor.NodeActionRelativeWaypointGUI"
       type="ACTION"
       group="ROBOT"
       description="Instructor Relative Waypoint"
-      cases=""
+      cases="baseline"
       name="Move Relative"/>
     <instructor plugin="instructor.NodePlanWaypointGUI"
       type="ACTION"

@@ -63,7 +63,13 @@ class CostarUR5Driver(CostarArm):
     def acquire(self):
         stamp = rospy.Time.now().to_sec()
         if self.cur_stamp is not None:
-            self.client.cancel_goal()
+            self.client.cancel_all_goals()
+            self.client.stop_tracking_goal()
+            traj = JointTrajectory(points=[JointTrajectoryPoint(positions=self.q0)])
+            goal = FollowJointTrajectoryGoal(trajectory=traj)
+            self.client.send_goal(goal)
+            self.client.wait_for_result()
+
         if stamp > self.cur_stamp:
             self.cur_stamp = stamp
             return stamp
@@ -121,9 +127,10 @@ class CostarUR5Driver(CostarArm):
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
 
-        self.client.send_goal(goal)
-        self.client.wait_for_result()
-        res = self.client.get_result()
+        if stamp >= self.cur_stamp:
+            self.client.send_goal(goal)
+            self.client.wait_for_result()
+            res = self.client.get_result()
 
         if res.error_code >= 0:
             return "SUCCESS"

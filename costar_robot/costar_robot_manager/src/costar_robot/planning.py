@@ -70,8 +70,8 @@ class SimplePlanning:
       #    q = self.kdl_kin.inverse(T)
       return q
 
-    def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, steps_per_radians = 4, time_multiplier=2):
-
+    def getCartesianMove(self, frame, q0, base_steps=1000, steps_per_meter=1000, steps_per_radians = 4, time_multiplier=2, use_joint_move = False):
+      print "current joint: ", str(q0)
       # interpolate between start and goal
       pose = pm.fromMatrix(self.kdl_kin.forward(q0))
 
@@ -85,17 +85,19 @@ class SimplePlanning:
 
       steps = base_steps + int(delta_translation * steps_per_meter) + int(delta_rpy * steps_per_radians)
       print " -- Computing %f steps"%steps
-      min_time = 0.5 #seconds
+      min_time = 1.0 #seconds
       ts = ((min_time/time_multiplier + delta_translation + delta_rpy) / steps ) * time_multiplier
       traj = JointTrajectory()
       traj.points.append(JointTrajectoryPoint(positions=q0,
           	velocities=[0]*len(q0),
           	accelerations=[0]*len(q0)))
 
+      q_target = self.ik(pm.toMatrix(frame),q0)
       # compute IK
       for i in range(1,steps+4):
         xyz = None
         rpy = None
+        q = None
         if i >= steps:
           # slow down at 3 final step: at 50% 25% 10% speed before stopping
           incremental_step = None
@@ -107,16 +109,28 @@ class SimplePlanning:
             incremental_step = 0.9
           else:
             incremental_step = 1.0
-          xyz = cur_xyz + ((steps-1)+incremental_step)/steps * (goal_xyz - cur_xyz)
-          rpy = cur_rpy + ((steps-1)+incremental_step)/steps * (goal_rpy - cur_rpy)
+          steps_speed = ((steps-1)+incremental_step)/steps
+          if not use_joint_move:
+            xyz = cur_xyz + steps_speed * (goal_xyz - cur_xyz)
+            rpy = cur_rpy + steps_speed * (goal_rpy - cur_rpy)
+            frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
+            q = self.ik(frame, q0)
+          else:
+            q = np.array(q0) + steps_speed * (q_target - np.array(q0))
+            q = q.tolist()
+
         else:
-          xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
-          rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
+          if not use_joint_move:
+            xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
+            rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
+            frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
+            q = self.ik(frame, q0)
+          else:
+            q = np.array(q0) + (float(i)/steps) * (q_target - np.array(q0))
+            q = q.tolist()
 
-        frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
-        #q = self.kdl_kin.inverse(frame,q0)
-        q = self.ik(frame, q0)
-
+          
+          #q = self.kdl_kin.inverse(frame,q0)
         if self.verbose:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
