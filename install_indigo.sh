@@ -4,6 +4,7 @@ sudo apt-get install python-catkin-tools ros-indigo-fcl ros-indigo-soem ros-indi
 cd $HOME
 mkdir -r costar_ws/src
 cd costar_ws
+source /opt/ros/indigo/setup.bash
 catkin init
 cd src
 git clone https://github.com/cpaxton/costar_stack.git  
