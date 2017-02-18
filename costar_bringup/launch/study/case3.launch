@@ -1,5 +1,5 @@
 <launch>
   <include file="$(find costar_bringup)/launch/utilities.launch">
-    <arg name="instructor_cases" value="baseline,perception,planning"/>
+    <arg name="instructor_cases" value="baseline,perception"/>
   </include>
 </launch>
