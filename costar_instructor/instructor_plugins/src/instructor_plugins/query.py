@@ -17,7 +17,7 @@ import tf;
 import tf_conversions as tf_c
 # Driver services for ur5
 import costar_robot_msgs
-from costar_robot_msgs.srv import SmartMove, Object
+from costar_robot_msgs.srv import SmartMove, Object, ObjectRequest, SmartMoveRequest
 from smart_waypoint_manager import SmartWaypointManager
 from predicator_msgs.msg import *
 
@@ -303,6 +303,7 @@ class CollisionGUI(NodeGUI):
         self.update_objects()
 
     def object_selected_cb(self,item):
+        rospy.logerr("Selecting obj = "+str(item.text()))
         self.selected_object = str(item.text())
 
     def update_objects(self):
@@ -326,8 +327,8 @@ class CollisionGUI(NodeGUI):
         self.update_objects()
 
     def generate(self):
-        if all([self.name.full(), self.selected_object, self.selected_smartmove]):
-            rospy.logwarn('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
+        rospy.logwarn("Selecting obj = "+str([self.name.full(), self.selected_object]))
+        if all([self.name.full(), self.selected_object]):
             return NodeActionCollision( self.get_name(),
                                         self.get_label(),
                                         self.selected_object,
@@ -345,12 +346,12 @@ class NodeActionCollision(Node):
     def __init__(self,name,label,selected_object,smartmove_manager,enable):
         if enable:
             info="ENABLE COLLISION"
-            self.srv_name = "EnableCollision"
+            self.srv_name = "/costar/EnableCollision"
         else:
             info="DISABLE COLLISION"
-            self.srv_name = "DisableCollision"
+            self.srv_name = "/costar/DisableCollision"
         L = '%s WITH [%s]'%(info,selected_object)
-        super(nodeactionquery,self).__init__(name,L,colors['purple'].normal)
+        super(NodeActionCollision,self).__init__(name,L,colors['purple'].normal)
         self.selected_object = selected_object
         self.manager = smartmove_manager
         #self.listener_ = smartmove_manager.listener
@@ -408,20 +409,14 @@ class NodeActionCollision(Node):
         try:
             rospy.wait_for_service(self.srv_name)
         except rospy.ROSException as e:
-            rospy.logerr('Could not find Query service')
+            rospy.logerr('Could not find service: %s'%self.srv_name)
             self.finished_with_success = False
             return
         # Make servo call to set pose
         try:
             query_proxy = rospy.ServiceProxy(self.srv_name,Object)
-            msg = SmartMoveRequest()
-            msg.pose = self.manager.lookup_waypoint(self.selected_object,self.selected_smartmove)
-            msg.obj_class = self.selected_object
-            msg.name = self.selected_smartmove
-            predicate = PredicateStatement()
-            predicate.predicate = self.selected_region 
-            predicate.params = ['*',self.selected_reference,'world']
-            msg.predicates = [predicate]
+            msg = ObjectRequest()
+            msg.object = self.selected_object
             # Send SmartMove Command
             rospy.logwarn('Query Started')
             result = query_proxy(msg)
