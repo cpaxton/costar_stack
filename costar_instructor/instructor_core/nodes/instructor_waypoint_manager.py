@@ -162,10 +162,8 @@ class WaypointManager(object):
                       self.add_landmark_marker('/'+landmark_name,landmark_name)
             except tf.Exception, e:
                 rospy.logerr('Frame ['+landmark_tf_name+'] not found (TIMEOUT)')
-                rospy.delete_param(L)
-                continue
-
-
+                if rospy.has_param(L):
+                    rospy.delete_param(L)
         
         # Rebroadcast frame of landmark
         for N,F in self.saved_landmark_frames.items():
