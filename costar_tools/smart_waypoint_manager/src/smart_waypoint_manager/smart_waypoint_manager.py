@@ -62,9 +62,9 @@ class SmartWaypointManager:
 
         self.all_moves = []
 
-        self.objs = []
-        self.obj_classes = []
-        self.obj_class = {}
+        self.objs = ["table_frame"]
+        self.obj_classes = ["table"]
+        self.obj_class = {"table_frame":"table"}
         
         self.available_obj_classes = rospy.get_param("/costar/smartmove/available_objects")
         self.available_regions = rospy.get_param("/costar/smartmove/regions")
@@ -124,8 +124,10 @@ class SmartWaypointManager:
         return self.all_moves
 
     def get_detected_objects(self):
-        self.objs = []
-        self.obj_classes = []
+
+        self.objs = ["table_frame"]
+        self.obj_classes = ["table"]
+
         if not self.available_obj_classes is None:
             for oc in self.available_obj_classes:
                 resp = self.get_assignment_service(PredicateStatement(predicate=oc,params=["*","",""]))

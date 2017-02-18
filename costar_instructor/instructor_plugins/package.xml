@@ -27,24 +27,36 @@
       type="ACTION"
       group="ROBOT"
       description="Waypoint Action"
-      cases=""
+      cases="baseline"
       name="Move to Waypoint"/>
+    <instructor plugin="instructor.MoveToHomeGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Home Waypoint Action"
+      cases="baseline"
+      name="Move to Home"/>
     <instructor plugin="instructor.NodeActionRelativeWaypointGUI"
       type="ACTION"
       group="ROBOT"
       description="Instructor Relative Waypoint"
-      cases=""
+      cases="perception"
       name="Move Relative"/>
     <instructor plugin="instructor.NodePlanWaypointGUI"
       type="ACTION"
       group="ROBOT"
       description="Instructor Plan to Waypoint Action"
-      cases="baseline"
+      cases="planning"
       name="Plan to Waypoint"/>
+    <instructor plugin="instructor.PlanToHomeGUI"
+      type="ACTION"
+      group="ROBOT"
+      description="Instructor Plan to Home Action"
+      cases="planning"
+      name="Plan to Home"/>
     <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
       type="ACTION" group="ROBOT"
       description="Instructor Plan to Relative Waypoint"
-      cases="perception"
+      cases=""
       name="Plan Relative"/>
 
     <!-- BASIC GRASPING COMMANDS -->
@@ -122,7 +134,7 @@
       name="Publish Message" />
     <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
       type="CONDITION"
-      group="VISION"
+      group="SCENE"
       description="update_planning_scene"
       cases=""
       name="Update Scene"/>
@@ -132,13 +144,19 @@
       description="Waypoint Query"
       cases=""
       name="Query"/>
+    <instructor plugin="instructor.DisableCollisionGUI"
+      type="CONDITION"
+      group="SCENE"
+      description="Disable Collision"
+      cases="planning"
+      name="Disable Collision"/>
 
     <!-- SP SEGMENTER OPERATIONS -->
     <instructor plugin="instructor.NodeActionDetectObjectsGUI"
       type="CONDITION"
       group="VISION"
       description="sp_segmenter_detect"
-      cases="planning"
+      cases="planning,perception"
       name="Detect Objects"/>
 
   </export>

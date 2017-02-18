@@ -25,6 +25,8 @@ from predicator_landmark import GetWaypointsService
 from smart_waypoint_manager import SmartWaypointManager
 from waypoint_manager import WaypointManager
 
+import copy
+
 class CostarArm(object):
 
     def make_service(self, name, srv_t, callback, *args, **kwargs):
@@ -35,8 +37,11 @@ class CostarArm(object):
        pub_name = os.path.join(self.namespace, name)
        return rospy.Publisher(pub_name, msg_t, *args, **kwargs)
 
-    def make_service_proxy(self, name, srv_t):
-        service_name = os.path.join(self.namespace, name)
+    def make_service_proxy(self, name, srv_t, use_namespace = True):
+        if use_namespace:
+            service_name = os.path.join(self.namespace, name)
+        else:
+            service_name = name
         print "service name: %s"%service_name
         rospy.wait_for_service(service_name)
         return rospy.ServiceProxy(service_name,srv_t)
@@ -60,10 +65,20 @@ class CostarArm(object):
             closed_form_IK_solver = None,
             default_distance = 0.05,
             state_validity_penalty = 1e5,
+            table_frame = "table_frame",
+            max_dist_from_table = 0.5,
             dof=7,
+            debug=False,
             perception_ns="/SPServer",):
         
+        self.debug = debug
         self.namespace = namespace
+        self.table_frame = table_frame
+        self.table_pose = None
+        self.max_dist_from_table = max_dist_from_table
+
+        self.home_q = rospy.get_param(os.path.join(self.namespace, "home"))
+        self.home_q = [float(q) for q in self.home_q]
 
         self.world = world
         self.base_link = base_link
@@ -129,18 +144,22 @@ class CostarArm(object):
 
         # Set up services
         # The CostarArm services let the UI put it into teach mode or anything else
-        self.teach_mode = self.make_service('SetTeachMode',SetTeachMode,self.set_teach_mode_call)
-        self.servo_mode = self.make_service('SetServoMode',SetServoMode,self.set_servo_mode_call)
-        self.shutdown = self.make_service('ShutdownArm',EmptyService,self.shutdown_arm_call)
-        self.servo = self.make_service('ServoToPose',ServoToPose,self.servo_to_pose_call)
-        self.plan = self.make_service('PlanToPose',ServoToPose,self.plan_to_pose_call)
-        self.smartmove = self.make_service('SmartMove',SmartMove,self.smart_move_call)
-        self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_call)
-        self.save_frame = self.make_service('SaveFrame',SaveFrame,self.save_frame_call)
-        self.save_joints = self.make_service('SaveJointPosition',SaveFrame,self.save_joints_call)
+        self.teach_mode = self.make_service('SetTeachMode',SetTeachMode,self.set_teach_mode_cb)
+        self.servo_mode = self.make_service('SetServoMode',SetServoMode,self.set_servo_mode_cb)
+        self.shutdown = self.make_service('ShutdownArm',EmptyService,self.shutdown_arm_cb)
+        self.servo = self.make_service('ServoToPose',ServoToPose,self.servo_to_pose_cb)
+        self.plan = self.make_service('PlanToPose',ServoToPose,self.plan_to_pose_cb)
+        self.servo_home_srv = self.make_service('ServoToHome',ServoToPose,self.servo_to_home_cb)
+        self.plan_home_srv = self.make_service('PlanToHome',ServoToPose,self.plan_to_home_cb)
+        self.smartmove = self.make_service('SmartMove',SmartMove,self.smart_move_cb)
+        self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_cb)
+        self.save_frame = self.make_service('SaveFrame',SaveFrame,self.save_frame_cb)
+        self.save_joints = self.make_service('SaveJointPosition',SaveFrame,self.save_joints_cb)
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
         self.smartmove_query_srv = self.make_service('Query',SmartMove,self.query_cb)
+        self.enable_collisions_srv = self.make_service('EnableCollision',Object,self.enable_collision_cb)
+        self.disable_collisions_srv = self.make_service('DisableCollision',Object,self.disable_collision_cb)
 
         self.get_waypoints_srv = GetWaypointsService(world=world,
                                                      service=False,
@@ -183,7 +202,7 @@ class CostarArm(object):
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
-
+        self.get_planning_scene = self.make_service_proxy('/get_planning_scene',GetPlanningScene)
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
@@ -271,7 +290,7 @@ class CostarArm(object):
     '''
     Save the current end effector pose as a frame that we can return to
     '''
-    def save_frame_call(self,req):
+    def save_frame_cb(self,req):
       rospy.logwarn('Save frame does not check to see if your frame already exists!')
       print self.ee_pose
       self.waypoint_manager.save_frame(self.ee_pose, self.world)
@@ -281,7 +300,7 @@ class CostarArm(object):
     '''
     Save the current joint states as a frame that we can return to
     '''
-    def save_joints_call(self,req):
+    def save_joints_cb(self,req):
       rospy.logwarn('Save frame does not check to see if your joint position already exists!')
       print self.q0
       self.waypoint_manager.save_frame(self.q0)
@@ -308,7 +327,7 @@ class CostarArm(object):
     Find any valid object that meets the requirements.
     Find a cartesian path or possibly longer path through joint space.
     '''
-    def smart_move_call(self,req):
+    def smart_move_cb(self,req):
 
         if not self.driver_status == 'SERVO':
             rospy.logerr('DRIVER -- Not in servo mode!')
@@ -366,7 +385,7 @@ class CostarArm(object):
     '''
     Definitely do a planned motion.
     '''
-    def plan_to_pose_call(self,req): 
+    def plan_to_pose_cb(self,req): 
         #rospy.loginfo('Recieved servo to pose request')
         #print req
         if self.driver_status == 'SERVO':
@@ -378,12 +397,30 @@ class CostarArm(object):
             # Send command
             pt = JointTrajectoryPoint()
             pose = pm.fromMsg(req.target)
-            (code,res) = self.planner.getPlan(pose,self.q0)
+            (code,res) = self.planner.getPlan(frame=pose,q=self.q0)
             return self.send_and_publish_planning_result(res,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
             return 'FAILURE - not in servo mode'
 
+    '''
+    Definitely do a planned motion to the home joint state.
+    '''
+    def plan_to_home_cb(self,req): 
+        #rospy.loginfo('Recieved servo to pose request')
+        #print req
+        if self.driver_status == 'SERVO':
+
+            # Check acceleration and velocity limits
+            (acceleration, velocity) = self.check_req_speed_params(req) 
+
+            # Send command
+            pt = JointTrajectoryPoint()
+            (code,res) = self.planner.getPlan(q_goal=self.home_q,q=self.q0)
+            return self.send_and_publish_planning_result(res,acceleration,velocity)
+        else:
+            rospy.logerr('DRIVER -- not in servo mode!')
+            return 'FAILURE - not in servo mode'
 
     '''
     Send a whole joint trajectory message to a robot...
@@ -397,7 +434,7 @@ class CostarArm(object):
     Standard movement call.
     Tries a cartesian move, then if that fails goes into a joint-space move.
     '''
-    def servo_to_pose_call(self,req): 
+    def servo_to_pose_cb(self,req): 
         if self.driver_status == 'SERVO':
             T = pm.fromMsg(req.target)
 
@@ -409,7 +446,9 @@ class CostarArm(object):
                 self.q0,
                 self.base_steps,
                 self.steps_per_meter,
-                self.steps_per_radians)
+                self.steps_per_radians,
+                use_joint_move = True,
+                table_frame = self.table_pose)
 
             # Send command
             if len(traj.points) > 0:
@@ -423,7 +462,39 @@ class CostarArm(object):
                 return res
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
-                return 'FAILURE - not in servo mode'
+                return 'FAILURE - no trajectory points'
+        else:
+            rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
+            return 'FAILURE - not in servo mode'
+
+    def servo_to_home_cb(self,req): 
+        if self.driver_status == 'SERVO':
+
+            # Check acceleration and velocity limits
+            (acceleration, velocity) = self.check_req_speed_params(req)
+
+            # inverse kinematics
+            traj = self.planner.getJointMove(self.home_q,
+                self.q0,
+                self.base_steps,
+                self.steps_per_meter,
+                self.steps_per_radians,
+                use_joint_move = True,
+                table_frame = self.table_pose)
+
+            # Send command
+            if len(traj.points) > 0:
+                stamp = self.acquire()
+                if stamp is not None:
+                    rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
+                    res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
+                    self.release()
+                else:
+                    res = 'FAILURE - could not preempt current arm control.'
+                return res
+            else:
+                rospy.logerr('SIMPLE DRIVER -- IK failed')
+                return 'FAILURE - no trajectory points'
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILURE - not in servo mode'
@@ -432,7 +503,7 @@ class CostarArm(object):
     Standard move call.
     Make a joint space move to a destination.
     '''
-    def servo_to_joints_call(self,req):
+    def servo_to_joints_cb(self,req):
 
         if self.driver_status == 'SERVO':
             # Check acceleration and velocity limits
@@ -447,7 +518,7 @@ class CostarArm(object):
     '''
     set teach mode
     '''
-    def set_teach_mode_call(self,req):
+    def set_teach_mode_cb(self,req):
         if req.enable == True:
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
@@ -464,10 +535,38 @@ class CostarArm(object):
 
         self.pt_publisher.publish(pt)
 
+    def enable_collision_cb(self, msg):
+        self.planner.updateAllowedCollisions(msg.object,False)
+        return "SUCCESS"
+
+    def disable_collision_cb(self, msg):
+        rospy.logerr("DISABLING COLLISIONS WITH" + str(msg))
+        self.planner.updateAllowedCollisions(msg.object,True)
+        remove_object = None
+
+        res = self.get_planning_scene(components=
+            PlanningSceneComponents(components=PlanningSceneComponents.WORLD_OBJECT_GEOMETRY))
+        all_objects = res.scene.world.collision_objects
+        for col_obj in all_objects:
+            if col_obj.id == msg.object:
+                remove_object = col_obj
+                break
+
+        # self.planning_group.attachObject(object_name, self.end_link)
+        if remove_object is not None:
+            self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
+            planning_scene_diff = PlanningScene(is_diff=True)
+            remove_object.operation = CollisionObject.REMOVE
+            del planning_scene_diff.world.collision_objects[:];
+            planning_scene_diff.world.collision_objects.append(copy.deepcopy(remove_object));
+
+            self.planning_scene_publisher.publish(planning_scene_diff)
+        return "SUCCESS"
+
     '''
     activate servo mode
     '''
-    def set_servo_mode_call(self,req):
+    def set_servo_mode_cb(self,req):
         if req.mode == 'SERVO':
             if self.q0 is not None:
                 self.send_q(self.q0,0.1,0.1)
@@ -476,11 +575,12 @@ class CostarArm(object):
             self.cur_stamp = self.release()
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
+            self.detach(actuate = False)
             self.cur_stamp = self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
 
-    def shutdown_arm_call(self,req):
+    def shutdown_arm_cb(self,req):
         self.driver_status = 'SHUTDOWN'
         pass
 
@@ -497,6 +597,17 @@ class CostarArm(object):
         if self.query_frame is not None:
             trans, rot = self.query_frame
             br.sendTransform(trans, rot, rospy.Time.now(),self.query_frame_name,self.world)
+
+        if self.debug:
+            if self.backoff_waypoints is not None:
+                for tf_name, transform in self.backoff_waypoints:
+                    trans, rot = pm.toTf(transform)
+                    br.sendTransform(trans, rot, rospy.Time.now(),tf_name,self.world)
+
+        try:
+            self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
+        except tf.ExtrapolationException, e:
+            rospy.logwarn(str(e))
 
     '''
     call this when "spinning" to keep updating things
@@ -526,71 +637,103 @@ class CostarArm(object):
 
     TODO(fjonath): currently attached object is missing its geometry.
     '''
-    def attach(self, object_name):
-        # attach the collision object to the gripper
-        self.gripper_close.call()
+    def attach(self, object_name, actuate = True):
+        if actuate:
+            # attach the collision object to the gripper
+            self.gripper_close.call()
+
+        # get the actual collision obj from planning scene
+        remove_object = None
+
+        res = self.get_planning_scene(components=
+            PlanningSceneComponents(components=PlanningSceneComponents.WORLD_OBJECT_GEOMETRY))
+        all_objects = res.scene.world.collision_objects
+        for col_obj in all_objects:
+            if col_obj.id == object_name:
+                remove_object = col_obj
+                break
 
         # self.planning_group.attachObject(object_name, self.end_link)
-        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
-        planning_scene_diff = PlanningScene(is_diff=True)
-        # remove original collision object, then add it to the gripper
-        remove_object = CollisionObject()
-        remove_object.id = object_name
-        remove_object.header.frame_id = self.base_link
-        remove_object.operation = remove_object.REMOVE
-        del planning_scene_diff.world.collision_objects[:];
-        planning_scene_diff.world.collision_objects.append(remove_object);
+        if remove_object is not None:
+            self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
+            planning_scene_diff = PlanningScene(is_diff=True)
+            remove_object.operation = CollisionObject.REMOVE
+            del planning_scene_diff.world.collision_objects[:];
+            planning_scene_diff.world.collision_objects.append(copy.deepcopy(remove_object));
 
-        attached_object = AttachedCollisionObject()
-        attached_object.object = remove_object
-        attached_object.link_name = self.end_link
-        attached_object.object.header.frame_id = self.joint_names[-1]
-        attached_object.object.operation = attached_object.object.ADD
-        del planning_scene_diff.robot_state.attached_collision_objects[:];
-        planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
+            attached_object = AttachedCollisionObject()
+            attached_object.object = remove_object
+            attached_object.link_name = self.end_link
+            attached_object.object.header.frame_id = self.joint_names[-1]
+            attached_object.object.operation = CollisionObject.ADD
+            del planning_scene_diff.robot_state.attached_collision_objects[:];
+            planning_scene_diff.robot_state.attached_collision_objects.append(attached_object);
 
-        self.planning_scene_publisher.publish(planning_scene_diff)
+            self.planning_scene_publisher.publish(planning_scene_diff)
 
     '''
     Detach an object from the planning scene.
     '''
-    def detach(self, object_name):
-        # detach the collision object to the gripper
-        self.gripper_open.call()
+    def detach(self, object_name="", actuate = True):
+        if actuate:
+            # detach the collision object to the gripper
+            self.gripper_open.call()
         # self.planning_group.detachObject(object_name, self.end_link)
-        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene)
+        self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size=100)
         planning_scene_diff = PlanningScene(is_diff=True)
-        # remove object from the gripper, then add the original collision object
-        detach_object = AttachedCollisionObject()
-        detach_object.object.id = object_name
-        detach_object.link_name = self.end_link
-        detach_object.object.operation = detach_object.object.REMOVE
-        del planning_scene_diff.robot_state.attached_collision_objects[:];
-        planning_scene_diff.robot_state.attached_collision_objects.append(detach_object);
+        T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
-        add_object = CollisionObject()
-        add_object = detach_object.object
-        add_object.header.frame_id = self.base_link
-        add_object.operation = add_object.ADD
-        del planning_scene_diff.world.collision_objects[:];
-        planning_scene_diff.world.collision_objects.append(add_object);
+        # get the actual collision obj from planning scene
+        res = self.get_planning_scene(components=
+            PlanningSceneComponents(components=PlanningSceneComponents.ROBOT_STATE_ATTACHED_OBJECTS))
+        all_objects = res.scene.robot_state.attached_collision_objects
+        for col_obj in all_objects:
+            rospy.logwarn(str(object_name)+", "+str(col_obj.link_name)+", "+str(col_obj.object.id))
+
+            # remove from attached objects
+            diff_obj = AttachedCollisionObject(
+                link_name=self.end_link,
+                object=CollisionObject(id=col_obj.object.id))
+            diff_obj.object.operation = CollisionObject.REMOVE
+            planning_scene_diff.robot_state.attached_collision_objects.append(diff_obj)
+             
+            # add into planning scene
+            add_object = col_obj.object
+            add_object.header.frame_id = self.base_link
+            add_object.operation = CollisionObject.ADD
+            for index, mesh_pose in enumerate(col_obj.object.mesh_poses):
+                add_object.mesh_poses[index] = pm.toMsg(T_fwd * pm.fromMsg(mesh_pose))
+            planning_scene_diff.world.collision_objects.append(add_object)
+
+            # if col_obj.id == object_name:
+            #     detach_object = col_obj
+            #     break
+
+        # remove object from the gripper, then add the original collision object
+        # detach_object = AttachedCollisionObject()
+        # detach_object.object.id = object_name
+        # detach_object.link_name = self.end_link
+        # detach_object.object.operation = detach_object.object.REMOVE
+        # planning_scene_diff.robot_state.attached_collision_objects.append(copy.deepcopy(detach_object));
+
+        # add_object = CollisionObject()
 
         self.planning_scene_publisher.publish(planning_scene_diff)
     '''
     Calculate the best distance between current joint position to the target pose given a IK solution or list of IK solutions 
     '''
-    def get_best_distance(self, T, T_fwd, q0):
+    def get_best_distance(self, T, T_fwd, q0, check_closest_only = False):
         quaternion_dot = np.dot(np.array(T_fwd.M.GetQuaternion()),np.array(T.M.GetQuaternion()))
         delta_rotation = np.arccos(2 * quaternion_dot ** 2 - 1) 
 
         q_new = list()
 
-        if self.closed_form_IK_solver == None:
+        if self.closed_form_IK_solver == None or check_closest_only:
             q_new.append(self.ik(pm.toMatrix(T),self.q0))
         else:
             q_new = self.closed_form_IK_solver.solveIK(pm.toMatrix(T))
 
-        if q_new is not None:
+        if q_new is not None and len(q_new) > 0:
             message_print = ''
             message_print_invalid = ''
             ik_joint_solution_validity = ''
@@ -600,6 +743,8 @@ class CostarArm(object):
             best_q_invalid = None
 
             for q_i in q_new:
+                if q_i is None:
+                    continue
                 dq = np.absolute(q_i - self.q0) * self.joint_weights
                 combined_distance = (T.p - T_fwd.p).Norm() + \
                       self.rotation_weight * delta_rotation + \
@@ -624,8 +769,8 @@ class CostarArm(object):
                 best_q = best_q_invalid
 
             return valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q
-        else:
-            return False, float('inf'), float('inf'), 'No valid IK solution', 'No valid IK solution', list()
+        
+        return False, float('inf'), float('inf'), 'No valid IK solution', 'No valid IK solution', list()
 
     def query(self, req, disable_target_object_collision = False):
         # Get the best object to manipulate, just like smart move, but without the actual movement
@@ -655,6 +800,8 @@ class CostarArm(object):
         	rospy.logerr("Robot state has not yet been received!")
         	return "FAILURE -- robot state not yet received!"
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
+
+        number_of_valid_query_poses, number_of_invalid_query_poses = 0, 0
         for (pose,name,obj) in zip(poses,names,objects):
 
             # figure out which tf frame we care about
@@ -672,22 +819,36 @@ class CostarArm(object):
             T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
             T = T_base_world.Inverse()*pm.fromMsg(pose)
 
+            # Ignore anything below the table: we don't need to even bother
+            # checking that position.
+            if T.p[2] < self.table_pose[0][2]:
+                rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
+                continue
+            dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
+            if dist_from_table > self.max_dist_from_table:
+                rospy.logwarn("Ignoring due to table distance: %f > %f"%(
+                    dist_from_table,
+                    self.max_dist_from_table))
+                continue
+
             Ts.append(T)
             if disable_target_object_collision:
 	            self.planner.updateAllowedCollisions(obj,True)
-            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0)
+            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = True)
             if disable_target_object_collision:
 	            self.planner.updateAllowedCollisions(obj,False)
 
-            if len(best_q) == 0:
-                print message_print
+            if best_q is None or len(best_q) == 0:
+                rospy.logwarn("[QUERY] DID NOT ADD:"+message_print)
                 continue
             elif valid_pose:
                 print message_print
                 dists.append(best_dist)
+                number_of_valid_query_poses += 1
             else:
                 print message_print_invalid
                 dists.append(best_invalid + self.state_validity_penalty)
+                number_of_invalid_query_poses += 1
 
 
         if len(Ts) == 0:
@@ -698,29 +859,36 @@ class CostarArm(object):
 
         joint = JointState()
         # joint.position = self.ik(T,self.q0)
+        rospy.loginfo("[Query] There are %i of valid poses and %i of invalid poses"%(number_of_valid_query_poses,number_of_invalid_query_poses))
+
         return possible_goals
 
-    def smartmove_multipurpose_gripper(self, possible_goals, distance, gripper_function, velocity, acceleration):
-        print 'Start multipurpose gripper'
+    def smartmove_multipurpose_gripper(self, possible_goals, distance, gripper_function, velocity, acceleration, backup_in_gripper_frame):
         list_of_valid_sequence = list()
         list_of_invalid_sequence = list()
         self.backoff_waypoints = []
 
+        if self.q0 is None:
+            return "FAILURE"
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
         for (dist,T,obj,name) in possible_goals:
-           backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
-           backup_waypoint = T * backup_waypoint
-           self.backoff_waypoints.append(("%s/backoff/%f"%(obj,dist),backup_waypoint))
-           self.backoff_waypoints.append(("%s/grasp/%f"%(obj,dist),T))
+           if backup_in_gripper_frame:
+               backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
+               backup_waypoint = T * backup_waypoint
+           else:
+               backup_waypoint = kdl.Frame(kdl.Vector(0.,0.,distance))
+               backup_waypoint = backup_waypoint * T
+           self.backoff_waypoints.append(("%s/%s_backoff/%f"%(obj,name,dist),backup_waypoint))
+           self.backoff_waypoints.append(("%s/%s_grasp/%f"%(obj,name,dist),T))
 
-           valid_pose, best_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0)
-           if len(best_q) == 0:
+           valid_pose, best_backup_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0, check_closest_only = True)
+           if best_q is None or len(best_q) == 0:
               continue
 
-           if valid_pose:
-               list_of_valid_sequence.append((backup_waypoint,T,self.q0,best_q,name))
+           if valid_pose and dist < self.state_validity_penalty:
+               list_of_valid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist))
            else:
-		       list_of_invalid_sequence.append((backup_waypoint,T,self.q0,best_q,name))
+		       list_of_invalid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist))
 
         sequence_to_execute = list()
         if len(list_of_valid_sequence) > 0:
@@ -728,12 +896,13 @@ class CostarArm(object):
             print 'There is %i valid sequence and %i invalid sequence to try'%(len(list_of_valid_sequence),len(list_of_invalid_sequence))
         else:
             rospy.logwarn("WARNING -- no sequential valid grasp action found")
+            print 'There is %i valid sequence and %i invalid sequence to try'%(len(list_of_valid_sequence),len(list_of_invalid_sequence))
             sequence_to_execute = list_of_invalid_sequence
 
         print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
-        for sequence_number, (backup_waypoint,T,self.q0,best_q,name) in enumerate(sequence_to_execute,1):
-            rospy.logwarn("Trying sequence number %i"%(sequence_number))
+        for sequence_number, (backup_waypoint,T,obj,backup_dist,query_dist) in enumerate(sequence_to_execute,1):
+            rospy.logwarn("Trying sequence number %i: backup_dist: %.3f query_dist: %.3f"%(sequence_number,backup_dist,query_dist))
             # plan to T
             rospy.sleep(0.1)
             (code,res) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
@@ -747,12 +916,22 @@ class CostarArm(object):
                     if msg[0:7] == 'SUCCESS':
                         msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
                         if msg[0:7] == 'SUCCESS':
-                            gripper_function(name)
+                            gripper_function(obj)
 
                             rospy.sleep(0.1)
-                            # TODO(fjonath) or TODO(cpaxton): use q_2 instead of waypoint here
-                            (code3,res3) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
-                            msg = self.send_and_publish_planning_result(res3,acceleration,velocity)
+
+                            traj = res2.planned_trajectory.joint_trajectory
+                            traj.points.reverse()
+                            end_t = traj.points[0].time_from_start
+                            for i, pt in enumerate(traj.points):
+                                pt.velocities = [-v for v in pt.velocities]
+                                pt.accelerations = []
+                                pt.effort = []
+                                pt.time_from_start = end_t - pt.time_from_start
+                            traj.points[0].positions = self.q0
+                            traj.points[-1].velocities = [0.]*len(self.q0)
+                            
+                            msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
                             return msg
                         else:
                         	rospy.logwarn("Fail to move to grasp pose in sequence %i" % sequence_number)
@@ -764,6 +943,9 @@ class CostarArm(object):
                 rospy.logwarn("Plan Backoff pose in sequence %i does not work" % sequence_number)
         return msg
 
+    def execute_planning_sequence(self, list_of_sequence, obj):
+        pass
+
     def smartmove_grasp(self, possible_goals, distance, velocity, acceleration):
         # Execute the list of waypoints to the selected object
         # It receive one object frame from select, and do motion planning for that
@@ -773,7 +955,7 @@ class CostarArm(object):
         # backup transform is [0, 0, -distance]
         # call /costar/gripper/close
         # move back to original tform
-        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.attach, velocity, acceleration)
+        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.attach, velocity, acceleration, True)
 
     '''
     SmartMove Release:
@@ -791,7 +973,7 @@ class CostarArm(object):
         # call /costar/gripper/open
         # move back to original tform
 
-        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.detach, velocity, acceleration)
+        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.detach, velocity, acceleration, False)
 
 
     '''

@@ -606,6 +606,13 @@ void SemanticSegmentation::setUsePreferredOrientation(const bool &use_preferred_
     this->use_preferred_orientation_ = use_preferred_orientation;
 }
 
+
+// void SemanticSegmentation::setUsePreferredOrientation(const bool &use_preferred_orientation, const Eigen::Quaterniond &input_preferred_orientation)
+// {
+//     this->use_preferred_orientation_ = use_preferred_orientation;
+//     this->base_rotation_ = input_preferred_orientation;
+// }
+
 void SemanticSegmentation::setUseObjectPersistence(const bool &use_object_persistence)
 {
     this->use_object_persistence_ = use_object_persistence;

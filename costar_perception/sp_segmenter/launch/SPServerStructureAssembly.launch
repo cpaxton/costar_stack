@@ -5,7 +5,7 @@
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data" doc="SP segmenter data folder" />
   <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
-  <arg name="debug_args"     default=""/>
+  <arg name="debug_args"     default="true"/>
 
   <!-- Segmentation Parameters parameters-->
   <arg name="compute_pose"          default="true" />
@@ -14,10 +14,10 @@
 
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
-  <arg name="minConfidence"  default="0.10" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
+  <arg name="minConfidence"  default="0.20" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
 
-  <arg name="useMedianFilter" default="true" doc="Apply median filter to point cloud input before processing it" />
+  <arg name="useMedianFilter" default="false" doc="Apply median filter to point cloud input before processing it" />
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
 
   <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>

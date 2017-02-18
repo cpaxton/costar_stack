@@ -5,7 +5,7 @@ SET(CMAKE_BUILD_TYPE "Release")
 
 OPTION(BUILD_ROS_BINDING "Build ROS Binding" ON)
 OPTION(BUILD_USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
-OPTION(BUILD_PYTHON_BINDING "Build Python Binding" ON)
+OPTION(BUILD_PYTHON_BINDING "Build Python Binding" OFF)
 OPTION(BUILD_ENABLE_TRACKING "Build Enable Tracking Keypoints (EXPERIMENTAL)" OFF)
 
 # Enable C++11
@@ -57,7 +57,7 @@ endif()
 
 # Build ROS BINDING
 IF (BUILD_ROS_BINDING)
-  find_package(catkin REQUIRED COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions cv_bridge costar_objrec_msgs QUIET)
+  find_package(catkin REQUIRED COMPONENTS sensor_msgs std_msgs message_generation pcl_conversions geometry_msgs tf tf_conversions costar_objrec_msgs QUIET)
 
   ADD_DEFINITIONS( -DBUILD_ROS_BINDING)
 

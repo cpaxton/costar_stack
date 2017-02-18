@@ -13,12 +13,14 @@
 
     <!-- Smartmove params -->
     <group ns="costar">
+      <rosparam param="home">[0.30, -1.33, -1.80, -0.27, 1.50, 1.60]</rosparam>
       <group ns="smartmove">
         <rosparam param="available_objects">
           - sander_makita
           - node_uniform
           - link_uniform
           - drill
+          - table
         </rosparam>
         <rosparam param="regions">
           - in_back_of

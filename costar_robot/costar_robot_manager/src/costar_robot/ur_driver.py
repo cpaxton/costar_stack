@@ -34,6 +34,7 @@ class CostarUR5Driver(CostarArm):
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
+            max_dist_from_table = 0.35,
             *args,
             **kwargs):
 
@@ -46,7 +47,7 @@ class CostarUR5Driver(CostarArm):
 
         self.closed_form_IK_solver = InverseKinematicsUR5()
         # self.closed_form_ur5_ik.enableDebugMode()
-        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.2])
+        self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
         self.closed_form_IK_solver.setEERotationOffsetROS()
         self.closed_form_IK_solver.setJointWeights(self.joint_weights)
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
@@ -62,7 +63,18 @@ class CostarUR5Driver(CostarArm):
     def acquire(self):
         stamp = rospy.Time.now().to_sec()
         if self.cur_stamp is not None:
-            self.client.cancel_goal()
+            self.client.cancel_all_goals()
+            self.client.stop_tracking_goal()
+            #traj = JointTrajectory(
+            #    points=[JointTrajectoryPoint(
+            #        positions=self.q0,
+            #        velocities=[0.]*len(self.q0))],
+            #    joint_names=self.joint_names)
+            #goal = FollowJointTrajectoryGoal(trajectory=traj)
+            #self.client.send_goal(goal)
+            #self.client.wait_for_result()
+            rospy.sleep(0.1)
+
         if stamp > self.cur_stamp:
             self.cur_stamp = stamp
             return stamp
@@ -120,9 +132,10 @@ class CostarUR5Driver(CostarArm):
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
 
-        self.client.send_goal(goal)
-        self.client.wait_for_result()
-        res = self.client.get_result()
+        if stamp >= self.cur_stamp:
+            self.client.send_goal(goal)
+            self.client.wait_for_result()
+            res = self.client.get_result()
 
         if res.error_code >= 0:
             return "SUCCESS"
@@ -133,8 +146,10 @@ class CostarUR5Driver(CostarArm):
     '''
     set teach mode
     '''
-    def set_teach_mode_call(self,req,cartesian=False):
+    def set_teach_mode_cb(self,req,cartesian=False):
+        rospy.logwarn(str(req))
         if req.enable == True:
+            rospy.logwarn(str(urscript_commands['TEACH']))
             self.ur_script_pub.publish(urscript_commands['TEACH'])
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'

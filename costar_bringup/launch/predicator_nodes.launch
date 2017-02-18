@@ -68,6 +68,10 @@
           - node_uniform
           - node
           - link
+          - table
+      - name: table
+        members:
+          - table_frame
     </rosparam>
 
   </node>
