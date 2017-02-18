@@ -88,10 +88,6 @@ class WaypointManager:
       data = yaml.load(self.load_service(id=name,type=self.cart_folder).text)
       self.cart_waypoints[name] = data
       self.all_cart_moves.append(name)
-    
-    print " === LOADED === "
-    print "Global: " + str(self.cart_waypoints.keys())
-    print "Joint states: " + str(self.js_waypoints.keys())
 
   '''
   Save frame to library if necessary
