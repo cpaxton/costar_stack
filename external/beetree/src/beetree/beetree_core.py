@@ -345,7 +345,9 @@ class NodeSequence(Node):
         for child in self.children_:
             status = child.execute()
 
-            if status[:7] != 'SUCCESS':
+            if status is None:
+                return self.set_status('FAILURE')
+            elif status[:7] != 'SUCCESS':
                 return self.set_status(status)
 
         return self.set_status('SUCCESS')
@@ -372,7 +374,9 @@ class NodeIterator(Node):
 
         for child in self.children_:
             status = child.execute()
-
+            
+            if status is None:
+                return self.set_status('FAILURE')
             if status[:7] != 'SUCCESS' and status[:7] != 'FAILURE':
                 return self.set_status(status)
             
