@@ -77,7 +77,6 @@ class NodeHomeGUI(NodeGUI):
                 self.command_acc = data['acc']['value']
                 self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100/1.5))
                 self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100/1.5))
-        self.update_waypoints()
 
     def generate(self):
         if all([self.name.full()]):
