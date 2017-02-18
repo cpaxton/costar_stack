@@ -49,7 +49,7 @@ IF(OPENMP_FOUND)
 ENDIF(OPENMP_FOUND)
 
 # COSTAR specific application. Leave this off all time if you are not working at costar
-OPTION(TURN_THIS_OFF "TURN_THIS_OFF" OFF)
+OPTION(TURN_THIS_OFF "TURN_THIS_OFF" ON)
 if (TURN_THIS_OFF)
   message(STATUS "Warning, only turn this on when you are a part of CoSTAR team. You will need to have costar_objrec_msgs from costar_stack package in github to compile this successfully")
   ADD_DEFINITIONS( -DCOSTAR)
