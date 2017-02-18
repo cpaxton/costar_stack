@@ -146,8 +146,10 @@ class CostarUR5Driver(CostarArm):
     '''
     set teach mode
     '''
-    def set_teach_mode_call(self,req,cartesian=False):
+    def set_teach_mode_cb(self,req,cartesian=False):
+        rospy.logwarn(str(req))
         if req.enable == True:
+            rospy.logwarn(str(urscript_commands['TEACH']))
             self.ur_script_pub.publish(urscript_commands['TEACH'])
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'

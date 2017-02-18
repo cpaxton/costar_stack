@@ -46,7 +46,7 @@ class CostarPSMDriver(CostarArm):
         self.dvrk_arm = dvrk.psm('PSM1')
         self.psm_initialized = False
 
-        rospy.Subscriber("/instructor_marker/feedback", InteractiveMarkerFeedback, self.marker_callback)
+        rospy.Subscriber("/instructor_marker/feedback", InteractiveMarkerFeedback, self.marker_cbback)
         self.last_marker_frame = PyKDL.Frame(PyKDL.Rotation.RPY(0,0,0),PyKDL.Vector(0,0,0))
         self.last_marker_trans = (0,0,0)
         self.last_marker_rot = (0,0,0,1)
@@ -69,7 +69,7 @@ class CostarPSMDriver(CostarArm):
         else:
             return 'FAILURE'
 
-    def marker_callback(self,data):
+    def marker_cbback(self,data):
         (self.last_marker_trans,self.last_marker_rot) = pm.toTf(pm.fromMsg(data.pose))
 
     def handle_tick(self):
@@ -110,14 +110,14 @@ class CostarPSMDriver(CostarArm):
         pass
     # clear the issues with base class
 
-    def save_frame_call(self,req):
+    def save_frame_cb(self,req):
       rospy.logwarn('Save frame does not check to see if your frame already exists!')
-      print "save_frame_call is called, and ee_pose is:", self.ee_pose
+      print "save_frame_cb is called, and ee_pose is:", self.ee_pose
       self.waypoint_manager.save_frame(self.ee_pose, self.world)
 
       return 'SUCCESS - '
 
-    def servo_to_pose_call(self,req):
+    def servo_to_pose_cb(self,req):
         if self.driver_status == 'SERVO':
             T = pm.fromMsg(req.target)
             print "This is the target pose: ", req.target
