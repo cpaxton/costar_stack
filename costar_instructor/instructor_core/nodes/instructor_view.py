@@ -914,6 +914,15 @@ class Instructor(QWidget):
 
     def walk_tree(self,node):
         t = [self.walk_tree(C) for C in node.children_]
+
+        # Remove invalid children.
+        # TODO: figure out why this happens and make it not happen any more.
+        t = [st for st in t if st is not None]
+
+        if node.name_ not in self.current_plugin_names:
+            rospy.logerr("Invalid child name: %s"%node.name_)
+            return None
+
         # Generate Info
         generator = self.all_generators[self.current_plugin_names[node.name_]]
         generator.load(self.current_node_info[node.name_])
