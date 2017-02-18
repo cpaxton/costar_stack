@@ -172,6 +172,7 @@ public:
         void addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis);
     void addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict);
     void setUsePreferredOrientation(const bool &use_preferred_orientation);
+    void setUsePreferredOrientation(const bool &use_preferred_orientation, const Eigen::Quaterniond &input_preferred_orientation);
     template <typename NumericType>
         void setPreferredOrientation(const Eigen::Quaternion<NumericType> &base_rotation);
 

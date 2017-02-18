@@ -53,12 +53,14 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const 
     objAxes[0] = Eigen::Vector3f(rotMatrix(0,0),rotMatrix(1,0),rotMatrix(2,0));
     objAxes[1] = Eigen::Vector3f(rotMatrix(0,1),rotMatrix(1,1),rotMatrix(2,1));
     objAxes[2] = Eigen::Vector3f(rotMatrix(0,2),rotMatrix(1,2),rotMatrix(2,2));
+    for (int i = 0; i < 3; i++)
     double pi = boost::math::constants::pi<double>();
     Eigen::Vector3f axis(0,0,0);
     axis[axisToAlign] = 1;
 
     double dotProduct = axis.dot(objAxes[axisToAlign]);
     double angle = std::acos(dotProduct); //since the vector is unit vector
+    if (angle < 0) angle += 2*boost::math::constants::pi<double>();
     
     Eigen::Vector3f bestAxis[3];
     bestAxis[0] = Eigen::Vector3f(1,0,0);
@@ -108,9 +110,7 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const 
         }
         objectLimit = tmp;
     }
-
-    //    std::cerr << "Number of step: " << std::floor(abs(angle)/objectLimit + 0.3333) << " " << angle * 180 / pi << " " << objectLimit * 180 / pi <<std::endl;
-    
+    double pi = boost::math::constants::pi<double>();
     if (std::floor(std::abs(angle+0.5236)/objectLimit) < 1) {
         //min angle = within 30 degree to the objectLimit to be aligned
         std::cerr << "Angle: " << angle * 180 / pi << " is too small, no need to fix the rotation\n";
@@ -196,7 +196,7 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
 
     Eigen::Matrix<numericType,3,3> normalize_orientation = minQuaternion.matrix();
     realignOrientation(normalize_orientation,object,2);
-    realignOrientation(normalize_orientation,object,0,true,2); 
+    //realignOrientation(normalize_orientation,object,0,true,2); 
 
     return Eigen::Quaternion<numericType>(normalize_orientation);
 }
