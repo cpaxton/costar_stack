@@ -46,7 +46,6 @@ class CostarUR5Driver(CostarArm):
         planning_group = "manipulator"
 
         self.closed_form_IK_solver = InverseKinematicsUR5()
-        # self.closed_form_ur5_ik.enableDebugMode()
         self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
         self.closed_form_IK_solver.setEERotationOffsetROS()
         self.closed_form_IK_solver.setJointWeights(self.joint_weights)
@@ -65,14 +64,6 @@ class CostarUR5Driver(CostarArm):
         if self.cur_stamp is not None:
             self.client.cancel_all_goals()
             self.client.stop_tracking_goal()
-            #traj = JointTrajectory(
-            #    points=[JointTrajectoryPoint(
-            #        positions=self.q0,
-            #        velocities=[0.]*len(self.q0))],
-            #    joint_names=self.joint_names)
-            #goal = FollowJointTrajectoryGoal(trajectory=traj)
-            #self.client.send_goal(goal)
-            #self.client.wait_for_result()
             rospy.sleep(0.1)
 
         if stamp > self.cur_stamp:
@@ -147,9 +138,7 @@ class CostarUR5Driver(CostarArm):
     set teach mode
     '''
     def set_teach_mode_cb(self,req,cartesian=False):
-        rospy.logwarn(str(req))
         if req.enable == True:
-            rospy.logwarn(str(urscript_commands['TEACH']))
             self.ur_script_pub.publish(urscript_commands['TEACH'])
             self.driver_status = 'TEACH'
             return 'SUCCESS - teach mode enabled'
