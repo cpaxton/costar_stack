@@ -628,6 +628,7 @@ class CostarArm(object):
         get_state_validity_req.group_name = self.planning_group
         current_robot_state = self.robot_state
         current_robot_state.joint_state.position = robot_joint_position
+        current_robot_state.is_diff = True
         get_state_validity_req.robot_state = current_robot_state
         
         return self.state_validity_service.call(get_state_validity_req)
@@ -722,7 +723,7 @@ class CostarArm(object):
     '''
     Calculate the best distance between current joint position to the target pose given a IK solution or list of IK solutions 
     '''
-    def get_best_distance(self, T, T_fwd, q0, check_closest_only = False):
+    def get_best_distance(self, T, T_fwd, q0, check_closest_only = False, obj_name = None):
         quaternion_dot = np.dot(np.array(T_fwd.M.GetQuaternion()),np.array(T.M.GetQuaternion()))
         delta_rotation = np.arccos(2 * quaternion_dot ** 2 - 1) 
 
@@ -749,8 +750,21 @@ class CostarArm(object):
                 combined_distance = (T.p - T_fwd.p).Norm() + \
                       self.rotation_weight * delta_rotation + \
                       self.joint_space_weight * np.sum(dq)
+
                 result = self.check_robot_position_validity(q_i.tolist())
-                ik_joint_solution_validity += '%s ' % result.valid
+
+                if obj_name is not None and not result.valid:
+                    other_obj_collision = False
+                    contacts = result.contacts
+                    for collision in contacts:
+                        if collision.contact_body_1 != obj_name and collision.contact_body_2 != obj_name:
+                            other_obj_collision = True
+                            break
+                    # if not other_obj_collision:
+                    #     rospy.logwarn('[Query] State Pose is actually valid')
+                    #     rospy.logwarn(str(contacts))
+                    result.valid = not other_obj_collision
+                # ik_joint_solution_validity += '%s ' % result.valid
 
                 if result.valid and combined_distance < best_dist:
                     best_q = q_i
@@ -832,11 +846,11 @@ class CostarArm(object):
                 continue
 
             Ts.append(T)
-            if disable_target_object_collision:
-	            self.planner.updateAllowedCollisions(obj,True)
-            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = True)
-            if disable_target_object_collision:
-	            self.planner.updateAllowedCollisions(obj,False)
+            # if disable_target_object_collision:
+	           #  self.planner.updateAllowedCollisions(obj,True)
+            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = True, obj_name = obj)
+            # if disable_target_object_collision:
+	           #  self.planner.updateAllowedCollisions(obj,False)
 
             if best_q is None or len(best_q) == 0:
                 rospy.logwarn("[QUERY] DID NOT ADD:"+message_print)

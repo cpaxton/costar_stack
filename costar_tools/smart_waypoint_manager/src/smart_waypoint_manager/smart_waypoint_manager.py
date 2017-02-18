@@ -14,6 +14,9 @@ from costar_robot_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
 
+import numpy as np
+import PyKDL as kdl
+
 '''
 SmartWaypointManager
 This class will create and load smart waypoints from the $LIBRARIAN_HOME/smart_waypoints directory
@@ -25,7 +28,12 @@ It also provides ways to use and access these methods
 class SmartWaypointManager:
 
 
-    def __init__(self,world="world",ns="",endpoint="/endpoint", listener=None, broadcaster=None):
+    def __init__(self,
+        world="world",
+        ns="",
+        endpoint="/endpoint",
+        gripper_center="/gripper_center",
+        listener=None, broadcaster=None):
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
 
         rospy.loginfo("[SmartMove] Waiting for LIBRARIAN to handle file I/O...")
@@ -52,6 +60,7 @@ class SmartWaypointManager:
 
         self.world = world
         self.endpoint = endpoint
+        self.gripper_center = gripper_center
 
         self.folder = 'smartmove_waypoint'
         self.info_folder = 'smartmove_info'
@@ -158,8 +167,31 @@ class SmartWaypointManager:
 
     def get_new_waypoint(self,obj):
         try:
-            (trans,rot) = self.listener.lookupTransform(obj,self.endpoint,rospy.Time(0))
-            return pm.toMsg(pm.fromTf((trans,rot)))
+            # TODO: make the snap configurable
+            #(trans,rot) = self.listener.lookupTransform(obj,self.endpoint,rospy.Time(0))
+            (eg_trans,eg_rot) = self.listener.lookupTransform(self.gripper_center,self.endpoint,rospy.Time(0))
+            (og_trans,og_rot) = self.listener.lookupTransform(obj,self.gripper_center,rospy.Time(0))
+
+            rospy.logwarn("gripper obj:" + str((og_trans, og_rot)))
+            rospy.logwarn("endpoint gripper:" + str((eg_trans, eg_rot)))
+
+            xyz, rpy = [], []
+            for dim in og_trans:
+                if abs(dim) < 0.025:
+                    xyz.append(0.)
+                else:
+                    xyz.append(dim)
+            Rog = kdl.Rotation.Quaternion(*og_rot)
+            for dim in Rog.GetRPY():
+                rpy.append(np.round(dim / np.pi * 8.) * np.pi/8.)
+            Rog_corrected = kdl.Rotation.RPY(*rpy)
+            Vog_corrected = kdl.Vector(*xyz)
+            Tog_corrected = kdl.Frame(Rog_corrected, Vog_corrected)
+
+            rospy.logwarn(str(Tog_corrected) + ", " + str(Rog_corrected.GetRPY()))
+
+            Teg = pm.fromTf((eg_trans, eg_rot))
+            return pm.toMsg(Tog_corrected * Teg)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             rospy.logerr('Failed to lookup transform from %s to %s'%(obj,self.endpoint))
         return None
