@@ -11,10 +11,9 @@
 
 //#include <BasicTools/Vtk/VtkTransform.h>
 //#include <BasicTools/ComputationalGeometry/Algorithms/RANSACPlaneDetector.h>
-#include <ObjRecRANSAC/ObjRecRANSAC.h>
-#include <VtkBasics/VtkWindow.h>
-#include <VtkBasics/VtkPolyData.h>
-#include <VtkBasics/VtkPoints.h>
+// #include <VtkBasics/VtkWindow.h>
+// #include <VtkBasics/VtkPolyData.h>
+// #include <VtkBasics/VtkPoints.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataReader.h>

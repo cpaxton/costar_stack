@@ -23,7 +23,7 @@ segmenter.setUseBinarySVM(False);
 segmenter.setDirectorySVM("../data/link_node_svm");
 segmenter.setPointCloudDownsampleValue(0.003);
 segmenter.setHierFeaRatio(3);
-segmenter.setUseVisualization(True);
+segmenter.setUseVisualization(False);
 print "All parameter required for point cloud segmentation has been loaded."
 
 if compute_pose:
@@ -42,16 +42,19 @@ if compute_pose:
 
 if use_additional_parameter:
     print "Setting up crop box"
-    segmenter.setUseCropBox(True);
+    segmenter.setUseCropBox(False);
     base_orientation = EigenQuaternion(0.316470, 0.647486, 0.629978, -0.289372);
     base_origin = EigenTranslation(0.049957, 0.085419, 0.986988);
-    table_pose_to_camera = EigenPose()
+    # table_pose_to_camera = EigenPose()
 
     # Setting the eigen pose in python is sometimes buggy (for no reason?)
-    table_pose_to_camera = makeEigenPose(base_orientation,base_origin);
-    segmenter.setCropBoxSize(0.35,0.35,0.35);
-    segmenter.setCropBoxPose(table_pose_to_camera);
-    print "Crop box has been set successfully."
+    # print "Make eigen pose"
+    # table_pose_to_camera = makeEigenPose(base_orientation,base_origin);
+    # print "Setting cropbox size"
+    # segmenter.setCropBoxSize(0.35,0.35,0.35);
+    # print "Setting cropbox pose"
+    # segmenter.setCropBoxPose(table_pose_to_camera);
+    # print "Crop box has been set successfully."
     if use_table:
         segmenter.setUseTableSegmentation(True);
         segmenter.setCropAboveTableBoundary(0.01, 0.5);
@@ -68,7 +71,7 @@ if use_additional_parameter:
 
     if compute_pose:
         segmenter.setUseObjectPersistence(True);
-        segmenter.setUsePreferredOrientation(False);
+        segmenter.setUsePreferredOrientation(True);
         segmenter.setPreferredOrientation(base_orientation);
         segmenter.addModelSymmetricProperty("node_uniform", 90, 90, 90, 90, "z");
         segmenter.addModelSymmetricProperty("link_uniform", 180, 180, 90, 90, "z");

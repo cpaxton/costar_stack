@@ -146,14 +146,13 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     this->setUseVisualization(visualization);
 
     // Setting up ObjRecRANSAC
-    bool compute_pose, use_cuda, setObjectOrientationTarget,useObjectPersistence;
+    bool compute_pose, use_cuda, useObjectPersistence;
     double  minConfidence;
     std::string objRecRANSACdetector;
     this->nh.param("compute_pose",compute_pose,true);
     this->nh.param("use_cuda", use_cuda,true);
     this->nh.param("objRecRANSACdetector", objRecRANSACdetector, std::string("StandardRecognize"));
     this->nh.param("minConfidence", minConfidence, 0.0);
-    this->nh.param("setObjectOrientation",setObjectOrientationTarget,false);
     this->nh.param("useObjectPersistence",useObjectPersistence,false);
 #ifdef USE_OBJRECRANSAC
     this->setUseComputePose(compute_pose);
@@ -163,17 +162,6 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     else if (objRecRANSACdetector == "StandardRecognize") this->setModeObjRecRANSAC(STANDARD_RECOGNIZE);
     else ROS_ERROR("Unsupported objRecRANSACdetector!");
     this->setMinConfidenceObjRecRANSAC(minConfidence);
-
-    // TODO: use preferred orientation from TF listener
-    Eigen::Affine3d cam_to_world;
-    tf::StampedTransform transform;
-    listener = new (tf::TransformListener);
-    listener->waitForTransform("/world", "/camera_rgb_optical_frame",ros::Time::now(),ros::Duration(5));
-    listener->lookupTransform("/world", "/camera_rgb_optical_frame",  
-                       ros::Time(0), transform);
-    tf::transformTFToEigen(transform, cam_to_world);
-    Eigen::Quaterniond preferred_orientation(cam_to_world.rotation());
-    this->setUsePreferredOrientation(setObjectOrientationTarget,preferred_orientation);
     this->setUseObjectPersistence(useObjectPersistence);
 
     std::string mesh_path;
@@ -215,12 +203,15 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
 
     // ---------------------- SETTING UP ROS SPECIFIC PARAMETERS --------------------------------------
     // Ros specific parameters
+    bool setObjectOrientation;
     this->nh.param("useTF",useTFinsteadOfPoses,true);
     this->nh.param("GripperTF",gripperTF,std::string("endpoint_marker"));
     this->nh.param("useMedianFilter",use_median_filter,true);
+    this->nh.param("setObjectOrientation",setObjectOrientation,false);
     this->nh.param("preferredOrientation",targetNormalObjectTF,std::string("/world"));
     this->nh.param("POINTS_IN", POINTS_IN,std::string("/camera/depth_registered/points"));
     this->nh.param("POINTS_OUT", POINTS_OUT,std::string("points_out"));
+    listener = new (tf::TransformListener);
 
     if (useTableSegmentation)
         table_corner_pub = nh.advertise<sensor_msgs::PointCloud2>("table_corner",3);
@@ -252,6 +243,9 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     cloud_vec.resize(maxframes);
     this->hasTF = false;
     table_corner_published = 0;
+    this->need_preferred_tf_ = setObjectOrientation;
+    this->setUsePreferredOrientation(setObjectOrientation);
+
 }
 
 void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
@@ -261,6 +255,15 @@ void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inpu
 
     this->setCropBoxSize(crop_box_size);
     this->setCropBoxPose(crop_box_pose_table_);
+    if (need_preferred_tf_ && listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+    {
+        listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
+        Eigen::Affine3d preferred_transform_eigen;
+        tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
+        Eigen::Quaterniond q(preferred_transform_eigen.rotation());
+        this->setPreferredOrientation(q);
+        this->need_preferred_tf_ = false;
+    }
 
     pcl::PointCloud<PointLT>::Ptr labelled_point_cloud_result;
 #ifdef USE_OBJRECRANSAC
@@ -343,6 +346,16 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
     if (!classReady) return;
     // The callback from main only update the cloud data
     inputCloud = pc;
+
+    if (need_preferred_tf_ && listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+    {
+        listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
+        Eigen::Affine3d preferred_transform_eigen;
+        tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
+        Eigen::Quaterniond q(preferred_transform_eigen.rotation());
+        this->setPreferredOrientation(q);
+        this->need_preferred_tf_ = false;
+    }
 
     if (!has_crop_box_pose_table_ && use_crop_box_)
     {

@@ -14,7 +14,7 @@
 #include "sp_segmenter/utility/utility.h"
 #include <math.h>
 #include <boost/math/constants/constants.hpp>
-
+const double pi = boost::math::constants::pi<double>();
 const double degToRad = boost::math::constants::pi<double>() / 180.0;
 
 //for normalizing object rotation
@@ -53,14 +53,17 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const 
     objAxes[0] = Eigen::Vector3f(rotMatrix(0,0),rotMatrix(1,0),rotMatrix(2,0));
     objAxes[1] = Eigen::Vector3f(rotMatrix(0,1),rotMatrix(1,1),rotMatrix(2,1));
     objAxes[2] = Eigen::Vector3f(rotMatrix(0,2),rotMatrix(1,2),rotMatrix(2,2));
-    for (int i = 0; i < 3; i++)
-    double pi = boost::math::constants::pi<double>();
+
+
     Eigen::Vector3f axis(0,0,0);
     axis[axisToAlign] = 1;
 
     double dotProduct = axis.dot(objAxes[axisToAlign]);
-    double angle = std::acos(dotProduct); //since the vector is unit vector
-    if (angle < 0) angle += 2*boost::math::constants::pi<double>();
+
+    Eigen::Vector3f crossProduct = objAxes[axisToAlign].cross(axis);
+
+    double angle = std::atan2(crossProduct.norm(),dotProduct); //since the vector is unit vector
+    if (angle < 0) angle += 2 * pi;
     
     Eigen::Vector3f bestAxis[3];
     bestAxis[0] = Eigen::Vector3f(1,0,0);
@@ -110,18 +113,18 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const 
         }
         objectLimit = tmp;
     }
-    double pi = boost::math::constants::pi<double>();
+
     if (std::floor(std::abs(angle+0.5236)/objectLimit) < 1) {
         //min angle = within 30 degree to the objectLimit to be aligned
         std::cerr << "Angle: " << angle * 180 / pi << " is too small, no need to fix the rotation\n";
         return;
     }
-    std::cerr << "Initial matrix\n" << rotMatrix << std::endl;
+    std::cerr << "Quaternion corrected matrix\n" << rotMatrix << std::endl;
 
     // rotate target axis to align as close as possible with its original axis by rotating the best axis to align the target axis. Use -angle because we want to undo the rotation
     rotMatrix = rotMatrix * Eigen::AngleAxisf(std::round(angle/objectLimit) * objectLimit,bestAxis[axisToRotate]);
-    std::cerr << "Corrected matrix\n" << rotMatrix << std::endl;
-    std::cerr << "Rotate axis" << axisToRotate << " : " << angle * 180 / pi << " -> " << std::round(angle/objectLimit) * objectLimit * 180 / pi <<std::endl;
+    std::cerr << "Axis corrected matrix\n" << rotMatrix << std::endl;
+    std::cerr << "Rotated axis" << axisToRotate << " : " << angle * 180 / pi << " -> " << std::round(angle/objectLimit) * objectLimit * 180 / pi <<std::endl;
 }
 
 template <typename numericStandard>
@@ -212,13 +215,18 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
 {
   std::cerr << "Input Qnew: "; printQuaternion(q_new);
   std::cerr << "Input Qold: "; printQuaternion(q_previous);
+  std::cerr << "Previous Rot Matrix:\n" << q_previous.matrix() << std::endl;
+  std::cerr << "Initial Rot Matrix:\n" << q_new.matrix() << std::endl;
+
   Eigen::Quaternion<numericType> rotationChange = q_previous.inverse() * q_new;
   // Since the rotationChange should be close to identity, realign the rotationChange as close as identity based on symmetric property of the object
   rotationChange = normalizeModelOrientation(rotationChange, object);
   
-  std::cerr << "Output Q: "; printQuaternion(q_previous * rotationChange);
+  Eigen::Quaternion<numericType> result = q_previous * rotationChange;
+  std::cerr << "Output Q: "; printQuaternion(result);
+  std::cerr << "Corrected Rot Matrix:\n" << result.matrix() << std::endl;
   // fix the orientation of new pose
-  return (q_previous * rotationChange);
+  return (result);
 }
 
 template <typename numericType>
