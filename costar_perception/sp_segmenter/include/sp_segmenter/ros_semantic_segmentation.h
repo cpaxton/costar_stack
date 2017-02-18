@@ -96,10 +96,10 @@ protected:
     int cur_frame_idx;
     bool cloud_ready, use_median_filter;
 
-    tf::StampedTransform table_transform;
+    tf::StampedTransform table_transform, preferred_transform;
     Eigen::Vector3f crop_box_size, crop_box_gripper_size;
     Eigen::Affine3d crop_box_pose_table_;
-    bool has_crop_box_pose_table_, use_crop_box_ ;
+    bool has_crop_box_pose_table_, use_crop_box_, need_preferred_tf_ ;
 
 #ifdef USE_TRACKING
     boost::shared_ptr<Tracker> tracker_;

@@ -17,12 +17,14 @@ This software repository is maintained by:
 
 Code has all been developed and tested with Ubuntu 14.04 / OSX 10.11.x and ROS Indigo. You will need OpenCV 2.4 and OpenCV nonfree.
 
-You can add and install this with:
+If you're using standard opencv2 library from ros, you can add and install the nonfree with:
 ```
 sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
 sudo apt-get update 
 sudo apt-get install libopencv-nonfree-dev
 ```
+
+If you want to build the code with pose estimation, you will need to build and install ObjRecRANSAC from `https://github.com/tum-mvp/ObjRecRANSAC`
 
 To run this code you need:
   - Sequence of object partial views in the correct lighting conditions
