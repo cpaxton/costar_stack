@@ -163,7 +163,17 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     else if (objRecRANSACdetector == "StandardRecognize") this->setModeObjRecRANSAC(STANDARD_RECOGNIZE);
     else ROS_ERROR("Unsupported objRecRANSACdetector!");
     this->setMinConfidenceObjRecRANSAC(minConfidence);
-    this->setUsePreferredOrientation(setObjectOrientationTarget);
+
+    // TODO: use preferred orientation from TF listener
+    Eigen::Affine3d cam_to_world;
+    tf::StampedTransform transform;
+    listener = new (tf::TransformListener);
+    listener->waitForTransform("/world", "/camera_rgb_optical_frame",ros::Time::now(),ros::Duration(5));
+    listener->lookupTransform("/world", "/camera_rgb_optical_frame",  
+                       ros::Time(0), transform);
+    tf::transformTFToEigen(transform, cam_to_world);
+    Eigen::Quaterniond preferred_orientation(cam_to_world.rotation());
+    this->setUsePreferredOrientation(setObjectOrientationTarget,preferred_orientation);
     this->setUseObjectPersistence(useObjectPersistence);
 
     std::string mesh_path;
@@ -226,7 +236,6 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     else
     {
         std::cerr << "Node publish TF.\n";
-        listener = new (tf::TransformListener);
         spSegmenter = this->nh.advertiseService("SPSegmenter",&RosSemanticSegmentation::serviceCallback,this);
 #ifdef COSTAR
         segmentGripper = this->nh.advertiseService("segmentInGripper",&RosSemanticSegmentation::serviceCallbackGripper,this);
