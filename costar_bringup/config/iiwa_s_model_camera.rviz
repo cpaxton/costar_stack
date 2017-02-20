@@ -15,7 +15,7 @@ Panels:
         - /PointCloud22
         - /Planned Path1
       Splitter Ratio: 0.413174
-    Tree Height: 839
+    Tree Height: 948
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -103,129 +103,101 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         00 Home:
-          Value: true
-        001:
-          Value: true
-        003 node to link assemble init:
-          Value: true
-        01 pickup:
           Value: false
-        01 place1:
+        01 Center:
           Value: false
-        01 place2:
+        A1:
           Value: false
-        01 workspace:
+        A2:
           Value: false
-        01 ws down:
-          Value: false
-        02 BAICHUAN:
-          Value: false
-        02 place1:
-          Value: true
-        02 place2:
-          Value: true
-        03 place1:
-          Value: true
-        03 place1b:
-          Value: true
-        03 place2:
-          Value: true
-        03 place2b:
-          Value: true
-        1-down:
-          Value: false
-        1-up:
-          Value: false
-        2-down:
-          Value: false
-        2-up:
-          Value: false
-        3-down:
-          Value: false
-        3-up:
-          Value: false
-        4-down:
-          Value: false
-        4-up:
-          Value: false
-        5-down:
-          Value: false
-        5-up:
-          Value: false
-        6-down:
-          Value: false
-        6-up:
+        A3:
           Value: false
         All Enabled: false
-        OVER2:
+        C1 01 Over:
+          Value: false
+        C1 02 Pick:
+          Value: false
+        C1 03 Lift:
+          Value: false
+        C1 04 Place:
+          Value: false
+        C1 05 Escape:
+          Value: false
+        C1 11 Over:
+          Value: false
+        C1 12 Pick:
+          Value: false
+        C1 13 Lift:
+          Value: false
+        C1 14 Place:
+          Value: false
+        C1 21 Over:
+          Value: false
+        C1 22 Pick:
+          Value: false
+        C1 23 Avoid:
+          Value: false
+        C1 24 Over:
+          Value: false
+        C1 25 Place:
+          Value: false
+        C3 01 Over:
+          Value: false
+        C3 02 Pick:
+          Value: false
+        C3 03 Over:
+          Value: false
+        C3 04 Pick:
           Value: false
         ar_marker_0:
-          Value: true
+          Value: false
+        avoid link after lift 1:
+          Value: false
         base:
           Value: false
         base_link:
-          Value: true
+          Value: false
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: true
+          Value: false
         camera_rgb_frame:
           Value: false
         camera_rgb_optical_frame:
           Value: false
-        down:
-          Value: false
         ee_link:
-          Value: true
+          Value: false
         endpoint:
           Value: false
         endpoint_marker:
-          Value: true
+          Value: false
+        first:
+          Value: false
         forearm_link:
           Value: false
+        fourth:
+          Value: false
+        grasp object 2:
+          Value: false
         gripper_center:
-          Value: true
+          Value: false
         gripper_link:
           Value: false
-        initial_ftest:
+        hover object 1:
           Value: false
-        link-align:
-          Value: true
-        link-approach:
-          Value: true
-        link-lift:
-          Value: true
-        link-to-node-align:
-          Value: true
-        link-to-node-attach:
-          Value: true
-        link-to-node-escape:
-          Value: true
+        hover object 2:
+          Value: false
+        hover over b2:
+          Value: false
+        hpver to drop 1:
+          Value: false
         marker_link:
           Value: false
-        new waypoint:
+        new c3 04 pick:
           Value: false
-        node-link-connect-escape:
-          Value: true
-        node-link-connect-init:
-          Value: true
-        node-link-connect-perform:
-          Value: true
-        node-over-rev-smartmove:
-          Value: false
-        node-over2-rev-smartmove:
-          Value: true
-        node-pick-rev-smartmove:
-          Value: true
-        node-pick2-rev-smartmove:
-          Value: true
         obj_link_uniform_1:
-          Value: true
-        obj_link_uniform_2:
-          Value: true
-        obj_link_uniform_3:
           Value: true
         obj_node_uniform_1:
           Value: true
@@ -235,13 +207,7 @@ Visualization Manager:
           Value: true
         obj_node_uniform_4:
           Value: true
-        obj_node_uniform_5:
-          Value: false
         objects/link_uniform/1:
-          Value: false
-        objects/link_uniform/2:
-          Value: false
-        objects/link_uniform/3:
           Value: false
         objects/node_uniform/1:
           Value: false
@@ -251,34 +217,32 @@ Visualization Manager:
           Value: false
         objects/node_uniform/4:
           Value: false
-        objects/node_uniform/5:
+        over1:
+          Value: false
+        pick1:
+          Value: false
+        pre hover object 1:
           Value: false
         preferred_orientation:
-          Value: true
+          Value: false
+        second:
+          Value: false
         shoulder_link:
           Value: false
         table_frame:
-          Value: true
-        test1 pos:
           Value: false
-        test2 pos:
+        test:
           Value: false
-        test3 pos:
+        test_place_link:
           Value: false
-        testA:
+        third:
           Value: false
-        testB:
-          Value: false
-        testC:
-          Value: false
-        tmp:
-          Value: true
         tool0_controller:
           Value: false
         upper_arm_link:
           Value: false
         world:
-          Value: true
+          Value: false
         wrist_1_link:
           Value: false
         wrist_2_link:
@@ -301,10 +265,6 @@ Visualization Manager:
                 {}
               obj_link_uniform_1:
                 {}
-              obj_link_uniform_2:
-                {}
-              obj_link_uniform_3:
-                {}
               obj_node_uniform_1:
                 {}
               obj_node_uniform_2:
@@ -313,64 +273,54 @@ Visualization Manager:
                 {}
               obj_node_uniform_4:
                 {}
-              obj_node_uniform_5:
-                {}
           world:
             00 Home:
               {}
-            001:
+            01 Center:
               {}
-            003 node to link assemble init:
+            A1:
               {}
-            01 pickup:
+            A2:
               {}
-            01 place1:
+            A3:
               {}
-            01 place2:
+            C1 01 Over:
               {}
-            01 workspace:
+            C1 02 Pick:
               {}
-            01 ws down:
+            C1 03 Lift:
               {}
-            02 BAICHUAN:
+            C1 04 Place:
               {}
-            02 place1:
+            C1 05 Escape:
               {}
-            02 place2:
+            C1 11 Over:
               {}
-            03 place1:
+            C1 12 Pick:
               {}
-            03 place1b:
+            C1 13 Lift:
               {}
-            03 place2:
+            C1 14 Place:
               {}
-            03 place2b:
+            C1 21 Over:
               {}
-            1-down:
+            C1 22 Pick:
               {}
-            1-up:
+            C1 23 Avoid:
               {}
-            2-down:
+            C1 24 Over:
               {}
-            2-up:
+            C1 25 Place:
               {}
-            3-down:
+            C3 01 Over:
               {}
-            3-up:
+            C3 02 Pick:
               {}
-            4-down:
+            C3 03 Over:
               {}
-            4-up:
+            C3 04 Pick:
               {}
-            5-down:
-              {}
-            5-up:
-              {}
-            6-down:
-              {}
-            6-up:
-              {}
-            OVER2:
+            avoid link after lift 1:
               {}
             base_link:
               preferred_orientation:
@@ -393,43 +343,23 @@ Visualization Manager:
                               {}
               table_frame:
                 {}
-            down:
+            first:
               {}
-            initial_ftest:
+            fourth:
               {}
-            link-align:
+            grasp object 2:
               {}
-            link-approach:
+            hover object 1:
               {}
-            link-lift:
+            hover object 2:
               {}
-            link-to-node-align:
+            hover over b2:
               {}
-            link-to-node-attach:
+            hpver to drop 1:
               {}
-            link-to-node-escape:
-              {}
-            new waypoint:
-              {}
-            node-link-connect-escape:
-              {}
-            node-link-connect-init:
-              {}
-            node-link-connect-perform:
-              {}
-            node-over-rev-smartmove:
-              {}
-            node-over2-rev-smartmove:
-              {}
-            node-pick-rev-smartmove:
-              {}
-            node-pick2-rev-smartmove:
+            new c3 04 pick:
               {}
             objects/link_uniform/1:
-              {}
-            objects/link_uniform/2:
-              {}
-            objects/link_uniform/3:
               {}
             objects/node_uniform/1:
               {}
@@ -439,21 +369,19 @@ Visualization Manager:
               {}
             objects/node_uniform/4:
               {}
-            objects/node_uniform/5:
+            over1:
               {}
-            test1 pos:
+            pick1:
               {}
-            test2 pos:
+            pre hover object 1:
               {}
-            test3 pos:
+            second:
               {}
-            testA:
+            test:
               {}
-            testB:
+            test_place_link:
               {}
-            testC:
-              {}
-            tmp:
+            third:
               {}
       Update Interval: 0
       Value: true
@@ -851,7 +779,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.88339
+      Distance: 1.70739
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -863,20 +791,20 @@ Visualization Manager:
         Z: 0.328306
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.454797
+      Pitch: 0.374798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.27831
+      Yaw: 5.3733
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 1150
+  Height: 1151
   Hide Left Dock: true
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000002ae000003d9fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730000000043000003d9000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002d7000000c90000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d006501000000000000045000000000000000000000063e0000044500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002ae00000446fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000001b00000446000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002d7000000c90000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000006400000044600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -885,6 +813,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1598
+  Width: 1600
   X: 0
   Y: 25

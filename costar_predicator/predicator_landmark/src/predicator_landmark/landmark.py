@@ -45,7 +45,6 @@ class GetWaypointsService:
         
     def get_waypoints_srv(self,req):
         resp = GetWaypointsResponse()
-        print req
         (poses, names) = self.get_waypoints(req.frame_type,req.predicates,req.transforms,req.names)
 
         if poses is None or len(poses) < 1:
