@@ -3,6 +3,7 @@
 
 #include "scene_physics_engine.h"
 #include "scene_physics_penalty.h"
+#include "scene_physics_support.h"
 
 static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
 { 
@@ -172,6 +173,7 @@ void PhysicsEngine::setGravityFromBackgroundNormal(const bool &input)
 void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 {
 	// mtx_.lock();
+
 	// Add new objects
 	if (this->debug_messages_) std::cerr << "Adding scene objects to the physics engine.\n";
 	
@@ -183,6 +185,9 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's world.\n";
 		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
 
+		// set the name of the object in the collision object
+		std::string * object_name = new std::string(it->getID());
+		this->rigid_body_[it->getID()]->setUserPointer(object_name);
 
 		object_penalty_parameter_database_by_id_[it->getID()] = (*object_penalty_parameter_database_)[it->getObjectClass()];
 		
@@ -213,6 +218,12 @@ void PhysicsEngine::simulate()
 	{
 		std::cerr << "Skipping simulation, scene does not has any background data yet.\n";
 		return;
+	}
+	else
+	{
+		// set the background name
+		std::string * background_name = new std::string("background");
+		this->background_->setUserPointer(background_name);
 	}
 
 	if (this->rendering_launched_)
@@ -295,6 +306,7 @@ void PhysicsEngine::resetObjects()
 		it != this->rigid_body_.end(); ++it)
 	{
 		m_dynamicsWorld->removeRigidBody(it->second);
+		delete it->second->getUserPointer();
 		delete it->second->getMotionState();
 		delete it->second;
 		if (this->debug_messages_) std::cerr << "Removed objects: "<<  it->first <<".\n";
@@ -446,18 +458,23 @@ void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenalty
 }
 
 void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
+	// mtx_.lock();
     // printf(“The world just ticked by %f seconds\n”, (float)timeStep);
     // calculate the scene analysis here
     this->cacheObjectVelocities(timeStep);
     for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
-		if (keyExistInConstantMap(it->first,this->object_acceleration_)){
-			std::cerr << it->first << " ";
+		if (keyExistInConstantMap(it->first,this->object_acceleration_))
+		{
+			if(this->debug_messages_)
+				std::cerr << it->first << " ";
 			calculateStabilityPenalty(this->object_acceleration_[it->first], 
 				object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
 		}
 	}
+	generateObjectSupportGraph(m_dynamicsWorld, timeStep);
+	// mtx_.unlock();
 }
 
 

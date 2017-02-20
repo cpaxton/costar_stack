@@ -165,7 +165,7 @@ add_library(objConvexDecomposition ${ObjConvexDecomposition})
 set(ObjectDataProperty src/object_data_property.cpp  src/scene_physics_penalty.cpp)
 add_library(objectDataProperty ${ObjectDataProperty})
 
-set(PhysicsEngine src/scene_physics_engine.cpp)
+set(PhysicsEngine src/scene_physics_engine.cpp src/scene_physics_support.cpp)
 add_library(physicsEngine ${PhysicsEngine})
 
 set(SequentialSceneParsing src/sequential_scene_parsing.cpp)
