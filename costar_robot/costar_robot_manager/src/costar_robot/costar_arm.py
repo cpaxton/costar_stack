@@ -191,9 +191,10 @@ class CostarArm(object):
 
         self.closed_form_IK_solver = closed_form_IK_solver
         self.state_validity_penalty = state_validity_penalty
+
         # how important is it to choose small rotations in goal poses
-        self.rotation_weight = 0.5
-        self.joint_space_weight = 0.05
+        self.rotation_weight = 1.0
+        self.joint_space_weight = 1.0
 
         # for checking robot configuration validity
         self.state_validity_service = rospy.ServiceProxy("/check_state_validity", GetStateValidity)
