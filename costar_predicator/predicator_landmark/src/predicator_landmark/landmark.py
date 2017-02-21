@@ -5,6 +5,7 @@ from predicator_msgs.srv import *
 
 import tf
 import tf_conversions.posemath as pm
+import numpy as np
 
 from costar_objrec_msgs.msg import *
 
@@ -95,6 +96,25 @@ class GetWaypointsService:
             self.obj_symmetries[frame_type].y_symmetries = 1
             self.obj_symmetries[frame_type].x_symmetries = 1
 
+        # Get only unique rotation matrices from the list of rotation matrices generated from RPY
+        quaternion_list = list()
+        for i in xrange(0, self.obj_symmetries[frame_type].z_symmetries):
+            for j in xrange(0, self.obj_symmetries[frame_type].y_symmetries):
+                for k in xrange(0, self.obj_symmetries[frame_type].x_symmetries):
+                    theta_z = i * self.obj_symmetries[frame_type].z_rotation
+                    theta_y = i * self.obj_symmetries[frame_type].y_rotation
+                    theta_x = i * self.obj_symmetries[frame_type].x_rotation
+                    rot_matrix = pm.Rotation.RPY(theta_x,theta_y,theta_z)
+                    quaternion_list.append(rot_matrix.GetQuaternion())
+        quaternion_list = np.array(quaternion_list)
+        quaternion_list = np.around(quaternion_list,decimals=5)
+        b = np.ascontiguousarray(quaternion_list).view(np.dtype((np.void, quaternion_list.dtype.itemsize * quaternion_list.shape[1])))
+        _, unique_indices = np.unique(b, return_index=True)
+        
+        unique_rot_matrix = list()
+        for index in unique_indices:
+            unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
+
         for match in res.matching:
             try:
                 (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
@@ -106,17 +126,12 @@ class GetWaypointsService:
 
                     # Create extra poses for symmetries around the Z axis
                     if frame_type in self.obj_symmetries:
-                        # if self.obj_symmetries[frame_type].z_symmetries > 1:
-                        for i in xrange(0, self.obj_symmetries[frame_type].z_symmetries):
-                            for j in xrange(0, self.obj_symmetries[frame_type].y_symmetries):
-                                for k in xrange(0, self.obj_symmetries[frame_type].x_symmetries):
-                                    theta_z = i * self.obj_symmetries[frame_type].z_rotation
-                                    theta_y = i * self.obj_symmetries[frame_type].y_rotation
-                                    theta_x = i * self.obj_symmetries[frame_type].x_rotation
-                                    tform = pm.Frame(pm.Rotation.RPY(theta_x,theta_y,theta_z))
-                                    new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
-                                    new_names.append(match + "/" + name + "/x%dy%dz%d"%(i,j,k))
-                                    objects.append(match)
+                        for rot_matrix in unique_rot_matrix:
+                            tform = pm.Frame(rot_matrix)
+                            new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
+                            new_names.append(match + "/" + name + "/x%dy%dz%d"%(rot_matrix.GetRPY()))
+
+                            objects.append(match)
                                 # theta = i * self.obj_symmetries[frame_type].z_rotation
                                 # #print "... "  + str(theta)
                                 # tform = pm.Frame(pm.Rotation.RotZ(theta))
@@ -142,6 +157,7 @@ class GetWaypointsService:
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
-        
+
+
         return (new_poses, new_names, objects)
         
