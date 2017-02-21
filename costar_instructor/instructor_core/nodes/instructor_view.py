@@ -1250,7 +1250,7 @@ color:#ffffff}''')
         if current_name:
             # current_name = self.right_selected_node
             replacement_node = self.current_node_generator.generate()
-            if type(replacement_node) == str:
+            if isinstance(replacement_node,str):
                 rospy.logerr(str(replacement_node))
             else:
                 current_child = self.current_tree[current_name]
@@ -1382,32 +1382,42 @@ color:#ffffff}''')
 
     def replace_child_cb(self):
         if self.left_selected_node != None:
-            current_name = self.left_selected_node
-            rospy.logwarn(current_name)
-            new_name = self.current_node_generator.get_name()
-            rospy.logwarn(new_name)
-            replacement_node = self.current_node_generator.generate()
-            # current_name = self.current_node_generator.get_name()
-            current_child = self.current_tree[current_name]
-            current_parent = self.current_tree[current_name].get_parent()
-            if current_parent.replace_child(current_child, replacement_node):
-                self.current_tree[new_name] = replacement_node
-                self.current_node_info[new_name] = self.current_node_generator.save()
-                self.current_plugin_names[new_name] = self.current_node_plugin_name
-                self.current_node_types[new_name] = self.current_node_type
-                if self.current_node_types[new_name] == 'LOGIC':
-                    self.delete_node(current_name,keep_children=True)
-                else:
-                    self.delete_node(current_name,keep_children=False)
-                self.regenerate_tree()
-                self.close_drawer()
-                # self.save_state()
-                if current_name in self.current_node_types:   
-                    if self.current_node_types[current_name] == 'LOGIC':
-                        self.node_leftclick_cb(current_name)
+            if not self.current_node_types[self.left_selected_node] == 'LOGIC':
+                current_name = self.left_selected_node
+                rospy.logwarn('selected node: ' + current_name)
+                new_name = self.current_node_generator.get_name()
+                rospy.logwarn('new node: ' + new_name)
+                replacement_node = self.current_node_generator.generate()
+                # current_name = self.current_node_generator.get_name()
+                current_child = self.current_tree[current_name]
+                current_parent = self.current_tree[current_name].get_parent()
 
+                # isinstance check whether the node is properly defined
+                if not isinstance(replacement_node,str):
+                    if current_parent.replace_child(current_child, replacement_node):
+                        self.current_tree[new_name] = replacement_node
+                        self.current_node_info[new_name] = self.current_node_generator.save()
+                        self.current_plugin_names[new_name] = self.current_node_plugin_name
+                        self.current_node_types[new_name] = self.current_node_type
+                        if current_name != new_name:
+                            if self.current_node_types[new_name] == 'LOGIC':
+                                self.delete_node(current_name,keep_children=True)
+                            else:
+                                self.delete_node(current_name,keep_children=False)
+                        self.regenerate_tree()
+                        self.close_drawer()
+                        # self.save_state()
+                        if current_name in self.current_node_types:   
+                            if self.current_node_types[current_name] == 'LOGIC':
+                                self.node_leftclick_cb(current_name)
+
+                    else:
+                        rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
+                else:
+                    rospy.logerr(str(replacement_node))
             else:
-                rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
+                rospy.logwarn("Replace failed. Replacing logic node (sequence/root) with other nodes is disabled.")
+
 
     def add_sibling_after_cb(self):
         print 'adding sibling node of type ' + self.current_node_type

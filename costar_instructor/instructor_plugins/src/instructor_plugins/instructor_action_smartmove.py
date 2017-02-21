@@ -106,6 +106,8 @@ class NodeActionSmartmoveGUI(NodeGUI):
             self.waypoint_ui.region_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.region_list.sortItems()
         self.waypoint_ui.region_list.setCurrentRow(0)
+        if self.waypoint_ui.region_list.currentItem() is not None:
+            self.selected_region = str(self.waypoint_ui.region_list.currentItem().text())
 
     def update_references(self):
         # TODO use a predicator call to populate list of references or look them up on rosparam
@@ -120,6 +122,8 @@ class NodeActionSmartmoveGUI(NodeGUI):
             self.waypoint_ui.reference_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.reference_list.sortItems()
         self.waypoint_ui.reference_list.setCurrentRow(0)
+        if self.waypoint_ui.region_list.currentItem() is not None:
+            self.selected_reference = str(self.waypoint_ui.region_list.currentItem().text())
 
     def update_objects(self):
         objects = []
@@ -129,6 +133,8 @@ class NodeActionSmartmoveGUI(NodeGUI):
             self.waypoint_ui.object_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.object_list.sortItems()
         self.waypoint_ui.object_list.setCurrentRow(0)    
+        if self.waypoint_ui.object_list.currentItem() is not None:
+            self.selected_object = str(self.waypoint_ui.object_list.currentItem().text())
 
     def update_smartmoves(self):
         smartmoves = []
@@ -138,6 +144,8 @@ class NodeActionSmartmoveGUI(NodeGUI):
             self.waypoint_ui.smartmove_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.smartmove_list.sortItems()
         self.waypoint_ui.smartmove_list.setCurrentRow(0)  
+        if self.waypoint_ui.smartmove_list.currentItem() is not None:
+            self.selected_smartmove = str(self.waypoint_ui.smartmove_list.currentItem().text())
 
     def save_data(self,data):
         data['region'] = {'value':self.selected_region}
