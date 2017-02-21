@@ -15,7 +15,7 @@ Panels:
         - /PointCloud22
         - /Planned Path1
       Splitter Ratio: 0.413174
-    Tree Height: 947
+    Tree Height: 356
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -106,7 +106,29 @@ Visualization Manager:
           Value: false
         01 Center:
           Value: false
+        A ABOVE:
+          Value: true
+        A DOWN:
+          Value: true
+        A LIFT:
+          Value: true
         All Enabled: false
+        B1 DOWN:
+          Value: true
+        B1 LIFT:
+          Value: true
+        B1 MOVE:
+          Value: true
+        B1 PLACE:
+          Value: true
+        B2 DOWN:
+          Value: true
+        B2 LIFT:
+          Value: true
+        B2 MOVE:
+          Value: true
+        B2 PLACE:
+          Value: true
         C1 01 Over:
           Value: false
         C1 02 Pick:
@@ -119,6 +141,18 @@ Visualization Manager:
           Value: false
         C1 11 Over:
           Value: false
+        C1 12 LIFT1 NEW:
+          Value: true
+        C1 12 LIFT2 NEW:
+          Value: true
+        C1 12 LIFT3 NEW:
+          Value: true
+        C1 12 OVER NEW:
+          Value: true
+        C1 12 PICK NEW1:
+          Value: true
+        C1 12 PICK NEW2 CLOSE:
+          Value: true
         C1 12 Pick:
           Value: false
         C1 13 Lift:
@@ -134,16 +168,6 @@ Visualization Manager:
         C1 24 Over:
           Value: false
         C1 25 Place:
-          Value: false
-        C3 01 Over:
-          Value: false
-        C3 02 Pick:
-          Value: false
-        C3 03 Over:
-          Value: false
-        C3 04 Pick:
-          Value: false
-        ar_marker_0:
           Value: false
         base:
           Value: false
@@ -173,32 +197,30 @@ Visualization Manager:
           Value: false
         marker_link:
           Value: false
-        obj_link_uniform_1:
+        move1:
           Value: true
-        obj_node_uniform_1:
+        move2:
           Value: true
-        obj_node_uniform_2:
+        move3_opengripper:
           Value: true
-        obj_node_uniform_3:
+        move4_closegripper:
           Value: true
-        objects/link_uniform/1:
-          Value: false
-        objects/node_uniform/1:
-          Value: false
-        objects/node_uniform/2:
-          Value: false
-        objects/node_uniform/3:
-          Value: false
+        move5_opengripper:
+          Value: true
+        over_node_pos1:
+          Value: true
+        over_place_node1:
+          Value: true
+        pickup_node_pos1:
+          Value: true
+        place_node1:
+          Value: true
         preferred_orientation:
           Value: false
         shoulder_link:
           Value: false
         table_frame:
           Value: true
-        test:
-          Value: false
-        test_place_link:
-          Value: false
         tool0_controller:
           Value: false
         upper_arm_link:
@@ -223,20 +245,33 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              ar_marker_0:
-                {}
-              obj_link_uniform_1:
-                {}
-              obj_node_uniform_1:
-                {}
-              obj_node_uniform_2:
-                {}
-              obj_node_uniform_3:
-                {}
+              {}
           world:
             00 Home:
               {}
             01 Center:
+              {}
+            A ABOVE:
+              {}
+            A DOWN:
+              {}
+            A LIFT:
+              {}
+            B1 DOWN:
+              {}
+            B1 LIFT:
+              {}
+            B1 MOVE:
+              {}
+            B1 PLACE:
+              {}
+            B2 DOWN:
+              {}
+            B2 LIFT:
+              {}
+            B2 MOVE:
+              {}
+            B2 PLACE:
               {}
             C1 01 Over:
               {}
@@ -249,6 +284,18 @@ Visualization Manager:
             C1 05 Escape:
               {}
             C1 11 Over:
+              {}
+            C1 12 LIFT1 NEW:
+              {}
+            C1 12 LIFT2 NEW:
+              {}
+            C1 12 LIFT3 NEW:
+              {}
+            C1 12 OVER NEW:
+              {}
+            C1 12 PICK NEW1:
+              {}
+            C1 12 PICK NEW2 CLOSE:
               {}
             C1 12 Pick:
               {}
@@ -265,14 +312,6 @@ Visualization Manager:
             C1 24 Over:
               {}
             C1 25 Place:
-              {}
-            C3 01 Over:
-              {}
-            C3 02 Pick:
-              {}
-            C3 03 Over:
-              {}
-            C3 04 Pick:
               {}
             base_link:
               preferred_orientation:
@@ -295,17 +334,23 @@ Visualization Manager:
                               {}
               table_frame:
                 {}
-            objects/link_uniform/1:
+            move1:
               {}
-            objects/node_uniform/1:
+            move2:
               {}
-            objects/node_uniform/2:
+            move3_opengripper:
               {}
-            objects/node_uniform/3:
+            move4_closegripper:
               {}
-            test:
+            move5_opengripper:
               {}
-            test_place_link:
+            over_node_pos1:
+              {}
+            over_place_node1:
+              {}
+            pickup_node_pos1:
+              {}
+            place_node1:
               {}
       Update Interval: 0
       Value: true
@@ -723,12 +768,12 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 1150
+  Height: 1151
   Hide Left Dock: true
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000002ae00000445fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000001b00000445000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002d7000000c90000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000006400000044500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002ae00000445fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000001b00000445000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002d7000000c90000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000006400000044600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -738,5 +783,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1600
-  X: -2
+  X: 0
   Y: 25

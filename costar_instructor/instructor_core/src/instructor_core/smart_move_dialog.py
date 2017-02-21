@@ -63,6 +63,8 @@ class SmartMoveDialog(QWidget):
                 self.object_list.addItem(QListWidgetItem(m.strip('/')))
             self.object_list.sortItems()
             self.object_list.setCurrentRow(0)
+            if self.object_list.currentItem() is not None:
+                self.selected_move = str(self.object_list.currentItem().text())
 
     def update_moves(self):
         if self.selected_object is not None:
@@ -76,6 +78,8 @@ class SmartMoveDialog(QWidget):
                     self.move_list.addItem(QListWidgetItem(m.strip('/')))
                 self.move_list.sortItems()
                 self.move_list.setCurrentRow(0)
+                if self.move_list.currentItem() is not None:
+                    self.selected_move = str(self.move_list.currentItem().text())
 
     def add_move(self):
         self.update_objects()
