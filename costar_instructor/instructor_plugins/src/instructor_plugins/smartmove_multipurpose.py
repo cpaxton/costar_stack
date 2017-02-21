@@ -114,7 +114,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
             self.waypoint_ui.region_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.region_list.sortItems()
         self.waypoint_ui.region_list.setCurrentRow(0)
-        if self.waypoint_ui.region_list.currentItem() is not None:
+        if self.waypoint_ui.region_list.currentItem() is not None and self.selected_region == 'none':
             self.selected_region = str(self.waypoint_ui.region_list.currentItem().text())
 
     def update_references(self):
@@ -130,7 +130,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
             self.waypoint_ui.reference_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.reference_list.sortItems()
         self.waypoint_ui.reference_list.setCurrentRow(0)
-        if self.waypoint_ui.reference_list.currentItem() is not None:
+        if self.waypoint_ui.reference_list.currentItem() is not None and self.selected_reference == 'none':
             self.selected_reference = str(self.waypoint_ui.reference_list.currentItem().text())
 
     def update_objects(self):
@@ -141,7 +141,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
             self.waypoint_ui.object_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.object_list.sortItems()
         self.waypoint_ui.object_list.setCurrentRow(0)
-        if self.waypoint_ui.object_list.currentItem() is not None:
+        if self.waypoint_ui.object_list.currentItem() is not None and self.selected_object is None:
             self.selected_object = str(self.waypoint_ui.object_list.currentItem().text())
 
     def update_smartmoves(self):
@@ -151,7 +151,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
             self.waypoint_ui.smartmove_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.smartmove_list.sortItems()
         self.waypoint_ui.smartmove_list.setCurrentRow(0)
-        if self.waypoint_ui.smartmove_list.currentItem() is not None:
+        if self.waypoint_ui.smartmove_list.currentItem() is not None and self.selected_smartmove is None:
             self.selected_smartmove = str(self.waypoint_ui.smartmove_list.currentItem().text())
 
     def save_data(self,data):
@@ -233,7 +233,10 @@ class NodeActionSmartmoveMultiPurpose(Node):
             display_name = "GRASP"
         else:
             display_name = "RELEASE"
-        L = 'SMART ' + display_name + ' to \\n ['+selected_smartmove+'] \\n [' + selected_region + ' ' + selected_reference + ']\n' + "Backoff: %f cm"%(backoff*100)
+        L = 'SMART ' + display_name + \
+            ' to \\n pose [%s]\\n'%(selected_smartmove) + \
+            'for any [%s %s %s]'%(selected_object,selected_region,selected_reference) + '\n' + \
+            "with backoff dist: %f cm"%(backoff*100)
         super(NodeActionSmartmoveMultiPurpose,self).__init__(name,
             L,
             C.colors['green'].normal)

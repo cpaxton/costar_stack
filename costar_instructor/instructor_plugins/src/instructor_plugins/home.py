@@ -135,7 +135,6 @@ class NodeHome(Node):
                 if self.service_thread.is_alive():
                     return self.set_status('RUNNING')
                 else:
-                    rospy.logerr("NODE DONE. WAS IT A SUCCESS? %s"%(str(self.finished_with_success)))
                     if self.finished_with_success == True:
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] succeeded')
                         self.running = False
