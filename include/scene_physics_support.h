@@ -14,9 +14,15 @@ struct scene_support_vertex_properties
     std::string object_id_;
     btCollisionObject* collision_object_;
     double support_contributions_;
+    double penetration_distance_;
     bool ground_supported_;
 
-    scene_support_vertex_properties(): object_id_(""), collision_object_(NULL),support_contributions_(1.),ground_supported_(false)
+    scene_support_vertex_properties(): 
+    	object_id_(""),
+    	collision_object_(NULL),
+    	support_contributions_(1.),
+    	penetration_distance_(0.),
+    	ground_supported_(false)
     {};
 };
 

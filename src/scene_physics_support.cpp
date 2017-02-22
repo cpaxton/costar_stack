@@ -21,7 +21,9 @@ void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const ve
             support_property.ground_supported_ = true;
 
             std::cerr << support_property.object_id_ << " support contribution= " 
-                << support_property.support_contributions_ << std::endl;
+                << support_property.support_contributions_
+                << " avg total penetration depth= " << support_property.penetration_distance_
+                << std::endl;
             // recursively call the connected vertex to assign the leaf of vertex connected to the parent
 
             // @TODO Check whether I need to recurvisely do this or not here
@@ -81,26 +83,42 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btSca
             vertex_t object_u,supported_object;
             object_u = vertex_map[getObjectIDFromCollisionObject(lower_obj)];
             supported_object = vertex_map[getObjectIDFromCollisionObject(upper_obj)];
-            edge_t new_edge; bool add_edge_success;
-            boost::tie(new_edge,add_edge_success) = boost::add_edge(object_u,supported_object,scene_support_graph);
-            if (add_edge_success)
+
+            // check whether the edge is already exist or not
+            edge_t detected_edge; bool edge_already_exist = false, add_edge_success = false;
+            boost::tie(detected_edge, edge_already_exist) = boost::edge(object_u,supported_object,scene_support_graph);
+
+            btScalar totalImpact = 0.;
+            btScalar total_collision_penetration = 0;
+            for (int p = 0; p < contactManifold->getNumContacts(); p++)
             {
-                // std::cerr << "Edge created\n";
-                btScalar totalImpact = 0.;
-                for (int p = 0; p < contactManifold->getNumContacts(); p++)
-                {  totalImpact += contactManifold->getContactPoint(p).m_appliedImpulse;  }
-                // std::cerr << "Total impact between " << getObjectIDFromCollisionObject(lower_obj) <<
-                //     " and " << getObjectIDFromCollisionObject(upper_obj) << "= " << totalImpact << std::endl;
+                btManifoldPoint& pt = contactManifold->getContactPoint(p);
+                totalImpact += pt.m_appliedImpulse;
+
+                // add penetration depth if it is in collision
+                total_collision_penetration += pt.getDistance() < 0 ? -pt.getDistance() : 0;
+            }
+
+            if (total_collision_penetration > 0 || totalImpact > 0)
+            {
+                scene_support_graph[object_u].penetration_distance_+= total_collision_penetration;
+                scene_support_graph[supported_object].penetration_distance_+= total_collision_penetration;
 
                 // update the support contribution based on
                 // the supporting forces relative to the supported object mass
-
                 // impulse: kg m/s; support_contribution = impulse/(dT * mass * gravity)
                 scene_support_graph[object_u].support_contributions_ += totalImpact*upper_obj->getInvMass()/dTime_times_gravity;
+
+                std::cerr << "Total impact " << getObjectIDFromCollisionObject(lower_obj) << ", " 
+                    << getObjectIDFromCollisionObject(upper_obj) << "= " << totalImpact << ", penetration= " 
+                    << total_collision_penetration << std::endl;
             }
-            else
+
+            if (!edge_already_exist && (totalImpact > 0 || total_collision_penetration > 0) )
             {
-                std::cerr << "Error adding edge?\n";
+                edge_t new_edge;
+                boost::tie(new_edge,add_edge_success) = boost::add_edge(object_u,supported_object,scene_support_graph);
+                if (!add_edge_success) std::cerr << "Error adding edge!\n";
             }
         }
     }

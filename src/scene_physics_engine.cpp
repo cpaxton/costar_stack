@@ -306,7 +306,7 @@ void PhysicsEngine::resetObjects()
 		it != this->rigid_body_.end(); ++it)
 	{
 		m_dynamicsWorld->removeRigidBody(it->second);
-		delete it->second->getUserPointer();
+		delete (std::string*) it->second->getUserPointer();
 		delete it->second->getMotionState();
 		delete it->second;
 		if (this->debug_messages_) std::cerr << "Removed objects: "<<  it->first <<".\n";
