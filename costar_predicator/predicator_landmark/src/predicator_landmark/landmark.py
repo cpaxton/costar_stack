@@ -62,6 +62,11 @@ class GetWaypointsService:
     def get_waypoints(self,frame_type,predicates,transforms,names):
         self.and_srv.wait_for_service()
 
+        if not len(names) == len(transforms):
+            raise RuntimeError('Names and transforms provided to landmark get_waypoints must be the same length')
+        if not len(names) == 1:
+            raise NotImplementedError('Passing a list of multiple transforms to get_waypoints is not yet supported.') 
+
         type_predicate = PredicateStatement()
         type_predicate.predicate = frame_type
         type_predicate.params = ['*','','']
@@ -84,11 +89,6 @@ class GetWaypointsService:
         poses = []
         for tform in transforms:
             poses.append(pm.fromMsg(tform))
-
-        #print poses
-        new_poses = []
-        new_names = []
-        objects = []
 
         if frame_type not in self.obj_symmetries.keys():
             self.obj_symmetries[frame_type] = ObjectSymmetry()
@@ -115,22 +115,28 @@ class GetWaypointsService:
         for index in unique_indices:
             unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
 
+        new_poses = []
+        new_names = []
+        objects = []
+
         for match in res.matching:
             try:
                 (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
-                for (pose, name) in zip(poses,names):
+                # for (pose, name) in zip(poses,names):
 
-                    if frame_type in self.obj_symmetries:
-                        for rot_matrix in unique_rot_matrix:
-                            tform = pm.Frame(rot_matrix)
-                            new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * pose))
-                            new_names.append(match + "/" + name + "/x%dy%dz%d"%(rot_matrix.GetRPY()))
+                if frame_type in self.obj_symmetries:
+                    for rot_matrix in unique_rot_matrix:
+                        tform = pm.Frame(rot_matrix)
+                        new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * poses[0]))
+                        new_names.append(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY()))
 
-                            objects.append(match)
+                        #print match, str(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY())),
+                        # pm.toTf(pm.fromTf((trans,rot)) * tform * poses[0])[0]
+
+                        objects.append(match)
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('Could not find transform from %s to %s!'%(self.world,match))
-
 
         return (new_poses, new_names, objects)
         
