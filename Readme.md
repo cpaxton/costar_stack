@@ -14,7 +14,7 @@ To take full advantage of CoSTAR, you will need an RGB-D camera and supported ha
 This is a project by members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. If you find this code useful, please cite:
 ```
 @article{paxton2016costar,
-  title={CoSTAR: Instructing Collaborative Robots with Behavior Trees and Vision},
+  title={Co{STAR}: Instructing Collaborative Robots with Behavior Trees and Vision},
   author={Paxton, Chris and Hundt, Andrew and Jonathan, Felix and Guerin, Kelleher and Hager, Gregory D},
   journal={arXiv preprint arXiv:1611.06145},
   year={2016}
