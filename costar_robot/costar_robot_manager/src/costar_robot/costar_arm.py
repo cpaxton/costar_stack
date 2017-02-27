@@ -576,7 +576,7 @@ class CostarArm(object):
             self.cur_stamp = self.release()
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
-            self.detach(actuate = False)
+            self.detach(actuate = False, add_back_to_planning_scene=False)
             self.cur_stamp = self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
@@ -677,7 +677,7 @@ class CostarArm(object):
     '''
     Detach an object from the planning scene.
     '''
-    def detach(self, object_name="", actuate = True):
+    def detach(self, object_name="", actuate = True, add_back_to_planning_scene = True):
         if actuate:
             # detach the collision object to the gripper
             self.gripper_open.call()
@@ -699,14 +699,15 @@ class CostarArm(object):
                 object=CollisionObject(id=col_obj.object.id))
             diff_obj.object.operation = CollisionObject.REMOVE
             planning_scene_diff.robot_state.attached_collision_objects.append(diff_obj)
-             
-            # add into planning scene
-            add_object = col_obj.object
-            add_object.header.frame_id = self.base_link
-            add_object.operation = CollisionObject.ADD
-            for index, mesh_pose in enumerate(col_obj.object.mesh_poses):
-                add_object.mesh_poses[index] = pm.toMsg(T_fwd * pm.fromMsg(mesh_pose))
-            planning_scene_diff.world.collision_objects.append(add_object)
+            
+            if add_back_to_planning_scene:
+                # add into planning scene
+                add_object = col_obj.object
+                add_object.header.frame_id = self.base_link
+                add_object.operation = CollisionObject.ADD
+                for index, mesh_pose in enumerate(col_obj.object.mesh_poses):
+                    add_object.mesh_poses[index] = pm.toMsg(T_fwd * pm.fromMsg(mesh_pose))
+                planning_scene_diff.world.collision_objects.append(add_object)
 
             # if col_obj.id == object_name:
             #     detach_object = col_obj
