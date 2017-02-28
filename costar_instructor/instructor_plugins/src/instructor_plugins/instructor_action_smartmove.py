@@ -53,7 +53,7 @@ class NodeActionSmartmoveGUI(NodeGUI):
 
         global GLOBAL_MANAGER
         if GLOBAL_MANAGER is None:
-            rospy.logerr("creating smart waypoint manager")
+            rospy.loginfo("creating smart waypoint manager")
             GLOBAL_MANAGER = SmartWaypointManager()
         self.manager = GLOBAL_MANAGER
 
