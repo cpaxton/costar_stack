@@ -71,13 +71,16 @@ class SmartWaypointManager:
 
         self.all_moves = []
 
-        self.objs = ["table_frame"]
-        self.obj_classes = ["table"]
-        self.obj_class = {"table_frame":"table"}
+        self._reset_objs()
+        self.obj_class = {}
         
         self.available_obj_classes = rospy.get_param("/costar/smartmove/available_objects")
         self.available_regions = rospy.get_param("/costar/smartmove/regions")
         self.available_references = rospy.get_param("/costar/smartmove/references")
+
+    def _reset_objs(self):
+        self.objs = []
+        self.obj_classes = []
         
     '''
     reads in costar object detection messages
@@ -133,9 +136,7 @@ class SmartWaypointManager:
         return self.all_moves
 
     def get_detected_objects(self):
-
-        self.objs = ["table_frame"]
-        self.obj_classes = ["table"]
+        self._reset_objs()
 
         if not self.available_obj_classes is None:
             for oc in self.available_obj_classes:

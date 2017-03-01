@@ -1,10 +1,10 @@
 <launch>
 
-  <!--<arg name="instructor_cases" default="baseline,perception,smartmove"/>-->
+  <!--<arg name="instructor_cases" default="baseline,perception,smartmove" />-->
   <arg name="instructor_cases" default=""/>
 
   <!-- CORE -->
-  <node pkg="instructor_core" type="instructor_view.py" name="instructor_view">
+  <node pkg="instructor_core" type="instructor_view.py" name="instructor_view" >
     <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
     <param name="cases" value="$(arg instructor_cases)"/>
   </node>

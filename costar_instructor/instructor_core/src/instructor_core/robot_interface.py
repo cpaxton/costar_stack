@@ -15,7 +15,8 @@ import tf_conversions as tf_c
 
 # Using roslib.rospack even though it is deprecated
 import threading
-from roslib import rospack
+# from roslib import rospack
+import rospkg
 import yaml
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *

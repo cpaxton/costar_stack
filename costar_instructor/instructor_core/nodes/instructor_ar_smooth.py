@@ -19,7 +19,7 @@ class InstructorARSmooth(object):
 
         self.broadcaster_ = tf.TransformBroadcaster()
         self.listener_ = tf.TransformListener()
-        self.buffer = 40
+        self.buffer = 15
         self.frames = {}
 
         while not rospy.is_shutdown():

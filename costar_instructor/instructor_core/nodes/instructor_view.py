@@ -29,7 +29,8 @@ from librarian_msgs.msg import *
 from librarian_msgs.srv import *
 import time
 from copy import deepcopy
-
+# import cProfile
+# from memory_profiler import profile
 # ==============================================================
 # SRVs
 import costar_robot_msgs
@@ -297,7 +298,7 @@ class Instructor(QWidget):
                 description = p['description']
                 if description in self.current_plugins:
                     if description not in self.active_plugin_widgets:
-                        #rospy.logwarn('Adding widget for plugin: ['+description+']')
+                        # rospy.logwarn('Adding widget for plugin: ['+description+']')
                         changed = True
                         self.component_widgets[p['type']].add_item_to_group(p['name'],p['group'])
                         self.active_plugin_widgets.append(description)
@@ -327,7 +328,8 @@ class Instructor(QWidget):
 
         rospy.logwarn('INSTRUCTOR: LOADING GENERATORS')
         for name,plugin in self.plugins.items():
-            self.all_generators[name] = plugin['module']()
+            if not name in self.all_generators:
+                self.all_generators[name] = plugin['module']()
 
     def splitter_moved(self,pos,index):
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
@@ -382,7 +384,8 @@ class Instructor(QWidget):
             # self.clear_node_info()
             self.clear_node_info()
             if self.current_node_plugin_name is not None:
-                self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
+                if not self.current_node_plugin_name in self.all_generators:
+                    self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
                 self.current_node_generator = self.all_generators[self.current_node_plugin_name]
                 self.current_node_type = self.plugins[self.current_node_plugin_name]['type']
                 # self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
@@ -551,6 +554,7 @@ class Instructor(QWidget):
         self.save_dialog.save_cancel_btn.clicked.connect(self.hide_save_dialog)
         self.save_dialog.save_subtree_btn.clicked.connect(self.save_subtree)
         self.save_dialog.save_node_btn.clicked.connect(self.save_node)
+        self.save_dialog.save_node_btn.hide()
         self.save_dialog.save_name_field.textChanged.connect(self.saved_name_updated_cb)
         self.save_btn.clicked.connect(self.show_save_dialog)
 
@@ -942,12 +946,16 @@ class Instructor(QWidget):
         self.remove_sub_btn.setText('REMOVE [ '+val.upper()+' ]')
 
         self.selected_subtree_data = yaml.load(self.lib_load_service(id=self.selected_subtree,type='instructor_subtree').text)
-        selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
-        print selected_subtree_root_name
-        if 'root' in selected_subtree_root_name.lower():
-            print 'You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.'
+        if self.selected_subtree_data is not None:
+            selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
+            print selected_subtree_root_name
+            if 'root' in selected_subtree_root_name.lower():
+                print 'You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.'
+            else:
+                print 'The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.'
         else:
-            print 'The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.'
+            rospy.logwarn('Subtree %s does not exist.'%val)
+            self.selected_subtree = None
 
     def delete_selected_subtree(self):
         if self.selected_subtree != None:
@@ -1008,18 +1016,19 @@ class Instructor(QWidget):
             node_data = info['save_info']
             node_plugin_name = node_data['plugin_name']
             if self.plugins.has_key(node_plugin_name):
-                node_type = self.plugins[node_plugin_name]['type']
-                plugin_name = node_plugin_name
                 # Add in parameters from saved file
                 self.all_generators[node_plugin_name].load(node_data['generator_info'])
+
                 # Generate Node
-                node_to_add = self.all_generators[node_plugin_name].generate()
-                current_name = self.all_generators[node_plugin_name].get_name()
+                self.current_node_generator = self.all_generators[node_plugin_name]
+                self.current_node_generator.name.set_field(self.get_node_counter_name(node_plugin_name))
+                self.current_node_plugin_name = node_plugin_name
+                self.current_node_type = self.plugins[node_plugin_name]['type']
+
+                node_to_add = self.current_node_generator.generate()
+                current_name = self.current_node_generator.get_name()
                 # Add node
-                self.current_tree[current_name] = node_to_add
-                self.current_node_info[current_name] = self.all_generators[node_plugin_name].save()
-                self.current_plugin_names[current_name] = plugin_name
-                self.current_node_types[current_name] = node_type
+                self.add_node_to_tree(current_name, node_to_add, regenerate_tree = False)
                 self.root_node = node_to_add
             else:
                 rospy.logwarn('node plugin undefined')
@@ -1030,18 +1039,20 @@ class Instructor(QWidget):
             node_data = info['save_info']
             node_plugin_name = node_data['plugin_name']
             if self.plugins.has_key(node_plugin_name):
-                node_type = self.plugins[node_plugin_name]['type']
-                plugin_name = node_plugin_name
+                # self.all_generators[node_plugin_name].name.set_field(self.get_node_counter_name(node_plugin_name))
                 self.all_generators[node_plugin_name].load(node_data['generator_info'])
                 # Generate Child
-                self.all_generators[node_plugin_name].name.set_field(self.increment_node_name(node_plugin_name))
-                node_to_add = self.all_generators[node_plugin_name].generate()
-                current_name = self.all_generators[node_plugin_name].get_name()
-                self.current_tree[current_name] = node_to_add
-                self.current_tree[parent.name_].add_child(node_to_add)
-                self.current_node_info[current_name] = self.all_generators[node_plugin_name].save()
-                self.current_plugin_names[current_name] = plugin_name
-                self.current_node_types[current_name] = node_type
+                self.current_node_generator = self.all_generators[node_plugin_name]
+                self.current_node_generator.name.set_field(self.get_node_counter_name(node_plugin_name))
+                
+                self.current_node_plugin_name = node_plugin_name
+                self.current_node_type = self.plugins[node_plugin_name]['type']
+
+                node_to_add = self.current_node_generator.generate()
+                current_name = self.current_node_generator.get_name()
+                self.add_node_to_tree(current_name, node_to_add, self.current_tree[parent.name_].add_child, regenerate_tree = False)
+                self.add_node_prime_gui()
+
             else:
                 rospy.logwarn(node_plugin_name)
                 rospy.logwarn('node plugin undefined')
@@ -1050,6 +1061,18 @@ class Instructor(QWidget):
                 self.recursive_add_nodes(C,node_to_add)
 
 # Callbacks --------------------------------------------------------------------
+    def get_node_counter_name(self,name):
+        if 'root' not in name.lower():
+            if self.node_counter.has_key(name):
+                num = self.node_counter[name]
+            else:
+                num = 0
+                self.node_counter[name] = num
+            auto_name = str(str(name)+'_'+str(num)).replace(' ','_').lower()
+            return auto_name
+        else:
+            return 'root'
+
     def increment_node_name(self,name):
         # rospy.logwarn('incrementing ['+name+']')
         if 'root' not in name.lower():
@@ -1064,8 +1087,9 @@ class Instructor(QWidget):
         else:
             return 'root'
     
+    # @profile
     def component_selected_callback(self,name):
-        rospy.logwarn('Selected node with type [' + str(self.plugins[name]['type']) + '] from list.')
+        rospy.loginfo('Selected node with type [' + str(self.plugins[name]['type']) + '] from list.')
         self.open_drawer()
         # if self.plugins[name]['type'] == 'LOGIC':
         #     self.add_node_root_btn.show()
@@ -1087,11 +1111,12 @@ class Instructor(QWidget):
 
         if self.plugins.has_key(name):
             self.clear_node_info()
-            self.all_generators[name] = self.plugins[name]['module']()
+            if not name in self.all_generators:
+                self.all_generators[name] = self.plugins[name]['module']()
             self.current_node_generator = self.all_generators[name]
             self.current_node_type = self.plugins[name]['type']
             self.current_node_plugin_name = name
-            self.current_node_generator.name.set_field(self.increment_node_name(name))
+            self.current_node_generator.name.set_field(self.get_node_counter_name(name))
             self.drawer.node_info_layout.addWidget(self.current_node_generator)
             self.right_selected_node = None
         else:
@@ -1250,7 +1275,7 @@ color:#ffffff}''')
         if current_name:
             # current_name = self.right_selected_node
             replacement_node = self.current_node_generator.generate()
-            if type(replacement_node) == str:
+            if isinstance(replacement_node,str):
                 rospy.logerr(str(replacement_node))
             else:
                 current_child = self.current_tree[current_name]
@@ -1275,7 +1300,8 @@ color:#ffffff}''')
     # will not change... which I think is ok considering it is a core component
     def generate_root(self):
         rospy.logwarn('Generating new ROOT node')
-        self.all_generators['Root'] = self.plugins['Root']['module']()
+        if not 'Root' in self.all_generators:
+            self.all_generators['Root'] = self.plugins['Root']['module']()
         self.current_node_generator = self.all_generators['Root']
         self.current_node_type = self.plugins['Root']['type']
         self.current_node_plugin_name = 'Root'
@@ -1314,7 +1340,28 @@ color:#ffffff}''')
         else:
             rospy.logwarn('NO NODE SELECTED')
 
+    def add_node_to_tree(self, name, node, add_node_function = None, regenerate_tree = True):
+        self.current_tree[name] = node
+        self.current_node_info[name] = self.current_node_generator.save()
+        ## debugging
+        self.current_plugin_names[name] = self.current_node_plugin_name
+        self.current_node_types[name] = self.current_node_type
 
+        if add_node_function is not None:
+            add_node_function(node)
+        if regenerate_tree:
+            self.regenerate_tree()
+        # increment the index
+        self.increment_node_name(self.current_node_plugin_name)
+
+        # Prime GUI for another node of the same type
+
+    def add_node_prime_gui(self):
+        # Prime GUI for another node of the same type
+        self.clear_node_info()
+        self.current_node_generator = self.all_generators[self.current_node_plugin_name]
+        self.current_node_generator.name.set_field(self.get_node_counter_name(self.current_node_plugin_name))
+        self.drawer.node_info_layout.addWidget(self.current_node_generator)
     
     def add_child_cb(self):
         if self.current_node_type != None:
@@ -1332,18 +1379,8 @@ color:#ffffff}''')
                     rospy.logerr(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
-                    self.current_tree[current_name] = node_to_add
-                    self.current_tree[self.left_selected_node].add_child(node_to_add)
-                    self.current_node_info[current_name] = self.current_node_generator.save()
-                    ## debugging
-                    self.current_plugin_names[current_name] = self.current_node_plugin_name
-                    self.current_node_types[current_name] = self.current_node_type
-                    self.regenerate_tree()
-                    # Prime GUI for another node of the same type
-                    self.clear_node_info()
-                    self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                    self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
-                    self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                    self.add_node_to_tree(current_name, node_to_add, self.current_tree[self.left_selected_node].add_child)
+                    self.add_node_prime_gui()
                     # self.save_state()
                     if self.current_node_types[current_name] == 'LOGIC':
                         self.node_leftclick_cb(current_name)
@@ -1364,50 +1401,52 @@ color:#ffffff}''')
                     rospy.logerr(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
-                    self.current_tree[current_name] = node_to_add
                     sibling_node = self.current_tree[self.left_selected_node]
-                    sibling_node.add_sibling_before(node_to_add)
-                    self.current_node_info[current_name] = self.current_node_generator.save()
-                    self.current_plugin_names[current_name] = self.current_node_plugin_name
-                    self.current_node_types[current_name] = self.current_node_type 
-                    self.regenerate_tree()
-                    # Prime GUI for another node of the same type
-                    self.clear_node_info()
-                    self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                    self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
-                    self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                    self.add_node_to_tree(current_name, node_to_add, sibling_node.add_sibling_before)
+                    self.add_node_prime_gui()
                     # self.save_state()
                     if self.current_node_types[current_name] == 'LOGIC':
                         self.node_leftclick_cb(current_name)
 
     def replace_child_cb(self):
         if self.left_selected_node != None:
-            current_name = self.left_selected_node
-            rospy.logwarn(current_name)
-            new_name = self.current_node_generator.get_name()
-            rospy.logwarn(new_name)
-            replacement_node = self.current_node_generator.generate()
-            # current_name = self.current_node_generator.get_name()
-            current_child = self.current_tree[current_name]
-            current_parent = self.current_tree[current_name].get_parent()
-            if current_parent.replace_child(current_child, replacement_node):
-                self.current_tree[new_name] = replacement_node
-                self.current_node_info[new_name] = self.current_node_generator.save()
-                self.current_plugin_names[new_name] = self.current_node_plugin_name
-                self.current_node_types[new_name] = self.current_node_type
-                if self.current_node_types[new_name] == 'LOGIC':
-                    self.delete_node(current_name,keep_children=True)
-                else:
-                    self.delete_node(current_name,keep_children=False)
-                self.regenerate_tree()
-                self.close_drawer()
-                # self.save_state()
-                if current_name in self.current_node_types:   
-                    if self.current_node_types[current_name] == 'LOGIC':
-                        self.node_leftclick_cb(current_name)
+            if not self.current_node_types[self.left_selected_node] == 'LOGIC':
+                current_name = self.left_selected_node
+                rospy.logwarn('selected node: ' + current_name)
+                new_name = self.current_node_generator.get_name()
+                rospy.logwarn('new node: ' + new_name)
+                replacement_node = self.current_node_generator.generate()
+                # current_name = self.current_node_generator.get_name()
+                current_child = self.current_tree[current_name]
+                current_parent = self.current_tree[current_name].get_parent()
 
+                # isinstance check whether the node is properly defined
+                if not isinstance(replacement_node,str):
+                    if current_parent.replace_child(current_child, replacement_node):
+                        
+                        self.add_node_to_tree(new_name, replacement_node, regenerate_tree = False)
+                        if current_name != new_name:
+                            if new_name in self.current_node_types:
+                                if self.current_node_types[new_name] == 'LOGIC':
+                                    self.delete_node(current_name,keep_children=True)
+                                else:
+                                    self.delete_node(current_name,keep_children=False)
+                            else:
+                                rospy.logerr("[Instructor]: Tries to access a nonexistent current_node_type key")
+                        self.regenerate_tree()
+                        self.close_drawer()
+                        # self.save_state()
+                        if current_name in self.current_node_types:   
+                            if self.current_node_types[current_name] == 'LOGIC':
+                                self.node_leftclick_cb(current_name)
+
+                    else:
+                        rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
+                else:
+                    rospy.logerr(str(replacement_node))
             else:
-                rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
+                rospy.logwarn("Replace failed. Replacing logic node (sequence/root) with other nodes is disabled.")
+
 
     def add_sibling_after_cb(self):
         print 'adding sibling node of type ' + self.current_node_type
@@ -1425,18 +1464,10 @@ color:#ffffff}''')
                     rospy.logerr(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
-                    self.current_tree[current_name] = node_to_add
                     sibling_node = self.current_tree[self.left_selected_node]
-                    sibling_node.add_sibling_after(node_to_add)
-                    self.current_node_info[current_name] = self.current_node_generator.save()
-                    self.current_plugin_names[current_name] = self.current_node_plugin_name
-                    self.current_node_types[current_name] = self.current_node_type 
-                    self.regenerate_tree()
-                    # Prime GUI for another node of the same type
-                    self.clear_node_info()
-                    self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                    self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
-                    self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                    self.add_node_to_tree(current_name, node_to_add, sibling_node.add_sibling_after)
+                    self.add_node_prime_gui()
+
                     # self.save_state()
                     if self.current_node_types[current_name] == 'LOGIC':
                         self.node_leftclick_cb(current_name)
@@ -1483,6 +1514,7 @@ color:#ffffff}''')
 
 
     def clear_tree(self):
+        self.node_counter.clear()
         self.current_tree.clear()
         self.current_generators.clear()
         self.current_node_types.clear()

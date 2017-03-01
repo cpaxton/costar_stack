@@ -3,7 +3,8 @@
 import rospy
 import numpy as np
 import tf
-
+import PyKDL as kdl
+import tf_conversions.posemath as pm
 from predicator_msgs.msg import *
 
 class GeometryPredicator(object):
@@ -25,8 +26,10 @@ class GeometryPredicator(object):
         self._z_threshold = rospy.get_param('~rel_z_threshold',0.1)
         self._near_2d_threshold = rospy.get_param('~near_2D_threshold',0.2)
         self._near_3d_threshold = rospy.get_param('~near_3D_threshold',0.2)
-
         self._values = {}
+
+        self._previous_frame = dict()
+        self._previous_msg = dict()
 
     '''
     addHeightPredicates()
@@ -34,8 +37,8 @@ class GeometryPredicator(object):
     Can be passed a margin/threshold, in case things aren't different enough to matter.
     higher_than(A, B) means B is higher than A
     '''
-    def addHeightPredicates(self, msg, frame1, frame2):
-        
+    def addHeightPredicates(self, frame1, frame2):
+        predicate_statement_list = list()
         try:
             (trans1, rot1) = self._listener.lookupTransform(self._world_frame, frame1, rospy.Time(0))
             (trans2, rot2) = self._listener.lookupTransform(self._world_frame, frame2, rospy.Time(0))
@@ -51,7 +54,7 @@ class GeometryPredicator(object):
                 ps.params[1] = frame2
                 ps.num_params = 2
                 ps.value = height_difference
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
             elif height_difference < self._higher_margin:
                 ps = PredicateStatement()
                 ps.predicate = 'lower_than'
@@ -59,19 +62,20 @@ class GeometryPredicator(object):
                 ps.params[1] = frame2
                 ps.num_params = 2
                 ps.value = height_difference
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
             pass
 
-        return msg
+        return predicate_statement_list
 
     '''
     addNearPredicates()
     Are the two frames close together in the (X, Y) world plane?
     Are the two frames close together in all (X, Y, Z) coordinates?
     '''
-    def addNearPredicates(self, msg, frame1, frame2):
+    def addNearPredicates(self, frame1, frame2):
+        predicate_statement_list = list()
         try:
             (trans1, rot1) = self._listener.lookupTransform(self._world_frame, frame1, rospy.Time(0))
             (trans2, rot2) = self._listener.lookupTransform(self._world_frame, frame2, rospy.Time(0))
@@ -93,7 +97,7 @@ class GeometryPredicator(object):
                 ps.params[1] = frame2
                 ps.num_params = 2
                 ps.value = dist
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
             if dist_xyz <= self._near_3d_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'near_xyz'
@@ -101,12 +105,12 @@ class GeometryPredicator(object):
                 ps.params[1] = frame2
                 ps.num_params = 2
                 ps.value = dist
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
 
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException): pass
 
-        return msg
+        return predicate_statement_list
 
 
     '''
@@ -120,8 +124,8 @@ class GeometryPredicator(object):
     
     In the context of the peg demo, this might mean that the robot arm is to "stage left" of a peg.
     '''
-    def addRelativeDirectionPredicates(self, msg, frame1, frame2, ref):
-
+    def addRelativeDirectionPredicates(self, frame1, frame2, ref):
+        predicate_statement_list = list()
         try:
             (trans1, rot1) = self._listener.lookupTransform(ref, frame1, rospy.Time(0))
             (trans2, rot2) = self._listener.lookupTransform(ref, frame2, rospy.Time(0))
@@ -142,7 +146,7 @@ class GeometryPredicator(object):
                 ps.params[2] = ref
                 ps.num_params = 3
                 ps.value = x_diff
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
             elif x_diff > self._x_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'in_back_of'
@@ -151,7 +155,7 @@ class GeometryPredicator(object):
                 ps.params[2] = ref
                 ps.num_params = 3
                 ps.value = x_diff
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
 
             if y_diff < -1 * self._y_threshold:
                 ps = PredicateStatement()
@@ -161,7 +165,7 @@ class GeometryPredicator(object):
                 ps.params[2] = ref
                 ps.num_params = 3
                 ps.value = y_diff
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
             elif y_diff > self._y_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'right_of'
@@ -170,7 +174,7 @@ class GeometryPredicator(object):
                 ps.params[2] = ref
                 ps.num_params = 3
                 ps.value = y_diff
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
 
             if z_diff < -1 * self._z_threshold:
                 ps = PredicateStatement()
@@ -180,7 +184,7 @@ class GeometryPredicator(object):
                 ps.params[2] = ref
                 ps.num_params = 3
                 ps.value = z_diff
-                msg.statements.append(ps)
+                predicate_statement_list.append(ps)
             elif z_diff > self._z_threshold:
                 ps = PredicateStatement()
                 ps.predicate = 'down_from'
@@ -189,17 +193,18 @@ class GeometryPredicator(object):
                 ps.params[2] = ref
                 ps.num_params = 3
                 ps.value = z_diff
-                msg.statements.append(ps) 
+                predicate_statement_list.append(ps) 
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException): pass
 
-        return msg
+        return predicate_statement_list
 
     '''
     addDistancePredicates()
     Get the distance between two transforms
     '''
-    def addDistancePredicates(self, msg, frame1, frame2):
+    def addDistancePredicates(self, frame1, frame2):
+        predicate_statement_list = list()
         try:
             (trans1, rot1) = self._listener.lookupTransform(self._world_frame, frame1, rospy.Time(0))
             (trans2, rot2) = self._listener.lookupTransform(self._world_frame, frame2, rospy.Time(0))
@@ -216,11 +221,11 @@ class GeometryPredicator(object):
             ps.params[1] = frame2
             ps.num_params = 2
             ps.value = distance
-            msg.statements.append(ps) 
+            predicate_statement_list.append(ps) 
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException): pass
 
-        return msg
+        return predicate_statement_list
 
 
     '''
@@ -238,15 +243,32 @@ class GeometryPredicator(object):
                 if frame1 == frame2:
                     continue
                 else:
-                    # check height predicates
-                    msg = self.addHeightPredicates(msg, frame1, frame2)
-                    msg = self.addNearPredicates(msg, frame1, frame2)
-                    if self._value_predicates:
-                        msg = self.addDistancePredicates(msg, frame1, frame2)
+                    try:
+                        cur_frame = pm.fromTf(self._listener.lookupTransform(frame1, frame2, rospy.Time(0)))
+                        f12_msg = None
+                        prev_frame = None
+                        if (frame1, frame2) in self._previous_frame:
+                            prev_frame = self._previous_frame[(frame1,frame2)]
 
-                    for ref in self._reference_frames:
-                        msg = self.addRelativeDirectionPredicates(msg, frame1, frame2, ref)
+                        if prev_frame == cur_frame:
+                            f12_msg = self._previous_msg[(frame1,frame2)]
+                        else:
+                            f12_msg = list()
+                            # check height predicates
+                            f12_msg += self.addHeightPredicates(frame1, frame2)
+                            f12_msg += self.addNearPredicates(frame1, frame2)
+                            if self._value_predicates:
+                                f12_msg += self.addDistancePredicates(frame1, frame2)
 
+                            for ref in self._reference_frames:
+                                f12_msg += self.addRelativeDirectionPredicates(frame1, frame2, ref)
+
+                            self._previous_frame[(frame1,frame2)] = cur_frame
+                            self._previous_msg[(frame1,frame2)] = f12_msg
+
+                        if f12_msg is not None:
+                            msg.statements = msg.statements + f12_msg
+                    except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException): pass
         #print self._frames
         #print self._reference_frames
         #print msg

@@ -191,9 +191,10 @@ class CostarArm(object):
 
         self.closed_form_IK_solver = closed_form_IK_solver
         self.state_validity_penalty = state_validity_penalty
+
         # how important is it to choose small rotations in goal poses
-        self.rotation_weight = 0.5
-        self.joint_space_weight = 0.05
+        self.rotation_weight = 1.0
+        self.joint_space_weight = 1.0
 
         # for checking robot configuration validity
         self.state_validity_service = rospy.ServiceProxy("/check_state_validity", GetStateValidity)
@@ -575,7 +576,7 @@ class CostarArm(object):
             self.cur_stamp = self.release()
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
-            self.detach(actuate = False)
+            self.detach(actuate = False, add_back_to_planning_scene=False)
             self.cur_stamp = self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
@@ -592,7 +593,7 @@ class CostarArm(object):
         br = tf.TransformBroadcaster()
         br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
         if not self.base_link == "base_link":
-        	br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
+            br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/base_link",self.base_link)
 
         if self.query_frame is not None:
             trans, rot = self.query_frame
@@ -646,6 +647,7 @@ class CostarArm(object):
         # get the actual collision obj from planning scene
         remove_object = None
 
+        rospy.logwarn('Attaching object: %s'% object_name)
         res = self.get_planning_scene(components=
             PlanningSceneComponents(components=PlanningSceneComponents.WORLD_OBJECT_GEOMETRY))
         all_objects = res.scene.world.collision_objects
@@ -675,7 +677,7 @@ class CostarArm(object):
     '''
     Detach an object from the planning scene.
     '''
-    def detach(self, object_name="", actuate = True):
+    def detach(self, object_name="", actuate = True, add_back_to_planning_scene = True):
         if actuate:
             # detach the collision object to the gripper
             self.gripper_open.call()
@@ -697,14 +699,15 @@ class CostarArm(object):
                 object=CollisionObject(id=col_obj.object.id))
             diff_obj.object.operation = CollisionObject.REMOVE
             planning_scene_diff.robot_state.attached_collision_objects.append(diff_obj)
-             
-            # add into planning scene
-            add_object = col_obj.object
-            add_object.header.frame_id = self.base_link
-            add_object.operation = CollisionObject.ADD
-            for index, mesh_pose in enumerate(col_obj.object.mesh_poses):
-                add_object.mesh_poses[index] = pm.toMsg(T_fwd * pm.fromMsg(mesh_pose))
-            planning_scene_diff.world.collision_objects.append(add_object)
+            
+            if add_back_to_planning_scene:
+                # add into planning scene
+                add_object = col_obj.object
+                add_object.header.frame_id = self.base_link
+                add_object.operation = CollisionObject.ADD
+                for index, mesh_pose in enumerate(col_obj.object.mesh_poses):
+                    add_object.mesh_poses[index] = pm.toMsg(T_fwd * pm.fromMsg(mesh_pose))
+                planning_scene_diff.world.collision_objects.append(add_object)
 
             # if col_obj.id == object_name:
             #     detach_object = col_obj
@@ -811,8 +814,8 @@ class CostarArm(object):
         dists = []
         Ts = []
         if self.q0 is None:
-        	rospy.logerr("Robot state has not yet been received!")
-        	return "FAILURE -- robot state not yet received!"
+            rospy.logerr("Robot state has not yet been received!")
+            return "FAILURE -- robot state not yet received!"
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
 
         number_of_valid_query_poses, number_of_invalid_query_poses = 0, 0
@@ -837,20 +840,20 @@ class CostarArm(object):
             # checking that position.
             if T.p[2] < self.table_pose[0][2]:
                 rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
+                Ts.append(None)
+                dists.append(float('inf'))
                 continue
             dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
             if dist_from_table > self.max_dist_from_table:
                 rospy.logwarn("Ignoring due to table distance: %f > %f"%(
                     dist_from_table,
                     self.max_dist_from_table))
+                Ts.append(None)
+                dists.append(float('inf'))
                 continue
 
             Ts.append(T)
-            # if disable_target_object_collision:
-	           #  self.planner.updateAllowedCollisions(obj,True)
             valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = True, obj_name = obj)
-            # if disable_target_object_collision:
-	           #  self.planner.updateAllowedCollisions(obj,False)
 
             if best_q is None or len(best_q) == 0:
                 rospy.logwarn("[QUERY] DID NOT ADD:"+message_print)
@@ -868,8 +871,10 @@ class CostarArm(object):
         if len(Ts) == 0:
             possible_goals = []
         else:
-            possible_goals = zip(dists,Ts,objects,names)
+            possible_goals = [(d,T,o,n) for (d,T,o,n) in zip(dists,Ts,objects,names) if T is not None]
             possible_goals.sort()
+
+
 
         joint = JointState()
         # joint.position = self.ik(T,self.q0)
@@ -900,9 +905,9 @@ class CostarArm(object):
               continue
 
            if valid_pose and dist < self.state_validity_penalty:
-               list_of_valid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist))
+               list_of_valid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
            else:
-		       list_of_invalid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist))
+               list_of_invalid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
 
         sequence_to_execute = list()
         if len(list_of_valid_sequence) > 0:
@@ -915,7 +920,7 @@ class CostarArm(object):
 
         print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
-        for sequence_number, (backup_waypoint,T,obj,backup_dist,query_dist) in enumerate(sequence_to_execute,1):
+        for sequence_number, (backup_waypoint,T,obj,backup_dist,query_dist,name) in enumerate(sequence_to_execute,1):
             rospy.logwarn("Trying sequence number %i: backup_dist: %.3f query_dist: %.3f"%(sequence_number,backup_dist,query_dist))
             # plan to T
             rospy.sleep(0.1)
@@ -948,9 +953,9 @@ class CostarArm(object):
                             msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
                             return msg
                         else:
-                        	rospy.logwarn("Fail to move to grasp pose in sequence %i" % sequence_number)
+                            rospy.logwarn("Fail to move to grasp pose in sequence %i" % sequence_number)
                     else:
-                    	rospy.logwarn("Fail to move to backup pose in sequence %i" % sequence_number)
+                        rospy.logwarn("Fail to move to backup pose in sequence %i" % sequence_number)
                 else:
                     rospy.logwarn("Plan to pose in sequence %i does not work" % sequence_number)
             else:
