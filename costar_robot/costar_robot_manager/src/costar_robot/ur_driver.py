@@ -62,9 +62,11 @@ class CostarUR5Driver(CostarArm):
     def acquire(self):
         stamp = rospy.Time.now().to_sec()
         if self.cur_stamp is not None:
-            self.client.cancel_all_goals()
             self.client.stop_tracking_goal()
+            # self.client.wait_for_result()
+            self.client.cancel_all_goals()
             rospy.sleep(0.1)
+            # rospy.logwarn("[UR_DRIVER]: current stamp is not None?")
 
         if stamp > self.cur_stamp:
             self.cur_stamp = stamp
@@ -124,11 +126,12 @@ class CostarUR5Driver(CostarArm):
         goal = FollowJointTrajectoryGoal(trajectory=traj)
 
         if stamp >= self.cur_stamp:
-            self.client.send_goal(goal)
-            self.client.wait_for_result()
+            self.client.send_goal_and_wait(goal, preempt_timeout=rospy.Duration.from_sec(10.0))
+            # max time before returning = 30 s
+            self.client.wait_for_result(rospy.Duration.from_sec(30.0))
             res = self.client.get_result()
 
-        if res.error_code >= 0:
+        if res is not None and res.error_code >= 0:
             return "SUCCESS"
         else:
             return "FAILURE - %s"%res.error_code

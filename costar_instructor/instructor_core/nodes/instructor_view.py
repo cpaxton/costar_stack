@@ -298,7 +298,7 @@ class Instructor(QWidget):
                 description = p['description']
                 if description in self.current_plugins:
                     if description not in self.active_plugin_widgets:
-                        #rospy.logwarn('Adding widget for plugin: ['+description+']')
+                        # rospy.logwarn('Adding widget for plugin: ['+description+']')
                         changed = True
                         self.component_widgets[p['type']].add_item_to_group(p['name'],p['group'])
                         self.active_plugin_widgets.append(description)
@@ -554,6 +554,7 @@ class Instructor(QWidget):
         self.save_dialog.save_cancel_btn.clicked.connect(self.hide_save_dialog)
         self.save_dialog.save_subtree_btn.clicked.connect(self.save_subtree)
         self.save_dialog.save_node_btn.clicked.connect(self.save_node)
+        self.save_dialog.save_node_btn.hide()
         self.save_dialog.save_name_field.textChanged.connect(self.saved_name_updated_cb)
         self.save_btn.clicked.connect(self.show_save_dialog)
 
@@ -945,12 +946,16 @@ class Instructor(QWidget):
         self.remove_sub_btn.setText('REMOVE [ '+val.upper()+' ]')
 
         self.selected_subtree_data = yaml.load(self.lib_load_service(id=self.selected_subtree,type='instructor_subtree').text)
-        selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
-        print selected_subtree_root_name
-        if 'root' in selected_subtree_root_name.lower():
-            print 'You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.'
+        if self.selected_subtree_data is not None:
+            selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
+            print selected_subtree_root_name
+            if 'root' in selected_subtree_root_name.lower():
+                print 'You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.'
+            else:
+                print 'The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.'
         else:
-            print 'The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.'
+            rospy.logwarn('Subtree %s does not exist.'%val)
+            self.selected_subtree = None
 
     def delete_selected_subtree(self):
         if self.selected_subtree != None:
