@@ -77,8 +77,11 @@ class CostarArm(object):
         self.table_pose = None
         self.max_dist_from_table = max_dist_from_table
 
-        self.home_q = rospy.get_param(os.path.join(self.namespace, "home"))
-        self.home_q = [float(q) for q in self.home_q]
+        try:
+            self.home_q = rospy.get_param(os.path.join(self.namespace, "home"))
+            self.home_q = [float(q) for q in self.home_q]
+        except KeyError, e:
+            self.home_q = [0.] * dof
 
         self.world = world
         self.base_link = base_link
