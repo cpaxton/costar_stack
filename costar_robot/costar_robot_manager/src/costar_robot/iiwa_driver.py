@@ -42,7 +42,10 @@ class CostarIIWADriver(CostarArm):
         end_link = 'iiwa_link_ee'
         planning_group = 'manipulator'
 
-        super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group,dof=7,*args,**kwargs)
+        super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group,dof=7,
+            table_frame=None,
+            *args,
+            **kwargs)
 
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
 

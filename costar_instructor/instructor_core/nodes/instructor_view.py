@@ -1267,6 +1267,10 @@ color:#ffffff}''')
         pass
 
     def regenerate_node(self):
+        if self.current_node_type is self.plugins['Root']['type']:
+            rospy.logerr('[INSTRUCTOR]: Regenerate command ignored because it is a Root node')
+            return
+
         if self.left_selected_node:
             current_name = self.left_selected_node
         else:
