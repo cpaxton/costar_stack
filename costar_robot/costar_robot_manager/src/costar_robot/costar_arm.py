@@ -215,7 +215,6 @@ class CostarArm(object):
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
             closed_form_IK_solver=closed_form_IK_solver)
-        rospy.logerr("planner")
 
     '''
     Preemption logic -- acquire at the beginning of a trajectory.
