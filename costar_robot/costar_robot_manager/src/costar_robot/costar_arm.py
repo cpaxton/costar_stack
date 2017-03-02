@@ -49,7 +49,7 @@ class CostarArm(object):
     def __init__(self,
             base_link, end_link, planning_group,
             world="/world",
-               namespace="costar",
+               namespace="/costar",
             listener=None,
             broadcaster=None,
             traj_step_t=0.1,
@@ -583,6 +583,8 @@ class CostarArm(object):
             self.cur_stamp = self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
+        else:
+            return 'FAILURE'
 
     def shutdown_arm_cb(self,req):
         self.driver_status = 'SHUTDOWN'
