@@ -48,8 +48,8 @@ class SimplePlanning:
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
 
-        rospy.wait_for_service('/compute_cartesian_path')
-        self.cartesian_path_plan = rospy.ServiceProxy('/compute_cartesian_path',GetCartesianPath)
+        rospy.wait_for_service('compute_cartesian_path')
+        self.cartesian_path_plan = rospy.ServiceProxy('compute_cartesian_path',GetCartesianPath)
 
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver

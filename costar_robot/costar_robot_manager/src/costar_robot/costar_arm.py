@@ -49,7 +49,8 @@ class CostarArm(object):
     def __init__(self,
             base_link, end_link, planning_group,
             world="/world",
-               namespace="/costar",
+            namespace="/costar",
+            moveit_namespace="/",
             listener=None,
             broadcaster=None,
             traj_step_t=0.1,
@@ -206,12 +207,15 @@ class CostarArm(object):
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
-        self.get_planning_scene = self.make_service_proxy('/get_planning_scene',GetPlanningScene)
+        self.get_planning_scene = self.make_service_proxy("get_planning_scene",
+                GetPlanningScene,
+                False)
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
             closed_form_IK_solver=closed_form_IK_solver)
+        rospy.logerr("planner")
 
     '''
     Preemption logic -- acquire at the beginning of a trajectory.
@@ -610,10 +614,11 @@ class CostarArm(object):
                     trans, rot = pm.toTf(transform)
                     br.sendTransform(trans, rot, rospy.Time.now(),tf_name,self.world)
 
-        try:
-            self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
-        except tf.ExtrapolationException, e:
-            rospy.logwarn(str(e))
+        if self.table_frame is not None:
+            try:
+                self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
+            except tf.ExtrapolationException, e:
+                rospy.logwarn(str(e))
 
     '''
     call this when "spinning" to keep updating things
@@ -843,12 +848,13 @@ class CostarArm(object):
 
             # Ignore anything below the table: we don't need to even bother
             # checking that position.
-            if T.p[2] < self.table_pose[0][2]:
-                rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
-                Ts.append(None)
-                dists.append(float('inf'))
-                continue
-            dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
+            if self.table_pose is not None:
+                if T.p[2] < self.table_pose[0][2]:
+                    rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
+                    Ts.append(None)
+                    dists.append(float('inf'))
+                    continue
+                dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
             if dist_from_table > self.max_dist_from_table:
                 rospy.logwarn("Ignoring due to table distance: %f > %f"%(
                     dist_from_table,
