@@ -81,4 +81,4 @@ roslaunch instructor_core instructor.launch
 
 *If everything shows up, CoSTAR system is then successfully installed. Enjoy!*
 
-CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms. If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton3@jhu.edu).
+CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms. If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton@jhu.edu).
