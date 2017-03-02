@@ -17,7 +17,7 @@ To use the CoSTAR system, you will need to install the following software packag
 You can download all the required packages to use CoSTAR with ROS Indigo from the Ubuntu repositories with this command:
 
 ```
-sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem ros-indigo-gazebo-plugins ros-indigo-pcl-ros ros-indigo-socketcan-interface ros-indigo-rqt-gui ros-indigo-rqt-gui-py
+sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem ros-indigo-gazebo-plugins ros-indigo-pcl-ros ros-indigo-socketcan-interface ros-indigo-rqt-gui ros-indigo-rqt-gui-py ros-indigo-position-controllers ros-indigo-robot-state-publisher ros-indigo-joint-state-controller
 ```
 
 ## Step 1. Get Packages From Git
