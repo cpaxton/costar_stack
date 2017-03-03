@@ -4,12 +4,12 @@
   <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" />
   <arg name="detected_object_topic"          default="/SPServer/detected_object_list"/>
   <arg name="background_normal_as_gravity"   default="true"/>
-  <arg name="background_mode"                default="0"/>
+  <arg name="background_mode"                default="1"/>
   <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3"/>
   <arg name="tf_publisher_initial"           default="scene"/>
   <arg name="debug"                          default="true"/>
   <arg name="load_table"                     default="true"/>
-  <arg name="table_location"                 default="$(find sp_segmenter)/data/table.pcd"/>
+  <arg name="table_location"                 default="$(find sequential_scene_parsing)/mesh/table.pcd"/>
   <arg name="render_scene"                   default="true" />
 
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros" >  

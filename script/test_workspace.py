@@ -60,28 +60,28 @@ if __name__ == "__main__":
 	rate = rospy.Rate(10)
 	while not rospy.is_shutdown():
 		br = tf.TransformBroadcaster()
-		br.sendTransform((0.0856636, -0.158265, 0.999503),
-							(0.89781, -0.434588, 0.0148354, 0.0696412),
-							rospy.Time.now(),
-							'objects/link_uniform/1',
-							"world")
 		br.sendTransform((0.248011, 0.0903798, 0.91842),
-							(0.946214, 0.105377, 0.299076, -0.0642442),
+							(-0.57472, 0.302057, 0.406916, 0.642556),
 							rospy.Time.now(),
 							'objects/node_uniform/1',
 							"world")
 		br.sendTransform((-0.137252, 0.0867218, 0.939421),
-							(0.890365, 0.321198, -0.290753, -0.139804),
+							(-0.186296, 0.374573, 0.819693, 0.391269),
 							rospy.Time.now(),
 							'objects/node_uniform/2',
 							"world")
-		br.sendTransform((-0.0249532, 0.0211767, 1.01974),
-							(0.761211, 0.427905, 0.232149, 0.42844),
+		br.sendTransform((0.254448, -0.00760714, 0.839513),
+							(-0.198534, 0.380009, 0.757896, 0.491702),
+							rospy.Time.now(),
+							'objects/link_uniform/1',
+							"world",)
+		br.sendTransform((0.0847675, -0.154304, 1.00225),
+							(-0.322911, 0.29201, 0.580116, 0.688422 ),
 							rospy.Time.now(),
 							'objects/link_uniform/2',
 							"world")
-		br.sendTransform((0.255402, -0.0097534, 0.83862),
-							(0.850925, -0.37827, -0.192071, -0.309754),
+		br.sendTransform((-0.0308435, 0.02324, 1.01637),
+							( -0.208724,0.849739, 0.151435, 0.459831),
 							rospy.Time.now(),
 							'objects/link_uniform/3',
 							"world")

@@ -36,6 +36,6 @@ std::string getObjectIDFromCollisionObject(const btCollisionObject* object);
 
 void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
 
-SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btScalar &time_step);
+SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btScalar &time_step,  const btVector3 &gravity, const bool &debug_mode = false);
 
 #endif

@@ -107,7 +107,8 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 		pcl::PCDReader reader;
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr background_cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 		if (reader.read(background_location,*background_cloud) == 0){
-			this->ros_scene_.addBackground(background_cloud);
+			this->nh_.param("background_mode",background_mode_,0);
+			this->ros_scene_.addBackground(background_cloud, background_mode_);
 			std::cerr << "Background point loaded successfully\n";
 		}
 		else

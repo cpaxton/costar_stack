@@ -27,56 +27,72 @@ void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const ve
             // recursively call the connected vertex to assign the leaf of vertex connected to the parent
 
             // @TODO Check whether I need to recurvisely do this or not here
-            // assignAllConnectedToParentVertices(input_graph, connected_vertex);
+            assignAllConnectedToParentVertices(input_graph, connected_vertex);
         }
     }
 }
 
-SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btScalar &time_step)
+SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btScalar &time_step, const btVector3 &gravity, const bool &debug_mode)
 {
-    // std::cerr << "Creating support graph\n";
+    if (debug_mode) std::cerr << "Creating support graph\n";
     // make the graph with number of vertices = number of collision objects
 	SceneSupportGraph scene_support_graph(world->getNumCollisionObjects());
     std::map<std::string, vertex_t> vertex_map;
     double dTime_times_gravity = time_step * GRAVITY_MAGNITUDE * SCALING;
 
-    // std::cerr << "Adding vertices\n";
     for (std::size_t i = 0; i < world->getNumCollisionObjects(); i++)
     {
         scene_support_vertex_properties new_vertex_property;
-        // std::cerr << "Getting collision object\n";
         new_vertex_property.collision_object_ = world->getCollisionObjectArray()[i];
-        // std::cerr << "Getting vertex object id\n";
         new_vertex_property.object_id_ = getObjectIDFromCollisionObject(new_vertex_property.collision_object_);
-        // std::cerr << "Add vertex\n";
         vertex_t new_vertex = boost::add_vertex(scene_support_graph);
-        // std::cerr << "Assign vertex property\n";
         scene_support_graph[new_vertex] = new_vertex_property;
-        // std::cerr << "Assign vertex map\n";
         vertex_map[new_vertex_property.object_id_] = new_vertex;
     }
 
-    // std::cerr << "Checking collisions and adding edges\n";
+    if (debug_mode) std::cerr << "Checking collisions and adding edges\n";
 	int numManifolds = world->getDispatcher()->getNumManifolds();
     for (int i = 0; i < numManifolds; i++)
     {
         btPersistentManifold* contactManifold =  world->getDispatcher()->getManifoldByIndexInternal(i);
-        const btCollisionObject* obj_0 = contactManifold->getBody0();
-        const btCollisionObject* obj_1 = contactManifold->getBody1();
+        const btCollisionObject* obj_a = contactManifold->getBody0();
+        const btCollisionObject* obj_b = contactManifold->getBody1();
 
         // all objects should be a btRigidBody
-        if (obj_0->getInternalType() == 2 && obj_1->getInternalType() == 2)
+        if (obj_a->getInternalType() == 2 && obj_b->getInternalType() == 2)
         {
             btRigidBody *lower_obj, *upper_obj;
-            if (obj_0->getWorldTransform().getOrigin().getZ() < obj_1->getWorldTransform().getOrigin().getZ())
+            btScalar obj_b_normal_sum = 0;
+
+            btScalar totalImpact = 0.;
+            btScalar total_collision_penetration = 0;
+            for (int p = 0; p < contactManifold->getNumContacts(); p++)
             {
-                lower_obj = (btRigidBody*)obj_0; 
-                upper_obj = (btRigidBody*)obj_1;
+                btManifoldPoint& pt = contactManifold->getContactPoint(p);
+                totalImpact += pt.m_appliedImpulse;
+
+                // add penetration depth if it is in collision
+                if (pt.getDistance() < 0)
+                {
+                    total_collision_penetration += pt.getDistance() < 0 ? -pt.getDistance() : 0;
+
+                    // measure scaled normal forces to determine whether the object is supporting/supported object
+                    obj_b_normal_sum += -pt.getDistance() * pt.m_appliedImpulse * pt.m_normalWorldOnB.dot(gravity)/SCALING;
+                }
+            }
+
+            if (obj_b_normal_sum == 0) {continue;} // no actual collision happened
+            else if (obj_b_normal_sum < 0)
+            {
+                // object that are supporting the other object will have its normal forces direction in
+                // opposite direction of gravity vector
+                lower_obj = (btRigidBody*)obj_b;
+                upper_obj = (btRigidBody*)obj_a;
             }
             else
             {
-                lower_obj = (btRigidBody*) obj_1; 
-                upper_obj = (btRigidBody*) obj_0;
+                lower_obj = (btRigidBody*)obj_a;
+                upper_obj = (btRigidBody*)obj_b;
             }
 
             // assign the graph direction to the supporting object
@@ -88,18 +104,7 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btSca
             edge_t detected_edge; bool edge_already_exist = false, add_edge_success = false;
             boost::tie(detected_edge, edge_already_exist) = boost::edge(object_u,supported_object,scene_support_graph);
 
-            btScalar totalImpact = 0.;
-            btScalar total_collision_penetration = 0;
-            for (int p = 0; p < contactManifold->getNumContacts(); p++)
-            {
-                btManifoldPoint& pt = contactManifold->getContactPoint(p);
-                totalImpact += pt.m_appliedImpulse;
-
-                // add penetration depth if it is in collision
-                total_collision_penetration += pt.getDistance() < 0 ? -pt.getDistance() : 0;
-            }
-
-            if (total_collision_penetration > 0 || totalImpact > 0)
+            if (total_collision_penetration > 0 && totalImpact > 0)
             {
                 scene_support_graph[object_u].penetration_distance_+= total_collision_penetration;
                 scene_support_graph[supported_object].penetration_distance_+= total_collision_penetration;
@@ -109,14 +114,27 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btSca
                 // impulse: kg m/s; support_contribution = impulse/(dT * mass * gravity)
                 scene_support_graph[object_u].support_contributions_ += totalImpact*upper_obj->getInvMass()/dTime_times_gravity;
 
-                std::cerr << "Total impact " << getObjectIDFromCollisionObject(lower_obj) << ", " 
-                    << getObjectIDFromCollisionObject(upper_obj) << "= " << totalImpact << ", penetration= " 
-                    << total_collision_penetration << std::endl;
+                // std::cerr << "Total impact " << getObjectIDFromCollisionObject(lower_obj) << ", " 
+                //     << getObjectIDFromCollisionObject(upper_obj) << "= " << totalImpact << ", penetration= " 
+                //     << total_collision_penetration << std::endl;
             }
 
-            if (!edge_already_exist && (totalImpact > 0 || total_collision_penetration > 0) )
+            if (!edge_already_exist && (totalImpact > 0 && total_collision_penetration > 0) )
             {
                 edge_t new_edge;
+                if (debug_mode) {
+                    std::cerr << "Edge between: " << getObjectIDFromCollisionObject(lower_obj) << ", " 
+                        << getObjectIDFromCollisionObject(upper_obj) << " obj_b_normal_sum: " << obj_b_normal_sum << std::endl;
+                }
+                // make sure it actually really does not exist
+                boost::tie(detected_edge, edge_already_exist) = boost::edge(supported_object,object_u,scene_support_graph);
+                if (edge_already_exist)
+                {
+                    if (debug_mode) std::cerr << "Something is wrong, this edge already exists! Skipped\n";
+                    continue;
+                }
+                if (debug_mode) std::cerr << "Edge added. \n";
+
                 boost::tie(new_edge,add_edge_success) = boost::add_edge(object_u,supported_object,scene_support_graph);
                 if (!add_edge_success) std::cerr << "Error adding edge!\n";
             }

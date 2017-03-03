@@ -99,6 +99,7 @@ private:
 	std::map<std::string, ObjectPenaltyParameters> object_penalty_parameter_database_by_id_;
     std::map<std::string, ObjectPenaltyParameters> * object_penalty_parameter_database_;
     double gravity_magnitude_;
+    btVector3 gravity_vector_;
     std::map<std::string, MovementComponent> object_velocity_;
     std::map<std::string, MovementComponent> object_acceleration_;
 

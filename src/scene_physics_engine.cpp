@@ -154,12 +154,12 @@ void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 {
 	// mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Setting physics engine gravity vector.\n";
-	btVector3 gravity_corrected_magnitude = gravity / gravity.norm() * GRAVITY_MAGNITUDE * SCALING;
-	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_corrected_magnitude[0] << ", "
-		<< gravity_corrected_magnitude[1] << ", " 
-		<< gravity_corrected_magnitude[2] << std::endl;
-	m_dynamicsWorld->setGravity(gravity_corrected_magnitude);
-	this->gravity_magnitude_ = gravity_corrected_magnitude.norm();
+	this->gravity_vector_ = gravity / gravity.norm() * GRAVITY_MAGNITUDE * SCALING;
+	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_vector_[0] << ", "
+		<< gravity_vector_[1] << ", " 
+		<< gravity_vector_[2] << std::endl;
+	m_dynamicsWorld->setGravity(gravity_vector_);
+	this->gravity_magnitude_ = gravity_vector_.norm();
 	// mtx_.unlock();
 }
 
@@ -232,7 +232,7 @@ void PhysicsEngine::simulate()
 		this->object_velocity_.clear();
 		this->object_acceleration_.clear();
 		this->in_simulation_ = true;
-		while (this->in_simulation_ && this->counter_ < 200 )
+		while (this->in_simulation_ && this->counter_ < 10 )
 		{
 			// Do nothing;
 
@@ -473,7 +473,7 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 				object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
 		}
 	}
-	generateObjectSupportGraph(m_dynamicsWorld, timeStep);
+	generateObjectSupportGraph(m_dynamicsWorld, timeStep, gravity_vector_, this->debug_messages_);
 	// mtx_.unlock();
 }
 
