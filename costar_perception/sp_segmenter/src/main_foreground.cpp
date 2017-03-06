@@ -11,7 +11,20 @@
 
 //std::string drill_mesh_name("../driller_uniform");
 //std::string sander_mesh_name("../sander_uniform");
-
+       
+uchar model_color[11][3] = 
+{ {0, 0, 0}, 
+  {255, 0, 0},
+  {0, 255, 0},
+  {0, 0, 255},
+  {255, 255, 0},
+  {255, 0, 255},
+  {0, 255, 255},
+  {255, 128, 0},
+  {255, 0, 128},
+  {0, 128, 255},
+  {128, 0, 255},
+}; 
 
 int main(int argc, char** argv)
 {

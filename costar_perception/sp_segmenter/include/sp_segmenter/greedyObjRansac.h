@@ -8,6 +8,7 @@
 #include "sp_segmenter/seg.h"
 #include "sp_segmenter/utility/utility.h"
 
+#include <ObjRecRANSAC/ObjRecRANSAC.h>
 #include <pcl/features/normal_3d.h>
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
@@ -32,8 +33,8 @@ public:
     void ICP(std::vector<poseT> &poses, const pcl::PointCloud<myPointXYZ>::Ptr scene);
     
     void AddModel(std::string name, std::string label);
-    void visualize(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, int color[3]);
-    void visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, std::map<std::string, int> &model_name_map, uchar model_color[11][3]);
+    void visualize(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, uchar color[3]);
+    void visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses, std::map<std::string, std::size_t> &model_name_map, uchar model_color[11][3]);
     void clearMesh(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses);
     
     void GreedyRecognize(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::vector<poseT> &poses);

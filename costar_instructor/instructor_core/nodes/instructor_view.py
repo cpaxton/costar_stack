@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('instructor_core')
+
+#import roslib; roslib.load_manifest('instructor_core')
+#from roslib import rospack
+
 import rospy
 from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
@@ -7,8 +10,10 @@ from PyQt4.QtCore import *
 from xdot.xdot_qt import DotWidget
 import rospkg
 from beetree import *
+
 import instructor_core
 from instructor_core.srv import *
+
 import os,sys, inspect, ast
 from std_msgs.msg import *
 from geometry_msgs.msg import *
@@ -19,17 +24,18 @@ import tf_conversions as tf_c
 from instructor_core.instructor_qt import *
 # Using roslib.rospack even though it is deprecated
 import threading
-from roslib import rospack
 import yaml
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
 import time
 from copy import deepcopy
+# import cProfile
+# from memory_profiler import profile
+# ==============================================================
+# SRVs
 import costar_robot_msgs
 from costar_robot_msgs.srv import *
-from instructor_gui_components import *
-from smart_waypoint_manager import SmartWaypointManager
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty as EmptySrv
 
 ### TIMER ###################################################
 global tic_time
@@ -47,738 +53,11 @@ color_options = ColorOptions()
 colors = color_options.colors
 
 ### GUI ELEMENTS --------------------------------------------------------- ### 
-class SmartMoveDialog(QWidget):
-    def __init__(self, show_hide_fn,parent=None):
-        QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
-        # GUI
-        rp = rospkg.RosPack()
-        w_path = rp.get_path('instructor_core') + '/ui/smart_move.ui'
-        uic.loadUi(w_path, self)
-        self.show_hide = show_hide_fn
-        self.selected_object = None
-        self.selected_move = None
-        self.saved_geom = None
-        self.new_move_name = None
-
-        self.manager = SmartWaypointManager(ns="")
-        
-        self.done_button.clicked.connect(self.done)
-        self.name_field.textChanged.connect(self.move_name_cb)
-        self.object_list.itemClicked.connect(self.object_selected)
-        self.move_list.itemClicked.connect(self.move_selected)
-
-        self.add_move_button.clicked.connect(self.add_move)
-        self.delete_move_button.clicked.connect(self.delete_move)
-
-        self.update_objects()
-        self.update_moves()
-
-    def update_all(self):
-        self.update_objects()
-        self.update_moves()
-
-    def done(self):
-        self.show_hide()
-
-    def move_name_cb(self,text):
-        self.new_move_name = str(text)
-        self.update_objects()
-
-    def object_selected(self,item):
-        self.selected_object = str(item.text())
-        self.object_field.setText(self.selected_object)
-        self.update_moves()
-
-    def move_selected(self,item):
-        # self.update_objects()
-        self.selected_move = str(item.text())
-
-    def update_objects(self):
-        self.object_list.clear()
-        self.found_objects = self.manager.get_detected_objects()
-        # Populate objects in list
-        if self.found_objects is not None:
-            for m in self.found_objects:
-                self.object_list.addItem(QListWidgetItem(m.strip('/')))
-            self.object_list.sortItems()
-            self.object_list.setCurrentRow(0)
-
-    def update_moves(self):
-        if self.selected_object is not None:
-            self.move_list.clear()
-
-            # Populate moves in list
-            self.manager.load_all()
-            self.found_moves = self.manager.get_moves_for_object(self.selected_object)
-            if self.found_moves is not None:
-                for m in self.found_moves:
-                    self.move_list.addItem(QListWidgetItem(m.strip('/')))
-                self.move_list.sortItems()
-                self.move_list.setCurrentRow(0)
-
-    def add_move(self):
-        self.update_objects()
-        print self.new_move_name
-        if self.new_move_name is not None and self.selected_object is not None:
-            # librarian call to add a new move with new_move_name
-            self.manager.save_new_waypoint(self.selected_object,self.new_move_name)
-            # Update moves
-            self.update_moves()
-            pass
-
-    def delete_move(self):
-        self.update_objects()
-        print self.selected_move
-        if self.selected_move is not None:
-            # librarian call to remove move for selected class
-            self.manager.delete(self.selected_move)
-
-            # Update moves
-            self.update_moves()
-        pass
-
-
-class JogDialog(QWidget):
-    def __init__(self, show_hide_fn,parent=None):
-        QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
-        # GUI
-        rp = rospkg.RosPack()
-        w_path = rp.get_path('instructor_core') + '/ui/jog_buttons.ui'
-        uic.loadUi(w_path, self)
-        # Vars
-        self.jog_publisher = rospy.Publisher('/ur_robot/jog',JointState)
-        self.show_hide = show_hide_fn 
-        self.saved_geom = None
-        self.jogging = False
-        self.jog_direction = None
-        self.step = .01
-        self.rot_step = .05
-        self.speed = 'low'
-        #Signals
-        self.btn_ok.clicked.connect(self.ok)
-
-        self.btn_roll_left.pressed.connect(self.start_jog)
-        self.btn_roll_right.pressed.connect(self.start_jog)
-        self.btn_yaw_left.pressed.connect(self.start_jog)
-        self.btn_yaw_right.pressed.connect(self.start_jog)
-        self.btn_pitch_up.pressed.connect(self.start_jog)
-        self.btn_pitch_down.pressed.connect(self.start_jog)
-        self.btn_roll_left.released.connect(self.stop_jog)
-        self.btn_roll_right.released.connect(self.stop_jog)
-        self.btn_yaw_left.released.connect(self.stop_jog)
-        self.btn_yaw_right.released.connect(self.stop_jog)
-        self.btn_pitch_up.released.connect(self.stop_jog)
-        self.btn_pitch_down.released.connect(self.stop_jog)
-
-        self.btn_plus_x.pressed.connect(self.start_jog)
-        self.btn_plus_y.pressed.connect(self.start_jog)
-        self.btn_plus_z.pressed.connect(self.start_jog)
-        self.btn_minus_x.pressed.connect(self.start_jog)
-        self.btn_minus_y.pressed.connect(self.start_jog)
-        self.btn_minus_z.pressed.connect(self.start_jog)
-        self.btn_plus_x.released.connect(self.stop_jog)
-        self.btn_plus_y.released.connect(self.stop_jog)
-        self.btn_plus_z.released.connect(self.stop_jog)
-        self.btn_minus_x.released.connect(self.stop_jog)
-        self.btn_minus_y.released.connect(self.stop_jog)
-        self.btn_minus_z.released.connect(self.stop_jog)
-        self.btn_speed.clicked.connect(self.toggle_speed)
-
-    def ok(self):
-        self.stop_jog()
-        self.show_hide()
-
-    def toggle_speed(self):
-        if self.speed == 'low':
-            self.speed = 'high'
-            self.step = .05
-            self.rot_step = .1
-            self.btn_speed.setText('JOG SPEED: HIGH')
-            self.btn_speed.setStyleSheet('''QPushButton#btn_speed { background-color:#F22613;color:#ffffff;border:none }QPushButton#btn_speed:hover:!pressed{ background-color:#F22613;color:#ffffff;border:none }QPushButton#btn_speed:hover { background-color:#F22613;color:#ffffff;border:none }''')
-        else:
-            self.speed = 'low'
-            self.step = .01
-            self.rot_step = .05
-            self.btn_speed.setText('JOG SPEED: LOW')
-            self.btn_speed.setStyleSheet('''QPushButton#btn_speed { background-color:#26A65B;color:#ffffff;border:none }QPushButton#btn_speed:hover:!pressed{ background-color:#26A65B;color:#ffffff;border:none }QPushButton#btn_speed:hover { background-color:#26A65B;color:#ffffff;border:none }''')
-
-    def stop_jog(self):
-        sender = str(self.sender().objectName())
-        P = JointState()
-        P.header.stamp = rospy.get_rostime()
-        P.header.frame_id = "jog_offset"
-        P.position = [0]*6
-        P.velocity = [0]*6
-        P.effort = [0]*6
-        self.jog_publisher.publish(P)
-        rospy.logwarn('Sent '+ str(P.velocity))
-        rospy.logwarn('Jog Finished ['+sender+']')
-        self.jogging = False
-
-    def start_jog(self):
-        if not self.jogging:
-            sender = str(self.sender().objectName())
-
-            P = JointState()
-            P.header.stamp = rospy.get_rostime()
-            P.header.frame_id = "jog_offset"
-            P.position = [0]*6
-            P.velocity = [0]*6
-            P.effort = [0]*6
-            if sender == str("btn_plus_x"):
-                P.velocity[0] += self.step
-            elif sender == str("btn_plus_y"):
-                P.velocity[1] += self.step
-            elif sender == str("btn_plus_z"):
-                P.velocity[2] += self.step
-            elif sender == str("btn_minus_x"):
-                P.velocity[0] -= self.step
-            elif sender == str("btn_minus_y"):
-                P.velocity[1] -= self.step
-            elif sender == str("btn_minus_z"):
-                P.velocity[2] -= self.step
-                    
-            elif sender == str("btn_pitch_up"):
-                P.velocity[4] -= self.rot_step
-            elif sender == str("btn_pitch_down"):
-                P.velocity[4] += self.rot_step
-
-            elif sender == str("btn_roll_left"):
-                P.velocity[3] -= self.rot_step
-            elif sender == str("btn_roll_right"):
-                P.velocity[3] += self.rot_step
-                
-            elif sender == str("btn_yaw_left"):
-                P.velocity[5] -= self.rot_step
-            elif sender == str("btn_yaw_right"):
-                P.velocity[5] += self.rot_step
-            
-
-            self.jog_publisher.publish(P)
-            rospy.logwarn('Jog Started ['+sender+']')
-            rospy.logwarn('Sent '+ str(P.velocity))
-            self.jogging = True
-       
-
-class WaypointManagerDialog(QWidget):
-    def __init__(self, parent=None):
-        QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
-        # GUI
-        rp = rospkg.RosPack()
-        w_path = rp.get_path('instructor_plugins') + '/ui/waypoint_manager_2.ui'
-        uic.loadUi(w_path, self)
-        self.waypoint_page_widget = QWidget()
-        self.relative_page_widget = QWidget()
-        waypoint_path = rp.get_path('instructor_plugins') + '/ui/waypoint_inner_frame.ui'
-        uic.loadUi(waypoint_path, self.waypoint_page_widget)
-        relative_path = rp.get_path('instructor_plugins') + '/ui/relative_inner_frame.ui'
-        uic.loadUi(relative_path, self.relative_page_widget)
-        self.waypoint_layout.addWidget(self.waypoint_page_widget)
-        self.relative_layout.addWidget(self.relative_page_widget)
-
-        self.waypoint_page_btn = InterfaceButton('FIXED WAYPOINTS',colors['blue'])
-        self.waypoint_page_btn.clicked.connect(self.show_waypoint_page)
-        self.relative_page_btn = InterfaceButton('RELATIVE WAYPOINTS',colors['green'])
-        self.relative_page_btn.clicked.connect(self.show_relative_page)
-        self.page_button_layout.addWidget(self.waypoint_page_btn)
-        self.page_button_layout.addWidget(self.relative_page_btn)
-
-        # BUTTONS #
-        self.add_waypoint_btn = InterfaceButton('ADD WAYPOINT',colors['blue'])
-        self.button_layout.addWidget(self.add_waypoint_btn)
-        self.add_waypoint_btn.clicked.connect(self.add_waypoint)
-
-        self.add_waypoint_seq_btn = InterfaceButton('ADD WAYPOINT SEQUENCE',colors['blue'])
-        self.button_layout.addWidget(self.add_waypoint_seq_btn)
-        self.add_waypoint_seq_btn.clicked.connect(self.add_waypoint_seq)
-
-        self.add_waypoint_btn = InterfaceButton('REMOVE WAYPOINT',colors['red'])
-        self.button_layout.addWidget(self.add_waypoint_btn)
-        self.add_waypoint_btn.clicked.connect(self.remove_waypoint)
-
-        self.servo_to_waypoint_btn = InterfaceButton('SERVO TO WAYPOINT',colors['purple'])
-        self.button_layout.addWidget(self.servo_to_waypoint_btn)
-        self.servo_to_waypoint_btn.clicked.connect(self.servo_to_waypoint)
-
-        self.waypoint_page_widget.name_field.textChanged.connect(self.waypoint_name_cb)
-        self.relative_page_widget.name_field.textChanged.connect(self.waypoint_name_cb)
-
-        self.relative_page_widget.landmark_list.itemClicked.connect(self.landmark_selected)
-        self.relative_page_widget.landmark_field.setText('NONE')
-        self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
-        
-        # Members
-        self.landmarks = {}
-        self.new_fixed_name = None
-        self.new_relative_name = None
-        self.selected_landmark = None
-        self.waypoint_selected = False
-        self.listener_ = tf.TransformListener()
-        self.mode = 'FIXED'
-        self.found_waypoints = []
-        self.found_rel_waypoints = []
-        # Initialize
-        self.update_waypoints()
-
-    def show_waypoint_page(self):
-        self.stack.setCurrentIndex(0)
-        self.mode = 'FIXED'
-        self.update_waypoints()
-
-    def show_relative_page(self):
-        self.stack.setCurrentIndex(1)
-        self.mode = 'RELATIVE'
-        self.update_waypoints()
-
-    def waypoint_name_cb(self,t):
-        if self.mode == 'FIXED':
-            self.new_fixed_name = str(t)
-        else:
-            self.new_relative_name = str(t)
-
-    def landmark_selected(self,item):
-        if item == None:
-            self.relative_page_widget.landmark_field.setText('NONE')
-            self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
-            self.selected_landmark = None
-        else:
-            text = str(item.text())
-            self.relative_page_widget.landmark_field.setText(text.upper())
-            self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['green'].hover+';color:#ffffff')
-            self.selected_landmark = text
-
-    def add_waypoint(self):
-        if self.mode == 'FIXED':
-            if self.new_fixed_name:
-                # Check for sequence waypoints
-                for w in self.found_waypoints:
-                    if '--' in w:
-                        if self.new_fixed_name == w.split('--')[0].replace('/',''):
-                            rospy.logerr('YOU MUST PICK A NAME THAT IS NOT A SEQUENCE')
-                            return
-                try:
-                    F_waypoint = tf_c.fromTf(self.listener_.lookupTransform('/world','/endpoint',rospy.Time(0)))
-                except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                    rospy.logerr('Could not find the tf frame for the robot endpoint: %s'%str(e))
-                    return
-                try:
-                    rospy.wait_for_service('/instructor_core/AddWaypoint',2)
-                except rospy.ROSException as e:
-                    rospy.logerr(e)
-                    return
-                try:
-                    add_waypoint_proxy = rospy.ServiceProxy('/instructor_core/AddWaypoint',AddWaypoint)
-                    msg = AddWaypointRequest()
-                    msg.name = '/' + self.new_fixed_name
-                    msg.world_pose = tf_c.toMsg(F_waypoint)
-                    rospy.loginfo(add_waypoint_proxy(msg))
-                    self.update_waypoints()
-                    self.waypoint_page_widget.name_field.setText('')
-                except rospy.ServiceException, e:
-                    rospy.logwarn(e)
-            else:
-                rospy.logerr('You need to input a name for the waypoint')
-        else:
-            rospy.logwarn('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
-            if self.selected_landmark != None:
-                landmark_frame = self.landmarks[str(self.selected_landmark)].strip('/')
-                rospy.logwarn(landmark_frame)
-                try:
-                    F_landmark = tf_c.fromTf(self.listener_.lookupTransform('/world',landmark_frame,rospy.Time(0)))
-                except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                    rospy.logerr('Selected landmark not found')
-                    return                
-            else:
-                rospy.logerr('You did not select a landmark')
-                return
-            if not self.new_relative_name:
-                rospy.logwarn('You did not enter a waypoint name')
-                return
-
-            # Get relative pose
-            try:
-                F_landmark_endpoint = tf_c.fromTf(self.listener_.lookupTransform('/'+landmark_frame,'/endpoint',rospy.Time(0)))
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                rospy.logerr(e)
-                return
-
-            try:
-                rospy.wait_for_service('/instructor_core/AddWaypoint',2)
-            except rospy.ROSException as e:
-                rospy.logerr(e)
-                return
-
-            for w in self.found_rel_waypoints:
-                if '--' in w:
-                    if self.new_relative_name == w.split('--')[0].replace('/',''):
-                        rospy.logerr('YOU MUST PICK A NAME THAT IS NOT A SEQUENCE')
-                        return
-            try:
-                add_waypoint_proxy = rospy.ServiceProxy('/instructor_core/AddWaypoint',AddWaypoint)
-                msg = AddWaypointRequest()
-                msg.name = '/' + self.new_relative_name
-                msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
-                msg.relative_frame_name = '/'+landmark_frame
-                rospy.loginfo(add_waypoint_proxy(msg))
-                self.update_waypoints()
-                # Reset
-                self.relative_page_widget.name_field.setText('')
-                self.relative_page_widget.landmark_field.setText('NONE')
-                self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
-                self.selected_landmark = None
-            except rospy.ServiceException, e:
-                rospy.logwarn(e)
-
-    def add_waypoint_seq(self):
-        if self.mode == 'FIXED':
-            if self.new_fixed_name:
-
-                try:
-                    F_waypoint = tf_c.fromTf(self.listener_.lookupTransform('/world','/endpoint',rospy.Time(0)))
-                except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                    rospy.logerr('Could not find the tf frame for the robot endpoint')
-                    return
-                try:
-                    rospy.wait_for_service('/instructor_core/AddWaypoint',2)
-                except rospy.ROSException as e:
-                    rospy.logerr(e)
-                    return
-
-                # Check for non-sequence waypoints with sequence name
-                for w in self.found_waypoints:
-                    if '--' not in w:
-                        if self.new_fixed_name == w.replace('/',''):
-                            rospy.logerr('YOU MUST PICK A UNIQUE NAME FOR A SEQUENCE')
-                            return
-                            
-                # Look for existing sequence and get index if present
-                wp = [w.split('--')[0].replace('/','') for w in self.found_waypoints]
-                index = 0
-                rospy.logwarn('wp: '+str(wp))
-                rospy.logwarn('name: '+self.new_fixed_name)
-                if self.new_fixed_name in wp:
-                    rospy.logwarn('name found... ' + self.new_fixed_name)
-                    index = -1
-                    for w in self.found_waypoints:
-                        if self.new_fixed_name in w:
-                            if int(w.split('--')[1]) > index:
-                                index = int(w.split('--')[1])
-                    index = index + 1
-
-                try:
-                    add_waypoint_proxy = rospy.ServiceProxy('/instructor_core/AddWaypoint',AddWaypoint)
-                    msg = AddWaypointRequest()
-                    msg.name = '/' + self.new_fixed_name + '--' + str(index)
-                    msg.world_pose = tf_c.toMsg(F_waypoint)
-                    rospy.loginfo(add_waypoint_proxy(msg))
-                    self.update_waypoints()
-                    # self.waypoint_page_widget.name_field.setText('')
-                except rospy.ServiceException, e:
-                    rospy.logwarn(e)
-            else:
-                rospy.logerr('You need to input a name for the waypoint')
-        else:
-            rospy.logwarn('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
-            if self.selected_landmark != None:
-                landmark_frame = self.landmarks[str(self.selected_landmark)].strip('/')
-                rospy.logwarn(landmark_frame)
-                try:
-                    F_landmark = tf_c.fromTf(self.listener_.lookupTransform('/world',landmark_frame,rospy.Time(0)))
-                except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                    rospy.logerr('Selected landmark not found')
-                    return                
-            else:
-                rospy.logerr('You did not select a landmark')
-                return
-            if not self.new_relative_name:
-                rospy.logwarn('You did not enter a waypoint name')
-                return
-
-            # Check for non-sequence waypoints with sequence name
-            for w in self.found_rel_waypoints:
-                if '--' not in w:
-                    if self.new_relative_name == w.replace('/',''):
-                        rospy.logerr('YOU MUST PICK A UNIQUE NAME FOR A SEQUENCE')
-                        return
-                                        # Look for existing sequence and get index if present
-            wp = [w.split('--')[0].replace('/','') for w in self.found_rel_waypoints]
-            index = 0
-            if self.new_relative_name in wp:
-                index = -1
-                for w in self.found_rel_waypoints:
-                    if self.new_relative_name in w:
-                        if int(w.split('--')[1]) > index:
-                            index = int(w.split('--')[1])
-                index = index + 1
-
-            # Get relative pose
-            try:
-                F_landmark_endpoint = tf_c.fromTf(self.listener_.lookupTransform('/'+landmark_frame,'/endpoint',rospy.Time(0)))
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                rospy.logerr(e)
-                return
-
-            try:
-                rospy.wait_for_service('/instructor_core/AddWaypoint',2)
-            except rospy.ROSException as e:
-                rospy.logerr(e)
-                return
-            try:
-                add_waypoint_proxy = rospy.ServiceProxy('/instructor_core/AddWaypoint',AddWaypoint)
-                msg = AddWaypointRequest()
-                msg.name = '/' + self.new_relative_name + '--' + str(index)
-                msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
-                msg.relative_frame_name = '/'+landmark_frame
-                rospy.loginfo(add_waypoint_proxy(msg))
-                self.update_waypoints()
-                # Reset
-                # self.relative_page_widget.name_field.setText('')
-                # self.relative_page_widget.landmark_field.setText('NONE')
-                # self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
-                # self.selected_landmark = None
-            except rospy.ServiceException, e:
-                rospy.logwarn(e)
-
-    def remove_waypoint(self):
-        if self.mode is 'FIXED':
-            current_selected_name = self.waypoint_page_widget.waypoint_list.currentItem().text()
-        else:
-            current_selected_name = self.relative_page_widget.waypoint_list.currentItem().text()
-        
-        if current_selected_name:
-            try:
-                rospy.wait_for_service('/instructor_core/RemoveWaypoint',2)
-            except rospy.ROSException as e:
-                rospy.logerr(e)
-                return
-            try:
-                remove_waypoint_proxy = rospy.ServiceProxy('/instructor_core/RemoveWaypoint',RemoveWaypoint)
-                msg = RemoveWaypointRequest()
-                msg.name = str('/' + current_selected_name)
-                rospy.loginfo(remove_waypoint_proxy(msg))
-                self.update_waypoints()
-            except rospy.ServiceException, e:
-                rospy.logwarn(e)
-
-    def update_waypoints(self):
-        # Update FIXED Waypoints
-        rospy.wait_for_service('/instructor_core/GetWaypointList')
-        self.found_waypoints = []
-        self.waypoint_page_widget.waypoint_list.clear()
-        try:
-            get_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetWaypointList',GetWaypointList)
-            self.found_waypoints = get_waypoints_proxy('').names
-        except rospy.ServiceException, e:
-            rospy.logwarn(e)
-        for w in self.found_waypoints:
-            self.waypoint_page_widget.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
-        self.waypoint_page_widget.waypoint_list.sortItems()
-        self.waypoint_page_widget.waypoint_list.setCurrentRow(0)
-        # Update RELATIVE Waypoints
-        rospy.wait_for_service('/instructor_core/GetRelativeWaypointList')
-        self.found_rel_waypoints = []
-        self.relative_page_widget.waypoint_list.clear()
-        try:
-            get_relative_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetRelativeWaypointList',GetRelativeWaypointList)
-            self.found_rel_waypoints = get_relative_waypoints_proxy('').names
-        except rospy.ServiceException, e:
-            rospy.logwarn(e)
-        for w in self.found_rel_waypoints:
-            self.relative_page_widget.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
-        self.relative_page_widget.waypoint_list.sortItems()
-        self.relative_page_widget.waypoint_list.setCurrentRow(0)
-        # Update LANDMARKS
-        rospy.wait_for_service('/instructor_core/GetLandmarkList')
-        landmark_names = []
-        landmark_frames = []
-        self.landmarks.clear()
-        self.relative_page_widget.landmark_list.clear()
-        try:
-            get_landmarks_proxy = rospy.ServiceProxy('/instructor_core/GetLandmarkList',GetLandmarkList)
-            found_landmarks = get_landmarks_proxy('')
-            landmark_names = found_landmarks.names
-            landmark_frames = found_landmarks.frame_names
-        except rospy.ServiceException, e:
-            rospy.logwarn(e)
-        for name,frame in zip(landmark_names,landmark_frames):
-            self.landmarks[name] = frame
-        # rospy.logwarn(self.landmarks)
-        # Add to UI
-        for w in landmark_names:
-            self.relative_page_widget.landmark_list.addItem(QListWidgetItem(w.strip('/')))
-        self.relative_page_widget.landmark_list.sortItems()
-        self.relative_page_widget.landmark_list.setCurrentRow(0)
-
-    def servo_to_waypoint(self):
-        if self.mode is 'FIXED':
-            current_selected_waypoint = self.waypoint_page_widget.waypoint_list.currentItem().text()
-            self.command_waypoint_name = str(current_selected_waypoint)
-        else:
-            current_selected_waypoint = self.relative_page_widget.waypoint_list.currentItem().text()
-            self.command_waypoint_name = str(current_selected_waypoint)
-
-        if self.command_waypoint_name != None:
-            try:
-                pose_servo_proxy = rospy.ServiceProxy('costar/ServoToPose',costar_robot_msgs.srv.ServoToPose)
-                
-                F_command_world = tf_c.fromTf(self.listener_.lookupTransform('/world', '/'+self.command_waypoint_name, rospy.Time(0)))
-                F_base_world = tf_c.fromTf(self.listener_.lookupTransform('/world','/base_link',rospy.Time(0)))
-                F_command = F_base_world.Inverse()*F_command_world
-                    
-                msg = costar_robot_msgs.srv.ServoToPoseRequest()
-                msg.target = tf_c.toMsg(F_command)
-                msg.vel = .25
-                msg.accel = .25
-                # Send Servo Command
-                rospy.logwarn('Single Servo Move Started')
-                result = pose_servo_proxy(msg)
-                if 'FAILURE' in str(result.ack):
-                    rospy.logwarn('Servo failed with reply: '+ str(result.ack))
-                    return
-                else:
-                    rospy.logwarn('Single Servo Move Finished')
-                    rospy.logwarn('Robot driver reported: '+str(result.ack))
-                    return
-
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
-                rospy.logwarn('There was a problem with the tf lookup or service:')
-                rospy.logwarn(e)
-                return
-
-
-class RobotInterface():
-    def __init__(self,status_label,teach_btn,servo_btn,sound_pub,toast):
-        self.toast = toast
-        self.driver_status_sub = rospy.Subscriber('/costar/DriverStatus',String,self.driver_status_cb)
-        self.status_label = status_label
-        self.teach_btn = teach_btn
-        self.servo_btn = servo_btn
-        self.sound_pub = sound_pub
-        self.driver_status = 'NOT CONNECTED'
-        self.status_label.setText('ROBOT MODE: [NOT CONNECTED]')
-
-    def driver_status_cb(self,msg):
-        mode = str(msg.data)
-        self.driver_status = mode
-        self.status_label.setText('ROBOT MODE: ['+mode.upper()+']')
-        # self.update_status()
-
-    def update_status(self):
-        if self.driver_status == 'TEACH':
-            self.status_label.setStyleSheet('background-color:'+colors['blue'].normal+'; color:#ffffff')
-        elif self.driver_status == 'SERVO':
-            self.status_label.setStyleSheet('background-color:'+colors['green'].normal+'; color:#ffffff')
-        elif self.driver_status == 'IDLE':
-            self.status_label.setStyleSheet('background-color:'+colors['gray_light'].normal+'; color:#ffffff')
-        elif self.driver_status == 'IDLE - WARN':
-            self.status_label.setStyleSheet('background-color:'+colors['orange'].normal+'; color:#ffffff')
-        elif self.driver_status == 'NOT CONNECTED':
-            self.status_label.setStyleSheet('background-color:'+colors['orange'].normal+'; color:#ffffff')
-        elif self.driver_status == 'DISABLED':
-            self.status_label.setStyleSheet('background-color:'+colors['red'].normal+'; color:#ffffff')
-
-        # self.status_label.setText('ROBOT MODE: ['+self.driver_status.upper()+']')
-
-    def teach(self):
-        if self.driver_status == 'IDLE':
-            try:
-                rospy.wait_for_service('/costar/SetTeachMode',2)
-            except rospy.ROSException as e:
-                print 'Could not find teach service'
-                return
-            try:
-                teach_mode_service = rospy.ServiceProxy('/costar/SetTeachMode',SetTeachMode)
-                result = teach_mode_service(True)
-                # self.sound_pub.publish(String("low_up"))
-                rospy.logwarn(result.ack)
-                self.teach_btn.set_color(colors['gray_light'])
-            except rospy.ServiceException, e:
-                print e
-        elif self.driver_status == 'TEACH':
-            try:
-                rospy.wait_for_service('/costar/SetTeachMode',2)
-            except rospy.ROSException as e:
-                print 'Could not find teach service'
-                return
-            try:
-                teach_mode_service = rospy.ServiceProxy('/costar/SetTeachMode',SetTeachMode)
-                result = teach_mode_service(False)
-                rospy.logwarn(result.ack)
-                # self.sound_pub.publish(String("low_down"))
-                self.teach_btn.set_color(colors['gray'])
-            except rospy.ServiceException, e:
-                print e
-        else:
-            rospy.logwarn('FAILED, driver is in ['+self.driver_status+'] mode.')
-            self.toast('Driver is in ['+self.driver_status+'] mode!')
-
-    def servo(self):
-        if self.driver_status == 'IDLE':
-            try:
-                rospy.wait_for_service('/costar/SetServoMode',2)
-            except rospy.ROSException as e:
-                print 'Could not find SetServoMode service'
-                return
-            try:
-                servo_mode_service = rospy.ServiceProxy('/costar/SetServoMode',SetServoMode)
-                result = servo_mode_service('SERVO')
-                rospy.logwarn(result.ack)
-                self.servo_btn.set_color(colors['gray_light'])
-            except rospy.ServiceException, e:
-                print e
-
-        elif self.driver_status == 'SERVO':
-            try:
-                rospy.wait_for_service('/costar/SetServoMode',2)
-            except rospy.ROSException as e:
-                print 'Could not find SetServoMode service'
-                return
-            try:
-                servo_mode_service = rospy.ServiceProxy('/costar/SetServoMode',SetServoMode)
-                result = servo_mode_service('DISABLE')
-                rospy.logwarn(result.ack)
-                self.servo_btn.set_color(colors['gray'])
-            except rospy.ServiceException, e:
-                print e
-        else:
-            rospy.logwarn('FAILED, driver is in ['+self.driver_status+'] mode.')
-            self.toast('Driver is in ['+self.driver_status+'] mode!')
-
-    def disable(self):
-        try:
-            rospy.wait_for_service('/costar/SetServoMode',2)
-        except rospy.ROSException as e:
-            print 'Could not find SetServoMode service'
-            return
-        try:
-            servo_mode_service = rospy.ServiceProxy('/costar/SetServoMode',SetServoMode)
-            result = servo_mode_service('DISABLE')
-            rospy.logwarn(result.ack)
-        except rospy.ServiceException, e:
-            print e
-
-    def teach_disable(self):
-        if self.driver_status == 'TEACH':
-            try:
-                rospy.wait_for_service('/costar/SetTeachMode',2)
-            except rospy.ROSException as e:
-                print 'Could not find teach service'
-                return
-            try:
-                teach_mode_service = rospy.ServiceProxy('/costar/SetTeachMode',SetTeachMode)
-                result = teach_mode_service(False)
-                rospy.logwarn(result.ack)
-                # self.teach = False
-                self._widget.teach_enable_label.setText('DISABLED')
-                self._widget.teach_enable_label.setStyleSheet('color:#ffffff;background-color:#FF9100')
-                self._widget.msg_label.setText("teach DISABLED")
-            except rospy.ServiceException, e:
-                print e
-        else:
-            self._widget.msg_label.setText("DRIVER MUST BE IN TEACH MODE TO DISABLE")
-            rospy.logwarn('FAILED, driver is in ['+self.driver_status+'] mode.')
-            self.toast('Driver is in ['+self.driver_status+'] mode!')
-
+from instructor_core.instructor_gui_components import *
+from instructor_core.smart_move_dialog import SmartMoveDialog
+from instructor_core.jog_dialog import JogDialog
+from instructor_core.waypoint_manager_dialog import WaypointManagerDialog
+from instructor_core.robot_interface import RobotInterface
 
 #############################################################################
 
@@ -786,13 +65,16 @@ def clear_cmd():
     os.system(['clear','cls'][os.name == 'nt'])
     pass
 
-def load_instructor_plugins():
+'''
+Load the plugins that become elements we can add to instructor.
+'''
+def load_instructor_plugins(cases=[]):
+    # NOTE: we no longer need to use this, at least for the time being.
     #to_check = rospack.rospack_depends_on_1('beetree')
-    to_check = ['instructor_plugins', 'instructor_core']
+    to_check = ["instructor_core", "instructor_plugins"]
     rp = rospkg.RosPack()
     # to_check = rospack.get_depends_on('beetree', implicit=False)
     clear_cmd()
-    print 'Found packages that have beetree dependency...'
     # print to_check
     plugins = []    
     descriptions = []
@@ -806,22 +88,33 @@ def load_instructor_plugins():
         p_descriptions = m.get_export('instructor', 'description')
         p_names = m.get_export('instructor', 'name')
         p_groups = m.get_export('instructor', 'group')
-
+        p_cases = m.get_export('instructor', 'cases')
         if not p_modules:
             continue
         if p_modules == []:
             pass
 
-        for p_module, p_description, p_name, p_type, p_group in zip(p_modules,p_descriptions,p_names,p_types,p_groups):
-            roslib.load_manifest(pkg)
-            package = __import__(pkg)
-            sub_mod = p_module.split('.')[1:][0]
-            module = getattr(package, sub_mod)
-            plugins.append(module)
-            descriptions.append(p_description)
-            names.append(p_name)               
-            types.append(p_type)
-            groups.append(p_group)                
+        for p_module, p_description, p_name, p_type, p_group, p_case in zip(p_modules,p_descriptions,p_names,p_types,p_groups,p_cases):
+            if len(cases) == 0:
+                include = True
+            else:
+                include = False
+                allowed_cases = p_case.split(',')
+                #rospy.logerr("allowed for " + p_name + ": " + str(allowed_cases))
+                for case in cases:
+                    if case in allowed_cases:
+                        include = True
+                        break
+
+            if include:
+                package = __import__(pkg)
+                sub_mod = p_module.split('.')[1:][0]
+                module = getattr(package, sub_mod)
+                plugins.append(module)
+                descriptions.append(p_description)
+                names.append(p_name)               
+                types.append(p_type)
+                groups.append(p_group)
 
     rospy.logwarn(plugins)
     rospy.logwarn(descriptions)
@@ -834,11 +127,37 @@ class Instructor(QWidget):
     toast_signal = pyqtSignal()
     def __init__(self,app):
         super(Instructor,self).__init__()
-        rospy.logwarn('INSTRUCTOR: STARTING UP...')
+        #rospy.logwarn('INSTRUCTOR: STARTING UP...')
         self.app_ = app
-        self.types__ = ['LOGIC', 'ACTION', 'CONDITION', 'QUERY', 'PROCESS', 'SERVICE','VARIABLE']
-        self.colors__ = ['blue', 'green', 'purple', 'orange', 'pink', 'gray','gray']
-        self.labels__ = ['BUILDING BLOCKS', 'ROBOT ACTIONS', 'SYSTEM KNOWLEDGE', 'QUERIES', 'PROCESSES','SERVICE','VARIABLES']
+        self.types__ = ['LOGIC',
+                'ACTION',
+                'CONDITION',
+                'QUERY',
+                'PROCESS',
+                'SERVICE',
+                'VARIABLE']
+        self.colors__ = ['blue',
+                'green',
+                'purple',
+                'orange',
+                'pink',
+                'gray',
+                'gray']
+        self.labels__ = ['BUILDING BLOCKS',
+                'ROBOT ACTIONS',
+                'SYSTEM KNOWLEDGE',
+                'QUERIES',
+                'PROCESSES',
+                'SERVICE',
+                'VARIABLES']
+
+        self.cases = rospy.get_param("~cases","")
+        if len(self.cases) > 0:
+            self.cases = self.cases.split(',')
+        else:
+            self.cases = []
+        #rospy.logerr(str(self.cases))
+
         # Load the ui attributes into the main widget
         self.rospack__ = rospkg.RosPack()
         ui_path = self.rospack__.get_path('instructor_core') + '/ui/view.ui'
@@ -867,11 +186,6 @@ class Instructor(QWidget):
         self.toast_timer_.setSingleShot(True)
         self.toast_signal.connect(self.toast_update)
 
-        # self.refresh_ui_plugins_timer = QTimer(self)
-        # self.connect(self.refresh_ui_plugins_timer, QtCore.SIGNAL("timeout()"), self.refresh_available_plugins)
-        # self.refresh_ui_plugins_timer.start(1000)
-
-        
         # Load Settings
         self.settings = QSettings('settings.ini', QSettings.IniFormat)
         self.settings.setFallbacksEnabled(False) 
@@ -879,7 +193,9 @@ class Instructor(QWidget):
         self.move(self.settings.value('pos', QPoint(50, 50), type=QPoint))
         # self.showMaximized()
 
-        self.sound_pub = rospy.Publisher('/audri/sound/sound_player', String)
+        self.sound_pub = rospy.Publisher('/audri/sound/sound_player',
+            String,
+            queue_size=1000)
 
         ### ROBOT ###
         # Robot Buttons #
@@ -929,7 +245,6 @@ class Instructor(QWidget):
         self.lib_load_service = rospy.ServiceProxy('/librarian/load', librarian_msgs.srv.Load)
         self.lib_list_service = rospy.ServiceProxy('/librarian/list', librarian_msgs.srv.List)
         self.lib_delete_service = rospy.ServiceProxy('/librarian/delete', librarian_msgs.srv.Delete)
-        rospy.logwarn('INSTRUCTOR: CREATED LIBRARIAN SERVICES')
         self.lib_set_type_service('instructor_node')
         self.lib_set_type_service('instructor_subtree')
         self.set_up_gui()
@@ -952,7 +267,6 @@ class Instructor(QWidget):
     def refresh_available_plugins(self):
         if self.is_set_up:
             changed = False
-            # rospy.logwarn('INSTRUCTOR: REFRESHING COMPONENTS')
             costar_attachment_namespace = '/costar/component/ui/'
             required_plugins = []
             if rospy.has_param(costar_attachment_namespace):
@@ -963,7 +277,6 @@ class Instructor(QWidget):
 
                 # rospy.logwarn('Available Plugins: ' + str(self.available_plugins))
                 # rospy.logwarn('Core Plugins: ' + str(self.core_plugins))
-
                 
                 # Check which plugins to enable
                 for i in required_plugins:
@@ -990,30 +303,10 @@ class Instructor(QWidget):
                 description = p['description']
                 if description in self.current_plugins:
                     if description not in self.active_plugin_widgets:
-                        rospy.logwarn('Adding widget for plugin: ['+description+']')
+                        # rospy.logwarn('Adding widget for plugin: ['+description+']')
                         changed = True
                         self.component_widgets[p['type']].add_item_to_group(p['name'],p['group'])
                         self.active_plugin_widgets.append(description)
-
-            # Remove plugins that are no longer required
-            for p in self.plugins.itervalues():
-                description = p['description']
-                if description in self.current_plugins:
-                    if description not in required_plugins:
-                        if description not in self.core_plugins:
-                            rospy.logwarn('Removing widget for plugin: ['+description+']')
-                            changed = True
-                            self.current_plugins.remove(description)
-                            self.component_widgets[p['type']].remove_item_from_group(p['name'],p['group'])
-                            self.active_plugin_widgets.remove(description)
-
-            # for n in self.plugins.itervalues():
-            #     item = n['name']
-            #     group = n['group']
-            #     description = n['description']
-
-            #     if description in self.current_plugins:
-            #     self.component_widgets[n['type']].add_item_to_group(item,group)
 
             for c in self.component_widgets.values():
                 if len(c.items) == 0:
@@ -1028,31 +321,27 @@ class Instructor(QWidget):
         rospy.logwarn('INSTRUCTOR: LOADING PLUGINS')
         self.plugins = {}
         self.node_counter = {}
-        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins()
+        plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.cases)
         for plug,desc,name,typ,grp in zip(plugins,plugin_descriptions,plugin_names,plugin_types, plugin_groups):
             self.plugins[name] = {'module':plug, 'type':typ, 'name':name, 'group':grp, 'description':desc, 'generator_type':str(type(plug()))}
         
         self.available_plugins = plugin_descriptions
-        # rospy.logwarn(self.available_plugins)
         for p in self.plugins.itervalues():
-            # rospy.logwarn(str(p['group']))
             if any(['SYSTEM' in p['group'], 'ROBOT' in p['group']]):
                 self.core_plugins.append(p['description'])
                 self.current_plugins.append(p['description'])
 
         rospy.logwarn('INSTRUCTOR: LOADING GENERATORS')
         for name,plugin in self.plugins.items():
-            self.all_generators[name] = plugin['module']()
+            if not name in self.all_generators:
+                self.all_generators[name] = plugin['module']()
 
     def splitter_moved(self,pos,index):
-        # rospy.logwarn(pos)
-        # rospy.logwarn(self.container_widget.geometry())
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
         self.drawer.move(self.container_widget.geometry().left()-360,50)
         self.drawer.hide()
 
     def window_resized(self,event):
-        rospy.logwarn(event.size())
         visible = self.drawer.isVisible()
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
         self.drawer.move(self.container_widget.geometry().left()-360,50)
@@ -1100,7 +389,8 @@ class Instructor(QWidget):
             # self.clear_node_info()
             self.clear_node_info()
             if self.current_node_plugin_name is not None:
-                self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
+                if not self.current_node_plugin_name in self.all_generators:
+                    self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
                 self.current_node_generator = self.all_generators[self.current_node_plugin_name]
                 self.current_node_type = self.plugins[self.current_node_plugin_name]['type']
                 # self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
@@ -1149,7 +439,7 @@ class Instructor(QWidget):
         self.regenerate_btn.clicked.connect(self.regenerate_node)
         self.drawer.button_layout.addWidget(self.regenerate_btn,3,0,1,2)
         self.regenerate_btn.hide()
-        self.add_node_cancel_btn = InterfaceButton('CANCEL',colors['red'])
+        self.add_node_cancel_btn = InterfaceButton('CLOSE',colors['red'])
         self.add_node_cancel_btn.clicked.connect(self.close_drawer)
         self.drawer.button_layout.addWidget(self.add_node_cancel_btn,4,0,1,2)
 
@@ -1159,9 +449,7 @@ class Instructor(QWidget):
         self.waypoint_btn.clicked.connect(self.show_waypoint_manager)
         self.waypoint_dialog_saved_geom = None
 
-        # JOG Dialog
-        self.jog_dialog = JogDialog(self.show_jog)
-        self.jog_dialog.hide()
+        # SMARTMOVE DIALOG
         self.smartmove_dialog = SmartMoveDialog(self.show_smartmove)
         self.smartmove_button.clicked.connect(self.show_smartmove)
 
@@ -1271,6 +559,7 @@ class Instructor(QWidget):
         self.save_dialog.save_cancel_btn.clicked.connect(self.hide_save_dialog)
         self.save_dialog.save_subtree_btn.clicked.connect(self.save_subtree)
         self.save_dialog.save_node_btn.clicked.connect(self.save_node)
+        self.save_dialog.save_node_btn.hide()
         self.save_dialog.save_name_field.textChanged.connect(self.saved_name_updated_cb)
         self.save_btn.clicked.connect(self.show_save_dialog)
 
@@ -1359,7 +648,7 @@ class Instructor(QWidget):
             return
         # Make servo call to robot
         try:
-            service_cmd_proxy = rospy.ServiceProxy(service_name,Empty)
+            service_cmd_proxy = rospy.ServiceProxy(service_name,EmptySrv)
             result = service_cmd_proxy()
             return
         except (rospy.ServiceException), e:
@@ -1378,17 +667,6 @@ class Instructor(QWidget):
     def hide_menu(self):
         self.menu_visible = False
         self.menu_widget.hide()
-
-    def show_jog(self):
-        if self.jog_dialog.isVisible():
-            self.jog_dialog.saved_geom = self.jog_dialog.geometry()
-            self.jog_dialog.hide()
-        else:
-            if self.jog_dialog.saved_geom is not None:
-                self.jog_dialog.move(self.jog_dialog.saved_geom.x(),self.jog_dialog.saved_geom.y())
-            else:
-                self.jog_dialog.move(self.geometry().x()+self.geometry().width()/2-self.jog_dialog.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.jog_dialog.geometry().height()/2)
-            self.jog_dialog.show()
 
     def show_smartmove(self):
         if self.smartmove_dialog.isVisible():
@@ -1499,7 +777,7 @@ class Instructor(QWidget):
             self.toast('ABORTED: Robot is no longer in servo')
             
     def run_tree(self):
-         rospy.logwarn(self.robot_.driver_status)
+         #rospy.logwarn(self.robot_.driver_status)
          if 'servo' not in str(self.robot_.driver_status).lower():
              self.toast('Robot is NOT in SERVO MODE')
              return 
@@ -1509,6 +787,7 @@ class Instructor(QWidget):
          else:
             if self.running__ == True:
                 self.stop_tree()
+                self.robot_.stop_servo()
                 self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}''')
                 self.run_button.setText('EXECUTE PLAN')
             else:
@@ -1523,10 +802,10 @@ class Instructor(QWidget):
 
     def run(self):
         result = self.root_node.execute()
-        rospy.logwarn(result)
+        #rospy.logwarn(result)
         # self.regenerate_tree()
-        if result == 'SUCCESS':
-            rospy.logwarn('INSTRUCTOR: Task Tree FINISHED WITH SUCCESS')
+        if result[:7] == 'SUCCESS':
+            rospy.loginfo('INSTRUCTOR: Task Tree FINISHED WITH SUCCESS: %s'%result)
             self.sound_pub.publish(String("notify_4_succeed"))
             self.run_timer_.stop()
             self.running__ = False
@@ -1534,8 +813,8 @@ class Instructor(QWidget):
             self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}''')
             self.run_button.setText('EXECUTE PLAN')
             self.regenerate_tree()
-        elif result == 'FAILURE':
-            rospy.logerr('INSTRUCTOR: Task Tree FINISHED WITH FAILURE')
+        elif result[:7] == 'FAILURE':
+            rospy.logerr('INSTRUCTOR: Task Tree FINISHED WITH FAILURE: %s'%result)
             self.run_timer_.stop()
             self.running__ = False
             # self.root_node.reset()
@@ -1545,7 +824,7 @@ class Instructor(QWidget):
             rospy.sleep(.5)
             self.sound_pub.publish(String("notify_4_fail"))
         elif result == 'NODE_ERROR':
-            rospy.logwarn('INSTRUCTOR: Task Tree ERROR')
+            rospy.logerr('INSTRUCTOR: Task Tree ERROR')
             self.run_timer_.stop()
             self.running__ = False
             # self.root_node.reset()
@@ -1633,8 +912,7 @@ class Instructor(QWidget):
                 tree = self.walk_tree(self.current_tree[self.left_selected_node]) # this should start from the selected node
                 # tree = self.walk_tree(self.root_node) #this will always start from root
                 D = yaml.dump({'name':self.save_name,'tree':tree})
-                rospy.logwarn('SAVING SUBTREE')
-                rospy.logwarn(D)
+                rospy.logwarn('SAVING SUBTREE to %s'%self.save_name)
                 print self.lib_save_service(id=self.save_name,type='instructor_subtree',text=D)
                 # Hide on successful save    
                 #self.subtree_save_widget.hide()
@@ -1645,6 +923,15 @@ class Instructor(QWidget):
 
     def walk_tree(self,node):
         t = [self.walk_tree(C) for C in node.children_]
+
+        # Remove invalid children.
+        # TODO: figure out why this happens and make it not happen any more.
+        t = [st for st in t if st is not None]
+
+        if node.name_ not in self.current_plugin_names:
+            rospy.logerr("Invalid child name: %s"%node.name_)
+            return None
+
         # Generate Info
         generator = self.all_generators[self.current_plugin_names[node.name_]]
         generator.load(self.current_node_info[node.name_])
@@ -1664,12 +951,16 @@ class Instructor(QWidget):
         self.remove_sub_btn.setText('REMOVE [ '+val.upper()+' ]')
 
         self.selected_subtree_data = yaml.load(self.lib_load_service(id=self.selected_subtree,type='instructor_subtree').text)
-        selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
-        print selected_subtree_root_name
-        if 'root' in selected_subtree_root_name.lower():
-            print 'You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.'
+        if self.selected_subtree_data is not None:
+            selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
+            print selected_subtree_root_name
+            if 'root' in selected_subtree_root_name.lower():
+                print 'You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.'
+            else:
+                print 'The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.'
         else:
-            print 'The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.'
+            rospy.logwarn('Subtree %s does not exist.'%val)
+            self.selected_subtree = None
 
     def delete_selected_subtree(self):
         if self.selected_subtree != None:
@@ -1730,18 +1021,19 @@ class Instructor(QWidget):
             node_data = info['save_info']
             node_plugin_name = node_data['plugin_name']
             if self.plugins.has_key(node_plugin_name):
-                node_type = self.plugins[node_plugin_name]['type']
-                plugin_name = node_plugin_name
                 # Add in parameters from saved file
                 self.all_generators[node_plugin_name].load(node_data['generator_info'])
+
                 # Generate Node
-                node_to_add = self.all_generators[node_plugin_name].generate()
-                current_name = self.all_generators[node_plugin_name].get_name()
+                self.current_node_generator = self.all_generators[node_plugin_name]
+                self.current_node_generator.name.set_field(self.get_node_counter_name(node_plugin_name))
+                self.current_node_plugin_name = node_plugin_name
+                self.current_node_type = self.plugins[node_plugin_name]['type']
+
+                node_to_add = self.current_node_generator.generate()
+                current_name = self.current_node_generator.get_name()
                 # Add node
-                self.current_tree[current_name] = node_to_add
-                self.current_node_info[current_name] = self.all_generators[node_plugin_name].save()
-                self.current_plugin_names[current_name] = plugin_name
-                self.current_node_types[current_name] = node_type
+                self.add_node_to_tree(current_name, node_to_add, regenerate_tree = False)
                 self.root_node = node_to_add
             else:
                 rospy.logwarn('node plugin undefined')
@@ -1752,18 +1044,20 @@ class Instructor(QWidget):
             node_data = info['save_info']
             node_plugin_name = node_data['plugin_name']
             if self.plugins.has_key(node_plugin_name):
-                node_type = self.plugins[node_plugin_name]['type']
-                plugin_name = node_plugin_name
+                # self.all_generators[node_plugin_name].name.set_field(self.get_node_counter_name(node_plugin_name))
                 self.all_generators[node_plugin_name].load(node_data['generator_info'])
                 # Generate Child
-                self.all_generators[node_plugin_name].name.set_field(self.increment_node_name(node_plugin_name))
-                node_to_add = self.all_generators[node_plugin_name].generate()
-                current_name = self.all_generators[node_plugin_name].get_name()
-                self.current_tree[current_name] = node_to_add
-                self.current_tree[parent.name_].add_child(node_to_add)
-                self.current_node_info[current_name] = self.all_generators[node_plugin_name].save()
-                self.current_plugin_names[current_name] = plugin_name
-                self.current_node_types[current_name] = node_type
+                self.current_node_generator = self.all_generators[node_plugin_name]
+                self.current_node_generator.name.set_field(self.get_node_counter_name(node_plugin_name))
+                
+                self.current_node_plugin_name = node_plugin_name
+                self.current_node_type = self.plugins[node_plugin_name]['type']
+
+                node_to_add = self.current_node_generator.generate()
+                current_name = self.current_node_generator.get_name()
+                self.add_node_to_tree(current_name, node_to_add, self.current_tree[parent.name_].add_child, regenerate_tree = False)
+                self.add_node_prime_gui()
+
             else:
                 rospy.logwarn(node_plugin_name)
                 rospy.logwarn('node plugin undefined')
@@ -1772,6 +1066,18 @@ class Instructor(QWidget):
                 self.recursive_add_nodes(C,node_to_add)
 
 # Callbacks --------------------------------------------------------------------
+    def get_node_counter_name(self,name):
+        if 'root' not in name.lower():
+            if self.node_counter.has_key(name):
+                num = self.node_counter[name]
+            else:
+                num = 0
+                self.node_counter[name] = num
+            auto_name = str(str(name)+'_'+str(num)).replace(' ','_').lower()
+            return auto_name
+        else:
+            return 'root'
+
     def increment_node_name(self,name):
         # rospy.logwarn('incrementing ['+name+']')
         if 'root' not in name.lower():
@@ -1786,8 +1092,9 @@ class Instructor(QWidget):
         else:
             return 'root'
     
+    # @profile
     def component_selected_callback(self,name):
-        rospy.logwarn('Selected node with type [' + str(self.plugins[name]['type']) + '] from list.')
+        rospy.loginfo('Selected node with type [' + str(self.plugins[name]['type']) + '] from list.')
         self.open_drawer()
         # if self.plugins[name]['type'] == 'LOGIC':
         #     self.add_node_root_btn.show()
@@ -1809,11 +1116,12 @@ class Instructor(QWidget):
 
         if self.plugins.has_key(name):
             self.clear_node_info()
-            self.all_generators[name] = self.plugins[name]['module']()
+            if not name in self.all_generators:
+                self.all_generators[name] = self.plugins[name]['module']()
             self.current_node_generator = self.all_generators[name]
             self.current_node_type = self.plugins[name]['type']
             self.current_node_plugin_name = name
-            self.current_node_generator.name.set_field(self.increment_node_name(name))
+            self.current_node_generator.name.set_field(self.get_node_counter_name(name))
             self.drawer.node_info_layout.addWidget(self.current_node_generator)
             self.right_selected_node = None
         else:
@@ -1828,7 +1136,8 @@ class Instructor(QWidget):
         if event == 'none':
             # Update Context Menu
             self.context_popup.hide()
-            self.root_node.reset()
+            if self.root_node is not None:
+                self.root_node.reset()
             # Update Selected Node
             self.left_selected_node = None
             self.selected_node_field.setText('SELECTED NODE: NONE')
@@ -1963,6 +1272,10 @@ color:#ffffff}''')
         pass
 
     def regenerate_node(self):
+        if self.current_node_type is self.plugins['Root']['type']:
+            rospy.logerr('[INSTRUCTOR]: Regenerate command ignored because it is a Root node')
+            return
+
         if self.left_selected_node:
             current_name = self.left_selected_node
         else:
@@ -1971,7 +1284,7 @@ color:#ffffff}''')
         if current_name:
             # current_name = self.right_selected_node
             replacement_node = self.current_node_generator.generate()
-            if type(replacement_node) == str:
+            if isinstance(replacement_node,str):
                 rospy.logerr(str(replacement_node))
             else:
                 current_child = self.current_tree[current_name]
@@ -1996,7 +1309,8 @@ color:#ffffff}''')
     # will not change... which I think is ok considering it is a core component
     def generate_root(self):
         rospy.logwarn('Generating new ROOT node')
-        self.all_generators['Root'] = self.plugins['Root']['module']()
+        if not 'Root' in self.all_generators:
+            self.all_generators['Root'] = self.plugins['Root']['module']()
         self.current_node_generator = self.all_generators['Root']
         self.current_node_type = self.plugins['Root']['type']
         self.current_node_plugin_name = 'Root'
@@ -2035,7 +1349,28 @@ color:#ffffff}''')
         else:
             rospy.logwarn('NO NODE SELECTED')
 
+    def add_node_to_tree(self, name, node, add_node_function = None, regenerate_tree = True):
+        self.current_tree[name] = node
+        self.current_node_info[name] = self.current_node_generator.save()
+        ## debugging
+        self.current_plugin_names[name] = self.current_node_plugin_name
+        self.current_node_types[name] = self.current_node_type
 
+        if add_node_function is not None:
+            add_node_function(node)
+        if regenerate_tree:
+            self.regenerate_tree()
+        # increment the index
+        self.increment_node_name(self.current_node_plugin_name)
+
+        # Prime GUI for another node of the same type
+
+    def add_node_prime_gui(self):
+        # Prime GUI for another node of the same type
+        self.clear_node_info()
+        self.current_node_generator = self.all_generators[self.current_node_plugin_name]
+        self.current_node_generator.name.set_field(self.get_node_counter_name(self.current_node_plugin_name))
+        self.drawer.node_info_layout.addWidget(self.current_node_generator)
     
     def add_child_cb(self):
         if self.current_node_type != None:
@@ -2053,18 +1388,8 @@ color:#ffffff}''')
                     rospy.logerr(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
-                    self.current_tree[current_name] = node_to_add
-                    self.current_tree[self.left_selected_node].add_child(node_to_add)
-                    self.current_node_info[current_name] = self.current_node_generator.save()
-                    ## debugging
-                    self.current_plugin_names[current_name] = self.current_node_plugin_name
-                    self.current_node_types[current_name] = self.current_node_type
-                    self.regenerate_tree()
-                    # Prime GUI for another node of the same type
-                    self.clear_node_info()
-                    self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                    self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
-                    self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                    self.add_node_to_tree(current_name, node_to_add, self.current_tree[self.left_selected_node].add_child)
+                    self.add_node_prime_gui()
                     # self.save_state()
                     if self.current_node_types[current_name] == 'LOGIC':
                         self.node_leftclick_cb(current_name)
@@ -2085,50 +1410,52 @@ color:#ffffff}''')
                     rospy.logerr(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
-                    self.current_tree[current_name] = node_to_add
                     sibling_node = self.current_tree[self.left_selected_node]
-                    sibling_node.add_sibling_before(node_to_add)
-                    self.current_node_info[current_name] = self.current_node_generator.save()
-                    self.current_plugin_names[current_name] = self.current_node_plugin_name
-                    self.current_node_types[current_name] = self.current_node_type 
-                    self.regenerate_tree()
-                    # Prime GUI for another node of the same type
-                    self.clear_node_info()
-                    self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                    self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
-                    self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                    self.add_node_to_tree(current_name, node_to_add, sibling_node.add_sibling_before)
+                    self.add_node_prime_gui()
                     # self.save_state()
                     if self.current_node_types[current_name] == 'LOGIC':
                         self.node_leftclick_cb(current_name)
 
     def replace_child_cb(self):
         if self.left_selected_node != None:
-            current_name = self.left_selected_node
-            rospy.logwarn(current_name)
-            new_name = self.current_node_generator.get_name()
-            rospy.logwarn(new_name)
-            replacement_node = self.current_node_generator.generate()
-            # current_name = self.current_node_generator.get_name()
-            current_child = self.current_tree[current_name]
-            current_parent = self.current_tree[current_name].get_parent()
-            if current_parent.replace_child(current_child, replacement_node):
-                self.current_tree[new_name] = replacement_node
-                self.current_node_info[new_name] = self.current_node_generator.save()
-                self.current_plugin_names[new_name] = self.current_node_plugin_name
-                self.current_node_types[new_name] = self.current_node_type
-                if self.current_node_types[new_name] == 'LOGIC':
-                    self.delete_node(current_name,keep_children=True)
-                else:
-                    self.delete_node(current_name,keep_children=False)
-                self.regenerate_tree()
-                self.close_drawer()
-                # self.save_state()
-                if current_name in self.current_node_types:   
-                    if self.current_node_types[current_name] == 'LOGIC':
-                        self.node_leftclick_cb(current_name)
+            if not self.current_node_types[self.left_selected_node] == 'LOGIC':
+                current_name = self.left_selected_node
+                rospy.logwarn('selected node: ' + current_name)
+                new_name = self.current_node_generator.get_name()
+                rospy.logwarn('new node: ' + new_name)
+                replacement_node = self.current_node_generator.generate()
+                # current_name = self.current_node_generator.get_name()
+                current_child = self.current_tree[current_name]
+                current_parent = self.current_tree[current_name].get_parent()
 
+                # isinstance check whether the node is properly defined
+                if not isinstance(replacement_node,str):
+                    if current_parent.replace_child(current_child, replacement_node):
+                        
+                        self.add_node_to_tree(new_name, replacement_node, regenerate_tree = False)
+                        if current_name != new_name:
+                            if new_name in self.current_node_types:
+                                if self.current_node_types[new_name] == 'LOGIC':
+                                    self.delete_node(current_name,keep_children=True)
+                                else:
+                                    self.delete_node(current_name,keep_children=False)
+                            else:
+                                rospy.logerr("[Instructor]: Tries to access a nonexistent current_node_type key")
+                        self.regenerate_tree()
+                        self.close_drawer()
+                        # self.save_state()
+                        if current_name in self.current_node_types:   
+                            if self.current_node_types[current_name] == 'LOGIC':
+                                self.node_leftclick_cb(current_name)
+
+                    else:
+                        rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
+                else:
+                    rospy.logerr(str(replacement_node))
             else:
-                rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
+                rospy.logwarn("Replace failed. Replacing logic node (sequence/root) with other nodes is disabled.")
+
 
     def add_sibling_after_cb(self):
         print 'adding sibling node of type ' + self.current_node_type
@@ -2146,18 +1473,10 @@ color:#ffffff}''')
                     rospy.logerr(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
-                    self.current_tree[current_name] = node_to_add
                     sibling_node = self.current_tree[self.left_selected_node]
-                    sibling_node.add_sibling_after(node_to_add)
-                    self.current_node_info[current_name] = self.current_node_generator.save()
-                    self.current_plugin_names[current_name] = self.current_node_plugin_name
-                    self.current_node_types[current_name] = self.current_node_type 
-                    self.regenerate_tree()
-                    # Prime GUI for another node of the same type
-                    self.clear_node_info()
-                    self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                    self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
-                    self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                    self.add_node_to_tree(current_name, node_to_add, sibling_node.add_sibling_after)
+                    self.add_node_prime_gui()
+
                     # self.save_state()
                     if self.current_node_types[current_name] == 'LOGIC':
                         self.node_leftclick_cb(current_name)
@@ -2204,6 +1523,7 @@ color:#ffffff}''')
 
 
     def clear_tree(self):
+        self.node_counter.clear()
         self.current_tree.clear()
         self.current_generators.clear()
         self.current_node_types.clear()

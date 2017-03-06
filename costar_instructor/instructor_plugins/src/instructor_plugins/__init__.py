@@ -31,7 +31,13 @@ __all__ += ['NodePlanRelativeWaypointGUI']
 __all__ += ['NodeActionUpdatePlanningSceneGUI']
 __all__ += ['NodeActionRecordDataGUI']
 __all__ += ['NodeActionSmartmoveGUI']
+__all__ += ['NodeActionSmartmoveGraspGUI']
+__all__ += ['NodeActionSmartmoveReleaseGUI']
 __all__ += ['NodePublishMessageGUI']
+__all__ += ['NodeActionQueryGUI']
+__all__ += ['EnableCollisionGUI']
+__all__ += ['DisableCollisionGUI']
+__all__ += ['PlanToHomeGUI', 'MoveToHomeGUI']
 
 ### Sample Nodes
 from sample_nodes import NodeActionSampleGUI
@@ -70,3 +76,12 @@ from instructor_action_foot_pedal import NodeActionPedalGUI
 from instructor_action_stop import NodeActionStopGUI
 
 from instructor_action_smartmove import NodeActionSmartmoveGUI
+from smartmove_multipurpose import NodeActionSmartmoveGraspGUI
+from smartmove_multipurpose import NodeActionSmartmoveReleaseGUI
+
+from query import NodeActionQueryGUI
+from query import EnableCollisionGUI
+from query import DisableCollisionGUI
+
+from home import PlanToHomeGUI
+from home import MoveToHomeGUI

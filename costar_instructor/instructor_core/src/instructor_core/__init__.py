@@ -17,6 +17,9 @@ __all__ += ['NodeDecoratorIgnoreFailGUI']
 __all__ += ['NodeDecoratorWaitForSuccessGUI']
 __all__ += ['NamedField']
 __all__ += ['NamedComboBox']
+__all__ += ['JogDialog']
+__all__ += ['SmartMoveDialog']
+__all__ += ['RobotInterface']
 
 # NodeGUI Base Classes
 from instructor_core_nodes import NodeGUI
@@ -32,3 +35,7 @@ from instructor_core_nodes import NodeDecoratorRepeatGUI
 from instructor_core_nodes import NodeDecoratorResetGUI
 from instructor_core_nodes import NodeDecoratorIgnoreFailGUI
 from instructor_core_nodes import NodeDecoratorWaitForSuccessGUI
+
+from smart_move_dialog import *
+from jog_dialog import *
+from robot_interface import *

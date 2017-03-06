@@ -27,6 +27,7 @@ class WaypointManager:
 
     # Require librarian services.
     rospy.wait_for_service('/librarian/add_type',5)
+    rospy.wait_for_service('/librarian/load',5)
     self.add_type_service = rospy.ServiceProxy('/librarian/add_type', librarian_msgs.srv.AddType)
     self.save_service = rospy.ServiceProxy('/librarian/save', librarian_msgs.srv.Save)
     self.load_service = rospy.ServiceProxy('/librarian/load', librarian_msgs.srv.Load)
@@ -87,10 +88,6 @@ class WaypointManager:
       data = yaml.load(self.load_service(id=name,type=self.cart_folder).text)
       self.cart_waypoints[name] = data
       self.all_cart_moves.append(name)
-    
-    print " === LOADED === "
-    print "Global: " + str(self.cart_waypoints.keys())
-    print "Joint states: " + str(self.js_waypoints.keys())
 
   '''
   Save frame to library if necessary

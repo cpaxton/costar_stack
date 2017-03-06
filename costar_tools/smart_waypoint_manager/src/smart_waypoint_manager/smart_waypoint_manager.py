@@ -14,6 +14,9 @@ from costar_robot_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
 
+import numpy as np
+import PyKDL as kdl
+
 '''
 SmartWaypointManager
 This class will create and load smart waypoints from the $LIBRARIAN_HOME/smart_waypoints directory
@@ -25,7 +28,12 @@ It also provides ways to use and access these methods
 class SmartWaypointManager:
 
 
-    def __init__(self,world="world",ns="",endpoint="/endpoint", listener=None, broadcaster=None):
+    def __init__(self,
+        world="world",
+        ns="",
+        endpoint="/endpoint",
+        gripper_center="/gripper_center",
+        listener=None, broadcaster=None):
         self.get_waypoints_srv = GetWaypointsService(world=world,service=False)
 
         rospy.loginfo("[SmartMove] Waiting for LIBRARIAN to handle file I/O...")
@@ -52,6 +60,7 @@ class SmartWaypointManager:
 
         self.world = world
         self.endpoint = endpoint
+        self.gripper_center = gripper_center
 
         self.folder = 'smartmove_waypoint'
         self.info_folder = 'smartmove_info'
@@ -62,20 +71,17 @@ class SmartWaypointManager:
 
         self.all_moves = []
 
+        self._reset_objs()
+        self.obj_class = {}
+        
+        self.available_obj_classes = rospy.get_param("/costar/smartmove/available_objects")
+        self.available_regions = rospy.get_param("/costar/smartmove/regions")
+        self.available_references = rospy.get_param("/costar/smartmove/references")
+
+    def _reset_objs(self):
         self.objs = []
         self.obj_classes = []
-        self.obj_class = {}
-
-        self.available_object_classes = None
-        self.available_regions = None
-        self.available_references = None
         
-        self.add_type_service(self.info_folder)
-        self.available_obj_classes = yaml.load(self.load_service(type="smartmove_info",id="obj_classes").text)
-        self.available_regions = yaml.load(self.load_service(type="smartmove_info",id="regions").text)
-        self.available_references = yaml.load(self.load_service(type="smartmove_info",id="references").text)
-        rospy.logwarn("[SMARTMOVE] Available classes = " + str(self.available_obj_classes))
-
     '''
     reads in costar object detection messages
     this includes symmetry information produced by the vision pipeline
@@ -88,10 +94,6 @@ class SmartWaypointManager:
           if not obj.object_class in self.obj_classes:
                 self.objs.append(obj.object_class)
           self.obj_class[obj.id] = obj.object_class
-
-
-        print self.objs
-        print self.obj_classes
 
     '''
     get all waypoints from the disk
@@ -119,10 +121,9 @@ class SmartWaypointManager:
           self.waypoint_names[data[1]].append(name)
           self.all_moves.append(data[1] + "/" + name)
 
+
     def lookup_waypoint(self,obj_class,name):
-      rospy.logwarn("looking for %s"%name)
-      rospy.logwarn(self.waypoints)
-      rospy.logwarn(self.waypoint_names)
+      rospy.logwarn("Smart Waypoint Manager looking for %s with class %s"%(name,obj_class))
       return self.waypoints[obj_class][self.waypoint_names[obj_class].index(name)]
 
     def get_reference_frames(self):
@@ -135,13 +136,10 @@ class SmartWaypointManager:
         return self.all_moves
 
     def get_detected_objects(self):
-        self.objs = []
-        self.obj_classes = []
-        rospy.logwarn("Available object classes: " + str(self.available_obj_classes))
+        self._reset_objs()
+
         if not self.available_obj_classes is None:
-            rospy.logwarn("- not none")
             for oc in self.available_obj_classes:
-                rospy.logwarn("-- %s"%oc)
                 resp = self.get_assignment_service(PredicateStatement(predicate=oc,params=["*","",""]))
                 oc_objs = [p.params[0] for p in resp.values]
                 if len(oc_objs) > 0:
@@ -161,7 +159,7 @@ class SmartWaypointManager:
         return self.obj_classes
 
     def get_available_object_classes(self):
-        return self.available_object_classes
+        return self.available_obj_classes
 
     def save_new_waypoint(self,obj,name):
         pose = self.get_new_waypoint(obj)
@@ -170,8 +168,31 @@ class SmartWaypointManager:
 
     def get_new_waypoint(self,obj):
         try:
-            (trans,rot) = self.listener.lookupTransform(obj,self.endpoint,rospy.Time(0))
-            return pm.toMsg(pm.fromTf((trans,rot)))
+            # TODO: make the snap configurable
+            #(trans,rot) = self.listener.lookupTransform(obj,self.endpoint,rospy.Time(0))
+            (eg_trans,eg_rot) = self.listener.lookupTransform(self.gripper_center,self.endpoint,rospy.Time(0))
+            (og_trans,og_rot) = self.listener.lookupTransform(obj,self.gripper_center,rospy.Time(0))
+
+            rospy.logwarn("gripper obj:" + str((og_trans, og_rot)))
+            rospy.logwarn("endpoint gripper:" + str((eg_trans, eg_rot)))
+
+            xyz, rpy = [], []
+            for dim in og_trans:
+                if abs(dim) < 0.025:
+                    xyz.append(0.)
+                else:
+                    xyz.append(dim)
+            Rog = kdl.Rotation.Quaternion(*og_rot)
+            for dim in Rog.GetRPY():
+                rpy.append(np.round(dim / np.pi * 8.) * np.pi/8.)
+            Rog_corrected = kdl.Rotation.RPY(*rpy)
+            Vog_corrected = kdl.Vector(*xyz)
+            Tog_corrected = kdl.Frame(Rog_corrected, Vog_corrected)
+
+            rospy.logwarn(str(Tog_corrected) + ", " + str(Rog_corrected.GetRPY()))
+
+            Teg = pm.fromTf((eg_trans, eg_rot))
+            return pm.toMsg(Tog_corrected * Teg)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             rospy.logerr('Failed to lookup transform from %s to %s'%(obj,self.endpoint))
         return None
@@ -198,13 +219,11 @@ class SmartWaypointManager:
         return wpts
 
     def publish_tf(self):
-
         for key in self.waypoints.keys():
             (poses,names) = self.get_waypoints_srv.get_waypoints(key,[],self.waypoints[key],self.waypoint_names[key])
             for (pose,name) in zip(poses,names):
                 (trans,rot) = pm.toTf(pm.fromMsg(pose))
                 self.broadcaster.sendTransform(trans,rot,rospy.Time.now(),name,self.world)
-                #print (trans, rot, name)
 
     '''
     Send any non-smart waypoints we might be managing.

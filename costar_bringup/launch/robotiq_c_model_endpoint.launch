@@ -2,13 +2,8 @@
 
   <arg name="ee_frame" default="/endpoint"/>
 
-  <!-- <node pkg="tf" type="static_transform_publisher" name="endpoint_to_align0" args=" 0.05 0 0 0 1.5707 0  $(arg ee_frame) /endpoint_align0 10"/> -->
-  <!-- <node pkg="tf" type="static_transform_publisher" name="endpoint_to_align" args=" 0 0 0 1.5707 0 0  /endpoint_align0 /endpoint_align 10"/> -->
-  <!-- <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args=" 0.022 -0.005 0.093 3.14159 -1.5707 0  /endpoint_align /endpoint_marker 10"/> -->
-<!--    <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args=" -0.0131988 0.105739 -0.0014977  0.5177951984134268  0.4790266031048777  0.5149549972981862  -0.4870757797151874   $(arg ee_frame) /endpoint_marker 10"/>  -->
 
-   <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args="0.0111124 0.0984644 -0.00237545  0.536991 0.496908 0.484317 -0.47975 $(arg ee_frame) /endpoint_marker 10"/> 
-   <!-- <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args="0.016 0.113 -0.006  0.503 0.526 0.522 -0.445 $(arg ee_frame) /endpoint_marker 10"/>  -->
+   <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args="0.00784624   0.0835316 -0.00871847 -0.0457574 0.0869102 0.673131 0.732971 $(arg ee_frame) /endpoint_marker 10"/> 
 
    <node pkg="tf" type="static_transform_publisher" name="gripper_center" args=" 0.20 -0.010 -0.010  0  0  0  1   $(arg ee_frame) /gripper_center 10"/> 
   <!--<node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args=" -0.00746998     0.101617 -0.000671928  0.513209 0.492549 0.513209  -0.48498   $(arg ee_frame) /endpoint_marker 10"/>  -->

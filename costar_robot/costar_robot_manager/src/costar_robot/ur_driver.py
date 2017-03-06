@@ -33,18 +33,20 @@ class CostarUR5Driver(CostarArm):
             max_vel=1,
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6):
+            max_q_diff = 1e-6,
+            max_dist_from_table = 0.35,
+            *args,
+            **kwargs):
 
         self.simulation = simulation
-        self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
+        self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10,*args,**kwargs)
 
         base_link = "base_link"
         end_link = "ee_link"
         planning_group = "manipulator"
 
         self.closed_form_IK_solver = InverseKinematicsUR5()
-        # self.closed_form_ur5_ik.enableDebugMode()
-        self.joint_weights = np.array([6.0, 5.0, 4.0, 2.5, 1.5, 1.2])
+        self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
         self.closed_form_IK_solver.setEERotationOffsetROS()
         self.closed_form_IK_solver.setJointWeights(self.joint_weights)
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
@@ -57,17 +59,29 @@ class CostarUR5Driver(CostarArm):
 
         self.client = client = actionlib.SimpleActionClient('follow_joint_trajectory',FollowJointTrajectoryAction)
 
+    def acquire(self):
+        stamp = rospy.Time.now().to_sec()
+        if self.cur_stamp is not None:
+            self.client.stop_tracking_goal()
+            # self.client.wait_for_result()
+            self.client.cancel_all_goals()
+            rospy.sleep(0.1)
+            # rospy.logwarn("[UR_DRIVER]: current stamp is not None?")
+
+        if stamp > self.cur_stamp:
+            self.cur_stamp = stamp
+            return stamp
+        else:
+            return None
+
     '''
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False,linear=False):
+    def send_trajectory(self,traj,stamp,acceleration=0.5,velocity=0.5,cartesian=False,linear=False):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
-
-        stamp = rospy.Time.now().to_sec()
-        self.cur_stamp = stamp
 
         if self.simulation:
             if not linear:
@@ -78,7 +92,7 @@ class CostarUR5Driver(CostarArm):
                         self.send_cart(pt.positions,acceleration,velocity) ##
                     self.set_goal(pt.positions)
 
-                    print " -- %s"%(str(pt.positions))
+                    # print " -- %s"%(str(pt.positions))
                     start_t = rospy.Time.now()
 
                     if self.cur_stamp > stamp:
@@ -87,7 +101,7 @@ class CostarUR5Driver(CostarArm):
                     rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
                     t = pt.time_from_start
 
-            print " -- GOAL: %s"%(str(traj.points[-1].positions))
+            # print " -- GOAL: %s"%(str(traj.points[-1].positions))
             if not cartesian:
                 self.send_q(traj.points[-1].positions,acceleration,velocity)
             else:
@@ -102,21 +116,31 @@ class CostarUR5Driver(CostarArm):
                     return 'FAILURE - timeout'
                 rate.sleep()
 
-        goal = FollowJointTrajectoryGoal(trajectory=traj)
-        print goal
-        self.client.send_goal(goal)
-        self.client.wait_for_result()
-        print self.client.get_result()
-
-        if self.at_goal:
-            return 'SUCCESS - moved to pose'
+            if self.at_goal:
+                return 'SUCCESS - moved to pose'
+            else:
+                return 'FAILURE - did not reach destination'
         else:
-            return 'FAILURE - did not reach destination'
+            self.set_goal(traj.points[-1].positions)
+
+        goal = FollowJointTrajectoryGoal(trajectory=traj)
+
+        if stamp >= self.cur_stamp:
+            self.client.send_goal_and_wait(goal, preempt_timeout=rospy.Duration.from_sec(10.0))
+            # max time before returning = 30 s
+            self.client.wait_for_result(rospy.Duration.from_sec(30.0))
+            res = self.client.get_result()
+
+        if res is not None and res.error_code >= 0:
+            return "SUCCESS"
+        else:
+            return "FAILURE - %s"%res.error_code
+
 
     '''
     set teach mode
     '''
-    def set_teach_mode_call(self,req,cartesian=False):
+    def set_teach_mode_cb(self,req,cartesian=False):
         if req.enable == True:
             self.ur_script_pub.publish(urscript_commands['TEACH'])
             self.driver_status = 'TEACH'

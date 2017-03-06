@@ -2,25 +2,19 @@
 
 ***Collaborative System for Task Automation and Recognition***
 
-Our goal is to build a system which facilitates end-user instruction of robots to perform a a variety of different tasks. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more. Tasks are represented as Behavior Trees.
+CoSTAR is an end-user interface for authoring robot task plans developed at Johns Hopkins University. It includes integrated perception and planning capabilities, plus a Behavior Tree based user interface.
 
-[![Collaborative Assembly Example](https://img.youtube.com/vi/QS0cOPJFIDg/0.jpg)](https://youtu.be/QS0cOPJFIDg)
+Our goal is to build a system which facilitates end-user instruction of robots to solve a variety of different problems. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more. Tasks are represented as Behavior Trees. For videos of our system in action, you can check out the [CoSTAR YouTube Channel](https://www.youtube.com/playlist?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf).
 
-For more videos you can check out the [CoSTAR YouTube Channel](https://www.youtube.com/playlist?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf).
-
-These are the tools and utilities we created to get the CoSTAR project up and off the ground. This document describes the CoSTAR project for an LBR iiwa 14 R820 with an attahed Robotiq 3-finger adaptive gripper.
-
-To fully take advantage of these capabilities you will need:
-
-  - sp_segmenter: object detection and pose estimation library
-  - instructor: our custom user interface
+To take full advantage of CoSTAR, you will need an RGB-D camera and supported hardware:
   - a KUKA LBR iiwa or Universal Robots UR5
   - a Robotiq 3-finger gripper or 2-finger gripper
+  - a [Da Vinci Research Kit](https://github.com/jhu-dvrk/dvrk-ros) -- in development.
 
 This is a project by members of the JHU Laboratory for Computational Sensing and Robotics, namely Chris Paxton, Kel Guerin, Andrew Hundt, and Felix Jonathan. If you find this code useful, please cite:
 ```
 @article{paxton2016costar,
-  title={CoSTAR: Instructing Collaborative Robots with Behavior Trees and Vision},
+  title={Co{STAR}: Instructing Collaborative Robots with Behavior Trees and Vision},
   author={Paxton, Chris and Hundt, Andrew and Jonathan, Felix and Guerin, Kelleher and Hager, Gregory D},
   journal={arXiv preprint arXiv:1611.06145},
   year={2016}
@@ -53,18 +47,11 @@ roslaunch sp_segmenter SPServerStructureAssembly.launch
 
 You also need to launch the GRL KUKA ROS Driver. GRL is the [Generic Robot Library](https://github.com/ahundt/grl), which provides a low-level control interface for the KUKA LBR.
 
-In particular, `costar_bringup` will launch the robot command driver, the gripper command services, the MoveIt services, Predicator, and Librarian.
-
-To bring up the tool attachments run:
-
-```
-roslaunch ready_air stomper_tool.launch
-```
-
+In particular, `costar_bringup` will launch the robot command driver, the gripper command services, the MoveIt services, Predicator, and Librarian. Note that certain tools from our Hannover and other demos are not available open source due to our IP agreement with Ready Robotics, so you will not be able to duplicate our sanding task with this release of CoSTAR.
 
 ## Starting CoSTAR in a Simulation
 
-You can test CoSTAR in a simulation now. The basic launch procedure for a simulation is to run these commands:
+You can test CoSTAR in a Gazebo simulation. The basic launch procedure for a simulation is to run these commands:
 
 ```
 roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false

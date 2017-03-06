@@ -1,14 +1,16 @@
 <launch>
 
-    <!-- CORE -->
-    <node pkg="instructor_core" type="instructor_view.py" name="instructor_view">
-      <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
-    </node>
+  <!--<arg name="instructor_cases" default="baseline,perception,smartmove" />-->
+  <arg name="instructor_cases" default=""/>
 
-    <node pkg="instructor_core" type="instructor_waypoint_manager.py" name="instructor_waypoint_manager"/>
-    <param name="publish_frequency" type="double" value="10.0" />
-    <!-- Plugins -->
-    <node pkg="instructor_plugins" type="test_service.py" name="instructor_test_service_node"/>
+  <!-- CORE -->
+  <node pkg="instructor_core" type="instructor_view.py" name="instructor_view" >
+    <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
+    <param name="cases" value="$(arg instructor_cases)"/>
+  </node>
+
+  <node pkg="instructor_core" type="instructor_waypoint_manager.py" name="instructor_waypoint_manager"/>
+  <param name="publish_frequency" type="double" value="10.0" />
 
 </launch>
 

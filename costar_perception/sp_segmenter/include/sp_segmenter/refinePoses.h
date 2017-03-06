@@ -12,7 +12,7 @@ std::vector<poseT> RefinePoses(const pcl::PointCloud<myPointXYZ>::Ptr scene, con
     
     #pragma omp parallel for schedule(dynamic, 1)
     for(int i = 0 ; i < pose_num ; i++ ){
-        for( int j = 0 ; j < mesh_set.size() ; j++ ){
+        for( std::size_t j = 0 ; j < mesh_set.size() ; j++ ){
             if( mesh_set[j].model_label == all_poses[i].model_name )
             {
                 est_models[i].model_label = all_poses[i].model_name;

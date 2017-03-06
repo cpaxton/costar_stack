@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>395</width>
-    <height>496</height>
+    <height>499</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -47,7 +47,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Reference</string>
+          <string>In Coordinate Frame</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -96,7 +96,7 @@
           <string notr="true">color:#ffffff</string>
          </property>
          <property name="text">
-          <string>Select Region:</string>
+          <string>Object Position</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -158,7 +158,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Select Object Type</string>
+      <string>Type of Object to Choose</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -195,7 +195,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Select Smartmove</string>
+      <string>SmartMove Waypoint</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

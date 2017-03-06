@@ -34,13 +34,18 @@ class CostarIIWADriver(CostarArm):
             max_vel=1,
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6):
+            max_q_diff = 1e-6,
+            *args,
+            **kwargs):
 
         base_link = 'iiwa_link_0'
         end_link = 'iiwa_link_ee'
         planning_group = 'manipulator'
 
-        super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group, dof=7)
+        super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group,dof=7,
+            table_frame=None,
+            *args,
+            **kwargs)
 
         self.iiwa_mode_publisher = rospy.Publisher('/interaction_mode',String,queue_size=1000)
 
@@ -48,13 +53,10 @@ class CostarIIWADriver(CostarArm):
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False, linear=False):
+    def send_trajectory(self,traj,stamp,acceleration=0.5,velocity=0.5,cartesian=False, linear=False):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
-
-        stamp = rospy.Time.now().to_sec()
-        self.cur_stamp = stamp
 
         for pt in traj.points[:-1]:
           self.pt_publisher.publish(pt)
@@ -69,18 +71,11 @@ class CostarIIWADriver(CostarArm):
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
 
-          #while not self.near_goal:
-          #  if (rospy.Time.now() - start_t).to_sec() > 10*t.to_sec():
-          #      break
-          #  rate.sleep()
-
         print " -- GOAL: %s"%(str(traj.points[-1].positions))
         self.pt_publisher.publish(traj.points[-1])
         self.set_goal(traj.points[-1].positions)
         start_t = rospy.Time.now()
 
-        # wait until robot is at goal
-        #while self.moving:
         while not self.at_goal:
             if (rospy.Time.now() - start_t).to_sec() > 3:
                 return 'FAILURE - timeout'
@@ -96,6 +91,5 @@ class CostarIIWADriver(CostarArm):
         if self.driver_status in mode.keys():
             self.iiwa_mode_publisher.publish(mode[self.driver_status])
         else:
-            #rospy.logwarn('IIWA mode for %s not specified!'%self.driver_status)
             pass
 

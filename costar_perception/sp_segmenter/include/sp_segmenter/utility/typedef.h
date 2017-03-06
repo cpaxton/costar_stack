@@ -4,6 +4,7 @@
 #define TYPEDEFS_H
 
 #define OPENCV_SIFT
+#include <pcl/pcl_config.h>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -23,7 +24,12 @@
 #include <pcl/surface/mls.h>
 #include <pcl/correspondence.h>
 #include <pcl/features/board.h>
+#if PCL_VERSION_COMPARE(<, 1, 8, 0)
 #include <pcl/keypoints/uniform_sampling.h>
+#else
+#include <pcl/filters/uniform_sampling.h>
+#endif
+
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
 #include <pcl/console/parse.h>
@@ -255,14 +261,8 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (SIFTDescr,
                     (float[128], siftDescr, siftDescr)
 )
 
-static bool comp1( const std::pair<int, int> &p1, const std::pair<int, int> &p2 )
-{
-    return p1.second > p2.second;
-}
+bool comp1( const std::pair<int, int> &p1, const std::pair<int, int> &p2 );
 
-static bool comp2( const std::pair<int, float> &p1, const std::pair<int, float> &p2 )
-{
-    return p1.second < p2.second;
-}
+bool comp2( const std::pair<int, float> &p1, const std::pair<int, float> &p2 );
 
 #endif

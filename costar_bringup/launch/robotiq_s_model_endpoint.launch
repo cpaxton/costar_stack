@@ -36,7 +36,7 @@
 
   <!-- marker position determined by CamOdoCal -->
     <!--<node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="0.100466 -0.0749848 0.0199956 0.5782515618009793 0.14597756788320312 0.09221622196677907 0.7973781094034416 /iiwa_link_ee /endpoint_marker 1000"/>-->
-  <node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="0.100466 -0.0749848 0.0449956 0.5782515618009793 0.14597756788320312 0.09221622196677907 0.7973781094034416 $(arg ee_frame) /endpoint_marker 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="0.010 0.098 -0.006 0.042, 0.705, 0.708, -0.017 $(arg ee_frame) /endpoint_marker 1000"/>
   <!--<node pkg="tf" type="static_transform_publisher" name="ee_to_endpoint_marker" args="-.087281 -0.0365086  0.0344443 0.814691 0.545055 0.178562 0.545055 /iiwa_link_ee /endpoint_marker 1000"/>-->
 
 

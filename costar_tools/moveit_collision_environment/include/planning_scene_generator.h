@@ -36,6 +36,7 @@ public:
     bool updateCollisionObject (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     void addCollisionObjects (const std::vector<moveit_msgs::CollisionObject>& collision_objects);
     moveitPlanningSceneGenerator(const ros::NodeHandle &nh);
+    bool updateWithBackground(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     ;
 };
 
