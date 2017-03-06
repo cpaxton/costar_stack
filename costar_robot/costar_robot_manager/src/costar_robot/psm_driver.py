@@ -123,7 +123,7 @@ class CostarPSMDriver(CostarArm):
         if self.driver_status == 'SERVO':
             T = pm.fromMsg(req.target)
             # print "This is the target pose: ", req.target
-            rospy.logwarn("This is the target pose: ", T)
+            # rospy.logwarn("This is the target pose: ", T)
             self.dvrk_arm.move(T)
             return 'SUCCESS - moved to pose'
 
