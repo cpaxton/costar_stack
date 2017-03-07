@@ -118,13 +118,15 @@ class Librarian(object):
                 resp.status.error = Status.NO_SUCH_TYPE
                 resp.status.info = "Type %s does not exist!"%(req.type)
             else:
-                os.remove(filename)
-                resp.status.result = Status.SUCCESS
-        
+                if os.path.isfile(filename):
+                    os.remove(filename)
+                    resp.status.result = Status.SUCCESS
+                else:
+                    resp.status.result = Status.FAILURE
+                    resp.status.error = Status.FILE_MISSING
+                    resp.status.info = "File %s does not exist as a member of type %s!"%(req.id, req.type)
         return resp
 
-
-       
 
     '''
     save()

@@ -56,6 +56,8 @@ class NodeGUI(QWidget):
         self.load_data(data)
     def load_data(self,data):
         pass
+    def refresh_data(self):
+        pass
 #-------------------------------------------------------------------------------
 
 

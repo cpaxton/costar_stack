@@ -220,6 +220,7 @@ class Instructor(QWidget):
         self.root_node = None
         self.selected_subtree = None
         self.left_selected_node = None
+        self.right_selected_node = None
         self.available_plugins = []
         self.core_plugins = []
         self.current_plugins = []
@@ -386,9 +387,10 @@ class Instructor(QWidget):
             if self.current_node_plugin_name is not None:
                 if not self.current_node_plugin_name in self.all_generators:
                     self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
+                else:
+                    self.all_generators[self.current_node_plugin_name].refresh_data()
                 self.current_node_generator = self.all_generators[self.current_node_plugin_name]
                 self.current_node_type = self.plugins[self.current_node_plugin_name]['type']
-                # self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
                 self.drawer.node_info_layout.addWidget(self.current_node_generator)
                 self.right_selected_node = None
 
@@ -734,10 +736,13 @@ class Instructor(QWidget):
         pass
 
     def collapse_node(self):
-        if self.right_selected_node != None:
+        if self.right_selected_node is not None:
             val = self.right_selected_node
-        else:
+        elif self.left_selected_node is not None:
             val = self.left_selected_node
+        else:
+            rospy.logwarn('[INSTRUCTOR] Cannot collapse node since no node has been selected yet.')
+            return
 
         node = self.current_tree[val]
         if self.current_node_types[val] == 'LOGIC': 
@@ -1113,6 +1118,9 @@ class Instructor(QWidget):
             self.clear_node_info()
             if not name in self.all_generators:
                 self.all_generators[name] = self.plugins[name]['module']()
+            else:
+                self.all_generators[name].refresh_data()
+            
             self.current_node_generator = self.all_generators[name]
             self.current_node_type = self.plugins[name]['type']
             self.current_node_plugin_name = name
@@ -1251,6 +1259,7 @@ color:#ffffff}''')
             self.current_node_generator = self.all_generators[self.current_plugin_names[self.left_selected_node]]
         else:
             self.current_node_generator = self.all_generators[self.current_plugin_names[self.right_selected_node]]
+        self.current_node_generator.refresh_data()
         self.current_node_generator.name.set_read_only(True)
         if self.left_selected_node:
             self.current_node_generator.load(self.current_node_info[self.left_selected_node])
@@ -1278,6 +1287,7 @@ color:#ffffff}''')
 
         if current_name:
             # current_name = self.right_selected_node
+            self.current_node_generator.refresh_data()
             replacement_node = self.current_node_generator.generate()
             if isinstance(replacement_node,str):
                 rospy.logerr(str(replacement_node))
@@ -1365,6 +1375,7 @@ color:#ffffff}''')
         self.clear_node_info()
         self.current_node_generator = self.all_generators[self.current_node_plugin_name]
         self.current_node_generator.name.set_field(self.get_node_counter_name(self.current_node_plugin_name))
+        self.current_node_generator.refresh_data()
         self.drawer.node_info_layout.addWidget(self.current_node_generator)
     
     def add_child_cb(self):
@@ -1578,7 +1589,7 @@ color:#ffffff}''')
                 widget.setParent(None)
 
     def keyPressEvent(self, event):
-        if type(event) == QtGui.QKeyEvent:
+        if self.is_set_up and type(event) == QtGui.QKeyEvent:
             if event.key() == 16777220:
                 if self.selected_subtree != None:
                     self.load_selected_subtree()
