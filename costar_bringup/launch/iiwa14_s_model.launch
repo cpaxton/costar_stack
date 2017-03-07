@@ -4,16 +4,15 @@
   <arg name="sim" default="false"/>
   <arg name="start_sim" default="$(arg sim)"/>
 
-  <arg name="start_semi_static" default="false"/>
   <arg name="start_camera" default="true"/>
   <arg name="start_move_group" default="true"/>
   <arg name="start_alvar" default="true" />
 
+  <arg name="connect_gripper" default="true" description="(bool) start client to connect to S-model gripper"/>
+
   <arg name="table_frame" default="ar_marker_2"/>
 
-  <!-- not currently functional -->
-  <arg name="use_new_model" default="false"/>
-
+  <!-- End and base of the arm. Don't change these. -->
   <param name="ee_frame" value="iiwa_link_ee"/>
   <param name="base_frame" value="iiwa_link_0"/>
 
@@ -24,11 +23,13 @@
     <param name="trajectory" value="false"/>
   </include>
 
-  <include if="$(arg use_new_model)" file="$(find iiwa14_s_model)/launch/iiwa14_s_model_upload.launch"/>
 
   <group if="$(arg sim)" ns="iiwa">
     <!-- process high level motion commands -->
     <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/>
+
+    <!-- Bringup default configuration for the IIWA -->
+    <include file="$(find costar_bringup)/launch/config/iiwa14.launch"/>
 
     <!-- listen to joints and send them to simulation -->
     <node name="iiwa_simulation_publisher" type="iiwa_simulation_controller.py" pkg="costar_bringup" output="screen"/>
@@ -40,7 +41,11 @@
     </include>
   </group>
 
+  <!-- When not launching as a simulation, we do not need to namespace everything.-->
   <group unless="$(arg sim)">
+
+    <!-- Bringup default configuration for the UR5 -->
+    <include file="$(find costar_bringup)/launch/config/iiwa14.launch"/>
 
     <!-- start a robot state publisher for use with GRL -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
@@ -61,11 +66,18 @@
     </include>
 
     <!-- gripper bringup: connect to s model via TCP/IP -->
-    <node name="robotiq_s_model_interface" pkg="robotiq_s_model_control" type="SModelTcpNode.py" args="$(arg gripper_ip_address)"/>
+    <node if="$(arg connect_gripper)"
+      name="robotiq_s_model_interface"
+      pkg="robotiq_s_model_control"
+      type="SModelTcpNode.py"
+      args="$(arg gripper_ip_address)"/>
+
+    <!-- Launch gripper endpoint setup -->
     <include file="$(find costar_bringup)/launch/robotiq_s_model_endpoint.launch">
       <param name="ee_frame" value="$(arg ee_frame)"/>
     </include>
-    <node name="simple_s_model_server" pkg="costar_gripper_manager" type="s_model.py"/>
+
+    <!-- Start S model-->
     <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
 
   </group>
@@ -74,9 +86,6 @@
     <!-- start gripper server anyway, just don't connect it -->
     <node name="simple_s_model_server" pkg="costar_gripper_manager" type="s_model.py"/>
     <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
-
-
   </group>
-
 
 </launch>

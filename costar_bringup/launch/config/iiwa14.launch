@@ -1,0 +1,27 @@
+<launch>
+  <!-- Smartmove params -->
+  <group ns="costar">
+    <rosparam param="home">[0., 0., 0., 0., 0., 0., 0.]</rosparam>
+    <group ns="smartmove">
+      <rosparam param="available_objects">
+        - sander_makita
+        - node_uniform
+        - link_uniform
+        - drill
+        - table
+      </rosparam>
+      <rosparam param="regions">
+        - in_back_of
+        - in_front_of
+        - right_of
+        - left_of
+        - up_from
+        - down_from
+      </rosparam>
+      <rosparam param="references">
+        - world
+      </rosparam>
+    </group>
+  </group>
+</launch>
+

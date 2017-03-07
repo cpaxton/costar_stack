@@ -17,4 +17,6 @@
     <param name="use_gui" value="true"/>
   </node>
 
+  <node name="simple_s_model_server" pkg="costar_gripper_manager" type="s_model.py"/>
+
 </launch>
