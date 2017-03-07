@@ -1,2 +1,5 @@
 <launch>
+  <node name="simple_c_model_server"
+    pkg="costar_gripper_manager"
+    type="c_model.py"/>
 </launch>

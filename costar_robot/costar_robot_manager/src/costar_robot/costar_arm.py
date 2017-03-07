@@ -36,7 +36,7 @@ class CostarArm(object):
        pub_name = os.path.join(self.namespace, name)
        return rospy.Publisher(pub_name, msg_t, *args, **kwargs)
 
-    def make_service_proxy(self, name, srv_t, use_namespace = True):
+    def make_service_proxy(self, name, srv_t, use_namespace=True):
         if use_namespace:
             service_name = os.path.join(self.namespace, name)
         else:
