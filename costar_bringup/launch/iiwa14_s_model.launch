@@ -84,7 +84,6 @@
   <group if="$(arg sim)">
 
     <!-- start gripper server anyway, just don't connect it -->
-    <node name="simple_s_model_server" pkg="costar_gripper_manager" type="s_model.py"/>
     <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
   </group>
 

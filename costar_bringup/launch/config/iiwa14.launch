@@ -2,6 +2,11 @@
   <!-- Smartmove params -->
   <group ns="costar">
     <rosparam param="home">[0., 0., 0., 0., 0., 0., 0.]</rosparam>
+    <group ns="robot">
+      dof: 7
+      base_link: iiwa_link_0
+      end_link: iiwa_link_7
+    </group>
     <group ns="smartmove">
       <rosparam param="available_objects">
         - sander_makita

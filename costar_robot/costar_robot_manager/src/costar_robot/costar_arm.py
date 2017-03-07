@@ -22,7 +22,6 @@ from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
-from smart_waypoint_manager import SmartWaypointManager
 from waypoint_manager import WaypointManager
 
 import copy
@@ -58,7 +57,6 @@ class CostarArm(object):
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
-            start_js_cb=True,
             base_steps=2,
             steps_per_meter=300,
             steps_per_radians=4,
@@ -129,12 +127,6 @@ class CostarArm(object):
         else:
             self.listener = listener
 
-        # Currently this class does not need a smart waypoint manager.
-        # That will remain in the CoSTAR BT.
-        #self.smartmove_manager = SmartWaypointManager(
-        #        listener=self.listener,
-        #        broadcaster=self.broadcaster)
-
         # TODO: ensure the manager is set up properly
         # Note that while the waypoint manager is currently a part of CostarArm
         # If we wanted to set this up for multiple robots it should be treated
@@ -174,8 +166,7 @@ class CostarArm(object):
         self.display_pub = self.make_pub('display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.robot = URDF.from_parameter_server()
-        if start_js_cb:
-            self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
+        self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
 
