@@ -23,13 +23,12 @@
     <param name="trajectory" value="false"/>
   </include>
 
+  <!-- Bringup default configuration for the IIWA -->
+  <include file="$(find costar_bringup)/launch/config/iiwa14.launch"/>
 
   <group if="$(arg sim)" ns="iiwa">
     <!-- process high level motion commands -->
     <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/>
-
-    <!-- Bringup default configuration for the IIWA -->
-    <include file="$(find costar_bringup)/launch/config/iiwa14.launch"/>
 
     <!-- listen to joints and send them to simulation -->
     <node name="iiwa_simulation_publisher" type="iiwa_simulation_controller.py" pkg="costar_bringup" output="screen"/>
@@ -46,9 +45,6 @@
 
   <!-- When not launching as a simulation, we do not need to namespace everything.-->
   <group unless="$(arg sim)">
-
-    <!-- Bringup default configuration for the UR5 -->
-    <include file="$(find costar_bringup)/launch/config/iiwa14.launch"/>
 
     <!-- start a robot state publisher for use with GRL -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>

@@ -4,7 +4,7 @@
   <arg name="start_joint_state_publisher" default="false" doc="(bool) bring up joint state publisher with UI"/>
 
   <!-- Launch gripper endpoint setup -->
-  <include file="$(find costar_bringup)/launch/robotiq_s_model_endpoint.launch">
+  <include file="$(find costar_gripper_manager)/launch/robotiq_s_model_endpoint.launch">
     <param name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 

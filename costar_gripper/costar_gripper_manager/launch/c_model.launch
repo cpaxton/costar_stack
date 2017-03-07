@@ -2,7 +2,7 @@
   <arg name="ee_frame"/>
 
   <!-- Launch gripper endpoint setup -->
-  <include file="$(find costar_bringup)/launch/robotiq_c_model_endpoint.launch">
+  <include file="$(find costar_gripper_manager)/launch/robotiq_c_model_endpoint.launch">
     <param name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 
