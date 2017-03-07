@@ -115,6 +115,9 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
             rospy.logwarn('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
+    def refresh_data(self):
+        self.update_relative_waypoints()
+
 
 # Nodes -------------------------------------------------------------------
 class NodeActionRelativeWaypoint(Node):

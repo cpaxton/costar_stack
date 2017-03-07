@@ -117,6 +117,8 @@ class NodePlanWaypointGUI(NodeGUI):
             rospy.logwarn('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
+    def refresh_data(self):
+        self.update_waypoints()
 # Nodes -------------------------------------------------------------------
 class NodePlanWaypoint(Node):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):

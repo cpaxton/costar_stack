@@ -25,6 +25,10 @@ This is a project by members of the JHU Laboratory for Computational Sensing and
 
 Check out installation instructions [here](INSTALL.md).
 
+We are working on experimental install scripts:
+  - [ROS Indigo/Ubuntu 14.04 LTS](install_indigo.sh)
+  - [ROS Kinetic/Ubuntu 16.04 LTS](install_kinetic.sh) -- not yet supported
+
 ## Starting CoSTAR for the LBR iiwa with GRL
 
 Making sure you are connected to the robot:

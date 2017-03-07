@@ -64,7 +64,7 @@ class SmartMoveDialog(QWidget):
             self.object_list.sortItems()
             self.object_list.setCurrentRow(0)
             if self.object_list.currentItem() is not None:
-                self.selected_move = str(self.object_list.currentItem().text())
+                self.selected_object = str(self.object_list.currentItem().text())
 
     def update_moves(self):
         if self.selected_object is not None:
@@ -83,7 +83,7 @@ class SmartMoveDialog(QWidget):
 
     def add_move(self):
         self.update_objects()
-        print self.new_move_name
+        rospy.loginfo('add move %s'%self.new_move_name)
         if self.new_move_name is not None and self.selected_object is not None:
             # librarian call to add a new move with new_move_name
             self.manager.save_new_waypoint(self.selected_object,self.new_move_name)
@@ -93,7 +93,7 @@ class SmartMoveDialog(QWidget):
 
     def delete_move(self):
         self.update_objects()
-        print self.selected_move
+        rospy.loginfo('delete move %s'%self.selected_move)
         if self.selected_move is not None:
             # librarian call to remove move for selected class
             self.manager.delete(self.selected_move)

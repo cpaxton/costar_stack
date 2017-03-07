@@ -217,6 +217,12 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
             rospy.logwarn('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
+    def refresh_data(self):
+        self.manager.load_all()
+        self.update_regions()
+        self.update_references()
+        self.update_objects()
+
 
 class NodeActionSmartmoveGraspGUI(NodeActionSmartmoveMultiPurposeGUI):
     def __init__(self):

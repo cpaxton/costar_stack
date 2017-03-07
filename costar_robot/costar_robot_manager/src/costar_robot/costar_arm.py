@@ -52,7 +52,7 @@ class CostarArm(object):
     def __init__(self,
             base_link, end_link, planning_group,
             world="/world",
-               namespace="/costar",
+            namespace="/costar",
             listener=None,
             broadcaster=None,
             traj_step_t=0.1,
@@ -79,8 +79,11 @@ class CostarArm(object):
         self.table_pose = None
         self.max_dist_from_table = max_dist_from_table
 
-        self.home_q = rospy.get_param(os.path.join(self.namespace, "home"))
-        self.home_q = [float(q) for q in self.home_q]
+        try:
+            self.home_q = rospy.get_param(os.path.join(self.namespace, "home"))
+            self.home_q = [float(q) for q in self.home_q]
+        except KeyError, e:
+            self.home_q = [0.] * dof
 
         self.world = world
         self.base_link = base_link
@@ -203,6 +206,7 @@ class CostarArm(object):
                 use_namespace=False)
 
         rospy.loginfo("Creating simple planning interface...")
+
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
@@ -239,7 +243,6 @@ class CostarArm(object):
     def js_cb(self,msg):
      
         if len(msg.position) is self.dof:
-            pass
             self.old_q0 = self.q0
             self.q0 = np.array(msg.position)
         else:
@@ -257,9 +260,9 @@ class CostarArm(object):
 
         if self.goal is not None:
 
-            #goal_diff = np.abs(self.goal - self.q0).sum() / self.q0.shape[0]
             cart_diff = (self.ee_pose.p - self.goal.p).Norm()
-            rot_diff = 0 #self.goal_rotation_weight * (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
+            rot_diff = self.goal_rotation_weight * \
+              (pm.Vector(*self.ee_pose.M.GetRPY()) - pm.Vector(*self.goal.M.GetRPY())).Norm()
             goal_diff = cart_diff + rot_diff
 
             if goal_diff < self.max_goal_diff:
@@ -580,6 +583,8 @@ class CostarArm(object):
             self.cur_stamp = self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
+        else:
+            return 'FAILURE'
 
     def shutdown_arm_cb(self,req):
         self.driver_status = 'SHUTDOWN'
@@ -605,10 +610,11 @@ class CostarArm(object):
                     trans, rot = pm.toTf(transform)
                     br.sendTransform(trans, rot, rospy.Time.now(),tf_name,self.world)
 
-        try:
-            self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
-        except tf.ExtrapolationException, e:
-            rospy.logwarn(str(e))
+        if self.table_frame is not None:
+            try:
+                self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
+            except tf.ExtrapolationException, e:
+                rospy.logwarn(str(e))
 
     '''
     call this when "spinning" to keep updating things
@@ -838,12 +844,13 @@ class CostarArm(object):
 
             # Ignore anything below the table: we don't need to even bother
             # checking that position.
-            if T.p[2] < self.table_pose[0][2]:
-                rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
-                Ts.append(None)
-                dists.append(float('inf'))
-                continue
-            dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
+            if self.table_pose is not None:
+                if T.p[2] < self.table_pose[0][2]:
+                    rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
+                    Ts.append(None)
+                    dists.append(float('inf'))
+                    continue
+                dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
             if dist_from_table > self.max_dist_from_table:
                 rospy.logwarn("Ignoring due to table distance: %f > %f"%(
                     dist_from_table,
