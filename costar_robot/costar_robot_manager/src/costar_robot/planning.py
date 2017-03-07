@@ -48,8 +48,8 @@ class SimplePlanning:
         self.robot_ns = robot_ns
         self.client = actionlib.SimpleActionClient(move_group_ns, MoveGroupAction)
 
-        rospy.wait_for_service('/compute_cartesian_path')
-        self.cartesian_path_plan = rospy.ServiceProxy('/compute_cartesian_path',GetCartesianPath)
+        rospy.wait_for_service('compute_cartesian_path')
+        self.cartesian_path_plan = rospy.ServiceProxy('compute_cartesian_path',GetCartesianPath)
 
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
@@ -70,7 +70,15 @@ class SimplePlanning:
       #    q = self.kdl_kin.inverse(T)
       return q
 
-    def getJointMove(self, q_goal, q0, base_steps=1000, steps_per_meter=1000, steps_per_radians = 4, time_multiplier=2, use_joint_move = False, table_frame = None):
+    def getJointMove(self,
+        q_goal,
+        q0,
+        base_steps=1000,
+        steps_per_meter=1000,
+        steps_per_radians=4,
+        time_multiplier=2,
+        use_joint_move=False,
+        table_frame=None):
 
       if q0 is None:
         rospy.logerr("Invalid initial joint position in getCartesianMove")
@@ -308,8 +316,8 @@ class SimplePlanning:
 
     def updateAllowedCollisions(self,obj,allowed):
         self.planning_scene_publisher = rospy.Publisher('planning_scene', PlanningScene, queue_size = 10)
-        rospy.wait_for_service('/get_planning_scene', 10.0)
-        get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene)
+        rospy.wait_for_service('get_planning_scene', 10.0)
+        get_planning_scene = rospy.ServiceProxy('get_planning_scene', GetPlanningScene)
         request = PlanningSceneComponents(components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
         response = get_planning_scene(request)
 

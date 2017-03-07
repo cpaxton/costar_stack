@@ -32,9 +32,9 @@ class CostarIIWADriver(CostarArm):
             traj_step_t=0.1,
             max_acc=1,
             max_vel=1,
-            max_goal_diff = 0.02,
-            goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6,
+            max_goal_diff=0.02,
+            goal_rotation_weight=0.01,
+            max_q_diff=1e-6,
             *args,
             **kwargs):
 

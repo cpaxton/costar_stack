@@ -198,12 +198,17 @@ class CostarArm(object):
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
-        self.get_planning_scene = self.make_service_proxy('/get_planning_scene',GetPlanningScene)
+        self.get_planning_scene = self.make_service_proxy('get_planning_scene',
+                GetPlanningScene,
+                use_namespace=False)
+
+        rospy.loginfo("Creating simple planning interface...")
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
             closed_form_IK_solver=closed_form_IK_solver)
+        rospy.loginfo("Simple planning interface created successfully.")
 
     '''
     Preemption logic -- acquire at the beginning of a trajectory.
@@ -609,7 +614,6 @@ class CostarArm(object):
     call this when "spinning" to keep updating things
     '''
     def tick(self):
-        print "..."
         self.status_publisher.publish(self.driver_status)
         self.update_position()
         self.handle_tick()
