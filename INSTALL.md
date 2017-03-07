@@ -2,8 +2,7 @@
 
 Instructions by Baichuan Jiang
 
-Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). 
-
+Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
 
 ## Prerequisites
 
@@ -18,7 +17,7 @@ To use the CoSTAR system, you will need to install the following software packag
 You can download all the required packages to use CoSTAR with ROS Indigo from the Ubuntu repositories with this command:
 
 ```
-sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem  
+sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem ros-indigo-gazebo-plugins ros-indigo-pcl-ros ros-indigo-socketcan-interface ros-indigo-rqt-gui ros-indigo-rqt-gui-py ros-indigo-position-controllers ros-indigo-robot-state-publisher ros-indigo-joint-state-controller ros-indigo-robot-state-publisher
 ```
 
 ## Step 1. Get Packages From Git
@@ -82,4 +81,4 @@ roslaunch instructor_core instructor.launch
 
 *If everything shows up, CoSTAR system is then successfully installed. Enjoy!*
 
-CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms. If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton3@jhu.edu).
+CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms. If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton@jhu.edu).
