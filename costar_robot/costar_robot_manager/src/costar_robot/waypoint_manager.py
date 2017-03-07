@@ -76,6 +76,8 @@ class WaypointManager:
     # this section loads joint space waypoints
     js_filenames = self.list_service(self.js_folder).entries
 
+    self.js_waypoints = {}
+    self.all_js_moves = []
     for name in js_filenames:
       data = yaml.load(self.load_service(id=name,type=self.js_folder).text)
       self.js_waypoints[name] = data
@@ -84,6 +86,8 @@ class WaypointManager:
     # ----------------------------------------
     # this section loads cartesian waypoints
     cart_filenames = self.list_service(self.cart_folder).entries
+    self.cart_waypoints = {}
+    self.all_cart_moves = []
     for name in cart_filenames:
       data = yaml.load(self.load_service(id=name,type=self.cart_folder).text)
       self.cart_waypoints[name] = data
