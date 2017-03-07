@@ -32,6 +32,9 @@ class CostarArm(object):
         service_name = os.path.join(self.namespace, name)
         return rospy.Service(service_name, srv_t, callback, *args, **kwargs)
 
+    '''
+    Publishers are globally visible -- they go into the top-level CoSTAR namespace.
+    '''
     def make_pub(self, name, msg_t, *args, **kwargs):
        pub_name = os.path.join(self.namespace, name)
        return rospy.Publisher(pub_name, msg_t, *args, **kwargs)
@@ -41,14 +44,15 @@ class CostarArm(object):
             service_name = os.path.join(self.namespace, name)
         else:
             service_name = name
-        print "service name: %s"%service_name
+        rospy.loginfo("Connecting to service with name: %s"%service_name)
         rospy.wait_for_service(service_name)
+        rospy.loginfo("Connected to service successfully.")
         return rospy.ServiceProxy(service_name,srv_t)
 
     def __init__(self,
             base_link, end_link, planning_group,
             world="/world",
-               namespace="costar",
+               namespace="/costar",
             listener=None,
             broadcaster=None,
             traj_step_t=0.1,
@@ -605,6 +609,7 @@ class CostarArm(object):
     call this when "spinning" to keep updating things
     '''
     def tick(self):
+        print "..."
         self.status_publisher.publish(self.driver_status)
         self.update_position()
         self.handle_tick()

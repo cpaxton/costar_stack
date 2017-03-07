@@ -39,6 +39,9 @@
       <param name="allow_trajectory_execution" value="true"/>
       <param name="fake_execution" value="true"/>
     </include>
+
+    <!-- start gripper server anyway, just don't connect it -->
+    <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
   </group>
 
   <!-- When not launching as a simulation, we do not need to namespace everything.-->
@@ -72,19 +75,15 @@
       type="SModelTcpNode.py"
       args="$(arg gripper_ip_address)"/>
 
-    <!-- Launch gripper endpoint setup -->
-    <include file="$(find costar_bringup)/launch/robotiq_s_model_endpoint.launch">
-      <param name="ee_frame" value="$(arg ee_frame)"/>
-    </include>
-
     <!-- Start S model-->
-    <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
+    <include file="$(find costar_gripper_manager)/launch/s_model.launch">
+      <arg name="ee_frame" value="$(ee_frame)"/>
+    </include>
 
   </group>
   <group if="$(arg sim)">
 
-    <!-- start gripper server anyway, just don't connect it -->
-    <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
+
   </group>
 
 </launch>
