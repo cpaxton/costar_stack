@@ -43,7 +43,7 @@ object_orientation = "horizontal"
 # kinect_cmd = ["roslaunch","openni_launch","openni.launch","depth_registration:=true","device_id:=4@043"]
 # primesense_cmd =
 # ["roslaunch","openni_launch","openni.launch","depth_registration:=true"]
-# # WORKS! # used this previously: ,"device_id:=1311220031"
+# WORKS! # used this previously: ,"device_id:=1311220031"
 primesense_cmd = ["roslaunch", "openni2_launch",
                   "openni2.launch", "depth_registration:=true"]
     # WORKS! # used this previously: ,"device_id:=1311220031"
