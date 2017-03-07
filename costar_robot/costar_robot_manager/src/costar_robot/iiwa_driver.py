@@ -43,7 +43,6 @@ class CostarIIWADriver(CostarArm):
         planning_group = 'manipulator'
 
         super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group,dof=7,
-            table_frame=None,
             *args,
             **kwargs)
 
