@@ -3,7 +3,7 @@
 
   <!-- Launch gripper endpoint setup -->
   <include file="$(find costar_gripper_manager)/launch/robotiq_c_model_endpoint.launch">
-    <param name="ee_frame" value="$(arg ee_frame)"/>
+    <arg name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 
   <node name="simple_c_model_server"
