@@ -947,6 +947,7 @@ class Instructor(QWidget):
                 node_to_add = self.current_node_generator.generate()
                 current_name = self.current_node_generator.get_name()
                 self.add_node_to_tree(current_name, node_to_add, self.current_tree[parent.name_].add_child, regenerate_tree = False)
+                # self.add_node_prime_gui()
 
             else:
                 rospy.logwarn(node_plugin_name)
@@ -1019,6 +1020,7 @@ class Instructor(QWidget):
             self.current_node_type = self.plugins[name]['type']
             self.current_node_plugin_name = name
             self.current_node_generator.name.set_field(self.get_node_counter_name(name))
+            self.current_node_generator.show()
             self.drawer.node_info_layout.addWidget(self.current_node_generator)
             self.right_selected_node = None
 
@@ -1267,6 +1269,7 @@ color:#ffffff}''')
         self.current_node_generator = self.all_generators[self.current_node_plugin_name]
         self.current_node_generator.name.set_field(self.get_node_counter_name(self.current_node_plugin_name))
         self.current_node_generator.refresh_data()
+        self.current_node_generator.show()
         self.drawer.node_info_layout.addWidget(self.current_node_generator)
     
     def add_child_cb(self):
@@ -1476,7 +1479,8 @@ color:#ffffff}''')
             item = self.drawer.node_info_layout.takeAt(i)
             widget = item.widget()
             if widget is not None:
-                widget.setParent(None)
+                widget.hide()
+                # widget.setParent(None)
 
     def keyPressEvent(self, event):
         if self.is_set_up and type(event) == QtGui.QKeyEvent:
