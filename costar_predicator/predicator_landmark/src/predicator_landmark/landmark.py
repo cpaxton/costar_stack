@@ -102,8 +102,8 @@ class GetWaypointsService:
             for j in xrange(0, self.obj_symmetries[frame_type].y_symmetries):
                 for k in xrange(0, self.obj_symmetries[frame_type].x_symmetries):
                     theta_z = i * self.obj_symmetries[frame_type].z_rotation
-                    theta_y = i * self.obj_symmetries[frame_type].y_rotation
-                    theta_x = i * self.obj_symmetries[frame_type].x_rotation
+                    theta_y = j * self.obj_symmetries[frame_type].y_rotation
+                    theta_x = k * self.obj_symmetries[frame_type].x_rotation
                     rot_matrix = pm.Rotation.RPY(theta_x,theta_y,theta_z)
                     quaternion_list.append(rot_matrix.GetQuaternion())
         quaternion_list = np.array(quaternion_list)
