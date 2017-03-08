@@ -318,7 +318,6 @@ class Instructor(QWidget):
         self.clear_node_info()
         self.load_sub_btn.hide()
         self.remove_sub_btn.hide()
-        self.remove_saved_node_btn.hide()
         self.close_drawer()
         for k,v in self.component_widgets.items():
             if k is not id:
@@ -346,7 +345,7 @@ class Instructor(QWidget):
             # x,y = self.dot_widget.get_current_pos()
             # self.dot_widget.set_current_pos(x-400,y)
             # self.clear_node_info()
-            self.clear_node_info()
+            # self.clear_node_info()
             if self.current_node_plugin_name is not None:
                 if not self.current_node_plugin_name in self.all_generators:
                     rospy.logerr('%s not in current set of loaded nodes!')
@@ -354,10 +353,11 @@ class Instructor(QWidget):
                     #self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
                 else:
                     self.all_generators[self.current_node_plugin_name].refresh_data()
-                self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                self.current_node_type = self.plugins[self.current_node_plugin_name]['type']
-                self.drawer.node_info_layout.addWidget(self.current_node_generator)
-                self.right_selected_node = None
+
+                #self.current_node_generator = self.all_generators[self.current_node_plugin_name]
+                #self.current_node_type = self.plugins[self.current_node_plugin_name]['type']
+                #self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                #self.right_selected_node = None
 
             # self.drawer.
             # if self.current_node_generator is not None:
@@ -430,9 +430,6 @@ class Instructor(QWidget):
         self.remove_sub_btn = InterfaceButton('REMOVE',colors['red'])
         self.remove_sub_btn.hide()
         self.remove_sub_btn.clicked.connect(self.delete_selected_subtree)
-        self.remove_saved_node_btn = InterfaceButton('REMOVE',colors['red'])
-        self.remove_saved_node_btn.hide()
-        self.remove_saved_node_btn.clicked.connect(self.delete_selected_saved_node)
         self.save_btn = InterfaceButton('SAVE',colors['gray'])
         self.delete_btn = InterfaceButton('DELETE',colors['red'])
         self.save_btn.hide()
@@ -508,7 +505,6 @@ class Instructor(QWidget):
         self.subtree_container.layout.addWidget(self.remove_sub_btn)
         # self.node_container.show()
         # self.node_container.register_callbacks(self.collapse_unused,self.node_selected_callback)
-        # self.node_container.layout.addWidget(self.remove_saved_node_btn)
         self.load_widgets['SUBTREES'] = self.subtree_container
         # self.load_widgets['NODES'] = self.node_container
         self.component_layout.addWidget(self.subtree_container)
@@ -520,8 +516,6 @@ class Instructor(QWidget):
         self.save_dialog.hide()
         self.save_dialog.save_cancel_btn.clicked.connect(self.hide_save_dialog)
         self.save_dialog.save_subtree_btn.clicked.connect(self.save_subtree)
-        self.save_dialog.save_node_btn.clicked.connect(self.save_node)
-        self.save_dialog.save_node_btn.hide()
         self.save_dialog.save_name_field.textChanged.connect(self.saved_name_updated_cb)
         self.save_btn.clicked.connect(self.show_save_dialog)
 
@@ -795,62 +789,6 @@ class Instructor(QWidget):
         # self.root_node.reset()
         self.regenerate_tree()
 
-# Save and Load Nodes ----------------------------------------------------------
-    def save_node(self):
-        if self.right_selected_node != None:
-            if type(self.current_node_generator.generate()) == str:
-                rospy.logerr('The node must be fully defined to save it.')
-            else:
-                print ''
-                generator_to_save = {'node_type':self.current_node_type, 'name':self.save_name, 'plugin_name':self.current_node_plugin_name, 'generator_info':self.current_node_generator.save()}
-                D = yaml.dump(generator_to_save)
-                print D
-                print self.lib_save_service(id=self.save_name,type='instructor_node',text=D)
-                self.hide_save_dialog()
-
-        elif self.current_node_type != None:
-            if type(self.current_node_generator.generate()) == str:
-                rospy.logerr('The node must be fully defined to save it.')
-            else:
-                print ''
-                generator_to_save = {'node_type':self.current_node_type, 'name':self.save_name, 'plugin_name':self.current_node_plugin_name, 'generator_info':self.current_node_generator.save()}
-                D = yaml.dump(generator_to_save)
-                print D
-                print self.lib_save_service(id=self.save_name,type='instructor_node',text=D)
-                self.hide_save_dialog()
-
-    def load_node_info(self):
-        try:
-            self.open_drawer()
-            node_data = self.loadable_nodes[self.selected_load_node]
-            node_plugin_name = node_data['plugin_name']
-            if self.plugins.has_key(node_plugin_name):
-                rospy.loginfo('Node to load matches known nodes ['+ node_plugin_name +']')
-                self.clear_node_info()
-                #self.current_node_generator = self.plugins[node_plugin_name]['module']()
-                self.current_node_generator = self.all_generators[node_plugin_name]
-                self.current_node_type = self.plugins[node_plugin_name]['type']
-                self.current_node_plugin_name = node_plugin_name
-                rospy.logwarn(self.current_node_generator.get_name())
-                self.drawer.node_info_layout.addWidget(self.current_node_generator)
-                # Add in parameters from saved file
-                self.current_node_generator.load(node_data['generator_info'])
-                self.current_node_generator.name.set_field(self.increment_node_name(node_plugin_name))
-                # Close gui
-
-        except KeyError as e:
-            print "Not a valid node"
-
-    def node_selected_callback(self,val):
-        self.remove_saved_node_btn.show()
-        self.selected_load_node = val
-        self.load_node_info()
-
-    def delete_selected_saved_node(self):
-        if self.selected_load_node != None:
-            self.lib_delete_service(id=self.selected_load_node,type='instructor_node')
-            # self.load_node_list()
-
 # Save and Load Subtrees -------------------------------------------------------
 
     def saved_name_updated_cb(self,t):
@@ -1066,10 +1004,14 @@ class Instructor(QWidget):
             self.add_node_above_btn.show()
             self.add_node_below_btn.show()
 
+        self.clear_node_info()
+
         if self.plugins.has_key(name):
-            self.clear_node_info()
+
             if not name in self.all_generators:
-                self.all_generators[name] = self.plugins[name]['module']()
+                rospy.logerr('node with name %s not loaded correctly!'%name)
+                raise RuntimeError('Error loading plugin named %s'%name)
+                #self.all_generators[name] = self.plugins[name]['module']()
             else:
                 self.all_generators[name].refresh_data()
             
@@ -1079,8 +1021,6 @@ class Instructor(QWidget):
             self.current_node_generator.name.set_field(self.get_node_counter_name(name))
             self.drawer.node_info_layout.addWidget(self.current_node_generator)
             self.right_selected_node = None
-        else:
-            self.clear_node_info()
 
     def node_leftclick_location_cb(self,event):
         self.selected_location = event
@@ -1102,7 +1042,6 @@ class Instructor(QWidget):
             # self.run_button.hide()
             self.load_sub_btn.hide()
             self.remove_sub_btn.hide()
-            self.remove_saved_node_btn.hide()
             self.selected_subtree = None
             self.save_btn.hide()
             self.delete_btn.hide()
@@ -1470,7 +1409,6 @@ color:#ffffff}''')
                 # self.run_button.hide()
                 self.load_sub_btn.hide()
                 self.remove_sub_btn.hide()
-                self.remove_saved_node_btn.hide()
                 self.selected_subtree = None
 
     def clear_all_cancel(self):
