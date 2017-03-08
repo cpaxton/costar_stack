@@ -94,7 +94,13 @@ def load_instructor_plugins(cases=[]):
         if p_modules == []:
             pass
 
-        for p_module, p_description, p_name, p_type, p_group, p_case in zip(p_modules,p_descriptions,p_names,p_types,p_groups,p_cases):
+        for p_module, p_description, p_name, p_type, p_group, p_case in zip(p_modules,
+                p_descriptions,
+                p_names,
+                p_types,
+                p_groups,
+                p_cases):
+
             if len(cases) == 0:
                 include = True
             else:
@@ -266,8 +272,18 @@ class Instructor(QWidget):
         self.plugins = {}
         self.node_counter = {}
         plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.cases)
-        for plug,desc,name,typ,grp in zip(plugins,plugin_descriptions,plugin_names,plugin_types, plugin_groups):
-            self.plugins[name] = {'module':plug, 'type':typ, 'name':name, 'group':grp, 'description':desc, 'generator_type':str(type(plug()))}
+        for plug,desc,name,typ,grp in zip(plugins,
+                plugin_descriptions,
+                plugin_names,
+                plugin_types, 
+                plugin_groups):
+            self.plugins[name] = {
+                    'module':plug,
+                    'type':typ,
+                    'name':name,
+                    'group':grp,
+                    'description':desc,
+                    'generator_type':str(type(plug()))}
         
         self.available_plugins = plugin_descriptions
         for p in self.plugins.itervalues():
@@ -811,7 +827,8 @@ class Instructor(QWidget):
             if self.plugins.has_key(node_plugin_name):
                 rospy.loginfo('Node to load matches known nodes ['+ node_plugin_name +']')
                 self.clear_node_info()
-                self.current_node_generator = self.plugins[node_plugin_name]['module']()
+                #self.current_node_generator = self.plugins[node_plugin_name]['module']()
+                self.current_node_generator = self.all_generators[node_plugin_name]
                 self.current_node_type = self.plugins[node_plugin_name]['type']
                 self.current_node_plugin_name = node_plugin_name
                 rospy.logwarn(self.current_node_generator.get_name())
@@ -992,7 +1009,6 @@ class Instructor(QWidget):
                 node_to_add = self.current_node_generator.generate()
                 current_name = self.current_node_generator.get_name()
                 self.add_node_to_tree(current_name, node_to_add, self.current_tree[parent.name_].add_child, regenerate_tree = False)
-                self.add_node_prime_gui()
 
             else:
                 rospy.logwarn(node_plugin_name)
