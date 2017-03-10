@@ -78,9 +78,9 @@ before_install:
 # Create a catkin workspace with the package under integration.
 install:
   - mkdir -p ~/costar_ws/src
+  - cd ~/costar_ws
+  - catkin init
   - cd ~/costar_ws/src
-  - costar init
-  - git clone https://github.com/cpaxton/costar_stack.git  
   - git clone https://github.com/SalvoVirga/iiwa_stack.git  
   - git clone https://github.com/ros-industrial/robotiq.git  
   - git clone https://github.com/jbohren/rqt_dot.git  
@@ -89,6 +89,7 @@ install:
   - git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
   - git clone https://github.com/cpaxton/xdot.git  
   - git clone https://github.com/ThomasTimm/ur_modern_driver.git
+  - touch costar_stack/costar_perception/CATKIN_IGNORE
   # Create the devel/setup.bash (run catkin_make with an empty workspace) and
   # source it to set the path variables.
   - cd ~/costar_ws
