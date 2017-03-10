@@ -112,9 +112,6 @@ class SimplePlanning:
         else:
           rospy.logwarn("No IK solution on one of the trajectory point to cartesian move target")
 
-      for i in xrange(len(traj.points) - 1):
-        traj.points[i].velocities = (traj.points[i] - traj.points[i-1].positions)/ts
-
       if len(traj.points) < base_steps:
           print rospy.logerr("Planning failure with " \
                   + str(len(traj.points)) \
