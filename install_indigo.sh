@@ -18,7 +18,7 @@ git clone https://github.com/gt-ros-pkg/hrl-kdl.git
 git clone https://github.com/cpaxton/xdot.git  
 git clone https://github.com/ThomasTimm/ur_modern_driver.git
 
-source ../devel/setup.bash
 echo "Ignore COSTAR_PERCEPTION until you have installed its dependencies."
 touch costar_stack/costar_perception/CATKIN_IGNORE
 catkin build --continue
+source ../devel/setup.bash
