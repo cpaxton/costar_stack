@@ -116,6 +116,11 @@ def load_instructor_plugins(cases=[]):
                 types.append(p_type)
                 groups.append(p_group)
 
+    rospy.logwarn(plugins)
+    rospy.logwarn(descriptions)
+    rospy.logwarn(names)
+    rospy.logwarn(types)
+    rospy.logwarn(groups)
     return plugins, descriptions, names, types, groups
 
 class Instructor(QWidget):

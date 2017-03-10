@@ -41,8 +41,10 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>costar_robot_msgs</build_depend>
+
   <build_depend>ur_modern_driver</build_depend>
   <run_depend>ur_modern_driver</run_depend>
+
   <run_depend>costar_robot_msgs</run_depend>
   <build_depend>smart_waypoint_manager</build_depend>
   <run_depend>smart_waypoint_manager</run_depend>
