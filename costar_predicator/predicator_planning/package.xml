@@ -50,7 +50,6 @@
   <build_depend>tf</build_depend>
   <build_depend>tf_conversions</build_depend>
   <build_depend>urdf</build_depend>
-  <build_depend>urdfdom</build_depend>
   <build_depend>xacro</build_depend>
   <build_depend>trajectory_msgs</build_depend>
 
@@ -64,7 +63,6 @@
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>
   <run_depend>urdf</run_depend>
-  <run_depend>urdfdom</run_depend>
   <run_depend>xacro</run_depend>
   <run_depend>trajectory_msgs</run_depend>
 
