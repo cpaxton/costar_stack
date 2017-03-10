@@ -67,9 +67,11 @@ env:
 before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  # Do not build/test costar-perception: it requires OpenCV-nonfree, which is not automatically installed.
+  - touch $CI_SOURCE_PATH/costar_perception/CATKIN_IGNORE
   - sudo apt-get update -qq
   - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
-  - sudo apt-get install -y sudo apt-get install ros-$ROS_DISTRO-fcl ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-moveit-full liburdfdom-headers-dev ros-$ROS_DISTRO-control-msgs ros-$ROS_DISTRO-gazebo-ros-control ros-$ROS_DISTRO-python-orocos-kdl xdot libccd-dev ros-$ROS_DISTRO-ros-control ros-$ROS_DISTRO-octomap-msgs ros-$ROS_DISTRO-object-recognition-msgs ros-$ROS_DISTRO-realtime-tools ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-gazebo-plugins ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-socketcan-interface ros-$ROS_DISTRO-rqt-gui ros-$ROS_DISTRO-rqt-gui-py ros-$ROS_DISTRO-position-controllers ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-state-controller ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-trajectory-controller ros-$ROS_DISTRO-openni2-launch
+  - sudo apt-get install -y ros-$ROS_DISTRO-fcl ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-moveit-full liburdfdom-headers-dev ros-$ROS_DISTRO-control-msgs ros-$ROS_DISTRO-gazebo-ros-control ros-$ROS_DISTRO-python-orocos-kdl xdot ros-$ROS_DISTRO-ros-control ros-$ROS_DISTRO-universal-robot ros-$ROS_DISTRO-ur-msgs ros-$ROS_DISTRO-octomap-msgs ros-$ROS_DISTRO-object-recognition-msgs ros-$ROS_DISTRO-realtime-tools ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-gazebo-plugins ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-socketcan-interface ros-$ROS_DISTRO-rqt-gui ros-$ROS_DISTRO-rqt-gui-py ros-$ROS_DISTRO-position-controllers ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-state-controller ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-trajectory-controller ros-$ROS_DISTRO-openni2-launch
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep to install dependencies.
   - sudo rosdep init
@@ -89,7 +91,6 @@ install:
   - git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
   - git clone https://github.com/cpaxton/xdot.git  
   - git clone https://github.com/ThomasTimm/ur_modern_driver.git
-  - touch costar_stack/costar_perception/CATKIN_IGNORE
   # Create the devel/setup.bash (run catkin_make with an empty workspace) and
   # source it to set the path variables.
   - cd ~/costar_ws
@@ -122,7 +123,7 @@ before_script:
 script:
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - cd ~/costar_ws
-  - catkin_make $( [ -f $CATKIN_OPTIONS ] && cat $CATKIN_OPTIONS )
+  - catkin build
   # Run the tests, ensuring the path is set correctly.
   - source devel/setup.bash
   #- catkin_make run_tests && catkin_test_results
