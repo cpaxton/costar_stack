@@ -2,12 +2,12 @@
 
 sudo apt-get install python-catkin-tools ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-gazebo-plugins ros-indigo-pcl-ros ros-indigo-socketcan-interface ros-indigo-rqt-gui ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem ros-indigo-position-controllers ros-indigo-robot-state-publisher ros-indigo-joint-state-controller
  
-cd $HOME
-mkdir -r costar_ws/src
-cd costar_ws
+cd ~
+mkdir -p costar_ws/src
+cd ~/costar_ws
 source /opt/ros/indigo/setup.bash
 catkin init
-cd src
+cd ~/costar_ws/src
 git clone https://github.com/cpaxton/costar_stack.git  
 git clone https://github.com/SalvoVirga/iiwa_stack.git  
 git clone https://github.com/ros-industrial/robotiq.git  
