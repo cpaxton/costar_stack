@@ -94,6 +94,8 @@ install:
   # Create the devel/setup.bash (run catkin_make with an empty workspace) and
   # source it to set the path variables.
   - cd ~/costar_ws
+  # Install remaining dependencies using rosdep
+  - rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
   - catkin build
   - source devel/setup.bash
   # Add the package under integration to the workspace using a symlink.
