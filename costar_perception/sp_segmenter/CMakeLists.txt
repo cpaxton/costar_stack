@@ -121,6 +121,7 @@ IF (BUILD_USE_OBJRECRANSAC)
   message(STATUS "ObjRecRANSAC enabled")
   ADD_DEFINITIONS( -DUSE_OBJRECRANSAC)
   add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
+  include_directories(${ObjRecRANSAC_INCLUDE_DIRS})
   target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY})
 
   if(NOT EXISTS OBJREC_USE_CUDA)
