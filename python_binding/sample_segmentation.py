@@ -48,12 +48,6 @@ if use_additional_parameter:
     # table_pose_to_camera = EigenPose()
 
     # Setting the eigen pose in python is sometimes buggy (for no reason?)
-<<<<<<< HEAD
-    # table_pose_to_camera = makeEigenPose(base_orientation,base_origin);
-    segmenter.setCropBoxSize(0.35,0.35,0.35);
-    # segmenter.setCropBoxPose(table_pose_to_camera);
-    print "Crop box has been set successfully."
-=======
     # print "Make eigen pose"
     # table_pose_to_camera = makeEigenPose(base_orientation,base_origin);
     # print "Setting cropbox size"
@@ -61,7 +55,6 @@ if use_additional_parameter:
     # print "Setting cropbox pose"
     # segmenter.setCropBoxPose(table_pose_to_camera);
     # print "Crop box has been set successfully."
->>>>>>> 555c02d771535a21c498294beb9c8609e3af1aef
     if use_table:
         segmenter.setUseTableSegmentation(True);
         segmenter.setCropAboveTableBoundary(0.01, 0.5);
