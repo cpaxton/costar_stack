@@ -184,20 +184,3 @@ void SceneGraph::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
 }
-
-SequentialSceneGraph::SequentialSceneGraph(ImagePtr background_image)
-{
-	SceneGraph background_scene;
-	background_scene.addBackground(background_image);
-	sequential_scene_graph_.push_back(background_scene);
-}
-
-DecisionVector SequentialSceneGraph::BDLinear(ImagePtr I, SceneGraph G_minus, SceneGraph G_bar, DecisionVector D, std::vector<std::string> O)
-{
-	if (O.size() == 0) return D;
-	else
-	{
-		std::string &p = O.at(0);
-		
-	}
-}

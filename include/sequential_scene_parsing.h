@@ -42,12 +42,6 @@ private:
 	PhysicsEngine * physics_engine_;
 	// PhysicsEngine * physics_engine_;
 
-	// TODO
-	// void addObject();
-	// void removeObject();
-	// void moveObject();
-	// void perturbObject();
-
 	// // do everything (detecting objects etc)
 	// void processImage(Image input);
 
@@ -61,25 +55,5 @@ private:
 	;
 };
 
-class SequentialSceneGraph
-{
-public:
-	SequentialSceneGraph(ImagePtr background_image);
-	void addScene(ImagePtr input_image);
-	// generateEstimate();
-;
-private:
-	DecisionVector BDLinear(ImagePtr I, SceneGraph G_minus, SceneGraph G_bar, DecisionVector D, std::vector<std::string> O);
-	void binaryDecision();
-	void graphSweep();
-	void phase1();
-	void phase2();
-	void phase3();
-	void phase4();
-	void phase5();
-	void phase6();
-	std::vector <SceneGraph> sequential_scene_graph_;
-;
-};
 
 #endif

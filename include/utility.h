@@ -6,15 +6,15 @@
 #include <pcl/point_types.h>
 #include <map>
 
-template <class container_type>
-container_type getContentOfConstantMap(const std::string &key, const std::map<std::string, container_type> &database)
+template <typename container_type1, typename container_type2>
+container_type2 getContentOfConstantMap(const container_type1 &key, const std::map<container_type1, container_type2> &database)
 {
-	typename std::map<std::string, container_type>::const_iterator it(database.find(key));
-	return it != database.end() ? it->second : container_type();
+	typename std::map<container_type1, container_type2>::const_iterator it(database.find(key));
+	return it != database.end() ? it->second : container_type2();
 }
 
-template <typename container_type>
-bool keyExistInConstantMap(const std::string &key, const std::map<std::string, container_type> &database)
+template <typename container_type1, typename container_type2>
+bool keyExistInConstantMap(const container_type1 &key, const std::map<container_type1, container_type2> &database)
 {
 	return database.find(key) != database.end();
 }
