@@ -21,6 +21,13 @@
 #ifdef USE_TRACKING
 #include "sp_segmenter/tracker.h"
 #endif
+
+#ifdef SCENE_PARSING
+#include <objrec_hypothesis_msgs/Hypothesis.h>
+#include <objrec_hypothesis_msgs/ModelHypothesis.h>
+#include <objrec_hypothesis_msgs/AllModelHypothesis.h>
+#endif
+
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -63,6 +70,10 @@ protected:
     void initializeSemanticSegmentationFromRosParam();
     void populateTFMap(std::vector<objectTransformInformation> all_poses);
 
+#ifdef SCENE_PARSING
+    objrec_hypothesis_msgs::AllModelHypothesis generateAllModelHypothesis() const;
+#endif
+
     ros::NodeHandle nh;
     bool classReady, useTFinsteadOfPoses;
 
@@ -100,6 +111,12 @@ protected:
     Eigen::Vector3f crop_box_size, crop_box_gripper_size;
     Eigen::Affine3d crop_box_pose_table_;
     bool has_crop_box_pose_table_, use_crop_box_, need_preferred_tf_ ;
+
+#ifdef SCENE_PARSING
+    ros::Publisher hypothesis_pub_;
+    // ros::ServiceServer hypothesis_confidence_server_;
+#endif
+    
 
 #ifdef USE_TRACKING
     boost::shared_ptr<Tracker> tracker_;
