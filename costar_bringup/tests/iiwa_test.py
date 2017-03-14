@@ -18,7 +18,7 @@ def startup():
 
     rospy.init_node('test_node')
     rospy.wait_for_service('/gazebo/reset_world',10.)
-    time.sleep(10.)
+    time.sleep(1.)
     from sensor_msgs.msg import JointState
     global sub
     sub = rospy.Subscriber('/iiwa/joint_states',JointState,js_cb)
@@ -29,16 +29,17 @@ def startup():
 
     return gazebo, costar
 
+g, c = None, None
+
 class TestIIWA(unittest.TestCase):
 
-    def test_home(self):
+    def test_move(self):
         rospy.logwarn('TEST 1: HOME')
         global q
         time.sleep(10.);
         for qq in q:
             self.assertAlmostEqual(qq,0.0,places=2)
 
-    def test_move(self):
         from costar_robot_msgs.srv import SetServoMode, ServoToPose
         srv = rospy.ServiceProxy('/costar/SetServoMode',SetServoMode)
         srv(mode='SERVO')
@@ -95,6 +96,32 @@ class TestIIWA(unittest.TestCase):
         self.assertAlmostEqual(trans[1], goal_pos.y, places=2)
         self.assertAlmostEqual(trans[2], goal_pos.z, places=2)
 
+    def setUp(self):
+        subprocess.call(['pkill','-f','gz'])
+        time.sleep(5.)
+        try:
+            g, c = startup()
+            catch_sigint = lambda: catch_sigint(g,c)
+            signal.signal(signal.SIGINT, catch_sigint)
+
+        except Exception, e:
+            subprocess.call(['rosnode','kill','--all'])
+            subprocess.call(['pkill','-f','gz'])
+            if g is not None:
+              g.kill()
+            if c is not None:
+              c.kill()
+            raise e
+      
+    def tearDown(self):
+        subprocess.call(['rosnode','kill','--all'])
+        subprocess.call(['pkill','-f','gz'])
+        if g is not None:
+          g.kill()
+        if c is not None:
+          c.kill()
+        rospy.logwarn('DONE')
+
 def _catch_sigint(g,c):
     g.kill()
     c.kill()
@@ -103,33 +130,8 @@ def _catch_sigint(g,c):
     sys.exit()
 
 if __name__ == '__main__':
-    subprocess.call(['rosnode','kill','--all'])
-    subprocess.call(['pkill','-f','gz'])
-    time.sleep(5.)
-    g, c = None, None
-    try:
-        g, c = startup()
-        catch_sigint = lambda: catch_sigint(g,c)
-        signal.signal(signal.SIGINT, catch_sigint)
+    unittest.main()
 
-        unittest.main()
-
-    except Exception, e:
-        subprocess.call(['rosnode','kill','--all'])
-        subprocess.call(['pkill','-f','gz'])
-        if g is not None:
-          g.kill()
-        if c is not None:
-          c.kill()
-        raise e
-    
-    subprocess.call(['rosnode','kill','--all'])
-    subprocess.call(['pkill','-f','gz'])
-    if g is not None:
-      g.kill()
-    if c is not None:
-      c.kill()
-    rospy.logwarn('DONE')
 
 
 
