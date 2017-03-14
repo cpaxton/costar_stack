@@ -96,33 +96,21 @@ class SimplePlanning:
             velocities=[0]*len(q0),
             accelerations=[0]*len(q0)))
       # compute IK
-      for i in range(1,steps+4):
+      for i in range(1,steps):
         xyz = None
         rpy = None
         q = None
-        if i >= steps:
-          # slow down at 3 final step: at 50% 25% 10% speed before stopping
-          incremental_step = None
-          if i == steps:
-            incremental_step = 0.5
-          elif i == steps + 1:
-            incremental_step = 0.75
-          elif i == steps + 2:
-            incremental_step = 0.9
-          else:
-            incremental_step = 1.0
-          steps_speed = ((steps-1)+incremental_step)/steps
-          q = np.array(q0) + steps_speed * (q_goal - np.array(q0))
-          q = q.tolist()
 
-        else:
-          q = np.array(q0) + (float(i)/steps) * (q_goal - np.array(q0))
-          q = q.tolist()
+        q = np.array(q0) + (float(i)/steps) * (q_goal - np.array(q0))
+        q = q.tolist()
 
         if self.verbose:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
+          prev_velocity = (np.array(q) - np.array(traj.points[i-1].positions))/ts
+          traj.points[i-1].velocities = prev_velocity
+
           pt = JointTrajectoryPoint(positions=q,
             velocities=[0]*len(q),
             accelerations=[0]*len(q))
@@ -189,40 +177,19 @@ class SimplePlanning:
           return JointTrajectory()
           
       # compute IK
-      for i in range(1,steps+4):
+      for i in range(1,steps):
         xyz = None
         rpy = None
         q = None
-        if i >= steps:
-          # slow down at 3 final step: at 50% 25% 10% speed before stopping
-          incremental_step = None
-          if i == steps:
-            incremental_step = 0.5
-          elif i == steps + 1:
-            incremental_step = 0.75
-          elif i == steps + 2:
-            incremental_step = 0.9
-          else:
-            incremental_step = 1.0
-          steps_speed = ((steps-1)+incremental_step)/steps
-          if not use_joint_move:
-            xyz = cur_xyz + steps_speed * (goal_xyz - cur_xyz)
-            rpy = cur_rpy + steps_speed * (goal_rpy - cur_rpy)
-            frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
-            q = self.ik(frame, q0)
-          else:
-            q = np.array(q0) + steps_speed * (q_target - np.array(q0))
-            q = q.tolist()
 
+        if not use_joint_move:
+          xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
+          rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
+          frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
+          q = self.ik(frame, q0)
         else:
-          if not use_joint_move:
-            xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
-            rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
-            frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
-            q = self.ik(frame, q0)
-          else:
-            q = np.array(q0) + (float(i)/steps) * (q_target - np.array(q0))
-            q = q.tolist()
+          q = np.array(q0) + (float(i)/steps) * (q_target - np.array(q0))
+          q = q.tolist()
 
           
           #q = self.kdl_kin.inverse(frame,q0)
@@ -230,6 +197,8 @@ class SimplePlanning:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
+          prev_velocity = (np.array(q) - np.array(traj.points[i-1].positions))/ts
+          traj.points[i-1].velocities = prev_velocity
           pt = JointTrajectoryPoint(positions=q,
           	velocities=[0]*len(q),
           	accelerations=[0]*len(q))

@@ -2,6 +2,8 @@
 
 ***Collaborative System for Task Automation and Recognition***
 
+[![Build Status](https://travis-ci.org/cpaxton/costar_stack.svg?branch=master)](https://travis-ci.org/cpaxton/costar_stack)
+
 CoSTAR is an end-user interface for authoring robot task plans developed at Johns Hopkins University. It includes integrated perception and planning capabilities, plus a Behavior Tree based user interface.
 
 Our goal is to build a system which facilitates end-user instruction of robots to solve a variety of different problems. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more. Tasks are represented as Behavior Trees. For videos of our system in action, you can check out the [CoSTAR YouTube Channel](https://www.youtube.com/playlist?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf).

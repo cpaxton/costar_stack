@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   PCL
   tf
   pcl_ros
-  pcl_conversions
   sensor_msgs
 )
 
