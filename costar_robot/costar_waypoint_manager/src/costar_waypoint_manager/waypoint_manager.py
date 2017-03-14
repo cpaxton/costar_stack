@@ -12,6 +12,7 @@ import yaml
 from predicator_msgs.srv import *
 from predicator_msgs.msg import *
 
+from costar_component import CostarComponent
 from costar_robot_msgs.srv import *
 
 from librarian_msgs.srv import *
@@ -23,11 +24,7 @@ or cartesian waypoints (the later relative to some frame of reference).
 
 These are stored in Librarian and get loaded any time the system comes up.
 '''
-class WaypointManager:
-
-  def make_service(self, name, srv_t, callback, *args, **kwargs):
-      service_name = os.path.join(self.namespace, name)
-      return rospy.Service(service_name, srv_t, callback, *args, **kwargs)
+class WaypointManager(CostarComponent):
 
   def __init__(self,
           world="world",
@@ -35,6 +32,8 @@ class WaypointManager:
           endpoint="/endpoint",
           service=False,
           broadcaster=None):
+
+    super(CostarArm, self).__init__(name="WaypointManager", namespace=namespace)
 
     self.namespace = namespace
 

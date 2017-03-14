@@ -2,6 +2,7 @@
 import os
 import tf
 import rospy
+from costar_component import CostarComponent
 from costar_robot_msgs.srv import *
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectoryPoint
@@ -25,28 +26,7 @@ from predicator_landmark import GetWaypointsService
 
 import copy
 
-class CostarArm(object):
-
-    def make_service(self, name, srv_t, callback, *args, **kwargs):
-        service_name = os.path.join(self.namespace, name)
-        return rospy.Service(service_name, srv_t, callback, *args, **kwargs)
-
-    '''
-    Publishers are globally visible -- they go into the top-level CoSTAR namespace.
-    '''
-    def make_pub(self, name, msg_t, *args, **kwargs):
-       pub_name = os.path.join(self.namespace, name)
-       return rospy.Publisher(pub_name, msg_t, *args, **kwargs)
-
-    def make_service_proxy(self, name, srv_t, use_namespace=True):
-        if use_namespace:
-            service_name = os.path.join(self.namespace, name)
-        else:
-            service_name = name
-        rospy.loginfo("Connecting to service with name: %s"%service_name)
-        rospy.wait_for_service(service_name)
-        rospy.loginfo("Connected to service successfully.")
-        return rospy.ServiceProxy(service_name,srv_t)
+class CostarArm(CostarComponent):
 
     def __init__(self,
             base_link, end_link, planning_group,
@@ -71,6 +51,8 @@ class CostarArm(object):
             dof=7,
             debug=False,
             perception_ns="/SPServer",):
+
+        super(CostarArm, self).__init__(name="Arm", namespace=namespace)
         
         self.debug = debug
         self.namespace = namespace

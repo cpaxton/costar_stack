@@ -73,6 +73,7 @@ roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=true
 ## CoSTAR Packages
 
   * [Bringup](costar_bringup/Readme.md): launch files, RVIZ configurations, et cetera
+  * [Component](costar_component/Readme.md): generic tools for non-specific CoSTAR components.
   * [Instructor](costar_instructor/Readme.md): user interface
   * [Librarian](costar_librarian/Readme.md): file management
   * [Predicator](costar_predicator/Readme.md): robot knowledge management
