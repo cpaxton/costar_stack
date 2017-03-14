@@ -83,7 +83,7 @@ class SimplePlanning:
       if q0 is None:
         rospy.logerr("Invalid initial joint position in getJointMove")
         return JointTrajectory()
-      elif q_goal.isclose(q0,atol = 0.0001):
+      elif np.all(np.isclose(q0,q_goal,atol = 0.0001)):
         rospy.logwarn("Robot is already in the goal position.")
         return JointTrajectory()
 
@@ -104,7 +104,7 @@ class SimplePlanning:
             velocities=[0]*len(q0),
             accelerations=[0]*len(q0)))
       # compute IK
-      for i in range(1,steps):
+      for i in range(1,steps + 1):
         xyz = None
         rpy = None
         q = None
@@ -129,7 +129,6 @@ class SimplePlanning:
             accelerations=[0]*len(q))
           pt.time_from_start = rospy.Duration(i * ts)
           traj.points.append(pt)
-          q0 = q
         else:
           rospy.logwarn("No IK solution on one of the trajectory point to cartesian move target")
 
@@ -195,7 +194,7 @@ class SimplePlanning:
       
       dq_target = (q_target - np.array(q0))
       # compute IK
-      for i in range(1,steps):
+      for i in range(1,steps + 1):
         xyz = None
         rpy = None
         q = None
@@ -226,7 +225,6 @@ class SimplePlanning:
           	accelerations=[0]*len(q))
           pt.time_from_start = rospy.Duration(i * ts)
           traj.points.append(pt)
-          q0 = q
         else:
           rospy.logwarn("No IK solution on one of the trajectory point to cartesian move target")
 
