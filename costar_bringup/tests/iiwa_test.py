@@ -117,8 +117,10 @@ if __name__ == '__main__':
     except Exception, e:
         subprocess.call(['rosnode','kill','--all'])
         subprocess.call(['pkill','-f','gz'])
-        g.kill()
-        c.kill()
+        if g is not None:
+          g.kill()
+        if c is not None:
+          c.kill()
         raise e
     
     subprocess.call(['rosnode','kill','--all'])
