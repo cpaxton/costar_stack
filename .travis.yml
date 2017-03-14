@@ -131,4 +131,4 @@ script:
   #- catkin_make run_tests && catkin_test_results
   - roscore &
   # run a test: make sure we can bring up the robot successfully
-  - rosrun costar_bringup iiwa.py
+  - rosrun costar_bringup iiwa_test.py
