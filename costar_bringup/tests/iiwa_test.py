@@ -86,7 +86,7 @@ class TestIIWA(unittest.TestCase):
         from tf import TransformListener
         listener = TransformListener()
 
-        rospy.sleep(1.0)
+        rospy.sleep(10.0)
         (trans, rot) = listener.lookupTransform('/base_link', '/endpoint', rospy.Time(0))
 
         rospy.logwarn("result = %s, %s"%(str(trans),str(rot)))
