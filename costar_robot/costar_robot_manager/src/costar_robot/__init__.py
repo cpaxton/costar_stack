@@ -24,8 +24,6 @@ if rospack_exists('iiwa_ros',installed_robot_driver,missing_robot_driver):
 if rospack_exists('dvrk_robot',installed_robot_driver,missing_robot_driver):
 	from psm_driver import CostarPSMDriver
 
-from waypoint_manager import WaypointManager
-
 # define modes
 from planning import ModeJoints
 from planning import ModeCart

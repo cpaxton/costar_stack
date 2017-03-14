@@ -22,7 +22,6 @@ from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
-from waypoint_manager import WaypointManager
 
 import copy
 
@@ -134,13 +133,6 @@ class CostarArm(object):
         else:
             self.listener = listener
 
-        # TODO: ensure the manager is set up properly
-        # Note that while the waypoint manager is currently a part of CostarArm
-        # If we wanted to set this up for multiple robots it should be treated
-        # as an independent component.
-        self.waypoint_manager = WaypointManager(service=True,
-                broadcaster=self.broadcaster)
-
         # Set up services
         # The CostarArm services let the UI put it into teach mode or anything else
         self.teach_mode = self.make_service('SetTeachMode',SetTeachMode,self.set_teach_mode_cb)
@@ -152,8 +144,6 @@ class CostarArm(object):
         self.plan_home_srv = self.make_service('PlanToHome',ServoToPose,self.plan_to_home_cb)
         self.smartmove = self.make_service('SmartMove',SmartMove,self.smart_move_cb)
         self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_cb)
-        self.save_frame = self.make_service('SaveFrame',SaveFrame,self.save_frame_cb)
-        self.save_joints = self.make_service('SaveJointPosition',SaveFrame,self.save_joints_cb)
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
         self.smartmove_query_srv = self.make_service('Query',SmartMove,self.query_cb)
@@ -290,26 +280,6 @@ class CostarArm(object):
         else:
             velocity = req.vel
         return (acceleration, velocity)
-
-    '''
-    Save the current end effector pose as a frame that we can return to
-    '''
-    def save_frame_cb(self,req):
-      rospy.logwarn('Save frame does not check to see if your frame already exists!')
-      print self.ee_pose
-      self.waypoint_manager.save_frame(self.ee_pose, self.world)
-
-      return 'SUCCESS - '
-
-    '''
-    Save the current joint states as a frame that we can return to
-    '''
-    def save_joints_cb(self,req):
-      rospy.logwarn('Save frame does not check to see if your joint position already exists!')
-      print self.q0
-      self.waypoint_manager.save_frame(self.q0)
-
-      return 'SUCCESS - '
     
     '''
     ik: handles calls to KDL inverse kinematics
@@ -623,9 +593,6 @@ class CostarArm(object):
         self.status_publisher.publish(self.driver_status)
         self.update_position()
         self.handle_tick()
-
-        # publish TF messages to display frames
-        self.waypoint_manager.publish_tf()
     
     '''
     call this to get rough estimate whether the input robot configuration is in collision or not

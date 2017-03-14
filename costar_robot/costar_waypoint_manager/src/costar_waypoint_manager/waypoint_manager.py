@@ -1,3 +1,8 @@
+'''
+By Chris Paxton
+(c) 2016-2017 The Johns Hopkins University
+'''
+
 import rospy
 import yaml
 import tf
@@ -18,6 +23,10 @@ or cartesian waypoints (the later relative to some frame of reference).
 These are stored in Librarian and get loaded any time the system comes up.
 '''
 class WaypointManager:
+
+  def make_service(self, name, srv_t, callback, *args, **kwargs):
+      service_name = os.path.join(self.namespace, name)
+      return rospy.Service(service_name, srv_t, callback, *args, **kwargs)
 
   def __init__(self,world="world",ns="",endpoint="/endpoint",service=False,broadcaster=None):
     if not broadcaster is None:
@@ -46,23 +55,26 @@ class WaypointManager:
     self.all_cart_moves = []
 
     # If we are bringing this up as an independent component...
+    # This will create the appropriate services
     if service:
-      self.get_joint_states_waypoints_list = rospy.Service('/costar/GetJointStateWaypoints',GetList,self.get_js_waypoints_list)
-      self.get_waypoints_list = rospy.Service('/costar/GetWaypointsList',GetList,self.get_waypoints_list)
+      self.save_frame = self.make_service('SaveFrame',SaveFrame,self.save_frame_cb)
+      self.save_joints = self.make_service('SaveJointPosition',SaveFrame,self.save_joints_cb)
+      self.get_joint_states_waypoints_list = self.make_service('GetJointStateWaypoints',GetList,self.get_js_waypoints_list_cb)
+      self.get_waypoints_list = self.make_service('GetWaypointsList',GetList,self.get_waypoints_list_cb)
 
     self.update()
 
   '''
   Return the list of joint state waypoints
   '''
-  def get_js_waypoints_list(self,req):
+  def get_js_waypoints_list_cb(self,req):
     self.update()
     return GetListResponse(items=self.js_waypoints.keys())
 
   '''
   Return the list of cartesian waypoints
   '''
-  def get_waypoints_list(self,req):
+  def get_waypoints_list_cb(self,req):
     self.update()
     return GetListResponse(items=self.cart_waypoints.keys())
 
