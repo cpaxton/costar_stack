@@ -33,7 +33,7 @@ class WaypointManager(CostarComponent):
           service=False,
           broadcaster=None):
 
-    super(CostarArm, self).__init__(name="WaypointManager", namespace=namespace)
+    super(WaypointManager, self).__init__(name="WaypointManager", namespace=namespace)
 
     self.namespace = namespace
 
