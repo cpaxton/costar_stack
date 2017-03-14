@@ -34,6 +34,10 @@ g, c = None, None
 class TestIIWA(unittest.TestCase):
 
     def test_move(self):
+
+        # take these handles
+        global g, c
+
         rospy.logwarn('TEST 1: HOME')
         global q
         time.sleep(10.);
@@ -97,6 +101,7 @@ class TestIIWA(unittest.TestCase):
         self.assertAlmostEqual(trans[2], goal_pos.z, places=2)
 
     def setUp(self):
+        global g, c
         subprocess.call(['pkill','-f','gz'])
         time.sleep(5.)
         try:
@@ -114,6 +119,8 @@ class TestIIWA(unittest.TestCase):
             raise e
       
     def tearDown(self):
+        global g, c
+
         subprocess.call(['rosnode','kill','--all'])
         subprocess.call(['pkill','-f','gz'])
         if g is not None:
