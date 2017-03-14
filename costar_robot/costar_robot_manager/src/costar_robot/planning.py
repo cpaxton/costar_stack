@@ -81,10 +81,14 @@ class SimplePlanning:
         table_frame=None):
 
       if q0 is None:
-        rospy.logerr("Invalid initial joint position in getCartesianMove")
+        rospy.logerr("Invalid initial joint position in getJointMove")
         return JointTrajectory()
-      if np.any(np.greater(np.absolute(q_goal[:2] - np.array(q0[:2])), np.pi/2)) or np.absolute(q_goal[3] - q0[3]) > np.pi:
-        rospy.logerr("Dangerous IK solution, abort getCartesianMove")
+      if np.any(np.greater(np.absolute(q_goal[:2] - np.array(q0[:2])), np.pi/2)) \
+        or np.absolute(q_goal[3] - q0[3]) > np.pi:
+        
+        # TODO: these thresholds should not be set manually here.
+        rospy.logerr("Dangerous IK solution, abort getJointMove")
+
         return JointTrajectory()
       delta_q = np.absolute(np.array(q_goal) - np.array(q0))
       steps = base_steps + int(np.sum(delta_q) * steps_per_radians)
