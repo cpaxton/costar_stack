@@ -95,12 +95,11 @@ class TestIIWA(unittest.TestCase):
         self.assertAlmostEqual(trans[1], goal_pos.y, places=2)
         self.assertAlmostEqual(trans[2], goal_pos.z, places=2)
 
-
 def _catch_sigint(g,c):
     g.kill()
     c.kill()
     subprocess.call(['rosnode','kill','--all'])
-    suprocess.call(['pkill','-f','gz'])
+    subprocess.call(['pkill','-f','gz'])
     sys.exit()
 
 if __name__ == '__main__':
@@ -116,13 +115,13 @@ if __name__ == '__main__':
 
     except Exception, e:
         subprocess.call(['rosnode','kill','--all'])
-        suprocess.call(['pkill','-f','gz'])
+        subprocess.call(['pkill','-f','gz'])
         g.kill()
         c.kill()
         raise e
     
     subprocess.call(['rosnode','kill','--all'])
-    suprocess.call(['pkill','-f','gz'])
+    subprocess.call(['pkill','-f','gz'])
     g.kill()
     c.kill()
     rospy.logwarn('DONE')
