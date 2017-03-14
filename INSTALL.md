@@ -17,13 +17,20 @@ To use the CoSTAR system, you will need to install the following software packag
 You can download all the required packages to use CoSTAR with ROS Indigo from the Ubuntu repositories with this command:
 
 ```
-sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem ros-indigo-gazebo-plugins ros-indigo-pcl-ros ros-indigo-socketcan-interface ros-indigo-rqt-gui ros-indigo-rqt-gui-py ros-indigo-position-controllers ros-indigo-robot-state-publisher ros-indigo-joint-state-controller ros-indigo-robot-state-publisher ros-indigo-joint-trajectory-controller 
+# set your ros distro 
+export ROS_DISTRO=indigo
+
+# install rosdep and catkin
+sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
+
+# init your rosdep (if you have not already done so)
+sudo rosdep init
+rosdep update
 ```
 
 ## Step 1. Get Packages From Git
 
-We suggest that you download all the required packages before building your catkin workspace. First, change directory to the src directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub: 
-
+We suggest that you download all the required packages before building your catkin workspace. Change directory to the `src` directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub and use `rosdep` to get other dependencies:
 ```
 cd path/to/your/catkin_ws/src
 git clone https://github.com/cpaxton/costar_stack.git  
@@ -35,6 +42,7 @@ git clone https://github.com/sniekum/ar_track_alvar_msgs.git
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
 git clone https://github.com/cpaxton/xdot.git  
 git clone https://github.com/ThomasTimm/ur_modern_driver.git
+rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
 ```
 
 ## Step 2. Build catkin workspace
