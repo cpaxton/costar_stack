@@ -45,18 +45,55 @@ class TestIIWA(unittest.TestCase):
         move = rospy.ServiceProxy('/costar/ServoToPose',ServoToPose)
 
         from geometry_msgs.msg import Pose, Point, Quaternion
-        goal_pos = Point(*(0.440, 0.021, 0.406))
-        goal_rot = Quaternion(*(0.471, 0.547, -0.414, 0.555))
+        goal_pos = Point(*(0.440192456863, 0.0208541713193, 0.406347760719))
+        goal_rot = Quaternion(*(0.471173160807, 0.54682704131, -0.413921285917, 0.554657739955))
         target = Pose(position=goal_pos, orientation=goal_rot)
-        move(target=target,vel=1.0,accel=1.0)
+
+        """
+        WHEN USING INSTRUCTOR:
+
+        [ERROR] [WallTime: 1489518153.954650] [75.399000] [[   0.0592987,     0.97447,    0.216547;
+            0.0561312,     0.21333,   -0.975366;
+            -0.996661,    0.069993,  -0.0420479]
+        [    0.440192,   0.0208542,    0.406348]]
+        [ERROR] [WallTime: 1489518153.955106] [75.399000] [[   0.0592987,     0.97447,    0.216547;
+            0.0561312,     0.21333,   -0.975366;
+            -0.996661,    0.069993,  -0.0420479]
+        [    0.440192,   0.0208542,    0.406348]]
+        [ERROR] [WallTime: 1489518153.955971] [75.399000] target: 
+          position: 
+            x: 0.440192456863
+            y: 0.0208541713193
+            z: 0.406347760719
+          orientation: 
+            x: 0.471173160807
+            y: 0.54682704131
+            z: -0.413921285917
+            w: 0.554657739955
+        accel: 0.75
+        vel: 0.75
+        """
 
         rospy.logwarn(str(target))
+
+        move(target=target,vel=0.25,accel=0.25)
+        rospy.sleep(0.1)
+        move(target=target,vel=0.25,accel=0.25)
+        rospy.sleep(0.1)
+        move(target=target,vel=0.25,accel=0.25)
+        rospy.sleep(0.1)
 
         from tf import TransformListener
         listener = TransformListener()
 
         rospy.sleep(1.0)
         (trans, rot) = listener.lookupTransform('/base_link', '/endpoint', rospy.Time(0))
+
+        rospy.logwarn("result = %s, %s"%(str(trans),str(rot)))
+
+        self.assertAlmostEqual(trans[0], goal_pos.x, places=2)
+        self.assertAlmostEqual(trans[1], goal_pos.y, places=2)
+        self.assertAlmostEqual(trans[2], goal_pos.z, places=2)
 
 
 def _catch_sigint(g,c):
