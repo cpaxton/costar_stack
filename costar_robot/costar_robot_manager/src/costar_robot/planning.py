@@ -83,6 +83,10 @@ class SimplePlanning:
       if q0 is None:
         rospy.logerr("Invalid initial joint position in getJointMove")
         return JointTrajectory()
+      elif q_goal.isclose(q0,atol = 0.0001):
+        rospy.logwarn("Robot is already in the goal position.")
+        return JointTrajectory()
+
       if np.any(np.greater(np.absolute(q_goal[:2] - np.array(q0[:2])), np.pi/2)) \
         or np.absolute(q_goal[3] - q0[3]) > np.pi:
         
@@ -90,11 +94,11 @@ class SimplePlanning:
         rospy.logerr("Dangerous IK solution, abort getJointMove")
 
         return JointTrajectory()
-      delta_q = np.absolute(np.array(q_goal) - np.array(q0))
-      steps = base_steps + int(np.sum(delta_q) * steps_per_radians)
+      delta_q = np.array(q_goal) - np.array(q0)
+      steps = base_steps + int(np.sum(np.absolute(delta_q)) * steps_per_radians)
       
       min_time = 1.0 #seconds
-      ts = ((min_time/time_multiplier + np.sum(delta_q)) / steps ) * time_multiplier
+      ts = ((min_time/time_multiplier + np.sum(np.absolute(delta_q))) / steps ) * time_multiplier
       traj = JointTrajectory()
       traj.points.append(JointTrajectoryPoint(positions=q0,
             velocities=[0]*len(q0),
@@ -105,14 +109,19 @@ class SimplePlanning:
         rpy = None
         q = None
 
-        q = np.array(q0) + (float(i)/steps) * (q_goal - np.array(q0))
+        q = np.array(q0) + (float(i)/steps) * delta_q
         q = q.tolist()
 
         if self.verbose:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
-          prev_velocity = (np.array(q) - np.array(traj.points[i-1].positions))/ts
+          dq_i = np.array(q) - np.array(traj.points[i-1].positions)
+          if np.sum(dq_i) < 0.0001:
+            rospy.logwarn("Joint trajectory point %d is repeating previous trajectory point. "%i)
+            # continue
+
+          prev_velocity = (dq_i)/ts
           traj.points[i-1].velocities = prev_velocity
 
           pt = JointTrajectoryPoint(positions=q,
@@ -162,6 +171,10 @@ class SimplePlanning:
       delta_rpy = np.linalg.norm(goal_rpy - cur_rpy)
       delta_translation = (pose.p - frame.p).Norm()
 
+      if delta_rpy < 0.0001 and delta_translation < 0.0001:
+        rospy.logwarn("Robot is already in the goal position.")
+        return JointTrajectory()
+
       steps = base_steps + int(delta_translation * steps_per_meter) + int(delta_rpy * steps_per_radians)
       print " -- Computing %f steps"%steps
       min_time = 1.0 #seconds
@@ -179,7 +192,8 @@ class SimplePlanning:
         if np.any(np.greater(np.absolute(q_target[:2] - np.array(q0[:2])), np.pi/2)) or np.absolute(q_target[3] - q0[3]) > np.pi:
           rospy.logerr("Dangerous IK solution, abort getCartesianMove")
           return JointTrajectory()
-          
+      
+      dq_target = (q_target - np.array(q0))
       # compute IK
       for i in range(1,steps):
         xyz = None
@@ -192,7 +206,7 @@ class SimplePlanning:
           frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
           q = self.ik(frame, q0)
         else:
-          q = np.array(q0) + (float(i)/steps) * (q_target - np.array(q0))
+          q = np.array(q0) + (float(i)/steps) * dq_target
           q = q.tolist()
 
           
@@ -201,7 +215,11 @@ class SimplePlanning:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
-          prev_velocity = (np.array(q) - np.array(traj.points[i-1].positions))/ts
+          dq_i = np.array(q) - np.array(traj.points[i-1].positions)
+          if np.sum(dq_i) < 0.0001:
+            rospy.logwarn("Joint trajectory point %d is repeating previous trajectory point. "%i)
+            continue
+          prev_velocity = (dq_i)/ts
           traj.points[i-1].velocities = prev_velocity
           pt = JointTrajectoryPoint(positions=q,
           	velocities=[0]*len(q),
