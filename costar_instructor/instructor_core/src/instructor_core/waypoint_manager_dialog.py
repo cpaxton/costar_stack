@@ -379,10 +379,6 @@ class WaypointManagerDialog(QWidget):
                 F_base_world = tf_c.fromTf(self.listener_.lookupTransform('/world','/base_link',rospy.Time(0)))
                 F_command = F_base_world.Inverse()*F_command_world
 
-                rospy.logwarn(str(F_command_world))
-                rospy.lowarn(str(F_base_world))
-                rospy.logwarn(str((F_command, tf_c.toTf(F_command)))
-                    
                 msg = costar_robot_msgs.srv.ServoToPoseRequest()
                 msg.target = tf_c.toMsg(F_command)
                 msg.vel = .25
