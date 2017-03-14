@@ -17,15 +17,20 @@ To use the CoSTAR system, you will need to install the following software packag
 You can download all the required packages to use CoSTAR with ROS Indigo from the Ubuntu repositories with this command:
 
 ```
+# set your ros distro 
+export ROS_DISTRO=indigo
+
+# install rosdep and catkin
 sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
+
+# init your rosdep (if you have not already done so)
 sudo rosdep init
 rosdep update
 ```
 
 ## Step 1. Get Packages From Git
 
-We suggest that you download all the required packages before building your catkin workspace. First, change directory to the src directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub: 
-
+We suggest that you download all the required packages before building your catkin workspace. Change directory to the `src` directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub and use `rosdep` to get other dependencies:
 ```
 cd path/to/your/catkin_ws/src
 git clone https://github.com/cpaxton/costar_stack.git  
