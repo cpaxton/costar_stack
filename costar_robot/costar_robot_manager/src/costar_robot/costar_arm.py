@@ -22,7 +22,6 @@ from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
-from smart_waypoint_manager import SmartWaypointManager
 from waypoint_manager import WaypointManager
 
 import copy
@@ -33,24 +32,27 @@ class CostarArm(object):
         service_name = os.path.join(self.namespace, name)
         return rospy.Service(service_name, srv_t, callback, *args, **kwargs)
 
+    '''
+    Publishers are globally visible -- they go into the top-level CoSTAR namespace.
+    '''
     def make_pub(self, name, msg_t, *args, **kwargs):
        pub_name = os.path.join(self.namespace, name)
        return rospy.Publisher(pub_name, msg_t, *args, **kwargs)
 
-    def make_service_proxy(self, name, srv_t, use_namespace = True):
+    def make_service_proxy(self, name, srv_t, use_namespace=True):
         if use_namespace:
             service_name = os.path.join(self.namespace, name)
         else:
             service_name = name
-        print "service name: %s"%service_name
+        rospy.loginfo("Connecting to service with name: %s"%service_name)
         rospy.wait_for_service(service_name)
+        rospy.loginfo("Connected to service successfully.")
         return rospy.ServiceProxy(service_name,srv_t)
 
     def __init__(self,
             base_link, end_link, planning_group,
             world="/world",
             namespace="/costar",
-            moveit_namespace="/",
             listener=None,
             broadcaster=None,
             traj_step_t=0.1,
@@ -59,7 +61,6 @@ class CostarArm(object):
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
-            start_js_cb=True,
             base_steps=2,
             steps_per_meter=300,
             steps_per_radians=4,
@@ -133,12 +134,6 @@ class CostarArm(object):
         else:
             self.listener = listener
 
-        # Currently this class does not need a smart waypoint manager.
-        # That will remain in the CoSTAR BT.
-        #self.smartmove_manager = SmartWaypointManager(
-        #        listener=self.listener,
-        #        broadcaster=self.broadcaster)
-
         # TODO: ensure the manager is set up properly
         # Note that while the waypoint manager is currently a part of CostarArm
         # If we wanted to set this up for multiple robots it should be treated
@@ -178,8 +173,7 @@ class CostarArm(object):
         self.display_pub = self.make_pub('display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.robot = URDF.from_parameter_server()
-        if start_js_cb:
-            self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
+        self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
 
@@ -207,14 +201,18 @@ class CostarArm(object):
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
-        self.get_planning_scene = self.make_service_proxy("get_planning_scene",
+        self.get_planning_scene = self.make_service_proxy('get_planning_scene',
                 GetPlanningScene,
-                False)
+                use_namespace=False)
+
+        rospy.loginfo("Creating simple planning interface...")
+
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
             closed_form_IK_solver=closed_form_IK_solver)
+        rospy.loginfo("Simple planning interface created successfully.")
 
     '''
     Preemption logic -- acquire at the beginning of a trajectory.

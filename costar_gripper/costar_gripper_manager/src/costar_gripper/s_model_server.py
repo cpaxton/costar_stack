@@ -51,7 +51,7 @@ def getDefaultMsg():
 
 class SimpleSModelServer:
 
-    def __init__(self,ns="costar/gripper"):
+    def __init__(self,ns="/costar/gripper"):
         self.sub = rospy.Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.status_cb)
         self.pub = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output)
         self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)

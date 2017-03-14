@@ -11,38 +11,6 @@
     <include file="$(find predicator_bringup)/launch/core.launch">
     </include>
 
-    <!-- Smartmove params -->
-    <group ns="costar">
-      <rosparam param="home">[0.30, -1.33, -1.80, -0.27, 1.50, 1.60]</rosparam>
-      <group ns="smartmove">
-        <rosparam param="available_objects">
-          - sander_makita
-          - node_uniform
-          - link_uniform
-          - drill
-          - table
-        </rosparam>
-        <rosparam param="regions">
-          - in_back_of
-          - in_front_of
-          - right_of
-          - left_of
-          - up_from
-          - down_from
-        </rosparam>
-        <!-- Unused reference
-          - ar_marker_0
-          - ar_marker_1
-          - ar_marker_2
-          - ar_marker_3
-          - table_frame
-        -->
-        <rosparam param="references">
-          - world
-        </rosparam>
-      </group>
-    </group>
-
     <node pkg="point_cloud_recorder" type="point_cloud_recorder.py" name="point_cloud_recorder_service">
       <param name="id" value="costar"/>
     </node>
