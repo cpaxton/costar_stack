@@ -3,10 +3,11 @@ By Chris Paxton
 (c) 2016-2017 The Johns Hopkins University
 '''
 
+import os
 import rospy
-import yaml
 import tf
 import tf_conversions.posemath as pm
+import yaml
 
 from predicator_msgs.srv import *
 from predicator_msgs.msg import *
@@ -28,7 +29,15 @@ class WaypointManager:
       service_name = os.path.join(self.namespace, name)
       return rospy.Service(service_name, srv_t, callback, *args, **kwargs)
 
-  def __init__(self,world="world",ns="",endpoint="/endpoint",service=False,broadcaster=None):
+  def __init__(self,
+          world="world",
+          namespace="",
+          endpoint="/endpoint",
+          service=False,
+          broadcaster=None):
+
+    self.namespace = namespace
+
     if not broadcaster is None:
         self.broadcaster = broadcaster
     else:
@@ -63,6 +72,19 @@ class WaypointManager:
       self.get_waypoints_list = self.make_service('GetWaypointsList',GetList,self.get_waypoints_list_cb)
 
     self.update()
+
+  '''
+  Save the current frame.
+  '''
+  def save_frame_cb(self, req):
+      raise NotImplementedError('Function not yet implemented!')
+      pass
+
+  '''
+  Save the current set of joint positions.
+  '''
+  def save_joints_cb(self, req):
+      raise NotImplementedError('Function not yet implemented!')
 
   '''
   Return the list of joint state waypoints

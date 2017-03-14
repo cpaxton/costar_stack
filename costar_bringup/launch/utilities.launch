@@ -7,22 +7,9 @@
   <!-- Librarian -->
   <node pkg="librarian_core" type="core.py" name="librarian_core"/>
 
-  <!-- Waypoint Manager 2.0 -->
-  <node pkg="costar_waypoint_manager"
-    type="waypoint_manager_server.py"
-    name="costar_waypoints_manager"/>
-
   <!-- Predicator -->
   <include file="$(find predicator_bringup)/launch/core.launch">
   </include>
-
-  <!-- Point cloud recorder service -->
-  <node pkg="point_cloud_recorder"
-    type="point_cloud_recorder.py"
-    name="point_cloud_recorder_service">
-
-    <param name="id" value="costar"/>
-  </node>
 
   <!-- Force sensor -->
   <node if="$(arg start_robotiq_force_sensor)"
@@ -36,5 +23,20 @@
 
     <arg name="instructor_cases" value="$(arg instructor_cases)"/>
   </include>
+
+  <group ns="costar">
+    <!-- Waypoint Manager 2.0 -->
+    <node pkg="costar_waypoint_manager"
+      type="waypoint_manager_server.py"
+      name="costar_waypoints_manager"/>
+
+    <!-- Point cloud recorder service -->
+    <node pkg="point_cloud_recorder"
+      type="point_cloud_recorder.py"
+      name="point_cloud_recorder_service">
+
+      <param name="id" value="costar"/>
+    </node>
+  </group>
 
 </launch>

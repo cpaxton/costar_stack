@@ -18,7 +18,8 @@ if __name__ == '__main__':
   # Note that while the waypoint manager is currently a part of CostarArm
   # If we wanted to set this up for multiple robots it should be treated
   # as an independent component.
-  wm = WaypointManager(service=True, broadcaster=broadcaster)
+  wm = WaypointManager(service=True,
+          broadcaster=broadcaster)
 
   rate = rospy.Rate(60)
 
