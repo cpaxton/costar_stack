@@ -106,6 +106,7 @@ if __name__ == '__main__':
     subprocess.call(['rosnode','kill','--all'])
     subprocess.call(['pkill','-f','gz'])
     time.sleep(5.)
+    g, c = None, None
     try:
         g, c = startup()
         catch_sigint = lambda: catch_sigint(g,c)
@@ -122,8 +123,10 @@ if __name__ == '__main__':
     
     subprocess.call(['rosnode','kill','--all'])
     subprocess.call(['pkill','-f','gz'])
-    g.kill()
-    c.kill()
+    if g is not None:
+      g.kill()
+    if c is not None:
+      c.kill()
     rospy.logwarn('DONE')
 
 
