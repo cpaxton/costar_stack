@@ -2,6 +2,7 @@
 import os
 import tf
 import rospy
+from costar_component import CostarComponent
 from costar_robot_msgs.srv import *
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectoryPoint
@@ -22,35 +23,15 @@ from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
 from predicator_landmark import GetWaypointsService
-from smart_waypoint_manager import SmartWaypointManager
-from waypoint_manager import WaypointManager
 
 import copy
 
-class CostarArm(object):
-
-    def make_service(self, name, srv_t, callback, *args, **kwargs):
-        service_name = os.path.join(self.namespace, name)
-        return rospy.Service(service_name, srv_t, callback, *args, **kwargs)
-
-    def make_pub(self, name, msg_t, *args, **kwargs):
-       pub_name = os.path.join(self.namespace, name)
-       return rospy.Publisher(pub_name, msg_t, *args, **kwargs)
-
-    def make_service_proxy(self, name, srv_t, use_namespace = True):
-        if use_namespace:
-            service_name = os.path.join(self.namespace, name)
-        else:
-            service_name = name
-        print "service name: %s"%service_name
-        rospy.wait_for_service(service_name)
-        return rospy.ServiceProxy(service_name,srv_t)
+class CostarArm(CostarComponent):
 
     def __init__(self,
             base_link, end_link, planning_group,
             world="/world",
             namespace="/costar",
-            moveit_namespace="/",
             listener=None,
             broadcaster=None,
             traj_step_t=0.1,
@@ -59,7 +40,6 @@ class CostarArm(object):
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
-            start_js_cb=True,
             base_steps=2,
             steps_per_meter=300,
             steps_per_radians=4,
@@ -71,6 +51,8 @@ class CostarArm(object):
             dof=7,
             debug=False,
             perception_ns="/SPServer",):
+
+        super(CostarArm, self).__init__(name="Arm", namespace=namespace)
         
         self.debug = debug
         self.namespace = namespace
@@ -133,19 +115,6 @@ class CostarArm(object):
         else:
             self.listener = listener
 
-        # Currently this class does not need a smart waypoint manager.
-        # That will remain in the CoSTAR BT.
-        #self.smartmove_manager = SmartWaypointManager(
-        #        listener=self.listener,
-        #        broadcaster=self.broadcaster)
-
-        # TODO: ensure the manager is set up properly
-        # Note that while the waypoint manager is currently a part of CostarArm
-        # If we wanted to set this up for multiple robots it should be treated
-        # as an independent component.
-        self.waypoint_manager = WaypointManager(service=True,
-                broadcaster=self.broadcaster)
-
         # Set up services
         # The CostarArm services let the UI put it into teach mode or anything else
         self.teach_mode = self.make_service('SetTeachMode',SetTeachMode,self.set_teach_mode_cb)
@@ -157,8 +126,6 @@ class CostarArm(object):
         self.plan_home_srv = self.make_service('PlanToHome',ServoToPose,self.plan_to_home_cb)
         self.smartmove = self.make_service('SmartMove',SmartMove,self.smart_move_cb)
         self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_cb)
-        self.save_frame = self.make_service('SaveFrame',SaveFrame,self.save_frame_cb)
-        self.save_joints = self.make_service('SaveJointPosition',SaveFrame,self.save_joints_cb)
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
         self.smartmove_query_srv = self.make_service('Query',SmartMove,self.query_cb)
@@ -178,8 +145,7 @@ class CostarArm(object):
         self.display_pub = self.make_pub('display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.robot = URDF.from_parameter_server()
-        if start_js_cb:
-            self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
+        self.js_subscriber = rospy.Subscriber('joint_states',JointState,self.js_cb)
         self.tree = kdl_tree_from_urdf_model(self.robot)
         self.chain = self.tree.getChain(base_link, end_link)
 
@@ -207,14 +173,18 @@ class CostarArm(object):
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
-        self.get_planning_scene = self.make_service_proxy("get_planning_scene",
+        self.get_planning_scene = self.make_service_proxy('get_planning_scene',
                 GetPlanningScene,
-                False)
+                use_namespace=False)
+
+        rospy.loginfo("Creating simple planning interface...")
+
         self.planner = SimplePlanning(self.robot,base_link,end_link,
             self.planning_group,
             kdl_kin=self.kdl_kin,
             joint_names=self.joint_names,
             closed_form_IK_solver=closed_form_IK_solver)
+        rospy.loginfo("Simple planning interface created successfully.")
 
     '''
     Preemption logic -- acquire at the beginning of a trajectory.
@@ -292,26 +262,6 @@ class CostarArm(object):
         else:
             velocity = req.vel
         return (acceleration, velocity)
-
-    '''
-    Save the current end effector pose as a frame that we can return to
-    '''
-    def save_frame_cb(self,req):
-      rospy.logwarn('Save frame does not check to see if your frame already exists!')
-      print self.ee_pose
-      self.waypoint_manager.save_frame(self.ee_pose, self.world)
-
-      return 'SUCCESS - '
-
-    '''
-    Save the current joint states as a frame that we can return to
-    '''
-    def save_joints_cb(self,req):
-      rospy.logwarn('Save frame does not check to see if your joint position already exists!')
-      print self.q0
-      self.waypoint_manager.save_frame(self.q0)
-
-      return 'SUCCESS - '
     
     '''
     ik: handles calls to KDL inverse kinematics
@@ -625,9 +575,6 @@ class CostarArm(object):
         self.status_publisher.publish(self.driver_status)
         self.update_position()
         self.handle_tick()
-
-        # publish TF messages to display frames
-        self.waypoint_manager.publish_tf()
     
     '''
     call this to get rough estimate whether the input robot configuration is in collision or not

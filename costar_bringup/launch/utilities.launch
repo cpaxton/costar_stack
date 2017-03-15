@@ -4,55 +4,39 @@
   <arg name="start_instructor" default="true" doc="(bool) Launch user interface."/>
   <arg name="instructor_cases" default="" doc="(string) Limit allowed plugins to specific cases."/>
 
-    <!-- Librarian -->
-    <node pkg="librarian_core" type="core.py" name="librarian_core"/>
+  <!-- Librarian -->
+  <node pkg="librarian_core" type="core.py" name="librarian_core"/>
 
-    <!-- Predicator -->
-    <include file="$(find predicator_bringup)/launch/core.launch">
-    </include>
+  <!-- Predicator -->
+  <include file="$(find predicator_bringup)/launch/core.launch">
+  </include>
 
-    <!-- Smartmove params -->
-    <group ns="costar">
-      <rosparam param="home">[0.30, -1.33, -1.80, -0.27, 1.50, 1.60]</rosparam>
-      <group ns="smartmove">
-        <rosparam param="available_objects">
-          - sander_makita
-          - node_uniform
-          - link_uniform
-          - drill
-          - table
-        </rosparam>
-        <rosparam param="regions">
-          - in_back_of
-          - in_front_of
-          - right_of
-          - left_of
-          - up_from
-          - down_from
-        </rosparam>
-        <!-- Unused reference
-          - ar_marker_0
-          - ar_marker_1
-          - ar_marker_2
-          - ar_marker_3
-          - table_frame
-        -->
-        <rosparam param="references">
-          - world
-        </rosparam>
-      </group>
-    </group>
+  <!-- Force sensor -->
+  <node if="$(arg start_robotiq_force_sensor)"
+    pkg="robotiq_force_torque_sensor"
+    type="rq_sensor"
+    name="robotiq_force_torque_sensor"/>
 
-    <node pkg="point_cloud_recorder" type="point_cloud_recorder.py" name="point_cloud_recorder_service">
+  <!-- User interface -->
+  <include if="$(arg start_instructor)"
+    file="$(find instructor_core)/launch/instructor.launch">
+
+    <arg name="instructor_cases" value="$(arg instructor_cases)"/>
+  </include>
+
+  <group ns="costar">
+    <!-- Waypoint Manager 2.0 -->
+    <node pkg="costar_waypoint_manager"
+      type="waypoint_manager_server.py"
+      name="costar_waypoints_manager"/>
+
+    <!-- Point cloud recorder service -->
+    <node pkg="point_cloud_recorder"
+      type="point_cloud_recorder.py"
+      name="point_cloud_recorder_service">
+
       <param name="id" value="costar"/>
     </node>
-
-    <!-- Force sensor -->
-    <node if="$(arg start_robotiq_force_sensor)" pkg="robotiq_force_torque_sensor" type="rq_sensor" name="robotiq_force_torque_sensor"/>
-
-    <!-- User interface -->
-    <include if="$(arg start_instructor)" file="$(find instructor_core)/launch/instructor.launch">
-      <arg name="instructor_cases" value="$(arg instructor_cases)"/>
-    </include>
+  </group>
 
 </launch>

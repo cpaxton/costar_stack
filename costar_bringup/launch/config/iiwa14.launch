@@ -1,0 +1,32 @@
+<launch>
+  <!-- Smartmove params -->
+  <group ns="costar">
+    <rosparam param="home">[-0.14, 0.27, 0.20, -1.93, -0.00, 0.88, 1.41]</rosparam>
+    <group ns="robot">
+      dof: 7
+      base_link: iiwa_link_0
+      end_link: iiwa_link_7
+    </group>
+    <group ns="smartmove">
+      <rosparam param="available_objects">
+        - sander_makita
+        - node_uniform
+        - link_uniform
+        - drill
+        - table
+      </rosparam>
+      <rosparam param="regions">
+        - in_back_of
+        - in_front_of
+        - right_of
+        - left_of
+        - up_from
+        - down_from
+      </rosparam>
+      <rosparam param="references">
+        - world
+      </rosparam>
+    </group>
+  </group>
+</launch>
+
