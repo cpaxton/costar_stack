@@ -5,8 +5,8 @@ project(costar_dmp)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  costar_robot_msgs
-  dmp
+  # costar_robot_msgs
+  # dmp
 )
 
 ## System dependencies are found with CMake's conventions
