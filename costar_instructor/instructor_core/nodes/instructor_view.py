@@ -233,6 +233,7 @@ class Instructor(QWidget):
         self.current_plugins = []
         self.active_plugin_widgets = []
         self.is_set_up = False
+        self.current_node_plugin_name = None
         #######################
 
         # Get known Beetree Builder Node Plugins
@@ -1487,6 +1488,9 @@ color:#ffffff}''')
             if event.key() == 16777220:
                 if self.selected_subtree != None:
                     self.load_selected_subtree()
+                elif self.current_node_plugin_name is None:
+                    # do nothing: no current node selected
+                    pass
                 elif 'root' in self.current_node_plugin_name.lower():
                     self.add_root_cb()
                 else:
