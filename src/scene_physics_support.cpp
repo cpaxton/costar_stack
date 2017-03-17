@@ -64,12 +64,15 @@ double getIntersectingVolume(const btAABB &shapeAABB_a, const btAABB &shapeAABB_
     return std::abs(volume);
 }
 
-SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btScalar &time_step, const btVector3 &gravity, const bool &debug_mode)
+SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, 
+    std::map<std::string, vertex_t> &vertex_map, 
+    const btScalar &time_step, const btVector3 &gravity, const bool &debug_mode)
 {
     if (debug_mode) std::cerr << "Creating support graph\n";
     // make the graph with number of vertices = number of collision objects
 	SceneSupportGraph scene_support_graph(world->getNumCollisionObjects());
-    std::map<std::string, vertex_t> vertex_map;
+    vertex_map.clear();
+    // std::map<std::string, vertex_t> vertex_map;
 
     double dTime_times_gravity = time_step * GRAVITY_MAGNITUDE * SCALING;
 

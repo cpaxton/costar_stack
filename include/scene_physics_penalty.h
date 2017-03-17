@@ -7,6 +7,7 @@
 #include <btBulletDynamicsCommon.h>
 
 #include "physics_world_parameters.h"
+#include "scene_physics_support.h"
 
 struct MovementComponent
 {
@@ -39,5 +40,9 @@ double calculateStabilityPenalty(const MovementComponent &acceleration,
 btScalar getObjectMaximumGravityTorqueLength(const btCollisionShape &object_shape);
 
 btScalar getObjectMaximumAngularAcceleration(const btCollisionShape &object_shape, const btScalar &mass, const btVector3 &inertia);
+
+btScalar getObjectSupportContribution(const scene_support_vertex_properties &support_graph_vertex);
+
+btScalar getObjectCollisionPenalty(const scene_support_vertex_properties &support_graph_vertex);
 
 #endif

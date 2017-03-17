@@ -1,9 +1,4 @@
-#include <iostream>
-#include <math.h>
-
 #include "scene_physics_engine.h"
-#include "scene_physics_penalty.h"
-#include "scene_physics_support.h"
 
 static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
 { 
@@ -11,12 +6,14 @@ static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
 	physics_engine_world->worldTickCallback(timeStep); 
 }
 
-PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), rendering_launched_(false), use_background_normal_as_gravity_(false)
+PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), 
+	rendering_launched_(false), use_background_normal_as_gravity_(false)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
 	simulation_step_ = 1/180.f; // 180 Hz
 	this->initPhysics();
 }
+
 void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center)
 {
 	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
@@ -182,6 +179,7 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 	{
 		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's database.\n";
 		this->rigid_body_[it->getID()] = it->generateRigidBodyForWorld();
+		this->object_best_pose_from_data_[it->getID()] = it->getTransform();
 		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's world.\n";
 		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
 
@@ -232,7 +230,7 @@ void PhysicsEngine::simulate()
 		this->object_velocity_.clear();
 		this->object_acceleration_.clear();
 		this->in_simulation_ = true;
-		while (this->in_simulation_ && this->counter_ < 10 )
+		while (this->in_simulation_ && this->counter_ < 2 )
 		{
 			// Do nothing;
 
@@ -312,6 +310,7 @@ void PhysicsEngine::resetObjects()
 		if (this->debug_messages_) std::cerr << "Removed objects: "<<  it->first <<".\n";
 	}
 	this->rigid_body_.clear();
+	this->object_best_pose_from_data_.clear();
 	if (this->debug_messages_) std::cerr << "Done removing all scene objects.\n";
 
 	// mtx_.unlock();
@@ -458,23 +457,40 @@ void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenalty
 }
 
 void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
-	// mtx_.lock();
-    // printf(“The world just ticked by %f seconds\n”, (float)timeStep);
+	mtx_.lock();
     // calculate the scene analysis here
     this->cacheObjectVelocities(timeStep);
-    for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
-		it != this->rigid_body_.end(); ++it)
+
+	scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
+	// put the stability penalty into the scene graph
+	for (std::map<std::string, vertex_t>::const_iterator it = vertex_map_.begin(); it != this->vertex_map_.end(); ++it)
 	{
 		if (keyExistInConstantMap(it->first,this->object_acceleration_))
 		{
-			if(this->debug_messages_)
-				std::cerr << it->first << " ";
-			calculateStabilityPenalty(this->object_acceleration_[it->first], 
+			scene_graph_[it->second].stability_penalty_ = calculateStabilityPenalty(this->object_acceleration_[it->first], 
 				object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
 		}
 	}
-	generateObjectSupportGraph(m_dynamicsWorld, timeStep, gravity_vector_, this->debug_messages_);
-	// mtx_.unlock();
+	mtx_.unlock();
 }
 
+void PhysicsEngine::resetObjectPoseToBestDataPosition()
+{
+	for (std::map<std::string, btTransform>::const_iterator it = object_best_pose_from_data_.begin(); 
+		it != object_best_pose_from_data_.end(); ++it)
+	{
+		rigid_body_[it->first]->setWorldTransform(it->second);
+	}
+}
+
+SceneSupportGraph PhysicsEngine::getCurrentSceneGraph() const
+{
+	return this->scene_graph_;
+}
+
+vertex_t PhysicsEngine::getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position)
+{
+	vertex_t object_in_graph = this->vertex_map_[object_name];
+	return object_in_graph;
+}
 

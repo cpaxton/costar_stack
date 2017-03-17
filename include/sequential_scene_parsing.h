@@ -12,6 +12,7 @@
 #include <Eigen/Geometry>
 
 #include "scene_physics_engine.h"
+#include "ObjRecRANSACTool/ObjRecRANSACTool.h"
 
  // ObjectParameter == Object Pose
 typedef btTransform ObjectParameter;
@@ -32,23 +33,29 @@ public:
 	// void setPhysicsEngine(PhysicsEngine* physics_engine);
 
 	void addBackground(ImagePtr background_image, int mode = 0);
+	void addScenePointCloud(ImagePtr scene_image);
+
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
 	void setDebugMode(bool debug);
 	
+	void evaluateAllObjectHypothesisProbability();
+
 private:
+	void getUpdatedSceneSupportGraph();
+	double evaluateObjectProbability(const std::string &object_label);
 	bool debug_messages_;
 	bool physics_engine_ready_;
-	PhysicsEngine * physics_engine_;
-	// PhysicsEngine * physics_engine_;
 
-	// // do everything (detecting objects etc)
-	// void processImage(Image input);
+	PhysicsEngine * physics_engine_;
+	SceneSupportGraph scene_support_graph_;
+	ObjRecRANSACTool data_probability_check_;
 
 	std::vector<std::string> object_label_;
 	std::string background_label_;
 	std::map<std::string, ImagePtr> object_point_cloud_;
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
+	std::map<std::string, std::vector<ObjectParameter> > object_hypothesis_map_;
 
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 
 	// one label may support multiple objects. Maybe make this into graph instead of list for easier support check

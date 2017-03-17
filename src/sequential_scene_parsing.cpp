@@ -39,7 +39,7 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 	if (this->debug_messages_) std::cerr <<"Adding background into the scene graph.\n";
 	
 	// add background
-	this->object_label_.push_back("g");
+	// this->object_label_.push_back("g");
 	this->background_label_ = "g";
 	this->object_point_cloud_["g"] = background_image;
 	btTransform identity; identity.setIdentity();
@@ -159,9 +159,22 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 	}
 }
 
+void SceneGraph::addScenePointCloud(ImagePtr scene_image)
+{
+	pcl::PointCloud<pcl::PointXYZ>::Ptr point_coordinates_only(new pcl::PointCloud<pcl::PointXYZ>());
+	pcl::copyPointCloud(*scene_image, *point_coordinates_only);
+	data_probability_check_.setPointCloudData(point_coordinates_only);
+}
+
 void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
 {
 	this->physics_engine_->resetObjects();
+	object_label_.reserve(objects.size());
+	for (std::vector<ObjectWithID>::const_iterator it = objects.begin(); it != objects.end(); ++it)
+	{
+		object_label_.push_back(it->getID());
+	}
+
 	if (this->debug_messages_) std::cerr <<"Adding new objects into the scene graph.\n";
 	this->physics_engine_->addObjects(objects);
 }
@@ -184,3 +197,24 @@ void SceneGraph::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
 }
+
+void SceneGraph::getUpdatedSceneSupportGraph()
+{
+	this->scene_support_graph_ = this->physics_engine_->getCurrentSceneGraph();
+}
+
+double SceneGraph::evaluateObjectProbability(const std::string &object_label)
+{
+	btTransform object_pose;
+	vertex_t object_in_graph = this->physics_engine_->getObjectVertexFromSupportGraph(object_label, object_pose);
+	const scene_support_vertex_properties &object_physics_status = this->scene_support_graph_[object_in_graph];
+	const double &stability_probability = object_physics_status.stability_penalty_;
+	double support_probability = getObjectSupportContribution(object_physics_status);
+	double collision_probability = getObjectCollisionPenalty(object_physics_status);
+	double object_data_compliance = this->data_probability_check_.getConfidence(object_label, object_pose);
+	double object_total_probability = object_data_compliance * support_probability * stability_probability * collision_probability;
+	std::cerr << object_label << " probability: " << object_total_probability << std::endl;
+
+	return object_total_probability;
+}
+

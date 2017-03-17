@@ -19,6 +19,7 @@ struct scene_support_vertex_properties
     double penetration_distance_;
     double colliding_volume_;
     bool ground_supported_;
+    double stability_penalty_;
 
     scene_support_vertex_properties(): 
     	object_id_(""),
@@ -26,7 +27,8 @@ struct scene_support_vertex_properties
     	support_contributions_(1.),
     	penetration_distance_(0.),
         colliding_volume_(0.),
-    	ground_supported_(false)
+    	ground_supported_(false),
+        stability_penalty_(0)
     {};
 };
 
@@ -64,7 +66,10 @@ btAABB getCollisionAABB(const btCollisionObject* obj, const btManifoldPoint &pt,
 
 double getIntersectingVolume(const btAABB &shapeAABB_a, const btAABB &shapeAABB_b);
 
-SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, const btScalar &time_step,  const btVector3 &gravity, const bool &debug_mode = false);
+SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, 
+    std::map<std::string, vertex_t> &vertex_map,
+    const btScalar &time_step,  const btVector3 &gravity, 
+    const bool &debug_mode = false);
 
 
 

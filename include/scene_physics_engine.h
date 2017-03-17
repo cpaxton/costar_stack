@@ -1,6 +1,8 @@
 #ifndef SCENE_PHYSICS_ENGINE_H
 #define SCENE_PHYSICS_ENGINE_H
 
+#include <iostream>
+#include <math.h>
 #include <vector>
 #include <map>
 #include <boost/thread.hpp>
@@ -19,7 +21,9 @@
 #include "debugdrawer/GLDebugDrawer.h"
 
 #include "object_data_property.h"
+
 #include "scene_physics_penalty.h"
+#include "scene_physics_support.h"
 
 static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep);
 
@@ -36,7 +40,6 @@ public:
 	// use plane as background (table)
 	void addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center);
 	void addBackgroundConvexHull(const std::vector<btVector3> &plane_points, btVector3 plane_normal);
-	// TODO: use mesh as background (table)
 	void addBackgroundMesh(btTriangleMesh* trimesh, btVector3 plane_normal, btVector3 plane_center);
 
 	// uses a frame that has Y direction up as a guide for gravity direction
@@ -46,10 +49,17 @@ public:
 	void addObjects(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, btTransform>  getUpdatedObjectPose();
 	void resetObjects();
+
 	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
 
 	void setDebugMode(bool debug);
 	void renderingLaunched();
+
+	// Scene analysis
+	void resetObjectPoseToBestDataPosition();
+	SceneSupportGraph getCurrentSceneGraph() const;
+	vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
+
 
 // Additional functions used for rendering:
     void initPhysics();
@@ -85,6 +95,7 @@ private:
 	unsigned int counter_;
 	// rigid body data from ObjectWithID input with ID information
 	std::map<std::string, btRigidBody*> rigid_body_;
+	std::map<std::string, btTransform> object_best_pose_from_data_;
 	btRigidBody* background_;
 	btVector3 background_surface_normal_;
 
@@ -100,8 +111,11 @@ private:
     std::map<std::string, ObjectPenaltyParameters> * object_penalty_parameter_database_;
     double gravity_magnitude_;
     btVector3 gravity_vector_;
+    
     std::map<std::string, MovementComponent> object_velocity_;
     std::map<std::string, MovementComponent> object_acceleration_;
+    SceneSupportGraph scene_graph_;
+    std::map<std::string, vertex_t> vertex_map_;
 
 	btVector3 camera_coordinate_, target_coordinate_;
 	double simulation_step_;

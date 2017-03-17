@@ -103,6 +103,7 @@ public:
 	std::string getID() const;
 	std::string getObjectClass() const;
 	btRigidBody* generateRigidBodyForWorld() const;
+	btTransform getTransform() const;
 private:
 	std::string id_;
 	std::string object_class_;

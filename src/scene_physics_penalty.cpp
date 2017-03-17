@@ -1,14 +1,20 @@
 #include "scene_physics_penalty.h"
 #include <iostream>
 
+inline double stabilityPenaltyFormula(const double &a_t, const double &a_r, const double &w_t, const double &w_r)
+{
+	// use logistic regression
+	return (1 - 1/exp(-12*(a_t*w_t - 0.35))) * (1 - 1/exp(-12*(a_r*w_r - 0.35)));
+}
+
 double calculateStabilityPenalty(const MovementComponent &acceleration,
 	const ObjectPenaltyParameters &penalty_params, const double &gravity_magnitude)
 {
 	double translation_penalty = acceleration.linear_.norm() / gravity_magnitude,
 		angular_penalty = acceleration.angular_.norm() / penalty_params.maximum_angular_acceleration_;
 	std::cerr << "lin penalty: " << translation_penalty << ", ang penalty: " << angular_penalty << std::endl;
-	return exp(- (penalty_params.translational_acceleration_weight_ * translation_penalty + 
-					penalty_params.angular_acceleration_weight_ * angular_penalty) );
+	return stabilityPenaltyFormula(translation_penalty, angular_penalty, 
+		penalty_params.translational_acceleration_weight_, penalty_params.angular_acceleration_weight_);
 }
 
 btScalar getObjectMaximumGravityTorqueLength(const btCollisionShape &object_shape)
@@ -62,5 +68,17 @@ btScalar getObjectMaximumAngularAcceleration(const btCollisionShape &object_shap
 	btVector3 inv_maximum_gravity_angular_acceleration = inertia /(scaled_gravity_magnitude * max_gravity_torque_length * mass);
 	// std::cerr << "inertia: " << inertia.x() << ", " << inertia.y() << ", " << inertia.z() << ": " << scaled_gravity_magnitude * max_gravity_torque_length * mass << std::endl;
 	return ( 1/inv_maximum_gravity_angular_acceleration.norm() );
+}
+
+btScalar getObjectSupportContribution(const scene_support_vertex_properties &support_graph_vertex)
+{
+	const double &support_value =  support_graph_vertex.support_contributions_;
+	return (1 / 1 + exp(-0.5 * support_value));
+}
+
+btScalar getObjectCollisionPenalty(const scene_support_vertex_properties &support_graph_vertex)
+{
+	// TODO: Find a good parameter for the penetration depth
+	return 1.;
 }
 

@@ -15,6 +15,11 @@
 #include <costar_objrec_msgs/DetectedObject.h>
 #include <costar_objrec_msgs/DetectedObjectList.h>
 
+// object hypothesis associated with the detectedObjectList
+#include <objrec_hypothesis_msgs/AllModelHypothesis.h>
+#include <objrec_hypothesis_msgs/ModelHypothesis.h>
+#include <objrec_hypothesis_msgs/Hypothesis.h>
+
 #include "sequential_scene_parsing.h"
 
 // Ros bundling for scene parsing
@@ -26,6 +31,7 @@ public:
 	void setNodeHandle(const ros::NodeHandle &nh);
 	void addBackground(const sensor_msgs::PointCloud2 &pc);
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
+	void fillObjectHypothesis(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypothesis);
 	void publishTf();
 
 	void setDebugMode(bool debug);
@@ -46,7 +52,9 @@ private:
 	// Background mode: 0 = BACKGROUND_PLANE, 1 = BACKGROUND_HULL, 2 = BACKGROUND_MESH
 	int background_mode_;
 	ros::Subscriber detected_object_sub;
+	ros::Subscriber object_hypothesis_sub;
 	ros::Subscriber background_pcl_sub;
+	ros::Subscriber scene_pcl_sub;
 	
 	ros::NodeHandle nh_;
 	tf::TransformListener listener_;

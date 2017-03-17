@@ -309,3 +309,32 @@ bool RosSceneGraph::fillObjectPropertyDatabase()
 	}
 	return true;
 }
+
+void RosSceneGraph::fillObjectHypothesis(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypothesis)
+{
+	for (unsigned int i = 0; i < detected_object_hypothesis.all_hypothesis.size(); i++)
+	{
+		const objrec_hypothesis_msgs::ModelHypothesis &model_hypo = detected_object_hypothesis.all_hypothesis[i];
+		const std::string &object_tf_name = model_hypo.tf_name;
+		std::vector<btTransform> object_pose_hypothesis;
+		object_pose_hypothesis.reserve(model_hypo.model_hypothesis.size());
+		for (unsigned int i = 0; i < model_hypo.model_hypothesis.size(); i++)
+		{
+			tf::Transform transform;
+			tf::transformMsgToTF(model_hypo.model_hypothesis[i].transform, transform);
+			double gl_matrix[15];
+			transform.getOpenGLMatrix(gl_matrix);
+			btTransform bt;
+#if defined(BT_USE_DOUBLE_PRECISION)
+			bt.setFromOpenGLMatrix(gl_matrix);
+#else
+			btScalar gl_matrix_bt[15];
+			for (int i = 0; i < 15; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
+			bt.setFromOpenGLMatrix(gl_matrix_bt);
+#endif
+			bt.setOrigin(bt.getOrigin()*SCALING);
+			object_pose_hypothesis.push_back(bt);
+		}
+	}
+}
+

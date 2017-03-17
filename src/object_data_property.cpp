@@ -102,6 +102,11 @@ btRigidBody* ObjectWithID::generateRigidBodyForWorld() const
 	return this->generateRigidBody(this->transform_);
 }
 
+btTransform ObjectWithID::getTransform() const
+{
+	return this->transform_;
+}
+
 void ObjectDatabase::setObjectFolderLocation(std::string file_location)
 {
 	this->file_location_ = file_location;
