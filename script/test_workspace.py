@@ -54,34 +54,35 @@ if __name__ == "__main__":
 	object_pub_service = rospy.Service('pub_objects', Empty, publish_detected_object_msgs)
 	
 	global pub
-	pub = rospy.Publisher('/SPServer/detected_object_list/', DetectedObjectList,queue_size=1)
+	pub = rospy.Publisher('/SPServer/detected_object_list', DetectedObjectList,queue_size=1)
 	global seq
 	seq = 0
 	rate = rospy.Rate(10)
 	while not rospy.is_shutdown():
 		br = tf.TransformBroadcaster()
-		br.sendTransform((0.248011, 0.0903798, 0.91842),
-							(-0.57472, 0.302057, 0.406916, 0.642556),
+		br.sendTransform((0.248603, 0.0910154, 0.918521),
+							(0.41052, 0.640302, -0.607897, 0.22792),
 							rospy.Time.now(),
 							'objects/node_uniform/1',
 							"world")
-		br.sendTransform((-0.137252, 0.0867218, 0.939421),
-							(-0.186296, 0.374573, 0.819693, 0.391269),
+		br.sendTransform((-0.13513, 0.0850241, 0.94148),
+							(0.823494, 0.357022, -0.173502, 0.405328),
 							rospy.Time.now(),
 							'objects/node_uniform/2',
 							"world")
-		br.sendTransform((0.254448, -0.00760714, 0.839513),
-							(-0.198534, 0.380009, 0.757896, 0.491702),
+
+		br.sendTransform((0.255369, -0.010304, 0.837136),
+							(0.818496, 0.369117, -0.14515, 0.415629),
 							rospy.Time.now(),
 							'objects/link_uniform/1',
 							"world",)
-		br.sendTransform((0.0847675, -0.154304, 1.00225),
-							(-0.322911, 0.29201, 0.580116, 0.688422 ),
+		br.sendTransform((0.0882621, -0.15488, 1.002),
+							( 0.591846, 0.677976, -0.317259,  0.29902),
 							rospy.Time.now(),
 							'objects/link_uniform/2',
 							"world")
-		br.sendTransform((-0.0308435, 0.02324, 1.01637),
-							( -0.208724,0.849739, 0.151435, 0.459831),
+		br.sendTransform((-0.0233503, 0.0190892, 1.0213),
+							( 0.42496, 0.232822, 0.423159, 0.765597),
 							rospy.Time.now(),
 							'objects/link_uniform/3',
 							"world")
