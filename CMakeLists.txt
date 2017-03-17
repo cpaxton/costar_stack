@@ -4,6 +4,7 @@ project(sequential_scene_parsing)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(VTK REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Bullet REQUIRED)
@@ -19,13 +20,16 @@ ELSE (OPENGL_FOUND)
 	SET(OPENGL_glu_LIBRARY glu32)
 ENDIF (OPENGL_FOUND)
 
+find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
 
 find_package(catkin REQUIRED COMPONENTS
+  VTK
   PCL
   tf
   pcl_conversions
   pcl_ros
   sensor_msgs
+  costar_objrec_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -136,6 +140,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${BULLET_INCLUDE_DIRS}
   ${GLUT_INCLUDE_DIR}
+  ${PCL_INCLUDE_DIRS}
+  ${VTK_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -164,6 +170,8 @@ add_library(objConvexDecomposition ${ObjConvexDecomposition})
 
 set(ObjectDataProperty src/object_data_property.cpp  src/scene_physics_penalty.cpp)
 add_library(objectDataProperty ${ObjectDataProperty})
+
+add_library(ObjRecRANSACTool include/ObjRecRANSACTool/ObjRecRANSACTool.h include/ObjRecRANSACTool/ObjRecRANSACTool.cpp) 
 
 set(PhysicsEngine src/scene_physics_engine.cpp src/scene_physics_support.cpp)
 add_library(physicsEngine ${PhysicsEngine})
@@ -213,11 +221,15 @@ target_link_libraries(
 )
 
 target_link_libraries(
+ ObjRecRANSACTool ${PCL_LIBRARIES} ${VTK_LIBS} ${ObjRecRANSAC_LIBRARY}
+)
+
+target_link_libraries(
  physicsEngine objectDataProperty OpenGLSupport ${BULLET_LIBRARIES} ${Boost_LIBRARIES}
 )
 
 target_link_libraries(
- sequentialSceneParsing objectDataProperty physicsEngine ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${BULLET_LIBRARIES} 
+ sequentialSceneParsing objectDataProperty physicsEngine ObjRecRANSACTool ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${BULLET_LIBRARIES} 
 )
 
 target_link_libraries(
