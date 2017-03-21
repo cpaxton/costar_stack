@@ -94,7 +94,6 @@ class CostarPSMDriver(CostarArm):
             br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(), "/endpoint", "/world")
             print "<<<<<", self.last_marker_trans, self.last_marker_rot, ">>>>>"
 
-        # br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(), self.base_link, "/world")
 
     '''
     Send a whole joint trajectory message to a robot...
@@ -122,11 +121,10 @@ class CostarPSMDriver(CostarArm):
     def servo_to_pose_cb(self,req):
         if self.driver_status == 'SERVO':
             T = pm.fromMsg(req.target)
-            # print "This is the target pose: ", req.target
-            # rospy.logwarn("This is the target pose: ", T)
             self.dvrk_arm.move(T)
             return 'SUCCESS - moved to pose'
 
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILURE - not in servo mode'
+
