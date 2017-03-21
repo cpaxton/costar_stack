@@ -43,12 +43,14 @@
 
   <build_depend>costar_component</build_depend>
   <build_depend>costar_robot_msgs</build_depend>
+
   <build_depend>ur_modern_driver</build_depend>
   <build_depend>smart_waypoint_manager</build_depend>
   <build_depend>moveit_ros_planning</build_depend>
 
   <run_depend>costar_component</run_depend>
   <run_depend>ur_modern_driver</run_depend>
+
   <run_depend>costar_robot_msgs</run_depend>
   <run_depend>smart_waypoint_manager</run_depend>
   <run_depend>moveit_ros_planning</run_depend>
