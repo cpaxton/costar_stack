@@ -15,8 +15,7 @@ git clone https://github.com/ros-industrial/robotiq.git
 git clone https://github.com/jbohren/rqt_dot.git  
 git clone https://github.com/sniekum/ar_track_alvar.git  
 git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
-git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
-git clone https://github.com/cpaxton/xdot.git  
+git clone https://github.com/gt-ros-pkg/hrl-kdl.git
 git clone https://github.com/ThomasTimm/ur_modern_driver.git
 rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
 echo "Ignore COSTAR_PERCEPTION until you have installed its dependencies."
