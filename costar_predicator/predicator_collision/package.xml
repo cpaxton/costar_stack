@@ -47,7 +47,6 @@
   <build_depend>tf</build_depend>
   <build_depend>tf_conversions</build_depend>
   <build_depend>urdf</build_depend>
-  <build_depend>urdfdom</build_depend>
   <build_depend>moveit_core</build_depend>
   <build_depend>moveit_ros_planning_interface</build_depend>
   <build_depend>moveit_ros_perception</build_depend>
@@ -64,7 +63,6 @@
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>
   <run_depend>urdf</run_depend>
-  <run_depend>urdfdom</run_depend>
   <run_depend>moveit_core</run_depend>
 
 

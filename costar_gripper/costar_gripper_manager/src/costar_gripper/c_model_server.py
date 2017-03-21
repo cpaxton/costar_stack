@@ -51,7 +51,7 @@ def getDefaultMsg():
 
 class SimpleCModelServer:
 
-    def __init__(self,ns="costar/gripper",verbose=False):
+    def __init__(self,ns="/costar/gripper",verbose=False):
 
         self.verbose = verbose
         self.predicator = CModelPredicator(start_subscriber=False,publish_predicates=True,

@@ -2,6 +2,8 @@
 
 ***Collaborative System for Task Automation and Recognition***
 
+[![Build Status](https://travis-ci.org/cpaxton/costar_stack.svg?branch=master)](https://travis-ci.org/cpaxton/costar_stack)
+
 CoSTAR is an end-user interface for authoring robot task plans developed at Johns Hopkins University. It includes integrated perception and planning capabilities, plus a Behavior Tree based user interface.
 
 Our goal is to build a system which facilitates end-user instruction of robots to solve a variety of different problems. CoSTAR allows users to program robots to perform complex tasks such as sorting, assembly, and more. Tasks are represented as Behavior Trees. For videos of our system in action, you can check out the [CoSTAR YouTube Channel](https://www.youtube.com/playlist?list=PLF86ez-NVmyEDgpmwpnpM6LyNwtkiWxAf).
@@ -29,48 +31,21 @@ We are working on experimental install scripts:
   - [ROS Indigo/Ubuntu 14.04 LTS](install_indigo.sh)
   - [ROS Kinetic/Ubuntu 16.04 LTS](install_kinetic.sh) -- not yet supported
 
-## Starting CoSTAR for the LBR iiwa with GRL
+## Tests
 
-Making sure you are connected to the robot:
-
+Run the IIWA test script:
 ```
-ping 192.170.10.2 # connection to FRI port for joint states
-ping 172.31.1.146 # connection to Robotiq 3-finger gripper to send commands
-ping 172.31.1.147 # connection to JAVA port on the robot to send commands
+rosrun costar_bringup iiwa_test.py
 ```
 
-How to bring this robot up on our own platform:
+It will start gazebo and move the arm to a new position. If this test passes, CoSTAR is set up right.
 
-```
-# core features and UI
-roslaunch costar_bringup iiwa14_s_model.launch
-
-# object detection and moveit planning scene
-roslaunch sp_segmenter SPServerStructureAssembly.launch
-```
-
-You also need to launch the GRL KUKA ROS Driver. GRL is the [Generic Robot Library](https://github.com/ahundt/grl), which provides a low-level control interface for the KUKA LBR.
-
-In particular, `costar_bringup` will launch the robot command driver, the gripper command services, the MoveIt services, Predicator, and Librarian. Note that certain tools from our Hannover and other demos are not available open source due to our IP agreement with Ready Robotics, so you will not be able to duplicate our sanding task with this release of CoSTAR.
-
-## Starting CoSTAR in a Simulation
-
-You can test CoSTAR in a Gazebo simulation. The basic launch procedure for a simulation is to run these commands:
-
-```
-roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false
-roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=false
-```
-
-You can then use the Instructor UI to move the robot around in simulation. If you want to bring up Gazebo and all the drivers at once instead of separately, launch as:
-
-```
-roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=true
-```
+There is a more detailed startup guided [here](Startup.md).
 
 ## CoSTAR Packages
 
   * [Bringup](costar_bringup/Readme.md): launch files, RVIZ configurations, et cetera
+  * [Component](costar_component/Readme.md): generic tools for non-specific CoSTAR components.
   * [Instructor](costar_instructor/Readme.md): user interface
   * [Librarian](costar_librarian/Readme.md): file management
   * [Predicator](costar_predicator/Readme.md): robot knowledge management

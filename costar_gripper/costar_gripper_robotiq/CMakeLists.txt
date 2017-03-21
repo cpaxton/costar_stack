@@ -1,22 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(object_on_table_segmenter)
+project(costar_gripper_robotiq)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(PCL REQUIRED)
-find_package(Boost REQUIRED)
-
 find_package(catkin REQUIRED COMPONENTS
-  PCL
-  tf
-  pcl_ros
-  sensor_msgs
+  costar_gripper_manager
+  predicator_robotiq
+  robotiq_c_model_control
+  robotiq_s_model_control
 )
-
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -71,7 +68,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   sensor_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -105,8 +102,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES object_on_table_segmenter
-#  CATKIN_DEPENDS pcl_conversion sensor_msgs
+#  LIBRARIES costar_gripper_robotiq
+#  CATKIN_DEPENDS costar_gripper_manager predicator_robotiq robotiq_c_model_control robotiq_s_model_control
 #  DEPENDS system_lib
 )
 
@@ -119,39 +116,29 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-
-# add_library(object_on_table_segmenter
-#   src/${PROJECT_NAME}/object_on_table_segmenter.cpp
+# add_library(costar_gripper_robotiq
+#   src/${PROJECT_NAME}/costar_gripper_robotiq.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(object_on_table_segmenter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(costar_gripper_robotiq ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(object_on_table_segmenter src/object_on_table_segmenter.cpp)
-#add_executable(pcd2png_segment_gt src/pcd2png_segment_gt.cpp)
-#target_include_directories(pcd2png_segment_gt ${PCL_LIBRARIES})
+# add_executable(costar_gripper_robotiq_node src/costar_gripper_robotiq_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(object_on_table_segmenter_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(costar_gripper_robotiq_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(object_on_table_segmenter
-   ${catkin_LIBRARIES}
-   ${Boost_LIBRARIES}
-)
-
-#target_link_libraries(pcd2png_segment_gt
-#   ${PCL_LIBRARIES}
-#   ${Boost_LIBRARIES}
-#)
+# target_link_libraries(costar_gripper_robotiq_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -168,7 +155,7 @@ target_link_libraries(object_on_table_segmenter
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS object_on_table_segmenter object_on_table_segmenter_node
+# install(TARGETS costar_gripper_robotiq costar_gripper_robotiq_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -193,7 +180,7 @@ target_link_libraries(object_on_table_segmenter
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_object_on_table_segmenter.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_costar_gripper_robotiq.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

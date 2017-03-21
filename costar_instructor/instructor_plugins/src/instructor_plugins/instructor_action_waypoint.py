@@ -196,11 +196,12 @@ class NodeActionWaypoint(Node):
             F_command_world = tf_c.fromTf(self.listener_.lookupTransform('/world', '/'+self.command_waypoint_name, rospy.Time(0)))
             F_base_world = tf_c.fromTf(self.listener_.lookupTransform('/world','/base_link',rospy.Time(0)))
             F_command = F_base_world.Inverse()*F_command_world
-                
+
             msg = costar_robot_msgs.srv.ServoToPoseRequest()
             msg.target = tf_c.toMsg(F_command)
             msg.vel = self.command_vel
             msg.accel = self.command_acc
+
             # Send Servo Command
             rospy.logwarn('Single Servo Move Started')
             result = pose_servo_proxy(msg)
