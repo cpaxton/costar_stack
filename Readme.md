@@ -23,9 +23,11 @@ This is a project by members of the JHU Laboratory for Computational Sensing and
 }
 ```
 
+Interested in contributing? Check out the [development guidelines](Development.md)
+
 ## Installation
 
-Check out installation instructions [here](INSTALL.md).
+Check out [installation instructions](INSTALL.md).
 
 We are working on experimental install scripts:
   - [ROS Indigo/Ubuntu 14.04 LTS](install_indigo.sh)
@@ -40,7 +42,7 @@ rosrun costar_bringup iiwa_test.py
 
 It will start gazebo and move the arm to a new position. If this test passes, CoSTAR is set up right.
 
-There is a more detailed startup guided [here](Startup.md).
+There is a more detailed [startup guide](Startup.md).
 
 ## CoSTAR Packages
 
