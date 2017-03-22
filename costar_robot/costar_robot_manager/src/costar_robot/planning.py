@@ -25,6 +25,8 @@ ModeJoints = 'joints'
 ModeCart = 'cartesian'
 
 class SimplePlanning:
+
+    skip_tol = 1e-6
     
     def __init__(self,robot,base_link,end_link,group,
             move_group_ns="move_group",
@@ -188,12 +190,18 @@ class SimplePlanning:
         rospy.logerr("No IK solution on cartesian move target")
         return JointTrajectory()
       else:
-        if np.any(np.greater(np.absolute(q_target[:2] - np.array(q0[:2])), np.pi/2)) or np.absolute(q_target[3] - q0[3]) > np.pi:
+        if np.any(
+          np.greater(
+            np.absolute(q_target[:2] - np.array(q0[:2])), np.pi/2)) \
+          or np.absolute(q_target[3] - q0[3]) > np.pi:
+
           rospy.logerr("Dangerous IK solution, abort getCartesianMove")
           return JointTrajectory()
       
-      dq_target = (q_target - np.array(q0))
-      # compute IK
+      dq_target = q_target - np.array(q0)
+
+
+      # Compute a smooth trajectory.
       for i in range(1,steps + 1):
         xyz = None
         rpy = None
@@ -202,20 +210,34 @@ class SimplePlanning:
         if not use_joint_move:
           xyz = cur_xyz + ((float(i)/steps) * (goal_xyz - cur_xyz))
           rpy = cur_rpy + ((float(i)/steps) * (goal_rpy - cur_rpy))
-          frame = pm.toMatrix(kdl.Frame(kdl.Rotation.RPY(rpy[0],rpy[1],rpy[2]),kdl.Vector(xyz[0],xyz[1],xyz[2])))
+
+          # Create transform for goal frame
+          frame = pm.toMatrix(
+            kdl.Frame(
+              kdl.Rotation.RPY(
+                rpy[0],
+                rpy[1],
+                rpy[2]),
+              kdl.Vector(
+                xyz[0],
+                xyz[1],
+                xyz[2])))
+
+          # Use current inverse kinematics solver with current position
           q = self.ik(frame, q0)
         else:
           q = np.array(q0) + (float(i)/steps) * dq_target
           q = q.tolist()
-
           
           #q = self.kdl_kin.inverse(frame,q0)
         if self.verbose:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
-          dq_i = np.array(q) - np.array(traj.points[i-1].positions)
-          if np.sum(dq_i) < 0.0001:
+
+          # Compute the distance to the last point for each joint. We use this to compute our joint velocities.
+          dq_i = np.array(q) - np.array(traj.points[-1].positions)
+          if np.sum(np.abs(dq_i)) < self.skip_tol:
             rospy.logwarn("Joint trajectory point %d is repeating previous trajectory point. "%i)
             continue
           prev_velocity = (dq_i)/ts
