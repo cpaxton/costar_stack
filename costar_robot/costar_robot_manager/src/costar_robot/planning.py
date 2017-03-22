@@ -25,6 +25,8 @@ ModeJoints = 'joints'
 ModeCart = 'cartesian'
 
 class SimplePlanning:
+
+    skip_tol = 1e-6
     
     def __init__(self,robot,base_link,end_link,group,
             move_group_ns="move_group",
@@ -192,8 +194,10 @@ class SimplePlanning:
           rospy.logerr("Dangerous IK solution, abort getCartesianMove")
           return JointTrajectory()
       
-      dq_target = (q_target - np.array(q0))
-      # compute IK
+      dq_target = q_target - np.array(q0)
+
+
+      # Compute a smooth trajectory.
       for i in range(1,steps + 1):
         xyz = None
         rpy = None
@@ -207,15 +211,15 @@ class SimplePlanning:
         else:
           q = np.array(q0) + (float(i)/steps) * dq_target
           q = q.tolist()
-
           
           #q = self.kdl_kin.inverse(frame,q0)
         if self.verbose:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
-          dq_i = np.array(q) - np.array(traj.points[i-1].positions)
-          if np.sum(dq_i) < 0.0001:
+          rospy.logwarn(str(traj.points))
+          dq_i = np.abs(np.array(q) - np.array(traj.points[-1].positions))
+          if np.sum(dq_i) < self.skip_tol:
             rospy.logwarn("Joint trajectory point %d is repeating previous trajectory point. "%i)
             continue
           prev_velocity = (dq_i)/ts
