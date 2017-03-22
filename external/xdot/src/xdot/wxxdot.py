@@ -25,10 +25,14 @@ __all__ = ['WxDotWindow', 'WxDotFrame']
 
 # We need to get the wx version with built-in cairo support
 import wxversion
-#try:
-wxversion.select("3.0")
-#except Exception, e:
-#  print "[WARNING] could not set WX version:", str(e)
+try:
+  wxversion.select("3.0")
+except Exception, e:
+  print "[WARNING] could not set WX version:", str(e)
+  try:
+    wxversion.select("2.8")
+  except Exception, e:
+    print "[WARNING] could not set backup WX version:", str(e)
 import wx
 import wx.lib.wxcairo as wxcairo
 
