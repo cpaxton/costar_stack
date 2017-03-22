@@ -234,7 +234,6 @@ class SimplePlanning:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
-          rospy.logwarn(str(traj.points))
 
           # Compute the distance to the last point for each joint. We use this to compute our joint velocities.
           dq_i = np.array(q) - np.array(traj.points[-1].positions)
