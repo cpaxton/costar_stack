@@ -406,17 +406,24 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
         return false;
     }
     
+    if (input_cloud->size() < 1)
+    {
+        std::cerr << "There are no points in the input cloud.\n";
+        return false;
+    }
+
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     *full_cloud = *input_cloud;
 
     if(use_crop_box_) {
       cropPointCloud(full_cloud, crop_box_target_pose_.inverse(), crop_box_size_);
+
+        if (full_cloud->size() < 1){
+            std::cerr << "No cloud available after using crop box.\n";
+            return false;
+        }
     }
 
-    if (full_cloud->size() < 1){
-        std::cerr << "No cloud available after using crop box.\n";
-        return false;
-    }
     
     if( viewer )
     {
@@ -672,6 +679,10 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
                 {
                     all_poses.insert(all_poses.end(), tmp_poses.begin(), tmp_poses.end());
                 }
+
+#ifdef SCENE_PARSING
+                hypothesis_list_.push_back(individual_ObjRecRANSAC_[j-1]->getLatestAcceptedHypothesis());
+#endif
             }
         }
 
@@ -701,6 +712,12 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
             default:
                 std::cerr << "Unsupported objRecRANSACdetector!\n";
         }
+
+#ifdef SCENE_PARSING
+        // NOT SUPPORTED YET. CANNOT SEPARATE COLLIDING SHAPES WITH ONLY ITS CLASS
+        // NEED SMARTER IMPLEMENTATION OF OBJRECRANSAC getBestShape
+        hypothesis_list_.push_back(combined_ObjRecRANSAC_->getLatestAcceptedHypothesis());
+#endif
 
         if (viewer)
         {
@@ -836,6 +853,15 @@ bool SemanticSegmentation::segmentAndCalculateObjTransform(const pcl::PointCloud
     
     return (segmentation_successful && object_transform_result.size() > 0);
 }
+
+#ifdef SCENE_PARSING
+std::vector<GreedyHypothesis> SemanticSegmentation::getHypothesisList() const
+{
+    return this->hypothesis_list_;
+}
+#endif
+
+
 
 #endif
 

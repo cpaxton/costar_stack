@@ -236,6 +236,13 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
 #ifdef COSTAR
     detected_object_pub = nh.advertise<costar_objrec_msgs::DetectedObjectList>("detected_object_list",1);
 #endif
+
+
+#ifdef SCENE_PARSING
+    hypothesis_pub_ = nh.advertise<objrec_hypothesis_msgs::AllModelHypothesis>("object_hypothesis",1);
+    // hypothesis_confidence_server_ = this->nh.advertiseService("HypothesisConfidence",&RosSemanticSegmentation::serviceCallbackGripper,this);
+#endif
+
     this->nh.param("maxFrames",maxframes,15);
     cur_frame_idx = 0;
     cloud_ready = false;
@@ -343,7 +350,7 @@ bool RosSemanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &p
 
 void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &pc)
 {
-    if (!classReady) return;
+    if (!this->class_ready_) return;
     // The callback from main only update the cloud data
     inputCloud = pc;
 
@@ -570,6 +577,10 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
         }
         this->populateTFMap(object_transform_result);
         hasTF = true;
+
+#ifdef SCENE_PARSING
+        this->hypothesis_pub_.publish(this->generateAllModelHypothesis());
+#endif
         return true;
     }
     else
@@ -670,3 +681,52 @@ void RosSemanticSegmentation::publishTF()
         }
     }
 }
+
+#ifdef SCENE_PARSING
+objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllModelHypothesis() const
+{
+    std::vector<GreedyHypothesis> vec_greedy_hypo = this->getHypothesisList();
+    objrec_hypothesis_msgs::AllModelHypothesis result;
+    result.all_hypothesis.reserve(vec_greedy_hypo.size());
+
+    for (std::vector<GreedyHypothesis>::iterator it = vec_greedy_hypo.begin(); it != vec_greedy_hypo.end(); ++it)
+    {
+        std::map< std::size_t, std::vector<AcceptedHypothesis> > &object_hypotheses = it->by_object_hypothesis;
+        for (std::map< std::size_t, std::vector<AcceptedHypothesis> >::iterator it_2 = object_hypotheses.begin();
+            it_2 != object_hypotheses.end(); ++it_2)
+        {
+            objrec_hypothesis_msgs::ModelHypothesis object_i;
+            std::stringstream ss;
+            ss << "obj_" << it->model_id << "_" << it_2->first;
+            object_i.tf_name = ss.str();
+            object_i.model_hypothesis.reserve( it_2->second.size() );
+
+            for (std::vector<AcceptedHypothesis>::iterator it_3 = it_2->second.begin(); 
+                it_3 != it_2->second.end(); ++it_3)
+            {
+                objrec_hypothesis_msgs::Hypothesis tmp;
+                tmp.match = it_3->match;
+                tmp.model_name = it_3->model_entry->getUserData()->getLabel();
+                // transform: 12 double
+                double *rigid_transform = it_3->rigid_transform;
+                Eigen::Matrix3d rotation;
+                rotation <<
+                    rigid_transform[0], rigid_transform[1], rigid_transform[2],
+                    rigid_transform[3], rigid_transform[4], rigid_transform[5], 
+                    rigid_transform[6], rigid_transform[7], rigid_transform[8];
+                Eigen::Quaterniond q(rotation);
+                tmp.transform.translation.x = rigid_transform[9];
+                tmp.transform.translation.y = rigid_transform[10];
+                tmp.transform.translation.z = rigid_transform[11];
+                tmp.transform.rotation.x = q.x();
+                tmp.transform.rotation.y = q.y(); 
+                tmp.transform.rotation.z = q.z(); 
+                tmp.transform.rotation.w = q.w();
+                object_i.model_hypothesis.push_back(tmp);
+            }
+            result.all_hypothesis.push_back(object_i);
+        }
+    }
+    return result;
+}
+#endif

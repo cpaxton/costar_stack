@@ -75,7 +75,7 @@ protected:
 #endif
 
     ros::NodeHandle nh;
-    bool classReady, useTFinsteadOfPoses;
+    bool useTFinsteadOfPoses;
 
     // TF related
     bool hasTF;
