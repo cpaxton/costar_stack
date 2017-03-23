@@ -39,6 +39,7 @@ public:
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
 	void setDebugMode(bool debug);
 	
+	void setObjectHypothesesMap(std::map<std::string, std::vector<ObjectParameter> > &object_hypotheses_map);
 	void evaluateAllObjectHypothesisProbability();
 
 private:

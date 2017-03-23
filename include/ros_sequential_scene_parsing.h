@@ -30,17 +30,20 @@ public:
 	RosSceneGraph(const ros::NodeHandle &nh);
 	void setNodeHandle(const ros::NodeHandle &nh);
 	void addBackground(const sensor_msgs::PointCloud2 &pc);
-	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
-	void fillObjectHypothesis(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypothesis);
+	
 	void publishTf();
 
 	void setDebugMode(bool debug);
 	void callGlutMain(int argc, char* argv[]);
 
-	bool fillObjectPropertyDatabase();
 	PhysicsEngine physics_engine_;
 	
 private:
+	bool fillObjectPropertyDatabase();
+	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
+	void fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses);
+	void processHypothesis();
+
 	// void initialize();
 	bool debug_messages_;
 	bool class_ready_;
@@ -68,6 +71,8 @@ private:
 	std::string tf_publisher_initial;
 	ObjectDatabase obj_database_;
 	std::map<std::string, PhysicalProperties> physical_properties_database_;
+
+	boost::mutex mtx_;
 };
 
 

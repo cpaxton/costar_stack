@@ -237,8 +237,10 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	}
 	this->ros_scene_.addNewObjectTransforms(objects);
 	std::cerr << "Getting corrected object transform...\n";
+	this->mtx_.lock();
 	this->object_transforms_.clear();
 	this->object_transforms_ = this->ros_scene_.getCorrectedObjectTransform();
+	this->mtx_.unlock();
 
 	this->object_transforms_tf_.clear();
 	for (std::map<std::string, ObjectParameter>::const_iterator it = this->object_transforms_.begin(); 
@@ -270,6 +272,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	this->has_tf_ = true;
 	this->publishTf();
 	std::cerr << "Done. Waiting for new detected object message...\n";
+
 }
 
 void RosSceneGraph::publishTf()
@@ -310,14 +313,15 @@ bool RosSceneGraph::fillObjectPropertyDatabase()
 	return true;
 }
 
-void RosSceneGraph::fillObjectHypothesis(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypothesis)
+void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses)
 {
-	for (unsigned int i = 0; i < detected_object_hypothesis.all_hypothesis.size(); i++)
+	std::map<std::string, std::vector<ObjectParameter> > object_hypotheses_map;
+	for (unsigned int i = 0; i < detected_object_hypotheses.all_hypothesis.size(); i++)
 	{
-		const objrec_hypothesis_msgs::ModelHypothesis &model_hypo = detected_object_hypothesis.all_hypothesis[i];
+		const objrec_hypothesis_msgs::ModelHypothesis &model_hypo = detected_object_hypotheses.all_hypothesis[i];
 		const std::string &object_tf_name = model_hypo.tf_name;
-		std::vector<btTransform> object_pose_hypothesis;
-		object_pose_hypothesis.reserve(model_hypo.model_hypothesis.size());
+		std::vector<btTransform> object_pose_hypotheses;
+		object_pose_hypotheses.reserve(model_hypo.model_hypothesis.size());
 		for (unsigned int i = 0; i < model_hypo.model_hypothesis.size(); i++)
 		{
 			tf::Transform transform;
@@ -333,8 +337,15 @@ void RosSceneGraph::fillObjectHypothesis(const objrec_hypothesis_msgs::AllModelH
 			bt.setFromOpenGLMatrix(gl_matrix_bt);
 #endif
 			bt.setOrigin(bt.getOrigin()*SCALING);
-			object_pose_hypothesis.push_back(bt);
+			object_pose_hypotheses.push_back(bt);
 		}
+		object_hypotheses_map[object_tf_name] = object_pose_hypotheses;
 	}
+	this->setObjectHypothesesMap(object_hypotheses_map);
+	this->mtx_.lock();
+	this->evaluateAllObjectHypothesisProbability();
+	this->mtx_.unlock();
+
 }
+
 

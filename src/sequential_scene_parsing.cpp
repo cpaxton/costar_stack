@@ -207,6 +207,11 @@ void SceneGraph::getUpdatedSceneSupportGraph()
 	this->scene_support_graph_ = this->physics_engine_->getUpdatedSceneGraph(this->vertex_map_);
 }
 
+void SceneGraph::setObjectHypothesesMap(std::map<std::string, std::vector<ObjectParameter> > &object_hypotheses_map)
+{
+	this->object_hypotheses_map_ = object_hypotheses_map;
+}
+
 double SceneGraph::evaluateObjectProbability(const std::string &object_label)
 {
 	vertex_t object_in_graph = this->vertex_map_[object_label];
