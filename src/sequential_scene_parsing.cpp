@@ -32,6 +32,10 @@ void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
 
 	// Check if physics engine exist
 	this->physics_engine_ready_ = (physics_engine_ != NULL);
+	if (this->physics_engine_ready_)
+	{
+		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH);
+	}
 }
 
 void SceneGraph::addBackground(ImagePtr background_image, int mode)
@@ -200,14 +204,14 @@ void SceneGraph::setDebugMode(bool debug)
 
 void SceneGraph::getUpdatedSceneSupportGraph()
 {
-	this->scene_support_graph_ = this->physics_engine_->getCurrentSceneGraph();
+	this->scene_support_graph_ = this->physics_engine_->getUpdatedSceneGraph(this->vertex_map_);
 }
 
 double SceneGraph::evaluateObjectProbability(const std::string &object_label)
 {
-	btTransform object_pose;
-	vertex_t object_in_graph = this->physics_engine_->getObjectVertexFromSupportGraph(object_label, object_pose);
-	const scene_support_vertex_properties &object_physics_status = this->scene_support_graph_[object_in_graph];
+	vertex_t object_in_graph = this->vertex_map_[object_label];
+	scene_support_vertex_properties &object_physics_status = this->scene_support_graph_[object_in_graph];
+	btTransform &object_pose = object_physics_status.object_pose_;
 	const double &stability_probability = object_physics_status.stability_penalty_;
 	double support_probability = getObjectSupportContribution(object_physics_status);
 	double collision_probability = getObjectCollisionPenalty(object_physics_status);
@@ -217,4 +221,28 @@ double SceneGraph::evaluateObjectProbability(const std::string &object_label)
 
 	return object_total_probability;
 }
+
+bool SceneGraph::evaluateObjectHypothesis(const std::string &object_label, const btTransform &object_pose_hypothesis)
+{
+	this->physics_engine_->prepareSimulationForOneTestHypothesis(object_label, object_pose_hypothesis);
+	this->getUpdatedSceneSupportGraph();
+	return this->evaluateObjectProbability(object_label);
+}
+
+void SceneGraph::evaluateAllObjectHypothesisProbability()
+{
+	for (std::map<std::string, std::vector<ObjectParameter> >::const_iterator it = this->object_hypotheses_map_.begin();
+		it != this->object_hypotheses_map_.end(); ++it)
+	{
+		const std::string &object_label = it->first;
+		const std::vector<ObjectParameter> &object_pose_hypotheses = it->second;
+		for (std::vector<ObjectParameter>::const_iterator it2 = object_pose_hypotheses.begin();
+			it2 != object_pose_hypotheses.end(); ++it2)
+		{
+			const ObjectParameter &object_pose = *it2;
+			this->evaluateObjectHypothesis(object_label, object_pose);
+		}
+	}
+}
+
 

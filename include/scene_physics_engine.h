@@ -52,13 +52,18 @@ public:
 
 	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
 
+	void setSimulationMode(const int &simulation_mode, const unsigned int &number_of_world_tick = 100);
+
 	void setDebugMode(bool debug);
 	void renderingLaunched();
 
 	// Scene analysis
-	void resetObjectPoseToBestDataPosition();
-	SceneSupportGraph getCurrentSceneGraph() const;
-	vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
+	void resetObjectMotionState(const bool &reset_object_pose, const std::map<std::string, btTransform> &target_pose_map);
+	SceneSupportGraph getCurrentSceneGraph(std::map<std::string, vertex_t> &vertex_map);
+	SceneSupportGraph getUpdatedSceneGraph(std::map<std::string, vertex_t> &vertex_map);
+	void prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose);
+	void changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose);
+	// vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
 
 
 // Additional functions used for rendering:
@@ -86,16 +91,20 @@ private:
 	void simulate();
 	bool checkSteadyState();
 	void cacheObjectVelocities(const btScalar &timeStep);
+	void stopAllObjectMotion();
 	
 	bool debug_messages_;
 	bool have_background_;
 	bool use_background_normal_as_gravity_;
 	bool rendering_launched_;
 	bool in_simulation_;
-	unsigned int counter_;
+	unsigned int world_tick_counter_;
 	// rigid body data from ObjectWithID input with ID information
 	std::map<std::string, btRigidBody*> rigid_body_;
 	std::map<std::string, btTransform> object_best_pose_from_data_;
+	// std::map<std::string, btTransform> object_test_pose_map_;
+	std::map<std::string, btTransform> object_best_test_pose_map_;
+	
 	btRigidBody* background_;
 	btVector3 background_surface_normal_;
 
@@ -120,6 +129,12 @@ private:
 	btVector3 camera_coordinate_, target_coordinate_;
 	double simulation_step_;
 	boost::mutex mtx_;
+
+	bool reset_obj_vel_every_frame_;
+	bool stop_simulation_after_have_support_graph_;
+	unsigned int number_of_world_tick_;
+
+	double best_scene_probability_;
 };
 
 #endif

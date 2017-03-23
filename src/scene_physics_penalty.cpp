@@ -1,10 +1,15 @@
 #include "scene_physics_penalty.h"
 #include <iostream>
 
+inline double logisticFunction(const double &steepness, const double &max_value, const double &midpoint, const double &x)
+{
+	return max_value / (1 + exp(-steepness * (x - midpoint)));
+}
+
 inline double stabilityPenaltyFormula(const double &a_t, const double &a_r, const double &w_t, const double &w_r)
 {
-	// use logistic regression
-	return (1 - 1/exp(-12*(a_t*w_t - 0.35))) * (1 - 1/exp(-12*(a_r*w_r - 0.35)));
+	// use reversed logistic function for 
+	return (logisticFunction(-12., 1., 0.35, a_t*w_t)) * (1 - logisticFunction(-12., 1., 0.35, a_r*w_r));
 }
 
 double calculateStabilityPenalty(const MovementComponent &acceleration,
@@ -12,7 +17,7 @@ double calculateStabilityPenalty(const MovementComponent &acceleration,
 {
 	double translation_penalty = acceleration.linear_.norm() / gravity_magnitude,
 		angular_penalty = acceleration.angular_.norm() / penalty_params.maximum_angular_acceleration_;
-	std::cerr << "lin penalty: " << translation_penalty << ", ang penalty: " << angular_penalty << std::endl;
+	// std::cerr << "lin penalty: " << translation_penalty << ", ang penalty: " << angular_penalty << std::endl;
 	return stabilityPenaltyFormula(translation_penalty, angular_penalty, 
 		penalty_params.translational_acceleration_weight_, penalty_params.angular_acceleration_weight_);
 }
@@ -66,19 +71,22 @@ btScalar getObjectMaximumAngularAcceleration(const btCollisionShape &object_shap
 	// and object orientation makes this distance vector perpendicular to the gravity direction
 
 	btVector3 inv_maximum_gravity_angular_acceleration = inertia /(scaled_gravity_magnitude * max_gravity_torque_length * mass);
-	// std::cerr << "inertia: " << inertia.x() << ", " << inertia.y() << ", " << inertia.z() << ": " << scaled_gravity_magnitude * max_gravity_torque_length * mass << std::endl;
+	// std::cerr << "inertia: " << inertia.x() << ", " << inertia.y() 
+	//	<< ", " << inertia.z() << ": " << scaled_gravity_magnitude * max_gravity_torque_length * mass << std::endl;
 	return ( 1/inv_maximum_gravity_angular_acceleration.norm() );
 }
 
 btScalar getObjectSupportContribution(const scene_support_vertex_properties &support_graph_vertex)
 {
 	const double &support_value =  support_graph_vertex.support_contributions_;
-	return (1 / 1 + exp(-0.5 * support_value));
+	return logisticFunction(0.5, 1., 0., support_value);
 }
 
 btScalar getObjectCollisionPenalty(const scene_support_vertex_properties &support_graph_vertex)
 {
 	// TODO: Find a good parameter for the penetration depth
-	return 1.;
+	const double &total_penetration_depth = support_graph_vertex.penetration_distance_;
+	return logisticFunction(1.5 , 1., 3., total_penetration_depth);
+	// return 1.;
 }
 

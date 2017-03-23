@@ -72,7 +72,6 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
     // make the graph with number of vertices = number of collision objects
 	SceneSupportGraph scene_support_graph(world->getNumCollisionObjects());
     vertex_map.clear();
-    // std::map<std::string, vertex_t> vertex_map;
 
     double dTime_times_gravity = time_step * GRAVITY_MAGNITUDE * SCALING;
 
@@ -81,6 +80,7 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
         scene_support_vertex_properties new_vertex_property;
         new_vertex_property.collision_object_ = world->getCollisionObjectArray()[i];
         new_vertex_property.object_id_ = getObjectIDFromCollisionObject(new_vertex_property.collision_object_);
+        new_vertex_property.object_pose_ = new_vertex_property.collision_object_->getWorldTransform();
         vertex_t new_vertex = boost::add_vertex(scene_support_graph);
         scene_support_graph[new_vertex] = new_vertex_property;
         vertex_map[new_vertex_property.object_id_] = new_vertex;

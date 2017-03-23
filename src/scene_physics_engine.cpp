@@ -7,11 +7,11 @@ static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
 }
 
 PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), 
-	rendering_launched_(false), use_background_normal_as_gravity_(false)
+	rendering_launched_(false), use_background_normal_as_gravity_(false), simulation_step_(1/180.)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
-	simulation_step_ = 1/180.f; // 180 Hz
 	this->initPhysics();
+	this->setSimulationMode(BULLET_DEFAULT, 100);
 }
 
 void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center)
@@ -200,6 +200,7 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 			std::cerr << "Translation: " << t[0]  << ", " << t[1]  << ", " << t[2] << std::endl;
 		}
 	}
+	this->object_best_test_pose_map_ = this->object_best_pose_from_data_;
 	if (this->debug_messages_) std::cerr << "Scene objects added to the physics engine.\n";
 
 	// mtx_.unlock();
@@ -224,31 +225,38 @@ void PhysicsEngine::simulate()
 		this->background_->setUserPointer(background_name);
 	}
 
+	// Make sure the simulation is stopped
+	mtx_.lock();
+	this->in_simulation_ = false;
+	this->world_tick_counter_ = 0;
+	this->object_velocity_.clear();
+	this->object_acceleration_.clear();
+
+	this->in_simulation_ = true;
+	mtx_.unlock();
+
 	if (this->rendering_launched_)
 	{
-		this->counter_ = 0;
-		this->object_velocity_.clear();
-		this->object_acceleration_.clear();
-		this->in_simulation_ = true;
-		while (this->in_simulation_ && this->counter_ < 2 )
+		while (this->in_simulation_ && this->world_tick_counter_ < this->number_of_world_tick_ )
 		{
 			// Do nothing;
-
 			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-			this->counter_++;
 		}
-		this->in_simulation_ = false;
 	}
 	else
 	{
-		for (int i = 0; i < 300; i++)
+		for (int i = 0; i < this->number_of_world_tick_; i++)
 		{
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
 			if (this->checkSteadyState()) break;
 		}
 	}
 
+	mtx_.lock();
+	this->in_simulation_ = false;
+	mtx_.unlock();
 }
+
 bool PhysicsEngine::checkSteadyState()
 {
 	bool steady_state = true;
@@ -265,13 +273,14 @@ bool PhysicsEngine::checkSteadyState()
 	return steady_state;
 }
 
-std::map<std::string, btTransform>  PhysicsEngine::getUpdatedObjectPose()
+std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
 {
 	if (this->debug_messages_) std::cerr << "Getting updated scene objects poses.\n";
 	// Run simulation to get an update on object poses
 	this->simulate();
 
-	// mtx_.lock();
+	mtx_.lock();
+
 	std::map<std::string, btTransform> result_pose;
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
@@ -289,15 +298,14 @@ std::map<std::string, btTransform>  PhysicsEngine::getUpdatedObjectPose()
 	}
 
 	if (this->debug_messages_) std::cerr << "Done scene objects poses.\n";
-
-	// mtx_.unlock();
+	mtx_.unlock();
 
 	return result_pose;
 }
 
 void PhysicsEngine::resetObjects()
 {
-	// mtx_.lock();
+	mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Removing all scene objects.\n";
 	// Removes all objects from the physics world then delete its' content
 	for (std::map<std::string, btRigidBody*>::iterator it = this->rigid_body_.begin(); 
@@ -313,16 +321,19 @@ void PhysicsEngine::resetObjects()
 	this->object_best_pose_from_data_.clear();
 	if (this->debug_messages_) std::cerr << "Done removing all scene objects.\n";
 
-	// mtx_.unlock();
+	mtx_.unlock();
 }
 
 void PhysicsEngine::cacheObjectVelocities(const btScalar &timeStep)
 {
+	btVector3 zero_vector(0,0,0);
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
 		btVector3 current_lin_vel = it->second->getLinearVelocity(),
 			current_ang_vel = it->second->getAngularVelocity();
+
+		// update the current object acceleration
 		if (keyExistInConstantMap(it->first,this->object_velocity_))
 		{
 			btVector3 avg_lin_acc = (current_lin_vel - object_velocity_[it->first].linear_)/ timeStep,
@@ -330,8 +341,51 @@ void PhysicsEngine::cacheObjectVelocities(const btScalar &timeStep)
 
 			this->object_acceleration_[it->first].setValue(avg_lin_acc, avg_ang_acc);
 		}
-		this->object_velocity_[it->first].setValue(current_lin_vel, current_ang_vel);
+
+		// update the current object velocity
+		if (reset_obj_vel_every_frame_)
+		{
+			this->object_velocity_[it->first].setValue(zero_vector, zero_vector);
+		}
+		else
+		{
+			this->object_velocity_[it->first].setValue(current_lin_vel, current_ang_vel);
+		}
 	}
+	// reset the object forces and velocity
+	if (reset_obj_vel_every_frame_) this->stopAllObjectMotion();
+}
+
+void PhysicsEngine::setSimulationMode(const int &simulation_mode, const unsigned int &number_of_world_tick)
+{
+	switch(simulation_mode)
+	{
+		case RESET_VELOCITY_ON_EACH_FRAME:
+		{
+			this->reset_obj_vel_every_frame_ = true;
+			this->stop_simulation_after_have_support_graph_ = false;
+			break;
+		}
+		case RUN_UNTIL_HAVE_SUPPORT_GRAPH:
+		{
+			this->reset_obj_vel_every_frame_ = false;
+			this->stop_simulation_after_have_support_graph_ = true;
+			break;
+		}
+		case RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH:
+		{
+			this->reset_obj_vel_every_frame_ = true;
+			this->stop_simulation_after_have_support_graph_ = true;
+			break;
+		}
+		default: //BULLET_DEFAULT
+		{
+			this->reset_obj_vel_every_frame_ = false;
+			this->stop_simulation_after_have_support_graph_ = false;
+			break;
+		}
+	}
+	this->number_of_world_tick_ = number_of_world_tick;
 }
 
 void PhysicsEngine::setDebugMode(bool debug)
@@ -394,7 +448,6 @@ void	PhysicsEngine::clientResetScene()
 
 void PhysicsEngine::clientMoveAndDisplay()
 {
-	// mtx_.lock();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
 	//simple dynamics world doesn't handle fixed-time-stepping
@@ -405,7 +458,12 @@ void PhysicsEngine::clientMoveAndDisplay()
 	{
 		if (this->in_simulation_){
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
-			if (this->checkSteadyState()) this->in_simulation_ = false;
+			if (this->checkSteadyState())
+			{
+				mtx_.lock();
+				this->in_simulation_ = false;
+				mtx_.unlock();
+			}
 		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
@@ -414,12 +472,10 @@ void PhysicsEngine::clientMoveAndDisplay()
 	renderme(); 
 	glFlush();
 	swapBuffers();
-	// mtx_.unlock();
 }
 
-void PhysicsEngine::displayCallback(void) {
-
-	// mtx_.lock();
+void PhysicsEngine::displayCallback(void)
+{
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 	renderme();
 
@@ -429,7 +485,6 @@ void PhysicsEngine::displayCallback(void) {
 	glFlush();
 	swapBuffers();
 
-	// mtx_.unlock();
 }
 
 
@@ -469,28 +524,82 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 		{
 			scene_graph_[it->second].stability_penalty_ = calculateStabilityPenalty(this->object_acceleration_[it->first], 
 				object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
+
+			double supp_contrib = getObjectSupportContribution(scene_graph_[it->second]);
+			std::cerr << it->first << ": " << " stability probability= " << scene_graph_[it->second].stability_penalty_
+				<< ", support contribution probability= " << supp_contrib << std::endl;
+			if (this->stop_simulation_after_have_support_graph_)
+			{
+				this->in_simulation_ = false;
+			}
 		}
 	}
 	mtx_.unlock();
 }
 
-void PhysicsEngine::resetObjectPoseToBestDataPosition()
+void PhysicsEngine::stopAllObjectMotion()
 {
-	for (std::map<std::string, btTransform>::const_iterator it = object_best_pose_from_data_.begin(); 
-		it != object_best_pose_from_data_.end(); ++it)
+	btVector3 zero_vector(0,0,0);
+	// mtx_.lock()
+	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
 	{
-		rigid_body_[it->first]->setWorldTransform(it->second);
+		// reset the forces and velocity of the objects
+		it->second->clearForces();
+		it->second->setLinearVelocity(zero_vector);
+		it->second->setAngularVelocity(zero_vector);
 	}
 }
 
-SceneSupportGraph PhysicsEngine::getCurrentSceneGraph() const
+void PhysicsEngine::resetObjectMotionState(const bool &reset_object_pose, 
+	const std::map<std::string, btTransform> &target_pose_map)
 {
+	btVector3 zero_vector(0,0,0);
+	// mtx_.lock()
+	for (std::map<std::string, btTransform>::const_iterator it = target_pose_map.begin(); 
+		it != target_pose_map.end(); ++it)
+	{
+		// Reset the object pose to the original states
+		if (reset_object_pose) rigid_body_[it->first]->setWorldTransform(it->second);
+
+		// reset the forces and velocity of the objects
+		rigid_body_[it->first]->clearForces();
+		rigid_body_[it->first]->setLinearVelocity(zero_vector);
+		rigid_body_[it->first]->setAngularVelocity(zero_vector);
+	}
+	// mtx_.unlock()
+}
+
+SceneSupportGraph PhysicsEngine::getCurrentSceneGraph(std::map<std::string, vertex_t> &vertex_map)
+{
+	vertex_map = this->vertex_map_;
 	return this->scene_graph_;
 }
 
-vertex_t PhysicsEngine::getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position)
+SceneSupportGraph PhysicsEngine::getUpdatedSceneGraph(std::map<std::string, vertex_t> &vertex_map)
 {
-	vertex_t object_in_graph = this->vertex_map_[object_name];
-	return object_in_graph;
+	if (this->debug_messages_) std::cerr << "Getting updated scene graph.\n";
+	this->simulate();
+	return this->getCurrentSceneGraph(vertex_map);
 }
+
+void PhysicsEngine::prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose)
+{
+	// Set the object poses
+	std::map<std::string, btTransform> object_test_pose_map_;
+	object_test_pose_map_ = this->object_best_test_pose_map_;
+	object_test_pose_map_[object_id] = object_pose;
+	this->resetObjectMotionState(true, object_test_pose_map_);
+}
+
+void PhysicsEngine::changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose)
+{
+	this->object_best_test_pose_map_[object_id] = object_pose;
+}
+
+// vertex_t PhysicsEngine::getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position)
+// {
+// 	vertex_t object_in_graph = this->vertex_map_[object_name];
+// 	return object_in_graph;
+// }
 

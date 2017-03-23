@@ -15,6 +15,7 @@ struct scene_support_vertex_properties
 {
     std::string object_id_;
     btCollisionObject* collision_object_;
+    btTransform object_pose_;
     double support_contributions_;
     double penetration_distance_;
     double colliding_volume_;
