@@ -47,7 +47,7 @@ class CostarUR5Driver(CostarArm):
 
         self.closed_form_IK_solver = InverseKinematicsUR5()
         #self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
-        self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 2.5, 2.5])
+        self.joint_weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         self.closed_form_IK_solver.setEERotationOffsetROS()
         self.closed_form_IK_solver.setJointWeights(self.joint_weights)
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
