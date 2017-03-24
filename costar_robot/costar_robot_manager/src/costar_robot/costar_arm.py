@@ -158,18 +158,27 @@ class CostarArm(CostarComponent):
         self.ee_pose = None
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
+        rospy.loginfo('Setting joint names to: %s'%(str(self.joint_names)))
 
+        self.joint_weights = rospy.get_param(os.path.join(self.namespace + '/robot/', "joint_weights"))
+        if not isinstance(self.joint_weights, list) and not len(self.joint_weights) == self.dof:
+            raise RuntimeError('loaded bad weights: %s'%(str(self.joint_weights)))
+        
         self.closed_form_IK_solver = closed_form_IK_solver
+        if self.closed_form_IK_solver is not None:
+            self.closed_form_IK_solver.setJointWeights(self.joint_weights)
+
         self.state_validity_penalty = state_validity_penalty
 
         # how important is it to choose small rotations in goal poses
-        self.rotation_weight = 1.0
+        self.rotation_weight = rospy.get_param(os.path.join(self.namespace + '/robot/', "rotation_weight"))
+        self.translation_weight = rospy.get_param(os.path.join(self.namespace + '/robot/', "translation_weight"))
         self.joint_space_weight = 1.0
 
         # for checking robot configuration validity
         self.state_validity_service = rospy.ServiceProxy("/check_state_validity", GetStateValidity)
-        self.robot_state = RobotState()
-        self.robot_state.joint_state.name = self.joint_names
+        # self.robot_state = RobotState()
+        # self.robot_state.joint_state.name = self.joint_names
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
@@ -582,9 +591,10 @@ class CostarArm(CostarComponent):
     def check_robot_position_validity(self, robot_joint_position):
         get_state_validity_req = GetStateValidityRequest()
         get_state_validity_req.group_name = self.planning_group
-        current_robot_state = self.robot_state
-        current_robot_state.joint_state.position = robot_joint_position
-        current_robot_state.is_diff = True
+        # name = self.joint_names
+        current_robot_state = RobotState(joint_state=JointState(position  = robot_joint_position), is_diff = True) #self.robot_state
+        # current_robot_state.joint_state.position = robot_joint_position
+        # current_robot_state.is_diff = True
         get_state_validity_req.robot_state = current_robot_state
         
         return self.state_validity_service.call(get_state_validity_req)
@@ -705,10 +715,11 @@ class CostarArm(CostarComponent):
                 if q_i is None:
                     continue
                 dq = np.absolute(q_i - self.q0) * self.joint_weights
-                combined_distance = (T.p - T_fwd.p).Norm() + \
+                combined_distance = (T.p - T_fwd.p).Norm() * self.translation_weight + \
                       self.rotation_weight * delta_rotation + \
                       self.joint_space_weight * np.sum(dq)
 
+                # rospy.loginfo(str(q_i))
                 result = self.check_robot_position_validity(q_i.tolist())
 
                 other_obj_collisions = ''
@@ -813,7 +824,7 @@ class CostarArm(CostarComponent):
                 continue
 
             Ts.append(T)
-            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = True, obj_name = obj)
+            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = False, obj_name = obj)
 
             if best_q is None or len(best_q) == 0:
                 rospy.logwarn("[QUERY] DID NOT ADD:"+message_print)
@@ -867,7 +878,7 @@ class CostarArm(CostarComponent):
             else:
                 query_backup_message = "invalid query's(dist = %.3f) backup msg"%(dist - self.state_validity_penalty)
 
-            valid_pose, best_backup_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0, check_closest_only = True,  obj_name = obj)
+            valid_pose, best_backup_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0, check_closest_only = False,  obj_name = obj)
             if best_q is None or len(best_q) == 0:
                 rospy.loginfo('Skipping %s: %s'%(query_backup_message,message_print_invalid))
                 continue
@@ -884,10 +895,10 @@ class CostarArm(CostarComponent):
 
         sequence_to_execute = list()
         if len(list_of_valid_sequence) > 0:
-            sequence_to_execute = list_of_valid_sequence + list_of_invalid_sequence
+            sequence_to_execute = list_of_valid_sequence + list_of_invalid_sequence[:5]
         else:
             rospy.logwarn("WARNING -- no sequential valid grasp action found")
-            sequence_to_execute = list_of_invalid_sequence
+            sequence_to_execute = list_of_invalid_sequence[:5]
 
         rospy.loginfo('There is %i valid sequence and %i invalid sequence to try'%(len(list_of_valid_sequence),len(list_of_invalid_sequence)))
         # print 'Number of sequence to execute:', len(sequence_to_execute)
