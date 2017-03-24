@@ -520,7 +520,9 @@ GreedyHypothesis greedyObjRansac::getLatestAcceptedHypothesis(const bool &combin
         // separate the object hypothesis by its best position
         for (std::size_t i = 0; i < acc_hypothesis.size(); ++i)
         {
-            result.by_object_hypothesis[i] = acc_hypothesis[i];
+            // object index starts from 1, not zero.
+            std::size_t object_tf_index = i + 1;
+            result.by_object_hypothesis[object_tf_index] = acc_hypothesis[i];
         }
     }
 

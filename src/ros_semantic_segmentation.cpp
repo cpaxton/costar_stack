@@ -700,7 +700,7 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
             ss << "obj_" << it->model_id << "_" << it_2->first;
             object_i.tf_name = ss.str();
             object_i.model_hypothesis.reserve( it_2->second.size() );
-
+            object_i.model_name = it->model_id;
             for (std::vector<AcceptedHypothesis>::iterator it_3 = it_2->second.begin(); 
                 it_3 != it_2->second.end(); ++it_3)
             {
