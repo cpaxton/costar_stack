@@ -67,7 +67,6 @@ class NodeActionWaypointGUI(NodeGUI):
         self.waypoint_ui.waypoint_label.setText('NONE')
         self.waypoint_ui.waypoint_label.setStyleSheet('background-color:#223F35 ; color:#6C897A')
 
-
     def vel_changed(self,t):
         self.waypoint_ui.vel_field.setText(str(float(t)))
         self.command_vel = float(t)/100*1.5
@@ -116,6 +115,9 @@ class NodeActionWaypointGUI(NodeGUI):
         else:
             rospy.logwarn('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
+
+    def refresh_data(self):
+        self.update_waypoints()
 
 # Nodes -------------------------------------------------------------------
 class NodeActionWaypoint(Node):
@@ -194,11 +196,12 @@ class NodeActionWaypoint(Node):
             F_command_world = tf_c.fromTf(self.listener_.lookupTransform('/world', '/'+self.command_waypoint_name, rospy.Time(0)))
             F_base_world = tf_c.fromTf(self.listener_.lookupTransform('/world','/base_link',rospy.Time(0)))
             F_command = F_base_world.Inverse()*F_command_world
-                
+
             msg = costar_robot_msgs.srv.ServoToPoseRequest()
             msg.target = tf_c.toMsg(F_command)
             msg.vel = self.command_vel
             msg.accel = self.command_acc
+
             # Send Servo Command
             rospy.logwarn('Single Servo Move Started')
             result = pose_servo_proxy(msg)

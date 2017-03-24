@@ -12,14 +12,18 @@
 
   <arg name="table_frame" default="ar_marker_2"/>
 
-  <param name="ee_frame" value="ee_link"/>
-  <param name="base_frame" value="base_link"/>
+  <!-- Set up the beginning and end of the robot's kinematic chain. -->
+  <arg name="ee_frame" value="ee_link"/>
+  <arg name="base_frame" value="base_link"/>
 
   <include file="$(find costar_bringup)/launch/utilities.launch">
-    <!-- TODO: start_robotiq_force_sensor is making the camera very slow --> 
     <arg name="start_robotiq_force_sensor" value="$(arg start_robotiq_force_sensor)"/>
   </include>
+
   <include file="$(find costar_bringup)/launch/predicator_nodes.launch"/>
+
+  <!-- Bringup default configuration for the UR5 -->
+  <include file="$(find costar_bringup)/launch/config/ur5.launch"/>
 
   <group unless="$(arg sim)">
 
@@ -40,21 +44,10 @@
 
     <!-- gripper bringup: connect to s model via TCP/IP -->
     <node name="robotiq_c_model_interface" pkg="robotiq_c_model_control" type="CModelTcpNode.py" args="$(arg gripper_ip_address)"/>
-    <include file="$(find costar_bringup)/launch/robotiq_c_model_endpoint.launch">
-      <param name="ee_frame" value="$(arg ee_frame)"/>
+    <include file="$(find costar_gripper_manager)/launch/c_model.launch">
+      <arg name="ee_frame" value="$(arg ee_frame)"/>
     </include>
-    <node name="simple_c_model_server" pkg="costar_gripper_manager" type="c_model.py"/>
-    <!--<include file="$(find simple_c_model_server)/launch/s_model.launch"/>-->
 
   </group>
-  <group if="$(arg sim)">
-
-    <!-- start gripper server anyway, just don't connect it -->
-    <!--<node name="simple_s_model_server" pkg="costar_gripper_manager" type="s_model.py"/>
-    <include file="$(find simple_s_model_server)/launch/s_model.launch"/>-->
-
-
-  </group>
-
 
 </launch>

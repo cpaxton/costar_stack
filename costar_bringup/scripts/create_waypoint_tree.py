@@ -3,12 +3,12 @@
 import datetime
 import time
 
-num_waypoints=203
-start_waypoint=34
-record_waypoint=1
-scan_start=0
+num_waypoints = 203
+start_waypoint = 34
+record_waypoint = 1
+scan_start = 0
 
-waypoint_tree="""name: scan-3
+waypoint_tree = """name: scan-3
 tree:
   children:
   - children:
@@ -70,11 +70,11 @@ tree:
 
 try:
     i = 0
-    while i<num_waypoints:
+    while i < num_waypoints:
         # move_to_waypoint_39
         # record_data_0
         # scan04--0
-        waypoint_tree+="""
+        waypoint_tree += """
         - children: []
           name: move_to_waypoint_%s
           save_info:
@@ -96,10 +96,10 @@ try:
               wait_finish: {field_name: Wait, type: NamedField, value: '1'}
             name: record_data_%s
             node_type: ACTION
-            plugin_name: Record Data"""%(i+start_waypoint,i+start_waypoint,i+scan_start,i+start_waypoint,i+record_waypoint,i+record_waypoint,i+record_waypoint)
+            plugin_name: Record Data""" % (i + start_waypoint, i + start_waypoint, i + scan_start, i + start_waypoint, i + record_waypoint, i + record_waypoint, i + record_waypoint)
         i += 1
-    
-    waypoint_tree+="""
+
+    waypoint_tree += """
         name: sequence_1
         save_info:
           generator_info:
@@ -144,4 +144,3 @@ except Exception, e:
     print e
 finally:
     print "at the end of program"
-

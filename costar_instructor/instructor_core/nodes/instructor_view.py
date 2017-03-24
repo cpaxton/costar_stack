@@ -28,7 +28,7 @@ import yaml
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
 import time
-from copy import deepcopy
+import copy
 # import cProfile
 # from memory_profiler import profile
 # ==============================================================
@@ -94,7 +94,13 @@ def load_instructor_plugins(cases=[]):
         if p_modules == []:
             pass
 
-        for p_module, p_description, p_name, p_type, p_group, p_case in zip(p_modules,p_descriptions,p_names,p_types,p_groups,p_cases):
+        for p_module, p_description, p_name, p_type, p_group, p_case in zip(p_modules,
+                p_descriptions,
+                p_names,
+                p_types,
+                p_groups,
+                p_cases):
+
             if len(cases) == 0:
                 include = True
             else:
@@ -116,6 +122,11 @@ def load_instructor_plugins(cases=[]):
                 types.append(p_type)
                 groups.append(p_group)
 
+    rospy.logwarn(plugins)
+    rospy.logwarn(descriptions)
+    rospy.logwarn(names)
+    rospy.logwarn(types)
+    rospy.logwarn(groups)
     return plugins, descriptions, names, types, groups
 
 class Instructor(QWidget):
@@ -210,6 +221,7 @@ class Instructor(QWidget):
         self.current_tree = {}
         self.current_generators = {}
         self.all_generators = {}
+        self.generator_makers = {}
         self.current_node_type = None
         self.selected_node_label = None
         self.active_node_type = None
@@ -220,11 +232,13 @@ class Instructor(QWidget):
         self.root_node = None
         self.selected_subtree = None
         self.left_selected_node = None
+        self.right_selected_node = None
         self.available_plugins = []
         self.core_plugins = []
         self.current_plugins = []
         self.active_plugin_widgets = []
         self.is_set_up = False
+        self.current_node_plugin_name = None
         #######################
 
         # Get known Beetree Builder Node Plugins
@@ -259,66 +273,23 @@ class Instructor(QWidget):
         self.status_label.show()
         self.toast_label.hide()
 
-    def refresh_available_plugins(self):
-        if self.is_set_up:
-            changed = False
-            costar_attachment_namespace = '/costar/component/ui/'
-            required_plugins = []
-            if rospy.has_param(costar_attachment_namespace):
-                ui_list = rospy.get_param(costar_attachment_namespace)
-                enable_plugins = disable_plugins = []
-                # Check that a plugin is available and add it if not aleeady enabled
-                required_plugins = ui_list.values()
-
-                # rospy.logwarn('Available Plugins: ' + str(self.available_plugins))
-                # rospy.logwarn('Core Plugins: ' + str(self.core_plugins))
-                
-                # Check which plugins to enable
-                for i in required_plugins:
-                    if i not in self.current_plugins:
-                        if i in self.available_plugins:
-                            rospy.logwarn('['+str(i)+'] is a valid plugin.')
-                            self.current_plugins.append(i)
-                            rospy.logwarn('Adding: ['+str(i)+']')
-                        else:
-                            rospy.logwarn('['+str(i)+'] is NOT a valid plugin.')
-                        
-                # # Check that current plugins are still valid
-                # for i in self.current_plugins:
-                #     if i not in required_plugins:
-                #         if i not in self.core_plugins:
-                #             changed = True
-                #             rospy.logwarn('Removing: ['+str(i)+']')
-                #             self.current_plugins.remove(i)
-
-
-            ### Update Plugin List 
-            # Add new plugins
-            for p in self.plugins.itervalues():
-                description = p['description']
-                if description in self.current_plugins:
-                    if description not in self.active_plugin_widgets:
-                        # rospy.logwarn('Adding widget for plugin: ['+description+']')
-                        changed = True
-                        self.component_widgets[p['type']].add_item_to_group(p['name'],p['group'])
-                        self.active_plugin_widgets.append(description)
-
-            for c in self.component_widgets.values():
-                if len(c.items) == 0:
-                    c.hide()
-
-            if changed is True:
-                rospy.logwarn('Current Plugins: ' + str(self.current_plugins))
-                rospy.logwarn('Required Plugins: ' + str(required_plugins))
-                rospy.logerr('Warning - system changed, you probably need to create a new tree.')
-
     def parse_plugin_info(self):
         rospy.logwarn('INSTRUCTOR: LOADING PLUGINS')
         self.plugins = {}
         self.node_counter = {}
         plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.cases)
-        for plug,desc,name,typ,grp in zip(plugins,plugin_descriptions,plugin_names,plugin_types, plugin_groups):
-            self.plugins[name] = {'module':plug, 'type':typ, 'name':name, 'group':grp, 'description':desc, 'generator_type':str(type(plug()))}
+        for plug,desc,name,typ,grp in zip(plugins,
+                plugin_descriptions,
+                plugin_names,
+                plugin_types, 
+                plugin_groups):
+            self.plugins[name] = {
+                    'module':plug,
+                    'type':typ,
+                    'name':name,
+                    'group':grp,
+                    'description':desc,
+                    'generator_type':str(type(plug()))}
         
         self.available_plugins = plugin_descriptions
         for p in self.plugins.itervalues():
@@ -330,6 +301,7 @@ class Instructor(QWidget):
         for name,plugin in self.plugins.items():
             if not name in self.all_generators:
                 self.all_generators[name] = plugin['module']()
+                self.generator_makers[name] = self.plugins[name]['module']
 
     def splitter_moved(self,pos,index):
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
@@ -352,7 +324,6 @@ class Instructor(QWidget):
         self.clear_node_info()
         self.load_sub_btn.hide()
         self.remove_sub_btn.hide()
-        self.remove_saved_node_btn.hide()
         self.close_drawer()
         for k,v in self.component_widgets.items():
             if k is not id:
@@ -364,8 +335,6 @@ class Instructor(QWidget):
     def open_drawer(self):
         self.regenerate_btn.hide()
         if self.drawer_state == 'CLOSED':
-            # x,y = self.dot_widget.get_current_pos()
-            # self.dot_widget.set_current_pos(x+400,y)
             self.drawer.show()
             self.open_animation = QPropertyAnimation(self.drawer, "geometry")
             self.open_animation.setDuration(200)
@@ -382,15 +351,19 @@ class Instructor(QWidget):
             # x,y = self.dot_widget.get_current_pos()
             # self.dot_widget.set_current_pos(x-400,y)
             # self.clear_node_info()
-            self.clear_node_info()
+            # self.clear_node_info()
             if self.current_node_plugin_name is not None:
                 if not self.current_node_plugin_name in self.all_generators:
-                    self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
-                self.current_node_generator = self.all_generators[self.current_node_plugin_name]
-                self.current_node_type = self.plugins[self.current_node_plugin_name]['type']
-                # self.current_node_generator.name.set_field(self.increment_node_name(self.current_node_plugin_name))
-                self.drawer.node_info_layout.addWidget(self.current_node_generator)
-                self.right_selected_node = None
+                    rospy.logerr('%s not in current set of loaded nodes!')
+                    raise RuntimeError('Tried to generate unavailable node.')
+                    #self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
+                else:
+                    self.all_generators[self.current_node_plugin_name].refresh_data()
+
+                #self.current_node_generator = self.all_generators[self.current_node_plugin_name]
+                #self.current_node_type = self.plugins[self.current_node_plugin_name]['type']
+                #self.drawer.node_info_layout.addWidget(self.current_node_generator)
+                #self.right_selected_node = None
 
             # self.drawer.
             # if self.current_node_generator is not None:
@@ -463,9 +436,6 @@ class Instructor(QWidget):
         self.remove_sub_btn = InterfaceButton('REMOVE',colors['red'])
         self.remove_sub_btn.hide()
         self.remove_sub_btn.clicked.connect(self.delete_selected_subtree)
-        self.remove_saved_node_btn = InterfaceButton('REMOVE',colors['red'])
-        self.remove_saved_node_btn.hide()
-        self.remove_saved_node_btn.clicked.connect(self.delete_selected_saved_node)
         self.save_btn = InterfaceButton('SAVE',colors['gray'])
         self.delete_btn = InterfaceButton('DELETE',colors['red'])
         self.save_btn.hide()
@@ -541,7 +511,6 @@ class Instructor(QWidget):
         self.subtree_container.layout.addWidget(self.remove_sub_btn)
         # self.node_container.show()
         # self.node_container.register_callbacks(self.collapse_unused,self.node_selected_callback)
-        # self.node_container.layout.addWidget(self.remove_saved_node_btn)
         self.load_widgets['SUBTREES'] = self.subtree_container
         # self.load_widgets['NODES'] = self.node_container
         self.component_layout.addWidget(self.subtree_container)
@@ -553,8 +522,6 @@ class Instructor(QWidget):
         self.save_dialog.hide()
         self.save_dialog.save_cancel_btn.clicked.connect(self.hide_save_dialog)
         self.save_dialog.save_subtree_btn.clicked.connect(self.save_subtree)
-        self.save_dialog.save_node_btn.clicked.connect(self.save_node)
-        self.save_dialog.save_node_btn.hide()
         self.save_dialog.save_name_field.textChanged.connect(self.saved_name_updated_cb)
         self.save_btn.clicked.connect(self.show_save_dialog)
 
@@ -695,17 +662,6 @@ class Instructor(QWidget):
 
         self.subtree_container.sort()
 
-    # def load_node_list(self):
-    #     generator_list = self.lib_list_service('instructor_node').entries
-    #     self.node_container.remove_all()
-    #     if len(generator_list) > 0: # There are actually nodes to load
-    #         self.loadable_nodes = {}
-    #         for g in generator_list:
-    #             data = yaml.load(self.lib_load_service(id=g,type='instructor_node').text)
-    #             self.loadable_nodes[data['name']] = data
-    #         for n in self.loadable_nodes.itervalues():
-    #             self.node_container.add_item(n['name'])
-
     def view_fit(self):
         if self.root_node is not None:
             self.dot_widget.zoom_to_fit()
@@ -734,10 +690,13 @@ class Instructor(QWidget):
         pass
 
     def collapse_node(self):
-        if self.right_selected_node != None:
+        if self.right_selected_node is not None:
             val = self.right_selected_node
-        else:
+        elif self.left_selected_node is not None:
             val = self.left_selected_node
+        else:
+            rospy.logwarn('[INSTRUCTOR] Cannot collapse node since no node has been selected yet.')
+            return
 
         node = self.current_tree[val]
         if self.current_node_types[val] == 'LOGIC': 
@@ -782,7 +741,6 @@ class Instructor(QWidget):
          else:
             if self.running__ == True:
                 self.stop_tree()
-                self.robot_.stop_servo()
                 self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #3FC380;border-radius: 0px;background-color: #3FC380;color:#ffffff}''')
                 self.run_button.setText('EXECUTE PLAN')
             else:
@@ -837,62 +795,6 @@ class Instructor(QWidget):
         # self.root_node.reset()
         self.regenerate_tree()
 
-# Save and Load Nodes ----------------------------------------------------------
-    def save_node(self):
-        if self.right_selected_node != None:
-            if type(self.current_node_generator.generate()) == str:
-                rospy.logerr('The node must be fully defined to save it.')
-            else:
-                print ''
-                generator_to_save = {'node_type':self.current_node_type, 'name':self.save_name, 'plugin_name':self.current_node_plugin_name, 'generator_info':self.current_node_generator.save()}
-                D = yaml.dump(generator_to_save)
-                print D
-                print self.lib_save_service(id=self.save_name,type='instructor_node',text=D)
-                self.hide_save_dialog()
-
-        elif self.current_node_type != None:
-            if type(self.current_node_generator.generate()) == str:
-                rospy.logerr('The node must be fully defined to save it.')
-            else:
-                print ''
-                generator_to_save = {'node_type':self.current_node_type, 'name':self.save_name, 'plugin_name':self.current_node_plugin_name, 'generator_info':self.current_node_generator.save()}
-                D = yaml.dump(generator_to_save)
-                print D
-                print self.lib_save_service(id=self.save_name,type='instructor_node',text=D)
-                self.hide_save_dialog()
-
-    def load_node_info(self):
-        print 'Attempting to load node'
-        try:
-            self.open_drawer()
-            node_data = self.loadable_nodes[self.selected_load_node]
-            node_plugin_name = node_data['plugin_name']
-            if self.plugins.has_key(node_plugin_name):
-                print 'Node to load matches known nodes ['+ node_plugin_name +']'
-                self.clear_node_info()
-                self.current_node_generator = self.plugins[node_plugin_name]['module']()
-                self.current_node_type = self.plugins[node_plugin_name]['type']
-                self.current_node_plugin_name = node_plugin_name
-                rospy.logwarn(self.current_node_generator.get_name())
-                self.drawer.node_info_layout.addWidget(self.current_node_generator)
-                # Add in parameters from saved file
-                self.current_node_generator.load(node_data['generator_info'])
-                self.current_node_generator.name.set_field(self.increment_node_name(node_plugin_name))
-                # Close gui
-
-        except KeyError as e:
-            print "Not a valid node"
-
-    def node_selected_callback(self,val):
-        self.remove_saved_node_btn.show()
-        self.selected_load_node = val
-        self.load_node_info()
-
-    def delete_selected_saved_node(self):
-        if self.selected_load_node != None:
-            self.lib_delete_service(id=self.selected_load_node,type='instructor_node')
-            # self.load_node_list()
-
 # Save and Load Subtrees -------------------------------------------------------
 
     def saved_name_updated_cb(self,t):
@@ -938,23 +840,23 @@ class Instructor(QWidget):
         return {'name':node.name_, 'save_info':generator_to_save, 'children':t}
 
     def subtree_selected_callback(self,val):
-        # self.selected_subtree = str(self.subtree_load_model.itemFromIndex(val).text())
         self.selected_subtree = val
         self.load_sub_btn.show()
         self.remove_sub_btn.show()
         self.load_sub_btn.setText('LOAD [ '+val.upper()+' ]')
         self.remove_sub_btn.setText('REMOVE [ '+val.upper()+' ]')
+        self.close_drawer()
 
         self.selected_subtree_data = yaml.load(self.lib_load_service(id=self.selected_subtree,type='instructor_subtree').text)
         if self.selected_subtree_data is not None:
             selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
-            print selected_subtree_root_name
+            #print selected_subtree_root_name
             if 'root' in selected_subtree_root_name.lower():
-                print 'You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.'
+                rospy.loginfo('You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.')
             else:
-                print 'The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.'
+                rospy.loginfo('The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.')
         else:
-            rospy.logwarn('Subtree %s does not exist.'%val)
+            rospy.logerr('Subtree %s does not exist.'%val)
             self.selected_subtree = None
 
     def delete_selected_subtree(self):
@@ -965,7 +867,7 @@ class Instructor(QWidget):
     def load_selected_subtree(self):
         if self.selected_subtree != None:
             clear_cmd()
-            print 'loading subtree'
+            rospy.loginfo('Loading subtree...')
             if self.root_node != None: # There is an existing tree, with a root node
                 rospy.logwarn('Loading as subtree...')
                 if self.left_selected_node == None:
@@ -977,7 +879,7 @@ class Instructor(QWidget):
                         rospy.logwarn('Found root in subtree... removing')
                         start_point = self.selected_subtree_data['tree']['children'][0]
                     else:
-                        rospy.logwarn('No root, starting with '+node_plugin_name)
+                        rospy.loginfo('No root, starting with '+node_plugin_name)
                         start_point = self.selected_subtree_data['tree']
                     try:
                         self.recursive_add_nodes(start_point,self.current_tree[self.left_selected_node])
@@ -1000,8 +902,8 @@ class Instructor(QWidget):
                         self.recursive_add_nodes(self.selected_subtree_data['tree'],None)
                         self.regenerate_tree(center=True)
                 except Exception as e:
-                    rospy.logerr('There was a problem loading the tree, most likely a node that didnt generate properly')
-                    rospy.logerr(e)
+                    rospy.logerr('There was a problem loading the tree, most likely a node that did not generate properly')
+                    rospy.logerr(str(e))
 
             # Finish
             self.load_sub_btn.hide()
@@ -1009,7 +911,7 @@ class Instructor(QWidget):
             self.selected_subtree = None
             self.view_fit()
         else:
-            rospy.logwarn('You must select a subtree to load')
+            rospy.logerr('You must select a subtree to load')
 
     def recursive_add_nodes(self,info,parent):
         if parent == None:
@@ -1031,7 +933,7 @@ class Instructor(QWidget):
                 self.add_node_to_tree(current_name, node_to_add, regenerate_tree = False)
                 self.root_node = node_to_add
             else:
-                rospy.logwarn('node plugin undefined')
+                rospy.logwarn('node plugin undefined: %s'%node_plugin_name)
             # recusively call child nodes
             for C in info['children']:
                 self.recursive_add_nodes(C,node_to_add)
@@ -1051,7 +953,7 @@ class Instructor(QWidget):
                 node_to_add = self.current_node_generator.generate()
                 current_name = self.current_node_generator.get_name()
                 self.add_node_to_tree(current_name, node_to_add, self.current_tree[parent.name_].add_child, regenerate_tree = False)
-                self.add_node_prime_gui()
+                # self.add_node_prime_gui()
 
             else:
                 rospy.logwarn(node_plugin_name)
@@ -1109,18 +1011,24 @@ class Instructor(QWidget):
             self.add_node_above_btn.show()
             self.add_node_below_btn.show()
 
+        self.clear_node_info()
+
         if self.plugins.has_key(name):
-            self.clear_node_info()
+
             if not name in self.all_generators:
-                self.all_generators[name] = self.plugins[name]['module']()
+                rospy.logerr('node with name %s not loaded correctly!'%name)
+                raise RuntimeError('Error loading plugin named %s'%name)
+                #self.all_generators[name] = self.plugins[name]['module']()
+            else:
+                self.all_generators[name].refresh_data()
+            
             self.current_node_generator = self.all_generators[name]
             self.current_node_type = self.plugins[name]['type']
             self.current_node_plugin_name = name
             self.current_node_generator.name.set_field(self.get_node_counter_name(name))
+            self.current_node_generator.show()
             self.drawer.node_info_layout.addWidget(self.current_node_generator)
             self.right_selected_node = None
-        else:
-            self.clear_node_info()
 
     def node_leftclick_location_cb(self,event):
         self.selected_location = event
@@ -1142,7 +1050,6 @@ class Instructor(QWidget):
             # self.run_button.hide()
             self.load_sub_btn.hide()
             self.remove_sub_btn.hide()
-            self.remove_saved_node_btn.hide()
             self.selected_subtree = None
             self.save_btn.hide()
             self.delete_btn.hide()
@@ -1251,6 +1158,7 @@ color:#ffffff}''')
             self.current_node_generator = self.all_generators[self.current_plugin_names[self.left_selected_node]]
         else:
             self.current_node_generator = self.all_generators[self.current_plugin_names[self.right_selected_node]]
+        self.current_node_generator.refresh_data()
         self.current_node_generator.name.set_read_only(True)
         if self.left_selected_node:
             self.current_node_generator.load(self.current_node_info[self.left_selected_node])
@@ -1267,6 +1175,10 @@ color:#ffffff}''')
         pass
 
     def regenerate_node(self):
+        if self.current_node_type is self.plugins['Root']['type']:
+            rospy.logerr('[INSTRUCTOR]: Regenerate command ignored because it is a Root node')
+            return
+
         if self.left_selected_node:
             current_name = self.left_selected_node
         else:
@@ -1274,6 +1186,7 @@ color:#ffffff}''')
 
         if current_name:
             # current_name = self.right_selected_node
+            self.current_node_generator.refresh_data()
             replacement_node = self.current_node_generator.generate()
             if isinstance(replacement_node,str):
                 rospy.logerr(str(replacement_node))
@@ -1361,6 +1274,8 @@ color:#ffffff}''')
         self.clear_node_info()
         self.current_node_generator = self.all_generators[self.current_node_plugin_name]
         self.current_node_generator.name.set_field(self.get_node_counter_name(self.current_node_plugin_name))
+        self.current_node_generator.refresh_data()
+        self.current_node_generator.show()
         self.drawer.node_info_layout.addWidget(self.current_node_generator)
     
     def add_child_cb(self):
@@ -1503,7 +1418,6 @@ color:#ffffff}''')
                 # self.run_button.hide()
                 self.load_sub_btn.hide()
                 self.remove_sub_btn.hide()
-                self.remove_saved_node_btn.hide()
                 self.selected_subtree = None
 
     def clear_all_cancel(self):
@@ -1571,13 +1485,17 @@ color:#ffffff}''')
             item = self.drawer.node_info_layout.takeAt(i)
             widget = item.widget()
             if widget is not None:
-                widget.setParent(None)
+                widget.hide()
+                # widget.setParent(None)
 
     def keyPressEvent(self, event):
-        if type(event) == QtGui.QKeyEvent:
+        if self.is_set_up and type(event) == QtGui.QKeyEvent:
             if event.key() == 16777220:
                 if self.selected_subtree != None:
                     self.load_selected_subtree()
+                elif self.current_node_plugin_name is None:
+                    # do nothing: no current node selected
+                    pass
                 elif 'root' in self.current_node_plugin_name.lower():
                     self.add_root_cb()
                 else:
@@ -1619,7 +1537,7 @@ color:#ffffff}''')
 
 # MAIN #######################################################
 if __name__ == '__main__':
-  rospy.init_node('beetree',anonymous=True)
+  rospy.init_node('instructor_view',anonymous=True)
   app = QApplication(sys.argv)
   wrapper = Instructor(app)
   # Running

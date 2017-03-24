@@ -31,11 +31,12 @@ class NodeActionUpdatePlanningSceneGUI(NodeGUI):
         self.note = NoteField('(1 = true, 0 = false)','purple')
         self.layout_.addWidget(self.wait_finish)
         self.layout_.addWidget(self.note)
+
     def generate(self):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionUpdatePlanningScene(self.get_name(),self.get_label(),int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------

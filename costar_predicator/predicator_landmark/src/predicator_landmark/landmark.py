@@ -102,17 +102,38 @@ class GetWaypointsService:
             for j in xrange(0, self.obj_symmetries[frame_type].y_symmetries):
                 for k in xrange(0, self.obj_symmetries[frame_type].x_symmetries):
                     theta_z = i * self.obj_symmetries[frame_type].z_rotation
-                    theta_y = i * self.obj_symmetries[frame_type].y_rotation
-                    theta_x = i * self.obj_symmetries[frame_type].x_rotation
+                    theta_y = j * self.obj_symmetries[frame_type].y_rotation
+                    theta_x = k * self.obj_symmetries[frame_type].x_rotation
                     rot_matrix = pm.Rotation.RPY(theta_x,theta_y,theta_z)
                     quaternion_list.append(rot_matrix.GetQuaternion())
         quaternion_list = np.array(quaternion_list)
-        quaternion_list = np.around(quaternion_list,decimals=5)
-        b = np.ascontiguousarray(quaternion_list).view(np.dtype((np.void, quaternion_list.dtype.itemsize * quaternion_list.shape[1])))
-        _, unique_indices = np.unique(b, return_index=True)
         
         unique_rot_matrix = list()
-        for index in unique_indices:
+        # quaternion_list = np.around(quaternion_list,decimals=5)
+        # b = np.ascontiguousarray(quaternion_list).view(np.dtype((np.void, quaternion_list.dtype.itemsize * quaternion_list.shape[1])))
+        # _, unique_indices = np.unique(b, return_index=True)
+
+        # for index in unique_indices:
+        #     unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
+
+        
+        unique_brute_force = list()
+        for i in xrange(len(quaternion_list)):
+            unique = True
+            for j in xrange(i, len(quaternion_list)):
+                if i == j:
+                    continue
+                else:
+                    if abs(quaternion_list[i].dot(quaternion_list[j])) > 0.99:
+                        unique = False
+                        # print i, j, ' is not unique', quaternion_list[i], quaternion_list[j]
+                        break
+            if unique:
+                unique_brute_force.append(i)
+        # print 'unique brute force: ', len(unique_brute_force)
+        # print unique_brute_force
+
+        for index in unique_brute_force:
             unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
 
         new_poses = []

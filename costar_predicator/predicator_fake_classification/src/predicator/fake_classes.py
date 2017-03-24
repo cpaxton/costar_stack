@@ -24,8 +24,8 @@ if __name__ == '__main__':
 
     print "starting fake classification node"
 
-    pub = rospy.Publisher('/predicator/input', PredicateList)
-    vpub = rospy.Publisher('/predicator/valid_input', ValidPredicates)
+    pub = rospy.Publisher('/predicator/input', PredicateList, queue_size = 100)
+    vpub = rospy.Publisher('/predicator/valid_input', ValidPredicates, queue_size = 100)
 
     msg = PredicateList()
     valid_msg = ValidPredicates()

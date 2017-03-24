@@ -199,7 +199,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
 
     def generate(self):
         if all([self.name.full(), self.selected_object, self.selected_smartmove]):
-            rospy.logwarn('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
+            rospy.loginfo('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
             return NodeActionSmartmoveMultiPurpose( self.get_name(),
                                         self.get_label(),
                                         self.selected_region,
@@ -212,10 +212,15 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
                                         self.manager,
                                         self.grasp)
 
-            #"%s %s %s %s"%(self.selected_smartmove,self.selected_objet,self.selected_region,self.selected_reference),
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
+
+    def refresh_data(self):
+        self.manager.load_all()
+        self.update_regions()
+        self.update_references()
+        self.update_objects()
 
 
 class NodeActionSmartmoveGraspGUI(NodeActionSmartmoveMultiPurposeGUI):

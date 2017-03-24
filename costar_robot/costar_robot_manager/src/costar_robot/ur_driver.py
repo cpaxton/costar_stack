@@ -46,7 +46,8 @@ class CostarUR5Driver(CostarArm):
         planning_group = "manipulator"
 
         self.closed_form_IK_solver = InverseKinematicsUR5()
-        self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
+        #self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
+        self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 2.5, 2.5])
         self.closed_form_IK_solver.setEERotationOffsetROS()
         self.closed_form_IK_solver.setJointWeights(self.joint_weights)
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
@@ -92,7 +93,6 @@ class CostarUR5Driver(CostarArm):
                         self.send_cart(pt.positions,acceleration,velocity) ##
                     self.set_goal(pt.positions)
 
-                    # print " -- %s"%(str(pt.positions))
                     start_t = rospy.Time.now()
 
                     if self.cur_stamp > stamp:
@@ -101,7 +101,6 @@ class CostarUR5Driver(CostarArm):
                     rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
                     t = pt.time_from_start
 
-            # print " -- GOAL: %s"%(str(traj.points[-1].positions))
             if not cartesian:
                 self.send_q(traj.points[-1].positions,acceleration,velocity)
             else:

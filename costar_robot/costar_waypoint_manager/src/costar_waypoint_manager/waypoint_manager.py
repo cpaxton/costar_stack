@@ -1,11 +1,18 @@
+'''
+By Chris Paxton
+(c) 2016-2017 The Johns Hopkins University
+'''
+
+import os
 import rospy
-import yaml
 import tf
 import tf_conversions.posemath as pm
+import yaml
 
 from predicator_msgs.srv import *
 from predicator_msgs.msg import *
 
+from costar_component import CostarComponent
 from costar_robot_msgs.srv import *
 
 from librarian_msgs.srv import *
@@ -17,9 +24,19 @@ or cartesian waypoints (the later relative to some frame of reference).
 
 These are stored in Librarian and get loaded any time the system comes up.
 '''
-class WaypointManager:
+class WaypointManager(CostarComponent):
 
-  def __init__(self,world="world",ns="",endpoint="/endpoint",service=False,broadcaster=None):
+  def __init__(self,
+          world="world",
+          namespace="",
+          endpoint="/endpoint",
+          service=False,
+          broadcaster=None):
+
+    super(WaypointManager, self).__init__(name="WaypointManager", namespace=namespace)
+
+    self.namespace = namespace
+
     if not broadcaster is None:
         self.broadcaster = broadcaster
     else:
@@ -46,23 +63,39 @@ class WaypointManager:
     self.all_cart_moves = []
 
     # If we are bringing this up as an independent component...
+    # This will create the appropriate services
     if service:
-      self.get_joint_states_waypoints_list = rospy.Service('/costar/GetJointStateWaypoints',GetList,self.get_js_waypoints_list)
-      self.get_waypoints_list = rospy.Service('/costar/GetWaypointsList',GetList,self.get_waypoints_list)
+      self.save_frame = self.make_service('SaveFrame',SaveFrame,self.save_frame_cb)
+      self.save_joints = self.make_service('SaveJointPosition',SaveFrame,self.save_joints_cb)
+      self.get_joint_states_waypoints_list = self.make_service('GetJointStateWaypoints',GetList,self.get_js_waypoints_list_cb)
+      self.get_waypoints_list = self.make_service('GetWaypointsList',GetList,self.get_waypoints_list_cb)
 
     self.update()
 
   '''
+  Save the current frame.
+  '''
+  def save_frame_cb(self, req):
+      raise NotImplementedError('Function not yet implemented!')
+      pass
+
+  '''
+  Save the current set of joint positions.
+  '''
+  def save_joints_cb(self, req):
+      raise NotImplementedError('Function not yet implemented!')
+
+  '''
   Return the list of joint state waypoints
   '''
-  def get_js_waypoints_list(self,req):
+  def get_js_waypoints_list_cb(self,req):
     self.update()
     return GetListResponse(items=self.js_waypoints.keys())
 
   '''
   Return the list of cartesian waypoints
   '''
-  def get_waypoints_list(self,req):
+  def get_waypoints_list_cb(self,req):
     self.update()
     return GetListResponse(items=self.cart_waypoints.keys())
 
@@ -76,6 +109,8 @@ class WaypointManager:
     # this section loads joint space waypoints
     js_filenames = self.list_service(self.js_folder).entries
 
+    self.js_waypoints = {}
+    self.all_js_moves = []
     for name in js_filenames:
       data = yaml.load(self.load_service(id=name,type=self.js_folder).text)
       self.js_waypoints[name] = data
@@ -84,6 +119,8 @@ class WaypointManager:
     # ----------------------------------------
     # this section loads cartesian waypoints
     cart_filenames = self.list_service(self.cart_folder).entries
+    self.cart_waypoints = {}
+    self.all_cart_moves = []
     for name in cart_filenames:
       data = yaml.load(self.load_service(id=name,type=self.cart_folder).text)
       self.cart_waypoints[name] = data

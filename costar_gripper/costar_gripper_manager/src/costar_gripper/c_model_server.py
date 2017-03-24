@@ -51,14 +51,14 @@ def getDefaultMsg():
 
 class SimpleCModelServer:
 
-    def __init__(self,ns="costar/gripper",verbose=False):
+    def __init__(self,ns="/costar/gripper",verbose=False):
 
         self.verbose = verbose
         self.predicator = CModelPredicator(start_subscriber=False,publish_predicates=True,
             gripper_name="c_model")
 
         self.sub = rospy.Subscriber("CModelRobotInput", inputMsg.CModel_robot_input, self.status_cb)
-        self.pub = rospy.Publisher('CModelRobotOutput', outputMsg.CModel_robot_output)
+        self.pub = rospy.Publisher('CModelRobotOutput', outputMsg.CModel_robot_output, queue_size = 100)
         self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
         self.close = rospy.Service(join(ns,"close"), Empty, self.close_gripper)
         self.wide_mode_srv = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)

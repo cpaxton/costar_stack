@@ -17,14 +17,34 @@ This software repository is maintained by:
 
 Code has all been developed and tested with Ubuntu 14.04 / OSX 10.11.x and ROS Indigo. You will need OpenCV 2.4 and OpenCV nonfree.
 
-If you're using standard opencv2 library from ros, you can add and install the nonfree with:
+If you're using standard opencv2 library from ros, you may be able to install the nonfree with:
 ```
 sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
 sudo apt-get update 
 sudo apt-get install libopencv-nonfree-dev
 ```
 
-If you want to build the code with pose estimation, you will need to build and install ObjRecRANSAC from `https://github.com/tum-mvp/ObjRecRANSAC`
+If you receive errors compiling sp_segmenter because of include problem in opencv nonfree headers, uninstall the nonfree package from the apt-get and build opencv2 by yourself with these commands:
+```
+git clone https://github.com/opencv/opencv.git
+cd opencv
+git checkout 2.4.13.2
+mkdir build
+cd build
+cmake ..
+make -j4
+sudo make install
+``` 
+
+If you want to build the code with pose estimation, you will need to build and install ObjRecRANSAC:
+```
+git clone https://github.com/ahundt/ObjRecRANSAC
+cd ObjRecRANSAC
+mkdir build
+cmake ..
+make -j4
+sudo make install
+```
 
 To run this code you need:
   - Sequence of object partial views in the correct lighting conditions

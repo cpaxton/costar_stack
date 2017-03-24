@@ -115,6 +115,12 @@ class NodePlanRelativeWaypointGUI(NodeGUI):
             rospy.logwarn('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
+    def refresh_data(self):
+        self.waypoint_ui.waypoint_list.itemClicked.connect(self.waypoint_selected_from_list)
+        self.waypoint_ui.acc_slider.valueChanged.connect(self.acc_changed)
+        self.waypoint_ui.vel_slider.valueChanged.connect(self.vel_changed)
+        self.waypoint_ui.refresh_btn.clicked.connect(self.update_relative_waypoints)
+        self.update_relative_waypoints()
 
 # Nodes -------------------------------------------------------------------
 class NodePlanRelativeWaypoint(Node):

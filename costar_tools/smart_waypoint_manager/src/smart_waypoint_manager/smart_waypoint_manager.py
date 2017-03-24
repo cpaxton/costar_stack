@@ -146,7 +146,7 @@ class SmartWaypointManager:
                   self.obj_classes.append(oc)
                 for obj in oc_objs:
                     self.obj_class[obj] = oc
-                    rospy.logwarn("%s = %s"%(obj,oc))
+                    rospy.loginfo("%s = %s"%(obj,oc))
                 self.objs += oc_objs
 
         return self.objs

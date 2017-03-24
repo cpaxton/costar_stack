@@ -2,8 +2,7 @@
 
 Instructions by Baichuan Jiang
 
-Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). 
-
+Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
 
 ## Prerequisites
 
@@ -18,13 +17,20 @@ To use the CoSTAR system, you will need to install the following software packag
 You can download all the required packages to use CoSTAR with ROS Indigo from the Ubuntu repositories with this command:
 
 ```
-sudo apt-get install ros-indigo-fcl ros-indigo-soem ros-indigo-moveit-full liburdfdom-headers-dev ros-indigo-control-msgs ros-indigo-gazebo-ros-control ros-indigo-python-orocos-kdl xdot libccd-dev ros-indigo-ros-control ros-indigo-octomap-msgs ros-indigo-object-recognition-msgs ros-indigo-realtime-tools ros-indigo-soem  
+# set your ros distro 
+export ROS_DISTRO=indigo
+
+# install rosdep and catkin
+sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
+
+# init your rosdep (if you have not already done so)
+sudo rosdep init
+rosdep update
 ```
 
 ## Step 1. Get Packages From Git
 
-We suggest that you download all the required packages before building your catkin workspace. First, change directory to the src directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub: 
-
+We suggest that you download all the required packages before building your catkin workspace. Change directory to the `src` directory in your catkin workspace. Then download the main CoSTAR stack and its ROS dependencies from GitHub and use `rosdep` to get other dependencies:
 ```
 cd path/to/your/catkin_ws/src
 git clone https://github.com/cpaxton/costar_stack.git  
@@ -33,9 +39,9 @@ git clone https://github.com/ros-industrial/robotiq.git
 git clone https://github.com/jbohren/rqt_dot.git  
 git clone https://github.com/sniekum/ar_track_alvar.git  
 git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
-git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
-git clone https://github.com/cpaxton/xdot.git  
+git clone https://github.com/gt-ros-pkg/hrl-kdl.git
 git clone https://github.com/ThomasTimm/ur_modern_driver.git
+rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
 ```
 
 ## Step 2. Build catkin workspace
@@ -64,11 +70,10 @@ CoSTAR is distributed as a single large package. This means that
 
 
 ## Step 3. Run simulation
-FIrst, download and put the costar_files in ~/.costar using the following commands:
+[Optional] Checkout an example CoSTAR workspace from github into ~/.costar by running:
 
 ```
-cd ~ 
-git clone https://git.lcsr.jhu.edu/cpaxton3/costar_files.git .costar\
+cd && git clone git@github.com:cpaxton/costar_files.git .costar\
 ```
 
 Now you can run the simulation with following commands. Please remember to run `source ~/catkin_ws/devel/setup.bash` before executing any of these commands, and consider adding this line to ~/.bashrc.
@@ -76,10 +81,13 @@ Now you can run the simulation with following commands. Please remember to run `
 ```
 roslaunch iiwa_gazebo iiwa_gazebo.launch trajectory:=false  
 roslaunch costar_bringup iiwa14_s_model.launch sim:=true start_sim:=false  
-roslaunch instructor_core instructor.launch
 ```
 
 
 *If everything shows up, CoSTAR system is then successfully installed. Enjoy!*
 
-CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms. If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton3@jhu.edu).
+The top should say "Robot Mode: Idle." If you installed the sample workspace, open the Menu (lower right) and click Waypoints. Put the robot into Servo mode, highlight some waypoints, and click Servo to Waypoint (the purple button on the Waypoints popup). Not all the waypoints are guaranteed to work for this robot, but you should be able to get the robot to move.
+
+CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms.
+
+If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton@jhu.edu).
