@@ -681,9 +681,11 @@ class Instructor(QWidget):
             self.dot_widget.animate_to(jump.x,jump.y)
 
     def show_save_dialog(self):
-        self.save_dialog.move(self.geometry().x()+self.geometry().width()/2-self.save_dialog.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.save_dialog.geometry().height()/2)
+        self.save_dialog.move(
+                self.geometry().x()+self.geometry().width()/2-self.save_dialog.geometry().width()/2,
+                self.geometry().y()+self.geometry().height()/2-self.save_dialog.geometry().height()/2)
         self.save_dialog.show()
-        self.save_dialog.label.setText('To save the selected node, click SAVE NODE.\nTo save the subtree starting with the selected node, click SAVE SUBTREE.')
+        self.save_dialog.label.setText('To save the subtree starting with the selected node, click SAVE SUBTREE.')
 
     def hide_save_dialog(self):
         self.save_dialog.hide()

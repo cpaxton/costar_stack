@@ -36,10 +36,8 @@ class Dialog(QWidget):
         rp = rospkg.RosPack()
         w_path = rp.get_path('instructor_core') + '/ui/save_dialog.ui'
         uic.loadUi(w_path, self)
-        self.save_node_btn = InterfaceButton('SAVE NODE',colors['gray'])
         self.save_subtree_btn = InterfaceButton('SAVE SUBTREE',colors['gray'])
         self.save_cancel_btn = InterfaceButton('CANCEL',colors['red'])
-        self.button_layout.addWidget(self.save_node_btn,0,0)
         self.button_layout.addWidget(self.save_subtree_btn,1,0)
         self.button_layout.addWidget(self.save_cancel_btn,2,0)
 
