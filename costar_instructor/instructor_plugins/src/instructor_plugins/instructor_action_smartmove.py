@@ -21,7 +21,7 @@ from costar_robot_msgs.srv import *
 from smart_waypoint_manager import SmartWaypointManager
 from predicator_msgs.msg import *
 
-C = ColorOptions()
+colors = ColorOptions().colors
 
 GLOBAL_MANAGER = None
 
@@ -34,8 +34,8 @@ class NodeActionSmartmoveGUI(NodeGUI):
         ui_path = rospack.get_path('instructor_plugins') + '/ui/action_smartmove.ui'
 
         self.title.setText('SMARTMOVE')
-        self.title.setStyleSheet('background-color:'+C.colors['green'].normal+';color:#ffffff')
-        self.setStyleSheet('background-color:'+C.colors['green'].normal+' ; color:#ffffff')
+        self.title.setStyleSheet('background-color:'+ colors['green'].normal+';color:#ffffff')
+        self.setStyleSheet('background-color:'+ colors['green'].normal+' ; color:#ffffff')
 
         self.waypoint_ui = QWidget()
         uic.loadUi(ui_path, self.waypoint_ui)
@@ -254,6 +254,7 @@ class NodeActionSmartmove(Node):
                         rospy.loginfo('SmartMove Service [' + self.name_ + '] succeeded')
                         self.running = False
                         self.needs_reset = True
+                        self.set_color(colors['gray'].normal)
                         return self.set_status('SUCCESS')
                     else:
                         rospy.loginfo('SmartMove Service [' + self.name_ + '] failed')

@@ -213,6 +213,7 @@ class NodeActionQuery(Node):
                 else:
                     if self.finished_with_success == True:
                         rospy.loginfo('Query Service [' + self.name_ + '] succeeded')
+                        self.set_color(colors['gray'].normal)
                         self.running = False
                         self.needs_reset = True
                         return self.set_status('SUCCESS')

@@ -21,7 +21,8 @@ from costar_robot_msgs.srv import *
 from smart_waypoint_manager import SmartWaypointManager
 from predicator_msgs.msg import *
 
-C = ColorOptions()
+colors = ColorOptions().colors
+
 
 global_manager = None
 
@@ -37,8 +38,8 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.grasp = grasp
 
         self.title.setText('SMARTMOVE')
-        self.title.setStyleSheet('background-color:'+C.colors['green'].normal+';color:#ffffff')
-        self.setStyleSheet('background-color:'+C.colors['green'].normal+' ; color:#ffffff')
+        self.title.setStyleSheet('background-color:'+ colors['green'].normal+';color:#ffffff')
+        self.setStyleSheet('background-color:'+ colors['green'].normal+' ; color:#ffffff')
 
         self.waypoint_ui = QWidget()
         uic.loadUi(ui_path, self.waypoint_ui)
@@ -244,7 +245,7 @@ class NodeActionSmartmoveMultiPurpose(Node):
             "with backoff dist: %f cm"%(backoff*100)
         super(NodeActionSmartmoveMultiPurpose,self).__init__(name,
             L,
-            C.colors['green'].normal)
+            colors['green'].normal)
         self.selected_region = selected_region
         self.selected_reference = selected_reference
         self.selected_object = selected_object
@@ -283,10 +284,12 @@ class NodeActionSmartmoveMultiPurpose(Node):
             else:# If thread is running
                 if self.service_thread.is_alive():
                     return self.set_status('RUNNING')
+                
                 else:
                     if self.finished_with_success == True:
                         rospy.loginfo('SmartMove Service [' + self.name_ + '] succeeded')
                         self.running = False
+                        self.set_color(colors['gray'].normal)
                         self.needs_reset = True
                         return self.set_status('SUCCESS')
                     else:
