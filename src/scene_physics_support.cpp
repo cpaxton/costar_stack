@@ -20,11 +20,11 @@ void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const ve
             scene_support_vertex_properties &support_property = input_graph[connected_vertex];
             support_property.ground_supported_ = true;
 
-            std::cerr << support_property.object_id_ << " support contribution = " 
-                << support_property.support_contributions_
-                << " total penetration depth = " << support_property.penetration_distance_
-                << " total penetration volume = " << support_property.colliding_volume_
-                << std::endl;
+            // std::cerr << support_property.object_id_ << " support contribution = " 
+            //     << support_property.support_contributions_
+            //     << " total penetration depth = " << support_property.penetration_distance_
+            //     << " total penetration volume = " << support_property.colliding_volume_
+            //     << std::endl;
             // recursively call the connected vertex to assign the leaf of vertex connected to the parent
 
             // @TODO Check whether I need to recurvisely do this or not here
@@ -173,12 +173,12 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
                 // std::cerr << "Total impact " << getObjectIDFromCollisionObject(lower_obj) << ", " 
                 //     << getObjectIDFromCollisionObject(upper_obj) << "= " << totalImpact << ", penetration= " 
                 //     << total_collision_penetration << std::endl;
-                if (debug_mode) {
-                    std::cerr << "Inspecting edge between " << getObjectIDFromCollisionObject(lower_obj) << " and " 
-                        << getObjectIDFromCollisionObject(upper_obj) << ": ";
-                    std::cerr << "Total penetration volume: " << total_volume_penetration << std::endl;
-                    // std::cerr << "obj_b_normal_sum: " << obj_b_normal_sum << std::endl
-                }
+                // if (debug_mode) {
+                //     std::cerr << "Inspecting edge between " << getObjectIDFromCollisionObject(lower_obj) << " and " 
+                //         << getObjectIDFromCollisionObject(upper_obj) << ": ";
+                //     std::cerr << "Total penetration volume: " << total_volume_penetration << std::endl;
+                //     // std::cerr << "obj_b_normal_sum: " << obj_b_normal_sum << std::endl
+                // }
 
                 if (edge_already_exist) { edge_to_update = detected_edge; }
                 else
@@ -197,7 +197,10 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
                         boost::tie(new_edge,add_edge_success) = boost::add_edge(object_u,supported_object,scene_support_graph);
                         if (!add_edge_success)
                         {
-                            std::cerr << "Error adding edge!\n";
+                            if (debug_mode)
+                            {
+                                std::cerr << "Error adding edge!\n";
+                            }
                             continue;
                         }
                         else { edge_to_update = new_edge; }
@@ -221,7 +224,7 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
     // Assign vertices that are supported by ground
     vertex_t ground_vertex = vertex_map["background"];
     scene_support_graph[ground_vertex].ground_supported_ = true;
-    std::cerr << "Background support contribution= " << scene_support_graph[ground_vertex].support_contributions_ << std::endl;
+    // std::cerr << "Background support contribution= " << scene_support_graph[ground_vertex].support_contributions_ << std::endl;
     assignAllConnectedToParentVertices(scene_support_graph,ground_vertex);
     // std::cerr << "Returning graph\n";
     return scene_support_graph;

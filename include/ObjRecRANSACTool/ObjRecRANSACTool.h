@@ -13,13 +13,15 @@
 
 #include <ObjRecRANSAC/ObjRecRANSAC.h>
 
+#include "physics_world_parameters.h"
+
 class ObjRecRANSACTool : public ObjRecRANSAC
 {
 public:
-    ObjRecRANSACTool(double pairWidth = 0.1, double voxelSize = 0.03);
+    ObjRecRANSACTool(double pairWidth = 0.1, double voxelSize = 0.004);
     ~ObjRecRANSACTool(){}
     
-    void AddModel(const std::string &name, const std::string &label);
+    void addModelFromPath(const std::string &name, const std::string &label);
     // void clearMesh(pcl::visualization::PCLVisualizer::Ptr viewer, const std::vector<poseT> &poses);
 
     void setPointCloudData(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
@@ -35,6 +37,8 @@ private:
     
     double visibility_;              //0.1   
     double relativeObjSize_;         //0.1
+
+    bool have_scene_points_;
 };
 
 

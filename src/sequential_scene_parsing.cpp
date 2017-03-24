@@ -1,20 +1,6 @@
-#include <iostream>
 
-// For plane segmentation
-#include <pcl/ModelCoefficients.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/common/centroid.h>
-
-// For creating mesh from point cloud input
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/surface/gp3.h>
-#include <pcl/conversions.h>
 
 #include "sequential_scene_parsing.h"
-#include "utility.h"
 
 
 SceneGraph::SceneGraph(ImagePtr input, ImagePtr background_image)
@@ -165,6 +151,11 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 
 void SceneGraph::addScenePointCloud(ImagePtr scene_image)
 {
+	if (scene_image->empty())
+	{
+		std::cerr << "Error, input scene cloud is empty.\n";
+	}
+	
 	pcl::PointCloud<pcl::PointXYZ>::Ptr point_coordinates_only(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::copyPointCloud(*scene_image, *point_coordinates_only);
 	data_probability_check_.setPointCloudData(point_coordinates_only);
@@ -197,6 +188,29 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 	// return result_eigen_pose;
 }
 
+bool SceneGraph::loadObjectModels(const std::string &input_model_directory_path, 
+	const std::vector<std::string> &object_names)
+{
+	std::cerr << "Adding objrecransac model.\n";
+	bool result = boost::filesystem::is_directory(input_model_directory_path);
+	if (result)
+	{
+	    std::string model_path = input_model_directory_path;
+	    if (*model_path.rbegin() != '/')
+	        model_path += "/";
+
+	    for (std::vector<std::string>::const_iterator it = object_names.begin(); it != object_names.end(); ++it)
+		    data_probability_check_.addModelFromPath(model_path + *it, *it);
+		std::cerr << "Done.\n";
+		return true;
+	}
+	else
+	{
+		std::cerr << "Error, object model directory: " << input_model_directory_path << " does not exist.\n";
+		return false;
+	}
+}
+
 void SceneGraph::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
@@ -207,45 +221,58 @@ void SceneGraph::getUpdatedSceneSupportGraph()
 	this->scene_support_graph_ = this->physics_engine_->getUpdatedSceneGraph(this->vertex_map_);
 }
 
-void SceneGraph::setObjectHypothesesMap(std::map<std::string, std::vector<ObjectParameter> > &object_hypotheses_map)
+void SceneGraph::setObjectHypothesesMap(std::map<std::string, ObjectHypothesesData > &object_hypotheses_map)
 {
 	this->object_hypotheses_map_ = object_hypotheses_map;
 }
 
-double SceneGraph::evaluateObjectProbability(const std::string &object_label)
+double SceneGraph::evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name)
 {
+	// std::cerr << "Accessing support graph data.\n";
 	vertex_t object_in_graph = this->vertex_map_[object_label];
 	scene_support_vertex_properties &object_physics_status = this->scene_support_graph_[object_in_graph];
 	btTransform &object_pose = object_physics_status.object_pose_;
+	// std::cerr << "Calculating physical probability criterion.\n";
+
 	const double &stability_probability = object_physics_status.stability_penalty_;
 	double support_probability = getObjectSupportContribution(object_physics_status);
 	double collision_probability = getObjectCollisionPenalty(object_physics_status);
-	double object_data_compliance = this->data_probability_check_.getConfidence(object_label, object_pose);
+	
+	// std::cerr << "Calculating data match probability criterion.\n";
+	double object_data_compliance = this->data_probability_check_.getConfidence(object_model_name, object_pose);
 	double object_total_probability = object_data_compliance * support_probability * stability_probability * collision_probability;
 	std::cerr << object_label << " probability: " << object_total_probability << std::endl;
 
 	return object_total_probability;
 }
 
-bool SceneGraph::evaluateObjectHypothesis(const std::string &object_label, const btTransform &object_pose_hypothesis)
+bool SceneGraph::evaluateObjectHypothesis(const std::string &object_label, const std::string &object_model_name,
+	const btTransform &object_pose_hypothesis)
 {
 	this->physics_engine_->prepareSimulationForOneTestHypothesis(object_label, object_pose_hypothesis);
 	this->getUpdatedSceneSupportGraph();
-	return this->evaluateObjectProbability(object_label);
+	// std::cerr << "Getting object probability.\n";
+	return this->evaluateObjectProbability(object_label, object_model_name);
 }
 
 void SceneGraph::evaluateAllObjectHypothesisProbability()
 {
-	for (std::map<std::string, std::vector<ObjectParameter> >::const_iterator it = this->object_hypotheses_map_.begin();
+	for (std::map<std::string, ObjectHypothesesData >::const_iterator it = this->object_hypotheses_map_.begin();
 		it != this->object_hypotheses_map_.end(); ++it)
 	{
-		const std::string &object_label = it->first;
-		const std::vector<ObjectParameter> &object_pose_hypotheses = it->second;
+		const std::string &object_pose_label = it->first;
+		const std::string &object_model_name = it->second.first;
+		const std::vector<ObjectParameter> &object_pose_hypotheses = it->second.second;
+		std::size_t counter = 0;
 		for (std::vector<ObjectParameter>::const_iterator it2 = object_pose_hypotheses.begin();
 			it2 != object_pose_hypotheses.end(); ++it2)
 		{
 			const ObjectParameter &object_pose = *it2;
-			this->evaluateObjectHypothesis(object_label, object_pose);
+			std::cerr << "-------------------------------------------------------------\n";
+			std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" << ++counter << std::endl;
+			this->evaluateObjectHypothesis(object_pose_label, object_model_name, object_pose);
+			std::cerr << "-------------------------------------------------------------\n\n";
+			break;
 		}
 	}
 }

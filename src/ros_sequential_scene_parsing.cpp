@@ -87,13 +87,20 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	this->has_background_ = false;
 	std::string detected_object_topic;
 	std::string background_pcl2_topic;
+	std::string scene_pcl2_topic;
 	std::string object_folder_location;
 	std::string background_location;
+
+	std::string object_hypotheses_topic;
+	std::string objransac_model_location, objransac_model_list;
+	std::vector<std::string> object_names;
 
 	bool debug_mode, load_table;
 
 	nh.param("detected_object_topic", detected_object_topic,std::string("/detected_object"));
 	nh.param("background_pcl2_topic", background_pcl2_topic,std::string("/background_points"));
+	nh.param("scene_pcl2_topic", scene_pcl2_topic,std::string("/scene_points"));
+
 	nh.param("object_folder_location",object_folder_location,std::string(""));
 	nh.param("TF_z_inv_gravity_dir",this->tf_z_is_inverse_gravity_direction_,std::string(""));
 	nh.param("bg_normal_as_gravity",background_normal_as_gravity_,false);
@@ -101,6 +108,10 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("tf_publisher_initial",this->tf_publisher_initial,std::string(""));
 	nh.param("debug_mode",debug_mode,false);
 	nh.param("load_table",load_table,false);
+
+	nh.param("object_hypotheses_topic",object_hypotheses_topic,std::string("/object_hypothesis"));
+	nh.param("objransac_model_directory",objransac_model_location,object_folder_location);
+	nh.param("objransac_model_names",objransac_model_list,std::string(""));
 
 	if (load_table){
 		nh.param("table_location",background_location,std::string(""));
@@ -117,14 +128,26 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 
 	std::cerr << "Debug mode: " << debug_mode << std::endl;
 	this->setDebugMode(debug_mode);
+	this->ros_scene_.setDebugMode(debug_mode);
 
 	this->obj_database_.setObjectFolderLocation(object_folder_location);
 	if (this->fillObjectPropertyDatabase()) this->obj_database_.loadDatabase(this->physical_properties_database_);
 	this->physics_engine_.setObjectPenaltyDatabase(this->obj_database_.getObjectPenaltyDatabase());
+	
+	this->detected_object_sub = this->nh_.subscribe(detected_object_topic,1,
+		&RosSceneGraph::updateSceneFromDetectedObjectMsgs,this);
+	this->background_pcl_sub = this->nh_.subscribe(background_pcl2_topic,1,&RosSceneGraph::addBackground,this);
+	this->scene_pcl_sub = this->nh_.subscribe(scene_pcl2_topic,1,&RosSceneGraph::addSceneCloud,this);
+
+	// setup objrecransac tool
+	boost::split(object_names,objransac_model_list,boost::is_any_of(","));
+	this->ros_scene_.loadObjectModels(objransac_model_location, object_names);
+	this->object_hypotheses_sub = this->nh_.subscribe(object_hypotheses_topic,1,
+		&RosSceneGraph::fillObjectHypotheses,this);
+	
 	// sleep for caching the initial TF frames.
 	sleep(1.0);
-	this->detected_object_sub = this->nh_.subscribe(detected_object_topic,1,&RosSceneGraph::updateSceneFromDetectedObjectMsgs,this);
-	this->background_pcl_sub = this->nh_.subscribe(background_pcl2_topic,1,&RosSceneGraph::addBackground,this);
+	
 	this->class_ready_ = true;
 }
 
@@ -142,7 +165,13 @@ void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 		this->has_background_ = true;
 	}
 }
-	
+
+void RosSceneGraph::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
+{
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
+	pcl::fromROSMsg(pc, *cloud);
+	this->ros_scene_.addScenePointCloud(cloud);
+}
 
 void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
 {
@@ -204,11 +233,13 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 			this->physics_engine_.setGravityFromBackgroundNormal(true);
 			this->physics_gravity_direction_set_ = true;
 		}
-		else if (this->listener_.waitForTransform(this->tf_z_is_inverse_gravity_direction_,this->parent_frame_,now,ros::Duration(1.0)))
+		else if (this->listener_.waitForTransform(this->tf_z_is_inverse_gravity_direction_,
+			this->parent_frame_,now,ros::Duration(1.0)))
 		{
 			std::cerr << "Setting gravity direction of the physics_engine.\n";
 			tf::StampedTransform transform;
-			this->listener_.lookupTransform(this->parent_frame_,this->tf_z_is_inverse_gravity_direction_,ros::Time(0),transform);
+			this->listener_.lookupTransform(this->parent_frame_,
+				this->tf_z_is_inverse_gravity_direction_,ros::Time(0),transform);
 			
 			// btTransform bt = convertRosTFToBulletTF(transform);
 			double gl_matrix[15];
@@ -282,7 +313,8 @@ void RosSceneGraph::publishTf()
 	for (std::map<std::string, tf::Transform>::const_iterator it = this->object_transforms_tf_.begin(); 
 		it != this->object_transforms_tf_.end(); ++it)
 	{
-		this->tf_broadcaster_.sendTransform(tf::StampedTransform(it->second,ros::Time::now(),this->parent_frame_,it->first) );
+		this->tf_broadcaster_.sendTransform(tf::StampedTransform(it->second,ros::Time::now(),
+			this->parent_frame_,it->first) );
 	}
 }
 
@@ -315,11 +347,15 @@ bool RosSceneGraph::fillObjectPropertyDatabase()
 
 void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses)
 {
-	std::map<std::string, std::vector<ObjectParameter> > object_hypotheses_map;
+	std::cerr << "Received input hypotheses list.\n";
+	std::map<std::string, ObjectHypothesesData > object_hypotheses_map;
 	for (unsigned int i = 0; i < detected_object_hypotheses.all_hypothesis.size(); i++)
 	{
 		const objrec_hypothesis_msgs::ModelHypothesis &model_hypo = detected_object_hypotheses.all_hypothesis[i];
 		const std::string &object_tf_name = model_hypo.tf_name;
+		const std::string &object_model_name = model_hypo.model_name;
+		std::cerr << "Object " << object_tf_name << " hypotheses size:"
+			<< model_hypo.model_hypothesis.size() << ".\n";
 		std::vector<btTransform> object_pose_hypotheses;
 		object_pose_hypotheses.reserve(model_hypo.model_hypothesis.size());
 		for (unsigned int i = 0; i < model_hypo.model_hypothesis.size(); i++)
@@ -339,13 +375,12 @@ void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelH
 			bt.setOrigin(bt.getOrigin()*SCALING);
 			object_pose_hypotheses.push_back(bt);
 		}
-		object_hypotheses_map[object_tf_name] = object_pose_hypotheses;
+		object_hypotheses_map[object_tf_name] = std::make_pair(object_model_name,object_pose_hypotheses);
 	}
-	this->setObjectHypothesesMap(object_hypotheses_map);
+	this->ros_scene_.setObjectHypothesesMap(object_hypotheses_map);
 	this->mtx_.lock();
-	this->evaluateAllObjectHypothesisProbability();
+	this->ros_scene_.evaluateAllObjectHypothesisProbability();
 	this->mtx_.unlock();
-
 }
 
 

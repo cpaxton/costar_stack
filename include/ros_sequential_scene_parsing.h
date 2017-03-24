@@ -1,6 +1,8 @@
 #ifndef ROS_SEQUENTIAL_SCENE_PARSING_H
 #define ROS_SEQUENTIAL_SCENE_PARSING_H
 
+#include <boost/algorithm/string.hpp>
+
 // ROS stuffs
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -9,7 +11,6 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <pcl_conversions/pcl_conversions.h>
-
 
 // use detected object list instead of tf name convention
 #include <costar_objrec_msgs/DetectedObject.h>
@@ -29,7 +30,6 @@ public:
 	RosSceneGraph();
 	RosSceneGraph(const ros::NodeHandle &nh);
 	void setNodeHandle(const ros::NodeHandle &nh);
-	void addBackground(const sensor_msgs::PointCloud2 &pc);
 	
 	void publishTf();
 
@@ -40,6 +40,8 @@ public:
 	
 private:
 	bool fillObjectPropertyDatabase();
+	void addBackground(const sensor_msgs::PointCloud2 &pc);
+	void addSceneCloud(const sensor_msgs::PointCloud2 &pc);
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
 	void fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses);
 	void processHypothesis();
@@ -55,7 +57,7 @@ private:
 	// Background mode: 0 = BACKGROUND_PLANE, 1 = BACKGROUND_HULL, 2 = BACKGROUND_MESH
 	int background_mode_;
 	ros::Subscriber detected_object_sub;
-	ros::Subscriber object_hypothesis_sub;
+	ros::Subscriber object_hypotheses_sub;
 	ros::Subscriber background_pcl_sub;
 	ros::Subscriber scene_pcl_sub;
 	

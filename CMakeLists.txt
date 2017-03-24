@@ -190,6 +190,7 @@ add_library(rosSequentialSceneParsing ${RosSequentialSceneParsing})
 ## Declare a C++ executable
 add_executable(obj_main_decomposition tool/main.cpp)
 add_executable(sequential_scene_ros src/main.cpp)
+add_executable(load_and_pub_pcd src/publish_pcd_to_ros.cpp)
 # add_executable(bare_scene_ros src/bare_main.cpp)
 
 ## Add cmake target dependencies of the executable
@@ -249,6 +250,8 @@ add_executable(draw_bullet_hello_world tool/main_bullet_hello_world_draw.cpp too
 target_link_libraries(
  draw_bullet_hello_world ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader OpenGLSupport 
 )
+
+target_link_libraries(load_and_pub_pcd  ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
 #############

@@ -1,8 +1,11 @@
 <launch>
   <!-- Scene topic arguments-->
   <arg name="background_pcl2_topic"          default="/SPServer/table_corner" />
-  <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" />
+  <arg name="scene_pcl2_topic"               default="/SPServer/points_out" />
   <arg name="detected_object_topic"          default="/SPServer/detected_object_list"/>
+  <arg name="object_hypotheses_topic"        default="/SPServer/object_hypothesis" />
+
+  <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" />
   <arg name="background_normal_as_gravity"   default="true"/>
   <arg name="background_mode"                default="1"/>
   <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3"/>
@@ -11,14 +14,20 @@
   <arg name="load_table"                     default="true"/>
   <arg name="table_location"                 default="$(find sequential_scene_parsing)/mesh/table.pcd"/>
   <arg name="render_scene"                   default="true" />
+  <arg name="objransac_model_directory"      default="$(find sp_segmenter)/data/mesh"/>
+  <arg name="objransac_model_names"          default="node_uniform,link_uniform" />
 
-  <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros" >  
+  <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros" 
+    >  
     <!-- sequential_scene_ros common Node arg pass -->
     <param name="background_pcl2_topic"   type="str"     value="$(arg background_pcl2_topic)" />
+    <param name="scene_pcl2_topic"        type="str"     value="$(arg scene_pcl2_topic)" />
+
     <param name="object_folder_location"  type="str"     value="$(arg object_folder_location)"/>
     <param name="detected_object_topic"   type="str"     value="$(arg detected_object_topic)"/>
     <param name="TF_z_inv_gravity_dir"    type="str"     value="$(arg TF_z_inv_gravity_dir)"/>
     <param name="tf_publisher_initial"    type="str"     value="$(arg tf_publisher_initial)"/>
+    <param name="object_hypotheses_topic" type="str"     value="$(arg object_hypotheses_topic)"/>
 
     <param name="debug_mode"              type="bool"    value="$(arg debug)"/>
     <param name="load_table"              type="bool"    value="$(arg load_table)"/>
@@ -27,6 +36,9 @@
     <param name="bg_normal_as_gravity"    type="bool"    value="$(arg background_normal_as_gravity)"/>
 
     <param name="render_scene"            type="bool"    value="$(arg render_scene)"/>
+
+    <param name="objransac_model_directory"    type="str"     value="$(arg objransac_model_directory)"/>
+    <param name="objransac_model_names"        type="str"     value="$(arg objransac_model_names)"/>
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sequential_scene_parsing)/mesh/object_property_database.yaml" />

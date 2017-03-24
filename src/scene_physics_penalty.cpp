@@ -1,5 +1,4 @@
 #include "scene_physics_penalty.h"
-#include <iostream>
 
 inline double logisticFunction(const double &steepness, const double &max_value, const double &midpoint, const double &x)
 {
@@ -17,7 +16,7 @@ double calculateStabilityPenalty(const MovementComponent &acceleration,
 {
 	double translation_penalty = acceleration.linear_.norm() / gravity_magnitude,
 		angular_penalty = acceleration.angular_.norm() / penalty_params.maximum_angular_acceleration_;
-	// std::cerr << "lin penalty: " << translation_penalty << ", ang penalty: " << angular_penalty << std::endl;
+
 	return stabilityPenaltyFormula(translation_penalty, angular_penalty, 
 		penalty_params.translational_acceleration_weight_, penalty_params.angular_acceleration_weight_);
 }
@@ -71,8 +70,6 @@ btScalar getObjectMaximumAngularAcceleration(const btCollisionShape &object_shap
 	// and object orientation makes this distance vector perpendicular to the gravity direction
 
 	btVector3 inv_maximum_gravity_angular_acceleration = inertia /(scaled_gravity_magnitude * max_gravity_torque_length * mass);
-	// std::cerr << "inertia: " << inertia.x() << ", " << inertia.y() 
-	//	<< ", " << inertia.z() << ": " << scaled_gravity_magnitude * max_gravity_torque_length * mass << std::endl;
 	return ( 1/inv_maximum_gravity_angular_acceleration.norm() );
 }
 

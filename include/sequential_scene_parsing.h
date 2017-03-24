@@ -1,8 +1,25 @@
 #ifndef SEQUENTIAL_SCENE_PARSING_H
 #define SEQUENTIAL_SCENE_PARSING_H
 
+#include <iostream>
+#include <utility>
 #include <vector>
 #include <map>
+
+// For plane segmentation
+#include <pcl/ModelCoefficients.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/common/centroid.h>
+
+// For creating mesh from point cloud input
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
+#include <pcl/conversions.h>
+
+#include <boost/filesystem.hpp>
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -13,6 +30,7 @@
 
 #include "scene_physics_engine.h"
 #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
+#include "utility.h"
 
  // ObjectParameter == Object Pose
 typedef btTransform ObjectParameter;
@@ -21,6 +39,9 @@ typedef pcl::PointCloud<pcl::PointXYZRGBA>::Ptr ImagePtr;
 typedef pcl::PointXYZRGBA ImagePoint;
 typedef pcl::PointCloud<pcl::PointXYZRGBA> Image;
 typedef std::vector<bool> DecisionVector;
+
+// this contains model name and pose hypothesis of a single object
+typedef std::pair<std::string, std::vector<ObjectParameter> > ObjectHypothesesData;
 
 class SceneGraph
 {
@@ -39,13 +60,16 @@ public:
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
 	void setDebugMode(bool debug);
 	
-	void setObjectHypothesesMap(std::map<std::string, std::vector<ObjectParameter> > &object_hypotheses_map);
+	void setObjectHypothesesMap(std::map<std::string, ObjectHypothesesData > &object_hypotheses_map);
 	void evaluateAllObjectHypothesisProbability();
+
+	bool loadObjectModels(const std::string &input_model_directory_path, const std::vector<std::string> &object_names);
 
 private:
 	void getUpdatedSceneSupportGraph();
-	double evaluateObjectProbability(const std::string &object_label);
-	bool evaluateObjectHypothesis(const std::string &object_label, const btTransform &object_pose_hypothesis);
+	double evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name);
+	bool evaluateObjectHypothesis(const std::string &object_label, const std::string &object_model_name,
+		const btTransform &object_pose_hypothesis);
 
 
 	bool debug_messages_;
@@ -62,7 +86,7 @@ private:
 	std::string background_label_;
 	std::map<std::string, ImagePtr> object_point_cloud_;
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
-	std::map<std::string, std::vector<ObjectParameter> > object_hypotheses_map_;
+	std::map<std::string, ObjectHypothesesData > object_hypotheses_map_;
 
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 
 	// one label may support multiple objects. Maybe make this into graph instead of list for easier support check
