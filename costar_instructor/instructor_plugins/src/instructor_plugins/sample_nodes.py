@@ -116,7 +116,6 @@ class NodeServiceSample(Node):
             else:
                 if self.finished_with_success == True:
                     rospy.loginfo('Test Service succeeded')
-                    self.set_color(colors['gray'].normal)
                     self.running = False
                     return self.set_status('SUCCESS')
                 else:

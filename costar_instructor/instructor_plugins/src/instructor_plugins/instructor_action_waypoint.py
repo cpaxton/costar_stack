@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import roslib; roslib.load_manifest('instructor_plugins')
 import rospy 
 from std_msgs.msg import *
@@ -179,7 +178,7 @@ class NodeActionWaypoint(Node):
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
-        self.set_color('#26A65B')
+        self.set_color(colors['green'].normal)
 
     def make_service_call(self,request,*args):
         # Check to see if service exists

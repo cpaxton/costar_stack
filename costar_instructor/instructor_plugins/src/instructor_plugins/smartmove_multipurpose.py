@@ -303,6 +303,7 @@ class NodeActionSmartmoveMultiPurpose(Node):
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
+        self.set_color(colors['green'].normal)
 
     def make_service_call(self,request,*args):
 
