@@ -279,13 +279,17 @@ class SimplePlanning:
         elif q_goal is not None:
           joints = q_goal
 
+        if len(joints) is not len(self.joint_names):
+          rospy.logerr("Invalid goal position. Number of joints in goal is not the same as robot's dof")
+          return (None, None)
+
         if mode == ModeJoints or q_goal is not None:
           for i in range(0,len(self.joint_names)):
                 joint = JointConstraint()
                 joint.joint_name = self.joint_names[i]
                 joint.position = joints[i] 
-                joint.tolerance_below = 0.01
-                joint.tolerance_above = 0.01
+                joint.tolerance_below = 1e-6
+                joint.tolerance_above = 1e-6
                 joint.weight = 1.0
                 goal.joint_constraints.append(joint)
 
@@ -366,6 +370,9 @@ class SimplePlanning:
           raise RuntimeError('Must provide either a goal frame or joint state!')
         if q is None:
           raise RuntimeError('Must provide starting position!')
+        elif len(q) is not len(self.joint_names):
+          rospy.logerr("Invalid number of joints in getPlan starting position setting")
+          return (-31,None)
         
         if obj is not None:
           self.updateAllowedCollisions(obj,True);
@@ -373,6 +380,7 @@ class SimplePlanning:
         motion_req = MotionPlanRequest()
 
         motion_req.start_state.joint_state.position = q
+        motion_req.start_state.joint_state.name = self.joint_names
         motion_req.workspace_parameters.header.frame_id = self.base_link
         motion_req.workspace_parameters.max_corner.x = 1.0
         motion_req.workspace_parameters.max_corner.y = 1.0

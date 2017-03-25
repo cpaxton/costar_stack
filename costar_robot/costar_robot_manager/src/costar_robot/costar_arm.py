@@ -29,7 +29,7 @@ import copy
 class CostarArm(CostarComponent):
 
     def __init__(self,
-            base_link, end_link, planning_group,
+            base_link=None, end_link=None, planning_group=None,
             world="/world",
             namespace="/costar",
             listener=None,
@@ -61,10 +61,17 @@ class CostarArm(CostarComponent):
         self.max_dist_from_table = max_dist_from_table
 
         try:
-            self.home_q = rospy.get_param(os.path.join(self.namespace, "home"))
+            self.home_q = rospy.get_param(os.path.join(self.namespace, "robot", "home"))
             self.home_q = [float(q) for q in self.home_q]
         except KeyError, e:
             self.home_q = [0.] * dof
+
+        if base_link is None:
+            base_link = rospy.get_param(os.path.join(self.namespace, "robot", "base_link"))
+        if end_link is None:
+            end_link = rospy.get_param(os.path.join(self.namespace, "robot", "end_link"))
+        if planning_group is None:
+            planning_group = rospy.get_param(os.path.join(self.namespace, "robot", "planning_group"))
 
         self.world = world
         self.base_link = base_link
@@ -572,8 +579,9 @@ class CostarArm(CostarComponent):
                     br.sendTransform(trans, rot, rospy.Time.now(),tf_name,self.world)
 
         if self.table_frame is not None:
+            self.listener.waitForTransform(self.world, self.table_frame, rospy.Time(), rospy.Duration(1.0))
             try:
-                self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
+                self.table_pose = self.listener.lookupTransform(self.world, self.table_frame, rospy.Time(0))
             except tf.ExtrapolationException, e:
                 rospy.logwarn(str(e))
 
@@ -589,15 +597,20 @@ class CostarArm(CostarComponent):
     call this to get rough estimate whether the input robot configuration is in collision or not
     '''
     def check_robot_position_validity(self, robot_joint_position):
-        get_state_validity_req = GetStateValidityRequest()
-        get_state_validity_req.group_name = self.planning_group
-        # name = self.joint_names
-        current_robot_state = RobotState(joint_state=JointState(position  = robot_joint_position), is_diff = True) #self.robot_state
-        # current_robot_state.joint_state.position = robot_joint_position
-        # current_robot_state.is_diff = True
-        get_state_validity_req.robot_state = current_robot_state
-        
-        return self.state_validity_service.call(get_state_validity_req)
+        if len(robot_joint_position) != self.dof:
+            # Incorrect input joint length
+            rospy.logwarn('Incorrect joint length')
+            return GetStateValidityResponse(valid = False)
+        else:
+            get_state_validity_req = GetStateValidityRequest()
+            get_state_validity_req.group_name = self.planning_group
+            # name = self.joint_names
+            # rospy.logwarn(str(self.q0))
+            # rospy.logwarn(str(robot_joint_position))
+            current_robot_state = RobotState(joint_state=JointState(position=robot_joint_position, name=self.joint_names), is_diff=True) #self.robot_state
+            get_state_validity_req.robot_state = current_robot_state
+            
+            return self.state_validity_service.call(get_state_validity_req)
 
     '''
     Attach an object to the planning scene.
@@ -781,6 +794,7 @@ class CostarArm(CostarComponent):
         if poses is None:
             return []
 
+        selected_objs, selected_names = [], []
         dists = []
         Ts = []
         if self.q0 is None:
@@ -810,20 +824,15 @@ class CostarArm(CostarComponent):
             # checking that position.
             if self.table_pose is not None:
                 if T.p[2] < self.table_pose[0][2]:
-                    rospy.logwarn("[QUERY] Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
-                    Ts.append(None)
-                    dists.append(float('inf'))
+                    rospy.logwarn("[QUERY] Ignoring due to relative z: %f < %f x=%f y=%f %s"%(T.p[2],self.table_pose[0][2],T.p[0],T.p[1], obj))
                     continue
                 dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
             if dist_from_table > self.max_dist_from_table:
                 rospy.logwarn("[QUERY] Ignoring due to table distance: %f > %f"%(
                     dist_from_table,
                     self.max_dist_from_table))
-                Ts.append(None)
-                dists.append(float('inf'))
                 continue
 
-            Ts.append(T)
             valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = False, obj_name = obj)
 
             if best_q is None or len(best_q) == 0:
@@ -831,20 +840,32 @@ class CostarArm(CostarComponent):
                 continue
             elif valid_pose:
                 rospy.loginfo('[QUERY] %s'%message_print)
+                Ts.append(T)
+                selected_objs.append(obj)
+                selected_names.append(name)
                 dists.append(best_dist)
                 number_of_valid_query_poses += 1
             else:
                 rospy.loginfo('[QUERY] %s'%message_print_invalid)
+                Ts.append(T)
+                selected_objs.append(obj)
+                selected_names.append(name)
                 dists.append(best_invalid + self.state_validity_penalty)
                 number_of_invalid_query_poses += 1
 
 
+        if len(Ts) is not len(dists):
+            raise RuntimeError('You miscounted the number of transforms somehow.')
+        if len(Ts) is not len(selected_objs):
+            raise RuntimeError('You miscounted the number of transforms vs. objects somehow.')
+        if len(Ts) is not len(selected_names):
+            raise RuntimeError('You miscounted the number of transforms vs. names somehow.')
+
         if len(Ts) == 0:
             possible_goals = []
         else:
-            possible_goals = [(d,T,o,n) for (d,T,o,n) in zip(dists,Ts,objects,names) if T is not None]
+            possible_goals = [(d,T,o,n) for (d,T,o,n) in zip(dists,Ts,selected_objs,selected_names) if T is not None]
             possible_goals.sort()
-
 
 
         joint = JointState()
@@ -887,11 +908,12 @@ class CostarArm(CostarComponent):
                 list_of_valid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
                 rospy.loginfo('Valid sequence: %s: %s'%(query_backup_message, message_print))
             else:
-                list_of_invalid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
                 if valid_pose:
                     rospy.loginfo('Invalid sequence: %s: %s'%(query_backup_message, message_print))
+                    list_of_invalid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
                 else:
                     rospy.loginfo('Invalid sequence: %s: %s'%(query_backup_message, message_print_invalid))
+                    list_of_invalid_sequence.append((backup_waypoint,T,obj,best_invalid,dist,name))
 
         sequence_to_execute = list()
         if len(list_of_valid_sequence) > 0:
