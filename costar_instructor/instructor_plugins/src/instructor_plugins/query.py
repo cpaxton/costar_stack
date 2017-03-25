@@ -63,6 +63,11 @@ class NodeActionQueryGUI(NodeGUI):
         self.update_references()
         self.update_objects()
 
+    def refresh_data(self):
+        self.update_regions()
+        self.update_references()
+        self.update_objects()
+
     def reference_selected_cb(self,item):
         self.selected_reference = str(item.text())
 
@@ -301,6 +306,9 @@ class CollisionGUI(NodeGUI):
         self.manager = global_manager
 
         self.waypoint_ui.object_list.itemClicked.connect(self.object_selected_cb)
+        self.update_objects()
+
+    def refresh_data(self):
         self.update_objects()
 
     def object_selected_cb(self,item):
