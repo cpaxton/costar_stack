@@ -25,15 +25,7 @@ urscript_commands = {'TEACH':'set robotmode freedrive','SERVO':'set robotmode ru
 
 class CostarUR5Driver(CostarArm):
 
-    def __init__(self,ip_address,simulation=False,
-            world="/world",
-            listener=None,
-            traj_step_t=0.1,
-            max_acc=1,
-            max_vel=1,
-            max_goal_diff = 0.02,
-            goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6,
+    def __init__(self, simulation=False,
             max_dist_from_table = 0.35,
             *args,
             **kwargs):
@@ -41,19 +33,12 @@ class CostarUR5Driver(CostarArm):
         self.simulation = simulation
         self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10,*args,**kwargs)
 
-        base_link = "base_link"
-        end_link = "ee_link"
-        planning_group = "manipulator"
-
         self.closed_form_IK_solver = InverseKinematicsUR5()
-        #self.joint_weightsjoint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
-        #self.joint_weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         self.closed_form_IK_solver.setEERotationOffsetROS()
         # self.closed_form_IK_solver.setJointWeights(self.joint_weights)
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
 
-        super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
-            steps_per_meter=10,
+        super(CostarUR5Driver, self).__init__(steps_per_meter=10,
             base_steps=10,
             dof=6,
             closed_form_IK_solver=self.closed_form_IK_solver)

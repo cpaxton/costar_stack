@@ -1,11 +1,15 @@
 <launch>
   <!-- Smartmove params -->
   <group ns="costar">
-    <rosparam param="home">[-0.14, 0.27, 0.20, -1.93, -0.00, 0.88, 1.41]</rosparam>
     <group ns="robot">
-      dof: 7
-      base_link: iiwa_link_0
-      end_link: iiwa_link_7
+      <rosparam param="home">[-0.14, 0.27, 0.20, -1.93, -0.00, 0.88, 1.41]</rosparam>
+      <rosparam param = "dof">7</rosparam>
+      <rosparam param = "base_link">iiwa_link_0</rosparam>
+      <rosparam param = "end_link">iiwa_link_ee</rosparam>
+      <rosparam param = "planning_group">manipulator</rosparam>
+      <rosparam param = "joint_weights">[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]</rosparam>
+      <rosparam param = "translation_weight">1.0</rosparam>
+      <rosparam param = "rotation_weight">0.2</rosparam>
     </group>
     <group ns="smartmove">
       <rosparam param="available_objects">
