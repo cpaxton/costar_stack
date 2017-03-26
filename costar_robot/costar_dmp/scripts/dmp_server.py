@@ -10,5 +10,5 @@ rate = rospy.Rate(10)
 
 while not rospy.is_shutdown():
 
-	server.dmp_tick()
+	server.tick()
 	rate.sleep()

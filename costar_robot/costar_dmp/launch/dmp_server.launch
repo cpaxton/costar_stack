@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node pkg="costar_dmp" name="simple_dmp_server" type="dmp_server.py" output="screen"/>
+  
+  <!-- Librarian -->
+  <node pkg="librarian_core" type="core.py" name="librarian_core"/>
+
+</launch>
