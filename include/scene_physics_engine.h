@@ -7,6 +7,7 @@
 #include <map>
 #include <boost/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/graph/graphviz.hpp>
 
 // Rendering platform
 #ifdef _WINDOWS
@@ -52,7 +53,8 @@ public:
 
 	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
 
-	void setSimulationMode(const int &simulation_mode, const unsigned int &number_of_world_tick = 100);
+	void setSimulationMode(const int &simulation_mode, const double simulation_step = 1./200,
+		const unsigned int &number_of_world_tick = 100);
 
 	void setDebugMode(bool debug);
 	void renderingLaunched();
@@ -61,15 +63,17 @@ public:
 	void resetObjectMotionState(const bool &reset_object_pose, const std::map<std::string, btTransform> &target_pose_map);
 	SceneSupportGraph getCurrentSceneGraph(std::map<std::string, vertex_t> &vertex_map);
 	SceneSupportGraph getUpdatedSceneGraph(std::map<std::string, vertex_t> &vertex_map);
-	void prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose);
+	void prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose, const bool &resetObjectPosition = true);
 	void changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose);
-	// vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
+	void changeBestTestPoseMap(const std::map<std::string, btTransform> &object_best_pose_from_data);
 
+	// vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
+	void stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step);
+    void worldTickCallback(const btScalar &timeStep);
 
 // Additional functions used for rendering:
     void initPhysics();
     void exitPhysics();
-    void worldTickCallback(const btScalar &timeStep);
 
     virtual void clientMoveAndDisplay();
 
@@ -131,6 +135,7 @@ private:
 	boost::mutex mtx_;
 
 	bool reset_obj_vel_every_frame_;
+	bool reset_interaction_forces_every_frame_;
 	bool stop_simulation_after_have_support_graph_;
 	unsigned int number_of_world_tick_;
 

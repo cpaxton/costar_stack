@@ -67,9 +67,9 @@ public:
 
 private:
 	void getUpdatedSceneSupportGraph();
-	double evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name);
-	bool evaluateObjectHypothesis(const std::string &object_label, const std::string &object_model_name,
-		const btTransform &object_pose_hypothesis);
+	double evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name, const bool &verbose = false);
+	double evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, const std::string &object_label, const std::string &object_model_name,
+		const btTransform &object_pose_hypothesis, const bool &reset_position);
 
 
 	bool debug_messages_;
@@ -82,12 +82,13 @@ private:
 
 	ObjRecRANSACTool data_probability_check_;
 
-	std::vector<std::string> object_label_;
+	std::map<std::string, std::string> object_label_class_map;
 	std::string background_label_;
 	std::map<std::string, ImagePtr> object_point_cloud_;
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map_;
 
+	boost::mutex seq_mtx_;
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 
 	// one label may support multiple objects. Maybe make this into graph instead of list for easier support check
 	;

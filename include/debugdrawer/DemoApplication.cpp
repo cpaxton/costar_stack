@@ -496,7 +496,7 @@ void DemoApplication::keyboardCallback(unsigned char key, int x, int y)
 
 	case '.':
 		{
-			shootBox(getRayTo(x,y));//getCameraTargetPosition());
+			// shootBox(getRayTo(x,y));//getCameraTargetPosition());
 			break;
 		}
 
@@ -699,106 +699,106 @@ void DemoApplication::mouseFunc(int button, int state, int x, int y)
 	//printf("button %i, state %i, x=%i,y=%i\n",button,state,x,y);
 	//button 0, state 0 means left mouse down
 
-	btVector3 rayTo = getRayTo(x,y);
+// 	btVector3 rayTo = getRayTo(x,y);
 
-	switch (button)
-	{
-	case 2:
-		{
-			if (state==0)
-			{
+// 	switch (button)
+// 	{
+// 	case 2:
+// 		{
+// 			if (state==0)
+// 			{
 
-				shootBox(rayTo);
-			}
-			break;
-		};
-	case 1:
-		{
-
-
-			if (state==0)
-			{
-
-#if 0
-				//apply an impulse
-				if (m_dynamicsWorld)
-				{
-					btCollisionWorld::ClosestRayResultCallback rayCallback(m_cameraPosition,rayTo);
-					m_dynamicsWorld->rayTest(m_cameraPosition,rayTo,rayCallback);
-					if (rayCallback.hasHit())
-					{
-
-						btRigidBody* body = btRigidBody::upcast(rayCallback.m_collisionObject);
-						if (body)
-						{
-							body->setActivationState(ACTIVE_TAG);
-							btVector3 impulse = rayTo;
-							impulse.normalize();
-							float impulseStrength = 10.f;
-							impulse *= impulseStrength;
-							btVector3 relPos = rayCallback.m_hitPointWorld - body->getCenterOfMassPosition();
-							body->applyImpulse(impulse,relPos);
-						}
-					}
-				}
-#endif
+// 				shootBox(rayTo);
+// 			}
+// 			break;
+// 		};
+// 	case 1:
+// 		{
 
 
+// 			if (state==0)
+// 			{
 
-			} else
-			{
+// #if 0
+// 				//apply an impulse
+// 				if (m_dynamicsWorld)
+// 				{
+// 					btCollisionWorld::ClosestRayResultCallback rayCallback(m_cameraPosition,rayTo);
+// 					m_dynamicsWorld->rayTest(m_cameraPosition,rayTo,rayCallback);
+// 					if (rayCallback.hasHit())
+// 					{
 
-			}
-			break;	
-		}
-	case 0:
-		{
-			if (state==0)
-			{
+// 						btRigidBody* body = btRigidBody::upcast(rayCallback.m_collisionObject);
+// 						if (body)
+// 						{
+// 							body->setActivationState(ACTIVE_TAG);
+// 							btVector3 impulse = rayTo;
+// 							impulse.normalize();
+// 							float impulseStrength = 10.f;
+// 							impulse *= impulseStrength;
+// 							btVector3 relPos = rayCallback.m_hitPointWorld - body->getCenterOfMassPosition();
+// 							body->applyImpulse(impulse,relPos);
+// 						}
+// 					}
+// 				}
+// #endif
 
 
-				//add a point to point constraint for picking
-				if (m_dynamicsWorld)
-				{
+
+// 			} else
+// 			{
+
+// 			}
+// 			break;	
+// 		}
+// 	case 0:
+// 		{
+// 			if (state==0)
+// 			{
+
+
+// 				//add a point to point constraint for picking
+// 				if (m_dynamicsWorld)
+// 				{
 					
-					btVector3 rayFrom;
-					if (m_ortho)
-					{
-						rayFrom = rayTo;
-						rayFrom.setZ(-100.f);
-					} else
-					{
-						rayFrom = m_cameraPosition;
-					}
+// 					btVector3 rayFrom;
+// 					if (m_ortho)
+// 					{
+// 						rayFrom = rayTo;
+// 						rayFrom.setZ(-100.f);
+// 					} else
+// 					{
+// 						rayFrom = m_cameraPosition;
+// 					}
 					
-					btCollisionWorld::ClosestRayResultCallback rayCallback(rayFrom,rayTo);
-					m_dynamicsWorld->rayTest(rayFrom,rayTo,rayCallback);
-					if (rayCallback.hasHit())
-					{
+// 					btCollisionWorld::ClosestRayResultCallback rayCallback(rayFrom,rayTo);
+// 					m_dynamicsWorld->rayTest(rayFrom,rayTo,rayCallback);
+// 					if (rayCallback.hasHit())
+// 					{
 
-						btVector3 pickPos = rayCallback.m_hitPointWorld;
+// 						btVector3 pickPos = rayCallback.m_hitPointWorld;
 						
-						pickObject(pickPos, rayCallback.m_collisionObject);
+// 						pickObject(pickPos, rayCallback.m_collisionObject);
 						
-						gOldPickingPos = rayTo;
-						gHitPos = pickPos;
+// 						gOldPickingPos = rayTo;
+// 						gHitPos = pickPos;
 
-						gOldPickingDist  = (pickPos-rayFrom).length();
-					}
-				}
+// 						gOldPickingDist  = (pickPos-rayFrom).length();
+// 					}
+// 				}
 
-			} else
-			{
-				removePickingConstraint();
-			}
+// 			} else
+// 			{
+// 				removePickingConstraint();
+// 			}
 
-			break;
+// 			break;
 
-		}
-	default:
-		{
-		}
-	}
+// 		}
+// 	default:
+// 		{
+// 		}
+// 	}
 
 }
 

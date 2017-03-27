@@ -7,7 +7,7 @@ static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
 }
 
 PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), 
-	rendering_launched_(false), use_background_normal_as_gravity_(false), simulation_step_(1/180.)
+	rendering_launched_(false), use_background_normal_as_gravity_(false), simulation_step_(1/200.)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
 	this->initPhysics();
@@ -42,7 +42,7 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
 
 void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_points, btVector3 plane_normal)
 {
-	// mtx_.lock();
+	mtx_.lock();
 
 	if (this->debug_messages_) std::cerr << "Adding background(convex hull) to the physics engine's world.\n";
 	
@@ -91,7 +91,7 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 	this->background_surface_normal_ = plane_normal;
 	if (this->use_background_normal_as_gravity_)
 		this->setGravityVectorDirection(-background_surface_normal_);
-	// mtx_.unlock();
+	mtx_.unlock();
     m_collisionShapes.push_back(background);
 }
 
@@ -131,7 +131,8 @@ void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transf
 	if (this->debug_messages_)
 	{
 		std::cerr << "Input transform:\n";
-		for (int i = 0; i < 3; i++){
+		for (int i = 0; i < 3; i++)
+		{
 			for (int j = 0; j < 3; j++)
 			{
 				std::cerr <<  rotation_matrix[i][j] << " ";
@@ -169,7 +170,7 @@ void PhysicsEngine::setGravityFromBackgroundNormal(const bool &input)
 
 void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 {
-	// mtx_.lock();
+	mtx_.lock();
 
 	// Add new objects
 	if (this->debug_messages_) std::cerr << "Adding scene objects to the physics engine.\n";
@@ -203,7 +204,7 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 	this->object_best_test_pose_map_ = this->object_best_pose_from_data_;
 	if (this->debug_messages_) std::cerr << "Scene objects added to the physics engine.\n";
 
-	// mtx_.unlock();
+	mtx_.unlock();
 }
 
 void PhysicsEngine::simulate()
@@ -248,12 +249,26 @@ void PhysicsEngine::simulate()
 		for (int i = 0; i < this->number_of_world_tick_; i++)
 		{
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
-			if (this->checkSteadyState()) break;
+			// if (this->checkSteadyState()) break;
 		}
 	}
 
 	mtx_.lock();
 	this->in_simulation_ = false;
+	mtx_.unlock();
+}
+
+void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step)
+{
+	int number_of_world_tick_to_step = delta_time / simulation_step;
+	mtx_.lock();
+	// set world tick counter so that it never evaluates the scene graph
+	this->world_tick_counter_ = this->number_of_world_tick_ + 1;
+	for (int i = 0; i < number_of_world_tick_to_step; i++)
+	{
+		m_dynamicsWorld->stepSimulation(simulation_step, 10);
+		// if (this->checkSteadyState()) break;
+	}
 	mtx_.unlock();
 }
 
@@ -279,9 +294,8 @@ std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
 	// Run simulation to get an update on object poses
 	this->simulate();
 
-	mtx_.lock();
-
 	std::map<std::string, btTransform> result_pose;
+	mtx_.lock();
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
@@ -296,7 +310,6 @@ std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
 			std::cerr << "Translation: " << t[0]  << ", " << t[1]  << ", " << t[2] << std::endl;
 		}
 	}
-
 	if (this->debug_messages_) std::cerr << "Done scene objects poses.\n";
 	mtx_.unlock();
 
@@ -356,7 +369,8 @@ void PhysicsEngine::cacheObjectVelocities(const btScalar &timeStep)
 	if (reset_obj_vel_every_frame_) this->stopAllObjectMotion();
 }
 
-void PhysicsEngine::setSimulationMode(const int &simulation_mode, const unsigned int &number_of_world_tick)
+void PhysicsEngine::setSimulationMode(const int &simulation_mode, const double simulation_step,
+	const unsigned int &number_of_world_tick)
 {
 	switch(simulation_mode)
 	{
@@ -385,6 +399,7 @@ void PhysicsEngine::setSimulationMode(const int &simulation_mode, const unsigned
 			break;
 		}
 	}
+	this->simulation_step_ = simulation_step;
 	this->number_of_world_tick_ = number_of_world_tick;
 }
 
@@ -458,12 +473,12 @@ void PhysicsEngine::clientMoveAndDisplay()
 	{
 		if (this->in_simulation_){
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
-			if (this->checkSteadyState())
-			{
-				mtx_.lock();
-				this->in_simulation_ = false;
-				mtx_.unlock();
-			}
+			// if (this->checkSteadyState())
+			// {
+			// 	mtx_.lock();
+			// 	this->in_simulation_ = false;
+			// 	mtx_.unlock();
+			// }
 		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
@@ -513,27 +528,34 @@ void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenalty
 
 void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 	mtx_.lock();
+	++world_tick_counter_;
     // calculate the scene analysis here
     this->cacheObjectVelocities(timeStep);
 
-	scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
-	// put the stability penalty into the scene graph
-	for (std::map<std::string, vertex_t>::const_iterator it = vertex_map_.begin(); it != this->vertex_map_.end(); ++it)
-	{
-		if (keyExistInConstantMap(it->first,this->object_acceleration_))
+    if (world_tick_counter_ == this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
+    {
+	    scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
+		// put the stability penalty into the scene graph
+		for (std::map<std::string, vertex_t>::const_iterator it = vertex_map_.begin(); it != this->vertex_map_.end(); ++it)
 		{
-			scene_graph_[it->second].stability_penalty_ = calculateStabilityPenalty(this->object_acceleration_[it->first], 
-				object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
-
-			double supp_contrib = getObjectSupportContribution(scene_graph_[it->second]);
-			std::cerr << it->first << ": " << " stability probability= " << scene_graph_[it->second].stability_penalty_
-				<< ", support contribution probability= " << supp_contrib << std::endl;
-			if (this->stop_simulation_after_have_support_graph_)
+			if (keyExistInConstantMap(it->first,this->object_acceleration_))
 			{
-				this->in_simulation_ = false;
+				scene_graph_[it->second].stability_penalty_ = calculateStabilityPenalty(this->object_acceleration_[it->first], 
+					object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
+
+				double supp_contrib = getObjectSupportContribution(scene_graph_[it->second]);
+				if (debug_messages_)
+				{
+					std::cerr << it->first << ": " << " stability probability= " << scene_graph_[it->second].stability_penalty_
+						<< ", support contribution probability= " << supp_contrib << std::endl;	
+				}
+				if (this->stop_simulation_after_have_support_graph_)
+				{
+					this->in_simulation_ = false;
+				}
 			}
 		}
-	}
+    }
 	mtx_.unlock();
 }
 
@@ -545,7 +567,7 @@ void PhysicsEngine::stopAllObjectMotion()
 		it != this->rigid_body_.end(); ++it)
 	{
 		// reset the forces and velocity of the objects
-		it->second->clearForces();
+		// it->second->clearForces();
 		it->second->setLinearVelocity(zero_vector);
 		it->second->setAngularVelocity(zero_vector);
 	}
@@ -559,6 +581,13 @@ void PhysicsEngine::resetObjectMotionState(const bool &reset_object_pose,
 	for (std::map<std::string, btTransform>::const_iterator it = target_pose_map.begin(); 
 		it != target_pose_map.end(); ++it)
 	{
+		if (it->first == "background") continue;
+		else if (rigid_body_.find(it->first) == rigid_body_.end())
+		{
+			std::cerr << "ERROR, object " << it->first << " has not been added yet.\n";
+			continue;
+		}
+		
 		// Reset the object pose to the original states
 		if (reset_object_pose) rigid_body_[it->first]->setWorldTransform(it->second);
 
@@ -566,6 +595,9 @@ void PhysicsEngine::resetObjectMotionState(const bool &reset_object_pose,
 		rigid_body_[it->first]->clearForces();
 		rigid_body_[it->first]->setLinearVelocity(zero_vector);
 		rigid_body_[it->first]->setAngularVelocity(zero_vector);
+
+		// force the object to be active again
+		rigid_body_[it->first]->activate(true);
 	}
 	// mtx_.unlock()
 }
@@ -583,18 +615,30 @@ SceneSupportGraph PhysicsEngine::getUpdatedSceneGraph(std::map<std::string, vert
 	return this->getCurrentSceneGraph(vertex_map);
 }
 
-void PhysicsEngine::prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose)
+void PhysicsEngine::prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose,
+	const bool &resetObjectPosition)
 {
+	mtx_.lock();
 	// Set the object poses
 	std::map<std::string, btTransform> object_test_pose_map_;
 	object_test_pose_map_ = this->object_best_test_pose_map_;
 	object_test_pose_map_[object_id] = object_pose;
-	this->resetObjectMotionState(true, object_test_pose_map_);
+	this->resetObjectMotionState(resetObjectPosition, object_test_pose_map_);
+	mtx_.unlock();
 }
 
 void PhysicsEngine::changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose)
 {
+	mtx_.lock();
 	this->object_best_test_pose_map_[object_id] = object_pose;
+	mtx_.unlock();
+}
+
+void PhysicsEngine::changeBestTestPoseMap(const std::map<std::string, btTransform> &object_best_pose_from_data)
+{
+	mtx_.lock();
+	this->object_best_test_pose_map_ = object_best_pose_from_data;
+	mtx_.unlock();
 }
 
 // vertex_t PhysicsEngine::getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position)

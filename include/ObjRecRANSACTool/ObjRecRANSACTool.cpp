@@ -70,14 +70,13 @@ double ObjRecRANSACTool::getConfidence(const std::string &model_name, const btTr
 				rigid_transform[objransac_matrix_index] = gl_matrix[gl_index];
 				// revert the scaling effect for checking confidence.
 				rigid_transform[objransac_matrix_index] /= (i == 3) ? SCALING : 1;
-				std::cerr << rigid_transform[objransac_matrix_index] << "\t";
+				// std::cerr << rigid_transform[objransac_matrix_index] << "\t";
 
 				++objransac_matrix_index;
 			}
-
 			if (gl_index == 15) break;
 		}
-		std::cerr << std::endl;
+		// std::cerr << std::endl;
 	}
 
 	hypothesis_tmp.rigid_transform = rigid_transform;

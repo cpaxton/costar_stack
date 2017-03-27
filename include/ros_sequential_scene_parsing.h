@@ -53,6 +53,7 @@ private:
 	bool background_normal_as_gravity_;
 	bool has_tf_;
 	bool has_background_;
+	bool has_scene_cloud_;
 
 	// Background mode: 0 = BACKGROUND_PLANE, 1 = BACKGROUND_HULL, 2 = BACKGROUND_MESH
 	int background_mode_;

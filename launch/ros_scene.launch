@@ -10,15 +10,16 @@
   <arg name="background_mode"                default="1"/>
   <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3"/>
   <arg name="tf_publisher_initial"           default="scene"/>
-  <arg name="debug"                          default="true"/>
+  <arg name="debug"                          default="false"/>
   <arg name="load_table"                     default="true"/>
   <arg name="table_location"                 default="$(find sequential_scene_parsing)/mesh/table.pcd"/>
   <arg name="render_scene"                   default="true" />
   <arg name="objransac_model_directory"      default="$(find sp_segmenter)/data/mesh"/>
   <arg name="objransac_model_names"          default="node_uniform,link_uniform" />
 
-  <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros" 
-    >  
+  <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros"
+  output="screen"
+  >  
     <!-- sequential_scene_ros common Node arg pass -->
     <param name="background_pcl2_topic"   type="str"     value="$(arg background_pcl2_topic)" />
     <param name="scene_pcl2_topic"        type="str"     value="$(arg scene_pcl2_topic)" />

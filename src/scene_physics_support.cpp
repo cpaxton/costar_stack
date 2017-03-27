@@ -8,28 +8,23 @@ std::string getObjectIDFromCollisionObject(const btCollisionObject* object)
         return std::string("unrecognized_object");
 }
 
+OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
+{
+    // Use breadth-first search to get the vertex order of hypothesis check
+    OrderedVertexVisitor vis;
+    
+    boost::breadth_first_search(input_graph, parent_vertex, boost::visitor(vis));
+    return vis;
+}
+
 void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
 {
-    boost::graph_traits<SceneSupportGraph>::out_edge_iterator out_i, out_end;
-    for (tie(out_i, out_end) = boost::out_edges(parent_vertex, input_graph); out_i != out_end; ++out_i) 
+    OrderedVertexVisitor vis  = getOrderedVertexList(input_graph, parent_vertex);
+    std::vector<vertex_t> parent_connected_vertices = vis.getVertexVisitList();
+    for (std::vector<vertex_t>::iterator it = parent_connected_vertices.begin();
+        it != parent_connected_vertices.end(); ++it)
     {
-        vertex_t connected_vertex = boost::target(*out_i, input_graph);
-        if (parent_vertex == connected_vertex) return;
-        else
-        {
-            scene_support_vertex_properties &support_property = input_graph[connected_vertex];
-            support_property.ground_supported_ = true;
-
-            // std::cerr << support_property.object_id_ << " support contribution = " 
-            //     << support_property.support_contributions_
-            //     << " total penetration depth = " << support_property.penetration_distance_
-            //     << " total penetration volume = " << support_property.colliding_volume_
-            //     << std::endl;
-            // recursively call the connected vertex to assign the leaf of vertex connected to the parent
-
-            // @TODO Check whether I need to recurvisely do this or not here
-            assignAllConnectedToParentVertices(input_graph, connected_vertex);
-        }
+        input_graph[*it].ground_supported_ = true;
     }
 }
 
@@ -70,16 +65,18 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
 {
     if (debug_mode) std::cerr << "Creating support graph\n";
     // make the graph with number of vertices = number of collision objects
-	SceneSupportGraph scene_support_graph(world->getNumCollisionObjects());
+	SceneSupportGraph scene_support_graph;
     vertex_map.clear();
 
     double dTime_times_gravity = time_step * GRAVITY_MAGNITUDE * SCALING;
-
     for (std::size_t i = 0; i < world->getNumCollisionObjects(); i++)
     {
         scene_support_vertex_properties new_vertex_property;
         new_vertex_property.collision_object_ = world->getCollisionObjectArray()[i];
         new_vertex_property.object_id_ = getObjectIDFromCollisionObject(new_vertex_property.collision_object_);
+        // do not add unrecognized object to the scene graph
+        if (new_vertex_property.object_id_ == "unrecognized_object") continue;
+
         new_vertex_property.object_pose_ = new_vertex_property.collision_object_->getWorldTransform();
         vertex_t new_vertex = boost::add_vertex(scene_support_graph);
         scene_support_graph[new_vertex] = new_vertex_property;
@@ -94,6 +91,12 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
         const btCollisionObject* obj_a = contactManifold->getBody0();
         const btCollisionObject* obj_b = contactManifold->getBody1();
 
+        if (getObjectIDFromCollisionObject(obj_a) == "unrecognized_object" || 
+            getObjectIDFromCollisionObject(obj_b) == "unrecognized_object")
+        {
+            continue;
+        }
+
         // all objects should be a btRigidBody
         if (obj_a->getInternalType() == 2 && obj_b->getInternalType() == 2)
         {
@@ -103,6 +106,7 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
             int shape_index_a, shape_index_b;
             int shape_index_lower, shape_index_upper;
             btScalar obj_b_normal_sum = 0;
+            btScalar support_object_normal = 0;
 
             btScalar totalImpact = 0.;
             btScalar total_collision_penetration = 0;
@@ -155,8 +159,10 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
             
             // if (debug_mode) std::cerr << "Inspecting edges\n";
             // check whether the edge is already exist or not
-            edge_t detected_edge; bool edge_already_exist = false, add_edge_success = false;
+            edge_t detected_edge; 
+            bool edge_already_exist = false;
             edge_t edge_to_update;
+            support_object_normal = std::abs(obj_b_normal_sum);
             boost::tie(detected_edge, edge_already_exist) = boost::edge(object_u,supported_object,scene_support_graph);
 
             if (total_collision_penetration > 0 && totalImpact > 0)
@@ -180,17 +186,21 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
                 //     // std::cerr << "obj_b_normal_sum: " << obj_b_normal_sum << std::endl
                 // }
 
-                if (edge_already_exist) { edge_to_update = detected_edge; }
+                if (edge_already_exist) {
+                    edge_to_update = detected_edge;
+                    scene_support_graph[edge_to_update].total_normal_force_ += support_object_normal;
+                }
                 else
                 {
                     edge_t new_edge;
-
+                    bool add_edge_success = false;
                     // make sure it actually really does not exist
                     boost::tie(detected_edge, edge_already_exist) = boost::edge(supported_object,object_u,scene_support_graph);
                     if (edge_already_exist)
                     {
                         edge_to_update = detected_edge;
-                        if (debug_mode) std::cerr << "Something is wrong, this edge already exists! Skipped\n";
+                        scene_support_graph[edge_to_update].total_normal_force_ -= support_object_normal;
+                        // if (debug_mode) std::cerr << "Something is wrong, this edge already exists! Skipped\n";
                     }
                     else
                     {
@@ -203,7 +213,10 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
                             }
                             continue;
                         }
-                        else { edge_to_update = new_edge; }
+                        else {
+                            edge_to_update = new_edge;
+                            scene_support_graph[edge_to_update].total_normal_force_ += support_object_normal;
+                        }
                     }
                 }
 
@@ -220,6 +233,30 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
             }
         }
     }
+    typedef boost::graph_traits<SceneSupportGraph>::edge_iterator edge_iter;
+    std::vector<edge_t> edge_to_reverse;
+    edge_iter ei, ei_end, next;
+    for (tie(ei, ei_end) = edges(scene_support_graph); ei != ei_end; ++ei)
+      if (scene_support_graph[*ei].total_normal_force_ < 0) edge_to_reverse.push_back(*ei);
+
+    for (std::vector<edge_t>::iterator it = edge_to_reverse.begin(); it != edge_to_reverse.end(); ++it)
+    {
+        vertex_t source = boost::source(*it,scene_support_graph);
+        vertex_t target = boost::target(*it,scene_support_graph);
+        // if (debug_mode) std::cerr << "Corrected edge direction: " << getObjectIDFromCollisionObject(target) 
+        //     << "->" << getObjectIDFromCollisionObject(source) << std::endl;
+        scene_support_edge_properties reversed_edge_property = scene_support_graph[*it];
+        reversed_edge_property.total_normal_force_ *= -1;
+        edge_t reversed_edge;
+        bool add_edge_success = false;
+        boost::remove_edge(source,target,scene_support_graph);
+        boost::tie(reversed_edge,add_edge_success) = boost::add_edge(target,source,scene_support_graph);
+        if (add_edge_success)
+        {
+            scene_support_graph[reversed_edge] = reversed_edge_property;
+        }
+    }
+
     // std::cerr << "Assigning ground supported vertices\n";
     // Assign vertices that are supported by ground
     vertex_t ground_vertex = vertex_map["background"];

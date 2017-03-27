@@ -85,6 +85,7 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 {
 	this->nh_ = nh;
 	this->has_background_ = false;
+	this->has_scene_cloud_ = false;
 	std::string detected_object_topic;
 	std::string background_pcl2_topic;
 	std::string scene_pcl2_topic;
@@ -170,7 +171,15 @@ void RosSceneGraph::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
 {
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 	pcl::fromROSMsg(pc, *cloud);
-	this->ros_scene_.addScenePointCloud(cloud);
+	if (!cloud->empty())
+	{
+		this->has_scene_cloud_ = true;
+		this->ros_scene_.addScenePointCloud(cloud);
+	}
+	else
+	{
+		std::cerr << "Point Cloud input is empty.\n";
+	}
 }
 
 void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
@@ -378,6 +387,13 @@ void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelH
 		object_hypotheses_map[object_tf_name] = std::make_pair(object_model_name,object_pose_hypotheses);
 	}
 	this->ros_scene_.setObjectHypothesesMap(object_hypotheses_map);
+
+	while (!this->has_scene_cloud_)
+	{
+		std::cerr << "Waiting for input scene point cloud.\n";
+		ros::Duration(0.5).sleep();
+	}
+
 	this->mtx_.lock();
 	this->ros_scene_.evaluateAllObjectHypothesisProbability();
 	this->mtx_.unlock();
