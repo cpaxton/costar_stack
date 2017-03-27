@@ -8,7 +8,7 @@ inline double logisticFunction(const double &steepness, const double &max_value,
 inline double stabilityPenaltyFormula(const double &a_t, const double &a_r, const double &w_t, const double &w_r)
 {
 	// use reversed logistic function for 
-	return (logisticFunction(-12., 1., 0.35, a_t*w_t)) * (1 - logisticFunction(-12., 1., 0.35, a_r*w_r));
+	return (logisticFunction(-12., 1., 0.35, a_t*w_t)) * (logisticFunction(-12., 1., 0.35, a_r*w_r));
 }
 
 double calculateStabilityPenalty(const MovementComponent &acceleration,
