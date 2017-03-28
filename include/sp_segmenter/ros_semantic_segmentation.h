@@ -72,6 +72,9 @@ protected:
 
 #ifdef SCENE_PARSING
     objrec_hypothesis_msgs::AllModelHypothesis generateAllModelHypothesis() const;
+    costar_objrec_msgs::DetectedObjectList last_object_list_;
+    sensor_msgs::PointCloud2 last_segmented_cloud_;
+    bool getLastHypotheses (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 #endif
 
     ros::NodeHandle nh;
@@ -114,7 +117,7 @@ protected:
 
 #ifdef SCENE_PARSING
     ros::Publisher hypothesis_pub_;
-    // ros::ServiceServer hypothesis_confidence_server_;
+    ros::ServiceServer last_hypotheses_server_;
 #endif
     
 

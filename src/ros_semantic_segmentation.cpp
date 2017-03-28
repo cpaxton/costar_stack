@@ -240,7 +240,7 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
 
 #ifdef SCENE_PARSING
     hypothesis_pub_ = nh.advertise<objrec_hypothesis_msgs::AllModelHypothesis>("object_hypothesis",1);
-    // hypothesis_confidence_server_ = this->nh.advertiseService("HypothesisConfidence",&RosSemanticSegmentation::serviceCallbackGripper,this);
+    last_hypotheses_server_ = this->nh.advertiseService("GetLastHypothesis",&RosSemanticSegmentation::getLastHypotheses,this);
 #endif
 
     this->nh.param("maxFrames",maxframes,15);
@@ -464,6 +464,7 @@ void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformati
     }
 
 #ifdef COSTAR
+    this->last_object_list_ = object_list;
     detected_object_pub.publish(object_list);
 #endif
 }
@@ -579,6 +580,7 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
         hasTF = true;
 
 #ifdef SCENE_PARSING
+        this->last_segmented_cloud_ = output_msg;
         this->hypothesis_pub_.publish(this->generateAllModelHypothesis());
 #endif
         return true;
@@ -729,4 +731,16 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
     }
     return result;
 }
+
+bool RosSemanticSegmentation::getLastHypotheses (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    this->pc_pub.publish(last_segmented_cloud_);
+    ros::Duration(0.5).sleep();
+    this->detected_object_pub.publish(this->last_object_list_);
+    ros::Duration(0.5).sleep();
+    this->hypothesis_pub_.publish(this->generateAllModelHypothesis());
+    ros::Duration(0.5).sleep();
+    return true;
+}
+
 #endif
