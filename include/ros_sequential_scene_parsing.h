@@ -45,6 +45,7 @@ private:
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
 	void fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses);
 	void processHypothesis();
+	void updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map);
 
 	// void initialize();
 	bool debug_messages_;
@@ -66,8 +67,8 @@ private:
 	tf::TransformListener listener_;
 	tf::TransformBroadcaster tf_broadcaster_;
 	SceneGraph ros_scene_;
+	
 	// PhysicsEngine physics_engine_;
-	std::map<std::string, ObjectParameter> object_transforms_;
 	std::map<std::string, tf::Transform> object_transforms_tf_;
 	std::string parent_frame_;
 	std::string tf_z_is_inverse_gravity_direction_;

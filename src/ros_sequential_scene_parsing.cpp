@@ -278,13 +278,23 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	this->ros_scene_.addNewObjectTransforms(objects);
 	std::cerr << "Getting corrected object transform...\n";
 	this->mtx_.lock();
-	this->object_transforms_.clear();
-	this->object_transforms_ = this->ros_scene_.getCorrectedObjectTransform();
+	std::map<std::string, ObjectParameter> object_transforms = this->ros_scene_.getCorrectedObjectTransform();
+	this->updateTfFromObjTransformMap(object_transforms);
 	this->mtx_.unlock();
+	
+	this->has_tf_ = true;
+	this->publishTf();
 
+	std::cerr << "Published tf with parent frame: "<< this->parent_frame_ << "\n";
+	std::cerr << "Done. Waiting for new detected object message...\n";
+
+}
+
+void RosSceneGraph::updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map)
+{
 	this->object_transforms_tf_.clear();
-	for (std::map<std::string, ObjectParameter>::const_iterator it = this->object_transforms_.begin(); 
-		it != this->object_transforms_.end(); ++it)
+	for (std::map<std::string, ObjectParameter>::const_iterator it = input_tf_map.begin(); 
+		it != input_tf_map.end(); ++it)
 	{
 		std::stringstream ss;
 		tf::Transform tf_transform;
@@ -307,12 +317,6 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 		ss << this->tf_publisher_initial << "/" << it -> first;
 		object_transforms_tf_[ss.str()] = tf_transform;
 	}
-
-	std::cerr << "Published tf with parent frame: "<< this->parent_frame_ << "\n";
-	this->has_tf_ = true;
-	this->publishTf();
-	std::cerr << "Done. Waiting for new detected object message...\n";
-
 }
 
 void RosSceneGraph::publishTf()
@@ -396,6 +400,7 @@ void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelH
 
 	this->mtx_.lock();
 	this->ros_scene_.evaluateAllObjectHypothesisProbability();
+	this->updateTfFromObjTransformMap(this->ros_scene_.getCorrectedObjectTransformFromSceneGraph());
 	this->mtx_.unlock();
 }
 

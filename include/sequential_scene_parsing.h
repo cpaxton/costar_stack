@@ -58,6 +58,7 @@ public:
 
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
+	std::map<std::string, ObjectParameter> getCorrectedObjectTransformFromSceneGraph();
 	void setDebugMode(bool debug);
 	
 	void setObjectHypothesesMap(std::map<std::string, ObjectHypothesesData > &object_hypotheses_map);
@@ -66,6 +67,7 @@ public:
 	bool loadObjectModels(const std::string &input_model_directory_path, const std::vector<std::string> &object_names);
 
 private:
+	void getCurrentSceneSupportGraph();
 	void getUpdatedSceneSupportGraph();
 	double evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name, const bool &verbose = false);
 	double evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 

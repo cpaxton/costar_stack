@@ -182,7 +182,7 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 	seq_mtx_.lock();
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./200,30);
 	std::map<std::string, ObjectParameter> result = this->physics_engine_->getUpdatedObjectPose();
-	this->scene_support_graph_ = this->physics_engine_->getCurrentSceneGraph(this->vertex_map_);
+	this->getCurrentSceneSupportGraph();
 	write_graphviz(std::cout, this->scene_support_graph_, label_writer(this->scene_support_graph_));
 
 	seq_mtx_.unlock();
@@ -215,6 +215,11 @@ bool SceneGraph::loadObjectModels(const std::string &input_model_directory_path,
 void SceneGraph::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
+}
+
+void SceneGraph::getCurrentSceneSupportGraph()
+{
+	this->scene_support_graph_ = this->physics_engine_->getCurrentSceneGraph(this->vertex_map_);
 }
 
 void SceneGraph::getUpdatedSceneSupportGraph()
@@ -455,6 +460,22 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 		else scene_hypothesis *= obj_probability;
 	}
 	std::cerr << "Final Scene probability = " << scene_hypothesis << std::endl;
+	// return scene_hypothesis;
 }
 
+std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransformFromSceneGraph()
+{
+	std::map<std::string, ObjectParameter> result;
+	this->seq_mtx_.lock();
+	this->getCurrentSceneSupportGraph();
+	for (std::map<std::string, vertex_t>::iterator it = this->vertex_map_.begin();
+		it != this->vertex_map_.end(); ++it)
+	{
+		const std::string &object_id = this->scene_support_graph_[it->second].object_id_; 
+		const btTransform &pose = this->scene_support_graph_[it->second].object_pose_;
+		result[object_id] = pose;
+	}
+	this->seq_mtx_.unlock();
+	return result;
+}
 
