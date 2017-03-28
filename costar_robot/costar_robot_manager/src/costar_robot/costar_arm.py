@@ -29,7 +29,7 @@ import copy
 class CostarArm(CostarComponent):
 
     def __init__(self,
-            base_link, end_link, planning_group,
+            base_link=None, end_link=None, planning_group=None,
             world="/world",
             namespace="/costar",
             listener=None,
@@ -61,10 +61,17 @@ class CostarArm(CostarComponent):
         self.max_dist_from_table = max_dist_from_table
 
         try:
-            self.home_q = rospy.get_param(os.path.join(self.namespace, "home"))
+            self.home_q = rospy.get_param(os.path.join(self.namespace, "robot", "home"))
             self.home_q = [float(q) for q in self.home_q]
         except KeyError, e:
             self.home_q = [0.] * dof
+
+        if base_link is None:
+            base_link = rospy.get_param(os.path.join(self.namespace, "robot", "base_link"))
+        if end_link is None:
+            end_link = rospy.get_param(os.path.join(self.namespace, "robot", "end_link"))
+        if planning_group is None:
+            planning_group = rospy.get_param(os.path.join(self.namespace, "robot", "planning_group"))
 
         self.world = world
         self.base_link = base_link
@@ -158,18 +165,27 @@ class CostarArm(CostarComponent):
         self.ee_pose = None
 
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
+        rospy.loginfo('Setting joint names to: %s'%(str(self.joint_names)))
 
+        self.joint_weights = rospy.get_param(os.path.join(self.namespace + '/robot/', "joint_weights"))
+        if not isinstance(self.joint_weights, list) and not len(self.joint_weights) == self.dof:
+            raise RuntimeError('loaded bad weights: %s'%(str(self.joint_weights)))
+        
         self.closed_form_IK_solver = closed_form_IK_solver
+        if self.closed_form_IK_solver is not None:
+            self.closed_form_IK_solver.setJointWeights(self.joint_weights)
+
         self.state_validity_penalty = state_validity_penalty
 
         # how important is it to choose small rotations in goal poses
-        self.rotation_weight = 1.0
+        self.rotation_weight = rospy.get_param(os.path.join(self.namespace + '/robot/', "rotation_weight"))
+        self.translation_weight = rospy.get_param(os.path.join(self.namespace + '/robot/', "translation_weight"))
         self.joint_space_weight = 1.0
 
         # for checking robot configuration validity
         self.state_validity_service = rospy.ServiceProxy("/check_state_validity", GetStateValidity)
-        self.robot_state = RobotState()
-        self.robot_state.joint_state.name = self.joint_names
+        # self.robot_state = RobotState()
+        # self.robot_state.joint_state.name = self.joint_names
 
         self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
         self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
@@ -563,8 +579,9 @@ class CostarArm(CostarComponent):
                     br.sendTransform(trans, rot, rospy.Time.now(),tf_name,self.world)
 
         if self.table_frame is not None:
+            self.listener.waitForTransform(self.world, self.table_frame, rospy.Time(), rospy.Duration(1.0))
             try:
-                self.table_pose = self.listener.lookupTransform(self.world,self.table_frame,rospy.Time(0))
+                self.table_pose = self.listener.lookupTransform(self.world, self.table_frame, rospy.Time(0))
             except tf.ExtrapolationException, e:
                 rospy.logwarn(str(e))
 
@@ -580,14 +597,20 @@ class CostarArm(CostarComponent):
     call this to get rough estimate whether the input robot configuration is in collision or not
     '''
     def check_robot_position_validity(self, robot_joint_position):
-        get_state_validity_req = GetStateValidityRequest()
-        get_state_validity_req.group_name = self.planning_group
-        current_robot_state = self.robot_state
-        current_robot_state.joint_state.position = robot_joint_position
-        current_robot_state.is_diff = True
-        get_state_validity_req.robot_state = current_robot_state
-        
-        return self.state_validity_service.call(get_state_validity_req)
+        if len(robot_joint_position) != self.dof:
+            # Incorrect input joint length
+            rospy.logwarn('Incorrect joint length')
+            return GetStateValidityResponse(valid = False)
+        else:
+            get_state_validity_req = GetStateValidityRequest()
+            get_state_validity_req.group_name = self.planning_group
+            # name = self.joint_names
+            # rospy.logwarn(str(self.q0))
+            # rospy.logwarn(str(robot_joint_position))
+            current_robot_state = RobotState(joint_state=JointState(position=robot_joint_position, name=self.joint_names), is_diff=True) #self.robot_state
+            get_state_validity_req.robot_state = current_robot_state
+            
+            return self.state_validity_service.call(get_state_validity_req)
 
     '''
     Attach an object to the planning scene.
@@ -705,12 +728,14 @@ class CostarArm(CostarComponent):
                 if q_i is None:
                     continue
                 dq = np.absolute(q_i - self.q0) * self.joint_weights
-                combined_distance = (T.p - T_fwd.p).Norm() + \
+                combined_distance = (T.p - T_fwd.p).Norm() * self.translation_weight + \
                       self.rotation_weight * delta_rotation + \
                       self.joint_space_weight * np.sum(dq)
 
+                # rospy.loginfo(str(q_i))
                 result = self.check_robot_position_validity(q_i.tolist())
 
+                other_obj_collisions = ''
                 if obj_name is not None and not result.valid:
                     other_obj_collision = False
                     contacts = result.contacts
@@ -727,22 +752,25 @@ class CostarArm(CostarComponent):
                 if result.valid and combined_distance < best_dist:
                     best_q = q_i
                     best_dist = combined_distance
-                    message_print = 'valid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
-                     ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
+                    message_print = 'valid %s pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
+                     (obj_name ,(T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
 
                 elif not result.valid and combined_distance < best_invalid:
                     best_q_invalid = q_i
                     best_invalid = combined_distance 
-                    message_print_invalid = 'invalid pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
-                     ( (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
-            valid_pose = (best_q is not None)
+                    message_print_invalid = 'invalid %s pose, translation: %f, rotation: %f, dq6: %f, dist: %f'  % \
+                        (obj_name, (T.p - T_fwd.p).Norm(),self.rotation_weight * delta_rotation, dq[-1], combined_distance )
+                    message_print_invalid += '\nCollisions found between: '
+                    for contact_info in result.contacts:
+                        message_print_invalid += '(%s and %s) '%(contact_info.contact_body_1,contact_info.contact_body_2)
 
-            if not valid_pose:
-                best_q = best_q_invalid
+            if (best_q is not None) or (best_q_invalid is not None):
+                valid_pose = (best_q is not None)
+                if not valid_pose:
+                    best_q = best_q_invalid
+                return valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q
 
-            return valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q
-        
-        return False, float('inf'), float('inf'), 'No valid IK solution', 'No valid IK solution', list()
+        return False, float('inf'), float('inf'), '%s: No valid IK solution'%obj_name,'%s: No valid IK solution'%obj_name, list()
 
     def query(self, req, disable_target_object_collision = False):
         # Get the best object to manipulate, just like smart move, but without the actual movement
@@ -766,6 +794,7 @@ class CostarArm(CostarComponent):
         if poses is None:
             return []
 
+        selected_objs, selected_names = [], []
         dists = []
         Ts = []
         if self.q0 is None:
@@ -795,46 +824,53 @@ class CostarArm(CostarComponent):
             # checking that position.
             if self.table_pose is not None:
                 if T.p[2] < self.table_pose[0][2]:
-                    rospy.logwarn("Ignoring due to relative z: %f < %f"%(T.p[2],self.table_pose[0][2]))
-                    Ts.append(None)
-                    dists.append(float('inf'))
+                    rospy.logwarn("[QUERY] Ignoring due to relative z: %f < %f x=%f y=%f %s"%(T.p[2],self.table_pose[0][2],T.p[0],T.p[1], obj))
                     continue
                 dist_from_table = (T.p - pm.Vector(*self.table_pose[0])).Norm()
             if dist_from_table > self.max_dist_from_table:
-                rospy.logwarn("Ignoring due to table distance: %f > %f"%(
+                rospy.logwarn("[QUERY] Ignoring due to table distance: %f > %f"%(
                     dist_from_table,
                     self.max_dist_from_table))
-                Ts.append(None)
-                dists.append(float('inf'))
                 continue
 
-            Ts.append(T)
-            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = True, obj_name = obj)
+            valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = False, obj_name = obj)
 
             if best_q is None or len(best_q) == 0:
                 rospy.logwarn("[QUERY] DID NOT ADD:"+message_print)
                 continue
             elif valid_pose:
-                print message_print
+                rospy.loginfo('[QUERY] %s'%message_print)
+                Ts.append(T)
+                selected_objs.append(obj)
+                selected_names.append(name)
                 dists.append(best_dist)
                 number_of_valid_query_poses += 1
             else:
-                print message_print_invalid
+                rospy.loginfo('[QUERY] %s'%message_print_invalid)
+                Ts.append(T)
+                selected_objs.append(obj)
+                selected_names.append(name)
                 dists.append(best_invalid + self.state_validity_penalty)
                 number_of_invalid_query_poses += 1
 
 
+        if len(Ts) is not len(dists):
+            raise RuntimeError('You miscounted the number of transforms somehow.')
+        if len(Ts) is not len(selected_objs):
+            raise RuntimeError('You miscounted the number of transforms vs. objects somehow.')
+        if len(Ts) is not len(selected_names):
+            raise RuntimeError('You miscounted the number of transforms vs. names somehow.')
+
         if len(Ts) == 0:
             possible_goals = []
         else:
-            possible_goals = [(d,T,o,n) for (d,T,o,n) in zip(dists,Ts,objects,names) if T is not None]
+            possible_goals = [(d,T,o,n) for (d,T,o,n) in zip(dists,Ts,selected_objs,selected_names) if T is not None]
             possible_goals.sort()
-
 
 
         joint = JointState()
         # joint.position = self.ik(T,self.q0)
-        rospy.loginfo("[Query] There are %i of valid poses and %i of invalid poses"%(number_of_valid_query_poses,number_of_invalid_query_poses))
+        rospy.loginfo("[QUERY] There are %i of valid poses and %i of invalid poses"%(number_of_valid_query_poses,number_of_invalid_query_poses))
 
         return possible_goals
 
@@ -845,36 +881,49 @@ class CostarArm(CostarComponent):
 
         if self.q0 is None:
             return "FAILURE"
+
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
         for (dist,T,obj,name) in possible_goals:
-           if backup_in_gripper_frame:
-               backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
-               backup_waypoint = T * backup_waypoint
-           else:
-               backup_waypoint = kdl.Frame(kdl.Vector(0.,0.,distance))
-               backup_waypoint = backup_waypoint * T
-           self.backoff_waypoints.append(("%s/%s_backoff/%f"%(obj,name,dist),backup_waypoint))
-           self.backoff_waypoints.append(("%s/%s_grasp/%f"%(obj,name,dist),T))
+            if backup_in_gripper_frame:
+                backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
+                backup_waypoint = T * backup_waypoint
+            else:
+                backup_waypoint = kdl.Frame(kdl.Vector(0.,0.,distance))
+                backup_waypoint = backup_waypoint * T
+            self.backoff_waypoints.append(("%s/%s_backoff/%f"%(obj,name,dist),backup_waypoint))
+            self.backoff_waypoints.append(("%s/%s_grasp/%f"%(obj,name,dist),T))
 
-           valid_pose, best_backup_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0, check_closest_only = True)
-           if best_q is None or len(best_q) == 0:
-              continue
+            query_backup_message = ''
+            if dist < self.state_validity_penalty:
+                query_backup_message = "valid query's(dist = %.3f) backup msg"%dist
+            else:
+                query_backup_message = "invalid query's(dist = %.3f) backup msg"%(dist - self.state_validity_penalty)
 
-           if valid_pose and dist < self.state_validity_penalty:
-               list_of_valid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
-           else:
-               list_of_invalid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
+            valid_pose, best_backup_dist, best_invalid, message_print, message_print_invalid,best_q = self.get_best_distance(backup_waypoint,T_fwd,self.q0, check_closest_only = False,  obj_name = obj)
+            if best_q is None or len(best_q) == 0:
+                rospy.loginfo('Skipping %s: %s'%(query_backup_message,message_print_invalid))
+                continue
+
+            if valid_pose and dist < self.state_validity_penalty:
+                list_of_valid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
+                rospy.loginfo('Valid sequence: %s: %s'%(query_backup_message, message_print))
+            else:
+                if valid_pose:
+                    rospy.loginfo('Invalid sequence: %s: %s'%(query_backup_message, message_print))
+                    list_of_invalid_sequence.append((backup_waypoint,T,obj,best_backup_dist,dist,name))
+                else:
+                    rospy.loginfo('Invalid sequence: %s: %s'%(query_backup_message, message_print_invalid))
+                    list_of_invalid_sequence.append((backup_waypoint,T,obj,best_invalid,dist,name))
 
         sequence_to_execute = list()
         if len(list_of_valid_sequence) > 0:
-            sequence_to_execute = list_of_valid_sequence + list_of_invalid_sequence
-            print 'There is %i valid sequence and %i invalid sequence to try'%(len(list_of_valid_sequence),len(list_of_invalid_sequence))
+            sequence_to_execute = list_of_valid_sequence + list_of_invalid_sequence[:5]
         else:
             rospy.logwarn("WARNING -- no sequential valid grasp action found")
-            print 'There is %i valid sequence and %i invalid sequence to try'%(len(list_of_valid_sequence),len(list_of_invalid_sequence))
-            sequence_to_execute = list_of_invalid_sequence
+            sequence_to_execute = list_of_invalid_sequence[:5]
 
-        print 'Number of sequence to execute:', len(sequence_to_execute)
+        rospy.loginfo('There is %i valid sequence and %i invalid sequence to try'%(len(list_of_valid_sequence),len(list_of_invalid_sequence)))
+        # print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
         for sequence_number, (backup_waypoint,T,obj,backup_dist,query_dist,name) in enumerate(sequence_to_execute,1):
             rospy.logwarn("Trying sequence number %i: backup_dist: %.3f query_dist: %.3f"%(sequence_number,backup_dist,query_dist))

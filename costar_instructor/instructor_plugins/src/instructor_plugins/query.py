@@ -63,6 +63,11 @@ class NodeActionQueryGUI(NodeGUI):
         self.update_references()
         self.update_objects()
 
+    def refresh_data(self):
+        self.update_regions()
+        self.update_references()
+        self.update_objects()
+
     def reference_selected_cb(self,item):
         self.selected_reference = str(item.text())
 
@@ -213,6 +218,7 @@ class NodeActionQuery(Node):
                 else:
                     if self.finished_with_success == True:
                         rospy.loginfo('Query Service [' + self.name_ + '] succeeded')
+                        self.set_color(colors['gray'].normal)
                         self.running = False
                         self.needs_reset = True
                         return self.set_status('SUCCESS')
@@ -300,6 +306,9 @@ class CollisionGUI(NodeGUI):
         self.manager = global_manager
 
         self.waypoint_ui.object_list.itemClicked.connect(self.object_selected_cb)
+        self.update_objects()
+
+    def refresh_data(self):
         self.update_objects()
 
     def object_selected_cb(self,item):

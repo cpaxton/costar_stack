@@ -112,5 +112,6 @@ class NodeActionStop(Node):
         self.stop_thread = Thread(target=self.stop,  args=(self.wait_time, 1))
         self.running = False
         self.needs_reset = False
-        self.set_color('#26A65B')
+        #self.set_color('#26A65B')
+        self.set_color(colors['green'].normal)
 

@@ -88,8 +88,7 @@ install:
   - git clone https://github.com/jbohren/rqt_dot.git  
   - git clone https://github.com/sniekum/ar_track_alvar.git  
   - git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
-  - git clone https://github.com/gt-ros-pkg/hrl-kdl.git  
-  - git clone https://github.com/cpaxton/xdot.git  
+  - git clone https://github.com/gt-ros-pkg/hrl-kdl.git
   - git clone https://github.com/ThomasTimm/ur_modern_driver.git
   # Create the devel/setup.bash (run catkin_make with an empty workspace) and
   # source it to set the path variables.
@@ -130,4 +129,4 @@ script:
   - source devel/setup.bash
   #- catkin_make run_tests && catkin_test_results
   # run a test: make sure we can bring up the robot successfully
-  - python $CI_SOURCE_PATH/costar_bringup/tests/iiwa_test.py
+  #- python2.7 $CI_SOURCE_PATH/costar_bringup/tests/iiwa_test.py

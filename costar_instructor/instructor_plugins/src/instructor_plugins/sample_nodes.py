@@ -9,11 +9,13 @@ from PyQt4.QtCore import *
 # Beetree and Instructor
 import beetree; from beetree import Node, NodeQuery
 from instructor_core import NodeGUI
-from instructor_core.instructor_qt import NamedField, NamedComboBox
+from instructor_core.instructor_qt import NamedField, NamedComboBox, ColorOptions
 # For testing the service node
 import instructor_plugins
 from instructor_plugins.srv import *
 from threading import Thread
+
+colors = ColorOptions().colors
 
 # Sample Node Wrappers -----------------------------------------------------------
 class NodeActionSampleGUI(NodeGUI):
@@ -114,8 +116,8 @@ class NodeServiceSample(Node):
             else:
                 if self.finished_with_success == True:
                     rospy.loginfo('Test Service succeeded')
-                    return self.set_status('SUCCESS')
                     self.running = False
+                    return self.set_status('SUCCESS')
                 else:
                     rospy.loginfo('Test Service failed')
                     return self.set_status('FAILURE')
