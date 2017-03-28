@@ -83,7 +83,7 @@ btScalar getObjectCollisionPenalty(const scene_support_vertex_properties &suppor
 {
 	// TODO: Find a good parameter for the penetration depth
 	const double &total_penetration_depth = support_graph_vertex.penetration_distance_;
-	return logisticFunction(1.5 , 1., 3., total_penetration_depth);
+	return logisticFunction(-1.5 , 1., 3., total_penetration_depth);
 	// return 1.;
 }
 

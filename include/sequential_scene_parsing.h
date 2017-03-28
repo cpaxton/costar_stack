@@ -68,7 +68,8 @@ public:
 private:
 	void getUpdatedSceneSupportGraph();
 	double evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name, const bool &verbose = false);
-	double evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, const std::string &object_label, const std::string &object_model_name,
+	double evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 
+		const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 		const btTransform &object_pose_hypothesis, const bool &reset_position);
 
 

@@ -257,13 +257,15 @@ double SceneGraph::evaluateObjectProbability(const std::string &object_label, co
 			<< "data = " << object_data_compliance << ", "
 			<< "stability = " << stability_probability << ", "
 			<< "support = " << support_probability << ", "
-			<< "collision = " << collision_probability << std::endl;	
+			<< "collision = " << collision_probability
+			// << ", " << "penetration_depth = " << object_physics_status.penetration_distance_ 
+			<< std::endl;	
 	}
 	return object_total_probability;
 }
 
 double SceneGraph::evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 
-	const std::string &object_label, const std::string &object_model_name,
+	const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 	const btTransform &object_pose_hypothesis, const bool &reset_position)
 {
 	this->physics_engine_->prepareSimulationForOneTestHypothesis(object_label, object_pose_hypothesis, reset_position);
@@ -283,13 +285,24 @@ double SceneGraph::evaluateSceneOnObjectHypothesis(std::map<std::string, btTrans
 
 		vertex_t &object_in_graph = this->vertex_map_[object_label];
 		object_pose_from_graph[object_label] = this->scene_support_graph_[object_in_graph].object_pose_;
-		// skips the object if it has 0 probability (invalid object state)
-		if (obj_probability == 0) 
+
+		if (obj_probability == 0)
 		{
-			continue;
+			if (background_support_status)
+			{
+				scene_hypothesis *= 0.00000001;
+			}
+			else
+			{
+				// skips the object if it has 0 probability (invalid object state) and the best data
+				// probability says that the object is not background supported
+				continue;
+			}
 		}
 		else
 		{
+			// update the background support status if there exist a hypothesis where the object is not floating
+			if (!background_support_status) background_support_status = true;
 			scene_hypothesis *= obj_probability;
 		}
 	}
@@ -301,6 +314,8 @@ double SceneGraph::evaluateSceneOnObjectHypothesis(std::map<std::string, btTrans
 void SceneGraph::evaluateAllObjectHypothesisProbability()
 {
 	// Set the best test pose map based on the best data
+	std::map<vertex_t, bool> vertex_background_support_status;
+
 	seq_mtx_.lock();
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH, 1./500);
 	vertex_t &ground_vertex = this->vertex_map_["background"];
@@ -335,6 +350,7 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 		it != value_ordered_vertex_map.end(); ++it)
 	{
 		std::cerr << this->scene_support_graph_[it->second].object_id_ << " " << it->first << std::endl;
+		vertex_background_support_status[it->first] = this->scene_support_graph_[it->second].ground_supported_;
 	}
 
 	seq_mtx_.unlock();
@@ -351,7 +367,10 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 		// const std::string &object_pose_label = it->first;
 		// const std::string &object_model_name = it->second.first;
 		const std::vector<ObjectParameter> &object_pose_hypotheses = obj_hypotheses.second;
+		bool &current_background_support_status = vertex_background_support_status[it->second];
+		bool updated_background_support_status = current_background_support_status;
 		
+		bool update_from_this_object = false;
 		ObjectParameter best_object_pose;
 		std::map<std::string, ObjectParameter> best_object_pose_from_graph;
 
@@ -368,17 +387,27 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 			// {
 				seq_mtx_.lock();
 				double scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
-					object_pose_label, 
-					object_model_name, object_pose, true);
+					object_pose_label, object_model_name, updated_background_support_status,
+					object_pose, true);
 				// get updated object pose from the scene simulation
 				// object_pose = this->scene_support_graph_[it->second].object_pose_;
 
 				seq_mtx_.unlock();
-				if (best_object_probability_effect < scene_hypothesis_probability)
+
+				// update the best scene if the current scene probability is better or there is
+				// a change from not background supported to background supported on this object hypothesis
+				if ((best_object_probability_effect < scene_hypothesis_probability) ||
+					(!current_background_support_status && updated_background_support_status)
+					)
 				{
+					if (!current_background_support_status && updated_background_support_status)
+					{
+						current_background_support_status = updated_background_support_status;
+					}
 					best_object_pose = object_pose;
 					best_object_probability_effect = scene_hypothesis_probability;
 					best_object_pose_from_graph = tmp_object_pose_config;
+					update_from_this_object = true;
 				}
 
 				std::cerr << "Scene probability = " << scene_hypothesis_probability
@@ -389,10 +418,14 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 			// std::cerr << "-------------------------------------------------------------\n\n";
 		}
 		
-		seq_mtx_.lock();
-		this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
+		// only update if this object provides valid best object pose
+		if (update_from_this_object)
+		{
+			seq_mtx_.lock();
+			this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
+			seq_mtx_.unlock();
+		}
 		// this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
-		seq_mtx_.unlock();
 	}
 
 	this->getUpdatedSceneSupportGraph();
@@ -400,15 +433,24 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 	for (std::map<std::string, vertex_t>::iterator it = this->vertex_map_.begin();
 		it != this->vertex_map_.end(); ++it)
 	{
+		bool current_background_support_status = this->scene_support_graph_[it->second].ground_supported_;
+		bool best_background_support_status = vertex_background_support_status[it->second];
 		// only check probability for object that are exist in the dictionary
 		if (object_label_class_map.find(it->first) == object_label_class_map.end()) continue;
 		std::cerr << it->first << " ";
 		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first], true);
-		
+
 		// skips the object if it has no probability
 		if (obj_probability == 0) 
 		{
-			scene_hypothesis *= 0.00000001;
+			if (!current_background_support_status && best_background_support_status)
+			{
+				scene_hypothesis *= 0.00000001;
+			}
+			else
+			{
+				continue;
+			}
 		}
 		else scene_hypothesis *= obj_probability;
 	}
