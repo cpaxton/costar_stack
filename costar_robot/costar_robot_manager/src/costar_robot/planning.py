@@ -78,7 +78,7 @@ class SimplePlanning:
         base_steps=1000,
         steps_per_meter=1000,
         steps_per_radians=4,
-        time_multiplier=2,
+        time_multiplier=1,
         use_joint_move=False,
         table_frame=None):
 
@@ -148,7 +148,8 @@ class SimplePlanning:
       base_steps=1000,
       steps_per_meter=1000,
       steps_per_radians = 4,
-      time_multiplier=2,
+      time_multiplier=1,
+      percent_acc=1,
       use_joint_move = False,
       table_frame = None):
 
@@ -180,6 +181,12 @@ class SimplePlanning:
       print " -- Computing %f steps"%steps
       min_time = 1.0 #seconds
       ts = ((min_time/time_multiplier + delta_translation + delta_rpy) / steps ) * time_multiplier
+      ta = np.sqrt(2 * ts / percent_acc)
+      steps_to_max_speed = np.round(ta/ts)
+      print "-- Steps to max speed %d"%steps_to_max_speed
+
+      const_velocity_max_step_count = steps + 1 - 2 * steps_to_max_speed
+
       traj = JointTrajectory()
       traj.points.append(JointTrajectoryPoint(positions=q0,
           	velocities=[0]*len(q0),
@@ -199,7 +206,7 @@ class SimplePlanning:
           return JointTrajectory()
       
       dq_target = q_target - np.array(q0)
-
+      acceleration = (steps_to_max_speed * np.max(dq_target)) / (1 / percent_acc)
 
       # Compute a smooth trajectory.
       for i in range(1,steps + 1):
@@ -234,18 +241,38 @@ class SimplePlanning:
           print "%d -- %s %s = %s"%(i,str(xyz),str(rpy),str(q))
 
         if q is not None:
+          acceleration_step = np.min([i, steps_to_max_speed])
+          deceleration_step = np.max([i - const_velocity_max_step_count - steps_to_max_speed, 0])
+          const_velocity_step = np.max([0, i - acceleration_step - deceleration_step])
+          dq_from_start = np.array(q) - np.array(q0)
+          acceleration_time = 0
+
+          current_velocity = (acceleration_step - deceleration_step) / steps_to_max_speed * (np.max(dq_target) / ts)
+
+          acceleration_time = np.sqrt(2*acceleration_step*ts / percent_acc)
+          
+          deceleration_time = 0
+          if deceleration_step > 0:
+            deceleration_time = ((np.max(dq_target) / ts) - current_velocity) / acceleration
+
+          # total_time = (acceleration_step + deceleration_step) * ta + const_velocity_step * ts
+          total_time = const_velocity_step * ts + acceleration_time + deceleration_time
+          print "%d: acc %d const_vel %d dec %d; t = %.3f"%(i,acceleration_step,const_velocity_step,deceleration_step,total_time)
 
           # Compute the distance to the last point for each joint. We use this to compute our joint velocities.
           dq_i = np.array(q) - np.array(traj.points[-1].positions)
           if np.sum(np.abs(dq_i)) < self.skip_tol:
             rospy.logwarn("Joint trajectory point %d is repeating previous trajectory point. "%i)
             continue
-          prev_velocity = (dq_i)/ts
-          traj.points[i-1].velocities = prev_velocity
+          # prev_velocity = (dq_i)/ts * (acceleration_step - deceleration_step)/steps_to_max_speed
+
+          traj.points[i-1].velocities = (dq_i)/(total_time - traj.points[i-1].time_from_start.to_sec())
           pt = JointTrajectoryPoint(positions=q,
           	velocities=[0]*len(q),
           	accelerations=[0]*len(q))
-          pt.time_from_start = rospy.Duration(i * ts)
+
+          pt.time_from_start = rospy.Duration(total_time)
+          # pt.time_from_start = rospy.Duration(i * ts)
           traj.points.append(pt)
         else:
           rospy.logwarn("No IK solution on one of the trajectory point to cartesian move target")
