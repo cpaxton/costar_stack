@@ -72,7 +72,7 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rot_matrix, const
 
     // rotate target axis to align as close as possible with its original axis by 
     // rotating the best axis to align the target axis. Use -angle because we want to undo the rotation
-    rot_matrix = rot_matrix * Eigen::AngleAxisf(std::round(angle/object_limit) * 
+    rot_matrix = rot_matrix * Eigen::AngleAxisf(boost::math::round(angle/object_limit) * 
         object_limit,best_axis[axis_to_rotate]);
 }
 
