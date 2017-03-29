@@ -156,6 +156,7 @@ class NodeActionRelativeWaypoint(Node):
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] thread failed')
                         self.running = False
                         self.needs_reset = True
+                        self.set_color(colors['gray'].normal)
                         return self.set_status('FAILURE')
                         
             else:# If thread is running
@@ -171,6 +172,7 @@ class NodeActionRelativeWaypoint(Node):
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] failed')
                         self.running = False
                         self.needs_reset = True
+                        self.set_color(colors['gray'].normal)
                         return self.set_status('FAILURE')
 
     def reset_self(self):
@@ -178,6 +180,7 @@ class NodeActionRelativeWaypoint(Node):
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
+        self.set_color(colors['green'].normal)
 
     def make_service_call(self,request,*args):
         # Check to see if service exists
