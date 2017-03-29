@@ -28,9 +28,11 @@
 #include <pcl/point_cloud.h>
 #include <Eigen/Geometry>
 
-#include "scene_physics_engine.h"
 #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
+#include "symmetric_orientation_realignment.h"
 #include "utility.h"
+
+#include "scene_physics_engine.h"
 
  // ObjectParameter == Object Pose
 typedef btTransform ObjectParameter;
@@ -65,6 +67,7 @@ public:
 	void evaluateAllObjectHypothesisProbability();
 
 	bool loadObjectModels(const std::string &input_model_directory_path, const std::vector<std::string> &object_names);
+	void setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map);
 
 private:
 	void getCurrentSceneSupportGraph();
@@ -90,6 +93,7 @@ private:
 	std::map<std::string, ImagePtr> object_point_cloud_;
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map_;
+	std::map<std::string, ObjectSymmetry> object_symmetry_map_;
 
 	boost::mutex seq_mtx_;
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 

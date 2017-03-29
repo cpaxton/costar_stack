@@ -130,6 +130,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	std::vector<ObjectWithID> objects;
 	// allocate memory for all objects
 	objects.reserve(detected_objects.objects.size());
+	std::map<std::string, ObjectSymmetry> object_symmetry_map;
 
 	this->parent_frame_ = detected_objects.header.frame_id;
 	ros::Time now = ros::Time::now();
@@ -154,6 +155,13 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 				btTransform bt = convertRosTFToBulletTF(transform);
 				obj_tmp.assignData(object_tf_frame, bt, object_class);
 				objects.push_back(obj_tmp);
+
+				if (!keyExistInConstantMap(object_class, object_symmetry_map))
+				{
+					const costar_objrec_msgs::ObjectSymmetry &obj_sym_msg = detected_objects.objects.at(i).symmetry;
+					object_symmetry_map[object_class] = ObjectSymmetry(obj_sym_msg.x_rotation, 
+					obj_sym_msg.y_rotation, obj_sym_msg.z_rotation);
+				}
 			}
 			else
 			{
@@ -189,7 +197,9 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 		}
 		// Do nothing if gravity has not been set and the direction cannot be found
 	}
+
 	this->ros_scene_.addNewObjectTransforms(objects);
+	this->ros_scene_.setObjectSymmetryMap(object_symmetry_map);
 	std::cerr << "Getting corrected object transform...\n";
 	this->mtx_.lock();
 	std::map<std::string, ObjectParameter> object_transforms = this->ros_scene_.getCorrectedObjectTransform();

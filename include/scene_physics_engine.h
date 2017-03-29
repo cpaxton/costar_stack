@@ -66,7 +66,8 @@ public:
 	void prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose, const bool &resetObjectPosition = true);
 	void changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose);
 	void changeBestTestPoseMap(const std::map<std::string, btTransform> &object_best_pose_from_data);
-
+	btTransform getTransformOfBestData(const std::string &object_id) const;
+	
 	// vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
 	void stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step);
     void worldTickCallback(const btScalar &timeStep);

@@ -13,6 +13,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // use detected object list instead of tf name convention
+#include <costar_objrec_msgs/ObjectSymmetry.h>
 #include <costar_objrec_msgs/DetectedObject.h>
 #include <costar_objrec_msgs/DetectedObjectList.h>
 
@@ -22,6 +23,7 @@
 #include <objrec_hypothesis_msgs/Hypothesis.h>
 
 #include "sequential_scene_parsing.h"
+#include "symmetric_orientation_realignment.h"
 
 // Ros bundling for scene parsing
 class RosSceneGraph : public SceneGraph

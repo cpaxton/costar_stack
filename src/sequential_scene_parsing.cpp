@@ -212,6 +212,11 @@ bool SceneGraph::loadObjectModels(const std::string &input_model_directory_path,
 	}
 }
 
+void SceneGraph::setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map)
+{
+	this->object_symmetry_map_ = object_symmetry_map;
+}
+
 void SceneGraph::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
@@ -473,7 +478,21 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransformFr
 	{
 		const std::string &object_id = this->scene_support_graph_[it->second].object_id_; 
 		const btTransform &pose = this->scene_support_graph_[it->second].object_pose_;
-		result[object_id] = pose;
+		std::string &model_name = object_label_class_map[object_id];
+		
+		if (keyExistInConstantMap(model_name, object_symmetry_map_))
+		{
+			const btTransform &original_pose = this->physics_engine_->getTransformOfBestData(object_id);
+			Eigen::Quaternion<float> original_q = convertBulletToEigenQuaternion<float>(original_pose.getRotation());
+			Eigen::Quaternion<float> corrected_q = convertBulletToEigenQuaternion<float>(pose.getRotation());
+			corrected_q = normalizeModelOrientation(corrected_q, original_q, object_symmetry_map_[model_name]);
+			btTransform symmetric_corrected_pose(convertEigenToBulletQuaternion<float>(corrected_q), pose.getOrigin());
+			result[object_id] = symmetric_corrected_pose;
+		}
+		else
+		{
+			result[object_id] = pose;
+		}
 	}
 	this->seq_mtx_.unlock();
 	return result;

@@ -16,6 +16,7 @@ PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false)
 
 void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center)
 {
+	mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
 	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant);
 	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
@@ -38,6 +39,11 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
 	if (this->use_background_normal_as_gravity_)
 		this->setGravityVectorDirection(-background_surface_normal_);
     m_collisionShapes.push_back(background);
+
+	// set the background name
+	std::string * background_name = new std::string("background");
+	this->background_->setUserPointer(background_name);
+	mtx_.unlock();
 }
 
 void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_points, btVector3 plane_normal)
@@ -91,12 +97,21 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 	this->background_surface_normal_ = plane_normal;
 	if (this->use_background_normal_as_gravity_)
 		this->setGravityVectorDirection(-background_surface_normal_);
-	mtx_.unlock();
+
+
+	// set the background name
+	std::string * background_name = new std::string("background");
+	this->background_->setUserPointer(background_name);
+
     m_collisionShapes.push_back(background);
+
+	mtx_.unlock();
+
 }
 
 void PhysicsEngine::addBackgroundMesh(btTriangleMesh* trimesh, btVector3 plane_normal, btVector3 plane_center)
 {
+	mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Adding background(mesh).\n";
 	this->camera_coordinate_ = btVector3(0,0,0);
 	this->target_coordinate_ = plane_center;
@@ -121,6 +136,11 @@ void PhysicsEngine::addBackgroundMesh(btTriangleMesh* trimesh, btVector3 plane_n
 	
 	m_dynamicsWorld->addRigidBody(this->background_);
 	this->have_background_ = true;
+
+	// set the background name
+	std::string * background_name = new std::string("background");
+	this->background_->setUserPointer(background_name);
+	mtx_.unlock();
 }
 
 void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transform_y_is_inverse_gravity_direction)
@@ -218,12 +238,6 @@ void PhysicsEngine::simulate()
 	{
 		std::cerr << "Skipping simulation, scene does not has any background data yet.\n";
 		return;
-	}
-	else
-	{
-		// set the background name
-		std::string * background_name = new std::string("background");
-		this->background_->setUserPointer(background_name);
 	}
 
 	// Make sure the simulation is stopped
@@ -639,6 +653,11 @@ void PhysicsEngine::changeBestTestPoseMap(const std::map<std::string, btTransfor
 	mtx_.lock();
 	this->object_best_test_pose_map_ = object_best_pose_from_data;
 	mtx_.unlock();
+}
+
+btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id) const
+{
+	return getContentOfConstantMap(object_id, this->object_best_pose_from_data_);
 }
 
 // vertex_t PhysicsEngine::getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position)
