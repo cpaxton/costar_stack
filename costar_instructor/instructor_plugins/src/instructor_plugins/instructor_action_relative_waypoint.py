@@ -123,7 +123,7 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
 class NodeActionRelativeWaypoint(Node):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
         #L = 'MOVE RELATIVE TO\\n ['+waypoint_name.upper()+'] \nVelocity: %d%%\nAcceleration: %d%%'%(int(vel*100),int(acc*100))
-        L = 'MOVE TO ['+waypoint_name.upper()+']\n(Relative To Object)\nVelocity: %d%%\nAcceleration: %d%%'%(int(vel*100),int(acc*100))
+        L = 'MOVE TO ['+waypoint_name.upper()+']\n(relative to object)\nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
         
         super(NodeActionRelativeWaypoint,self).__init__(name,L,'#26A65B')
         self.command_waypoint_name = waypoint_name

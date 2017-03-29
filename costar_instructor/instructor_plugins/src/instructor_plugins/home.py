@@ -92,7 +92,7 @@ class NodeHome(Node):
         if plan:
             L = 'PLAN TO HOME'
         else:
-            L = 'MOVE TO HOME\nVelocity: %d%%\nAcceleration: %d%%'%(int(vel*100),int(acc*100))
+            L = 'MOVE TO HOME\nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
         super(NodeHome,self).__init__(name,L,'#26A65B')
         self.command_vel = vel
         self.command_acc = acc
