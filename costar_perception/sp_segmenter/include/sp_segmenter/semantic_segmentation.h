@@ -22,6 +22,7 @@ enum ObjRecRansacMode {STANDARD_BEST, STANDARD_RECOGNIZE, GREEDY_RECOGNIZE};
 #include "sp_segmenter/greedyObjRansac.h"
 #endif
 
+
 struct ModelObjRecRANSACParameter
 {
     ModelObjRecRANSACParameter() : pair_width_(0.1), voxel_size_(0.003), object_visibility_(0.1), scene_visibility_(0.1)
@@ -142,6 +143,11 @@ public:
     // This order should follow the name of SVM directory.
     // For example, if the svm directory name is "link_node_sander_svm", then the order of adding model is: link model, node model, and sander model. 
     void addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter);
+
+#ifdef SCENE_PARSING
+    std::vector<GreedyHypothesis> getHypothesisList() const;
+#endif
+
 #endif
 
 // --------------------------------- OPTIONAL PARAMETERS that does not need to be set before initializeSemanticSegmentation, but may help in some cases -------------------------------
@@ -244,6 +250,11 @@ protected:
 
     // map of symmetries for orientation normalization
     objectRtree segmented_object_tree_;
+
+#ifdef SCENE_PARSING
+    std::vector<GreedyHypothesis> hypothesis_list_;
+#endif
+
 #endif
     pcl::visualization::PCLVisualizer::Ptr viewer;
     boost::shared_ptr<Hier_Pooler>  hie_producer;

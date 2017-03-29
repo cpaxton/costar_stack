@@ -41,8 +41,8 @@ class NodePlanRelativeWaypointGUI(NodeGUI):
         self.new_waypoint_name = None
         self.waypoint_selected = False
         self.command_waypoint_name = None
-        self.command_vel = .75
-        self.command_acc = .75
+        self.command_vel = .5
+        self.command_acc = .5
         self.listener_ = tf.TransformListener()
 
         self.waypoint_ui.waypoint_list.itemClicked.connect(self.waypoint_selected_from_list)

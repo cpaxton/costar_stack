@@ -40,9 +40,9 @@ class CostarArm(CostarComponent):
             max_goal_diff = 0.02,
             goal_rotation_weight = 0.01,
             max_q_diff = 1e-6,
-            base_steps=2,
-            steps_per_meter=300,
-            steps_per_radians=4,
+            base_steps=5,
+            steps_per_meter=10,
+            steps_per_radians=2,
             closed_form_IK_solver = None,
             default_distance = 0.05,
             state_validity_penalty = 1e5,
@@ -419,6 +419,8 @@ class CostarArm(CostarComponent):
                 self.base_steps,
                 self.steps_per_meter,
                 self.steps_per_radians,
+                time_multiplier = (1./velocity),
+                percent_acc = acceleration,
                 use_joint_move = True,
                 table_frame = self.table_pose)
 
@@ -433,7 +435,7 @@ class CostarArm(CostarComponent):
                     res = 'FAILURE - could not preempt current arm control.'
                 return res
             else:
-                rospy.logerr('SIMPLE DRIVER -- IK failed')
+                rospy.logerr('SIMPLE DRIVER -- no trajectory points')
                 return 'FAILURE - no trajectory points'
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
@@ -451,6 +453,8 @@ class CostarArm(CostarComponent):
                 self.base_steps,
                 self.steps_per_meter,
                 self.steps_per_radians,
+                time_multiplier = (1./velocity),
+                percent_acc = acceleration,
                 use_joint_move = True,
                 table_frame = self.table_pose)
 
