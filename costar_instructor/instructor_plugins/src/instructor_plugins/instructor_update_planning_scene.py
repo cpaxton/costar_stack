@@ -51,7 +51,7 @@ class NodeActionUpdatePlanningScene(Node):
         # L = 'Action\\n'+label+'\\n WAIT ['+str(self.wait_finish)+']'
         super(NodeActionUpdatePlanningScene,self).__init__(name,L,color)
         # Reset params
-        self.gripper_service_thread = Thread(target=self.make_service_call, args=('',1))
+        self.planning_scene_service_thread = Thread(target=self.make_service_call, args=('',1))
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
@@ -69,7 +69,7 @@ class NodeActionUpdatePlanningScene(Node):
             if not self.running: # Thread is not running
                 if self.finished_with_success == None: # Service was never called
                     try:
-                        self.gripper_service_thread.start()
+                        self.planning_scene_service_thread.start()
                         rospy.loginfo('MoveIt Planning Scene Server '+self.get_node_type()+' [' + self.name_ + '] running')
                         self.running = True
                         return self.set_status('RUNNING')
@@ -80,7 +80,7 @@ class NodeActionUpdatePlanningScene(Node):
                         return self.set_status('FAILURE')
                         
             else:# If thread is running
-                if self.gripper_service_thread.is_alive():
+                if self.planning_scene_service_thread.is_alive():
                     return self.set_status('RUNNING')
                 else:
                     if self.finished_with_success == True:
@@ -96,7 +96,7 @@ class NodeActionUpdatePlanningScene(Node):
                         return self.set_status('FAILURE')
 
     def reset_self(self):
-        self.gripper_service_thread = Thread(target=self.make_service_call, args=('',1))
+        self.planning_scene_service_thread = Thread(target=self.make_service_call, args=('',1))
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
@@ -114,23 +114,15 @@ class NodeActionUpdatePlanningScene(Node):
             return
         # Make servo call to set pose
         try:
-            gripper_open_proxy = rospy.ServiceProxy(service_name,Empty)
+            planning_scene_open_proxy = rospy.ServiceProxy(service_name,Empty)
             # Send Open Command
-            rospy.logwarn('MoveIt Planning Scene Server '+self.get_node_type()+' Started')
-            # msg.state = self.open_gripper
-            # msg.wait = self.wait_finish
-            result = gripper_open_proxy()
-            #if 'FAILURE' in str(result.ack):
-            #    rospy.logwarn('Gripper '+self.get_node_type()+' failed with reply: '+ str(result.ack))
-            #    self.finished_with_success = False
-            #    return
-            #else:
-            #    rospy.logwarn('Gripper '+self.get_node_type()+' Finished')
+            rospy.loginfo('MoveIt Planning Scene Server '+self.get_node_type()+' Started')
+            result = planning_scene_open_proxy()
             self.finished_with_success = True
             return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

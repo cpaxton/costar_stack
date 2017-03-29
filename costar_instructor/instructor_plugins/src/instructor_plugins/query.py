@@ -112,9 +112,9 @@ class NodeActionQueryGUI(NodeGUI):
 
     def update_objects(self):
         objects = []
-        rospy.logwarn("detecting objects")
+        rospy.loginfo("detecting objects")
         objects = self.manager.get_detected_object_classes()
-        rospy.logwarn(objects)
+        rospy.loginfo(objects)
         self.waypoint_ui.object_list.clear()
         for m in objects:
             self.waypoint_ui.object_list.addItem(QListWidgetItem(m.strip('/')))
@@ -124,9 +124,9 @@ class NodeActionQueryGUI(NodeGUI):
     def update_smartmoves(self):
         smartmoves = []
         self.manager.load_all()
-        rospy.logwarn(self.selected_object)
+        rospy.loginfo(self.selected_object)
         smartmoves = self.manager.get_moves_for_class(self.selected_object)
-        rospy.logwarn(smartmoves)
+        rospy.loginfo(smartmoves)
         self.waypoint_ui.smartmove_list.clear()
         for m in smartmoves:
             self.waypoint_ui.smartmove_list.addItem(QListWidgetItem(m.strip('/')))
@@ -141,7 +141,6 @@ class NodeActionQueryGUI(NodeGUI):
         return data
 
     def load_data(self,data):
-        rospy.logwarn(data)
         self.manager.load_all()
         if data.has_key('region'):
             if data['region']['value']!=None:
@@ -161,7 +160,7 @@ class NodeActionQueryGUI(NodeGUI):
 
     def generate(self):
         if all([self.name.full(), self.selected_object, self.selected_smartmove]):
-            rospy.logwarn('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
+            # rospy.loginfo('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
             return NodeActionQuery( self.get_name(),
                                         self.get_label(),
                                         self.selected_region,
@@ -172,7 +171,7 @@ class NodeActionQueryGUI(NodeGUI):
 
             #"%s %s %s %s"%(self.selected_smartmove,self.selected_objet,self.selected_region,self.selected_reference),
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 
@@ -257,26 +256,26 @@ class NodeActionQuery(Node):
             predicate.params = ['*',self.selected_reference,'world']
             msg.predicates = [predicate]
             # Send SmartMove Command
-            rospy.logwarn('Query Started')
+            rospy.loginfo('Query Started')
             result = query_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
-                rospy.logwarn('Robot driver reported: '+str(result.ack))
+                rospy.loginfo('Single Servo Move Finished')
+                rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
-            rospy.logwarn('There was a problem with the tf lookup:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
         except rospy.ServiceException, e:
-            rospy.logwarn('Service failed!')
-            rospy.logwarn(e)
+            rospy.logerr('Service failed!')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 
@@ -336,7 +335,7 @@ class CollisionGUI(NodeGUI):
         self.update_objects()
 
     def generate(self):
-        rospy.logwarn("Selecting obj = "+str([self.name.full(), self.selected_object]))
+        rospy.loginfo("Selecting obj = "+str([self.name.full(), self.selected_object]))
         if all([self.name.full(), self.selected_object]):
             return NodeActionCollision( self.get_name(),
                                         self.get_label(),
@@ -346,7 +345,7 @@ class CollisionGUI(NodeGUI):
 
             #"%s %s %s %s"%(self.selected_smartmove,self.selected_objet,self.selected_region,self.selected_reference),
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 
@@ -427,26 +426,26 @@ class NodeActionCollision(Node):
             msg = ObjectRequest()
             msg.object = self.selected_object
             # Send SmartMove Command
-            rospy.logwarn('Query Started')
+            rospy.loginfo('Query Started')
             result = query_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
-                rospy.logwarn('Robot driver reported: '+str(result.ack))
+                rospy.loginfo('Single Servo Move Finished')
+                rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
-            rospy.logwarn('There was a problem with the tf lookup:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
         except rospy.ServiceException, e:
-            rospy.logwarn('Service failed!')
-            rospy.logwarn(e)
+            rospy.logerr('Service failed!')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 

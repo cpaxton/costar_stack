@@ -62,7 +62,7 @@ class WaypointUI(QWidget):
             get_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetWaypointList',GetWaypointList)
             found_waypoints = get_waypoints_proxy('').names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            rospy.logerr(e)
         for w in found_waypoints:
             self.waypoint_ui.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
 
@@ -86,7 +86,7 @@ class WaypointUI(QWidget):
                 rospy.loginfo(add_waypoint_proxy(msg))
                 self.update_waypoints()
             except rospy.ServiceException, e:
-                rospy.logwarn(e)
+                rospy.logerr(e)
         else:
             rospy.logerr('You need to input a name for the waypoint')
 
@@ -105,7 +105,7 @@ class WaypointUI(QWidget):
                 rospy.loginfo(remove_waypoint_proxy(msg))
                 self.update_waypoints()
             except rospy.ServiceException, e:
-                rospy.logwarn(e)
+                rospy.logerr(e)
 
     def waypoint_name_entered(self,t):
         self.new_waypoint_name = str(t)
@@ -188,20 +188,20 @@ class NodeActionWaypoint(Node):
             msg.vel = self.command_vel
             msg.accel = self.command_acc
             # Send Servo Command
-            rospy.logwarn('Single Servo Move Started')
+            rospy.loginfo('Single Servo Move Started')
             result = pose_servo_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
+                rospy.loginfo('Single Servo Move Finished')
                 rospy.logwarn('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
             rospy.logwarn('There was a problem with the tf lookup or service:')
-            rospy.logwarn(e)
+            rospy.logerr(e)
             self.finished_with_success = False
             return

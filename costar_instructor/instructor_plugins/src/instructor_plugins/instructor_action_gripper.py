@@ -35,7 +35,7 @@ class NodeActionGripperOpenGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionGripper(self.get_name(),self.get_label(),True,int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 class NodeActionGripperCloseGUI(NodeGUI):
@@ -52,7 +52,7 @@ class NodeActionGripperCloseGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionGripper(self.get_name(),self.get_label(),False,int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
@@ -134,7 +134,7 @@ class NodeActionGripper(Node):
         try:
             gripper_open_proxy = rospy.ServiceProxy('/robotiq_c_model_control/Open',Open)                
             # Send Open Command
-            rospy.logwarn('Gripper '+self.type+' Started')
+            rospy.loginfo('Gripper '+self.type+' Started')
             msg = OpenRequest()
             msg.state = self.open_gripper
             msg.wait = self.wait_finish
@@ -149,7 +149,7 @@ class NodeActionGripper(Node):
                 return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

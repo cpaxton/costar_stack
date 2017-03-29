@@ -61,7 +61,7 @@ class NodePlanWaypointGUI(NodeGUI):
             get_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetWaypointList',GetWaypointList)
             found_waypoints = get_waypoints_proxy('').names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            rospy.logerr(e)
         for w in found_waypoints:
             self.waypoint_ui.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
         self.waypoint_ui.waypoint_label.setText('NONE')
@@ -114,7 +114,7 @@ class NodePlanWaypointGUI(NodeGUI):
             # rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodePlanWaypoint(self.get_name(),self.get_label(),self.command_waypoint_name,self.command_vel,self.command_acc,self.listener_)
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
     def refresh_data(self):
@@ -202,7 +202,7 @@ class NodePlanWaypoint(Node):
             msg.vel = self.command_vel
             msg.accel = self.command_acc
             # Send Servo Command
-            rospy.logwarn('Single Planned Move Started')
+            rospy.loginfo('Single Planned Move Started')
             result = pose_servo_proxy(msg)
             if 'FAILED' in str(result.ack):
                 rospy.logwarn('Planned move failed with reply: '+ str(result.ack))
@@ -216,6 +216,6 @@ class NodePlanWaypoint(Node):
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
             rospy.logwarn('There was a problem with the tf lookup or service:')
-            rospy.logwarn(e)
+            rospy.logerr(e)
             self.finished_with_success = False
             return

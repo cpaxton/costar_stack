@@ -30,7 +30,7 @@ class NodeActionForceZeroGUI(NodeGUI):
         if all([self.name.full()]):
             return NodeActionForceZero(self.get_name(),self.get_label())
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
@@ -101,7 +101,7 @@ class NodeActionForceZero(Node):
         try:
             force_zero_open_proxy = rospy.ServiceProxy('/robotiq_force_torque_sensor_acc',ft_srv.sensor_accessor)
             # Send Open Command
-            rospy.logwarn('Zero Sensor Started')
+            rospy.loginfo('Zero Sensor Started')
             msg = ft_srv.sensor_accessorRequest()
             msg.command = "SET ZRO"
             result = force_zero_open_proxy(msg)
@@ -115,7 +115,7 @@ class NodeActionForceZero(Node):
                 return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
