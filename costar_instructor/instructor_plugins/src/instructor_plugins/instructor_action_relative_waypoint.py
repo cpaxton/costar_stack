@@ -19,8 +19,7 @@ import tf_conversions as tf_c
 import costar_robot_msgs
 from costar_robot_msgs.srv import *
 
-C = ColorOptions()
-
+colors = ColorOptions().colors
 
 # Node Wrappers -----------------------------------------------------------
 class NodeActionRelativeWaypointGUI(NodeGUI):
@@ -31,8 +30,8 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
         ui_path = rospack.get_path('instructor_plugins') + '/ui/action_waypoint.ui'
 
         self.title.setText('MOVE TO WAYPOINT ACTION')
-        self.title.setStyleSheet('background-color:'+C.colors['green'].normal+';color:#ffffff')
-        self.setStyleSheet('background-color:'+C.colors['green'].normal+' ; color:#ffffff')
+        self.title.setStyleSheet('background-color:'+colors['green'].normal+';color:#ffffff')
+        self.setStyleSheet('background-color:'+colors['green'].normal+' ; color:#ffffff')
 
         self.waypoint_ui = QWidget()
         uic.loadUi(ui_path, self.waypoint_ui)
@@ -80,7 +79,7 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
     def set_command_waypoint(self,waypoint_name):
         # rospy.logwarn('Setting Command Waypoint')
         self.waypoint_ui.waypoint_label.setText(waypoint_name)
-        self.waypoint_ui.waypoint_label.setStyleSheet('background-color:'+C.colors['green'].hover+' ; color:#ffffff')
+        self.waypoint_ui.waypoint_label.setStyleSheet('background-color:'+colors['green'].hover+' ; color:#ffffff')
         self.waypoint_selected = True
         self.command_waypoint_name = waypoint_name
 
@@ -167,6 +166,7 @@ class NodeActionRelativeWaypoint(Node):
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] succeeded')
                         self.running = False
                         self.needs_reset = True
+                        self.set_color(colors['gray'].normal)
                         return self.set_status('SUCCESS')
                     else:
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] failed')
