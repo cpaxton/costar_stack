@@ -39,7 +39,7 @@ class CostarUR5Driver(CostarArm):
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
 
         super(CostarUR5Driver, self).__init__(steps_per_meter=10,
-            base_steps=10,
+            base_steps=5,
             dof=6,
             closed_form_IK_solver=self.closed_form_IK_solver)
 
@@ -68,6 +68,9 @@ class CostarUR5Driver(CostarArm):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
+        
+        # Make sure that the trajectory 0 is the current joint position
+        traj.points[0].positions = self.q0
 
         if self.simulation:
             if not linear:

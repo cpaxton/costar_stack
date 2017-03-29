@@ -68,11 +68,11 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
 
     def vel_changed(self,t):
         self.waypoint_ui.vel_field.setText(str(float(t)))
-        self.command_vel = float(t)/100*1.5
+        self.command_vel = float(t)/100
 
     def acc_changed(self,t):
         self.waypoint_ui.acc_field.setText(str(float(t)))
-        self.command_acc = float(t)/100*1.5
+        self.command_acc = float(t)/100
 
     def waypoint_selected_from_list(self,item):
         self.set_command_waypoint(str(item.text()))
@@ -98,13 +98,13 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
         if data.has_key('vel'):
             if data['vel']['value']!=None:
                 self.command_vel = data['vel']['value']
-                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100/1.5))
-                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100/1.5))
+                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100))
+                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100))
         if data.has_key('acc'):
             if data['acc']['value']!=None:
                 self.command_acc = data['acc']['value']
-                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100/1.5))
-                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100/1.5))
+                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100))
+                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100))
         self.update_relative_waypoints()
 
     def generate(self):
@@ -122,7 +122,7 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
 # Nodes -------------------------------------------------------------------
 class NodeActionRelativeWaypoint(Node):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
-        L = 'MOVE RELATIVE TO\\n ['+waypoint_name+']'
+        L = 'MOVE RELATIVE TO\\n ['+waypoint_name.upper()+'] \n VELOCITY = %d\nACCELERATION = %d'%(vel*100,acc*100)
         super(NodeActionRelativeWaypoint,self).__init__(name,L,'#26A65B')
         self.command_waypoint_name = waypoint_name
         self.command_acc = acc
