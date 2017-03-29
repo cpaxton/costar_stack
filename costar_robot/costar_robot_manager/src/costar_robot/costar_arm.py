@@ -435,7 +435,7 @@ class CostarArm(CostarComponent):
                     res = 'FAILURE - could not preempt current arm control.'
                 return res
             else:
-                rospy.logerr('SIMPLE DRIVER -- IK failed')
+                rospy.logerr('SIMPLE DRIVER -- no trajectory points')
                 return 'FAILURE - no trajectory points'
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
@@ -454,6 +454,7 @@ class CostarArm(CostarComponent):
                 self.steps_per_meter,
                 self.steps_per_radians,
                 time_multiplier = (1./velocity),
+                percent_acc = acceleration,
                 use_joint_move = True,
                 table_frame = self.table_pose)
 
