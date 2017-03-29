@@ -7,6 +7,9 @@ from std_srvs.srv import Empty as EmptyService
 from costar_component import CostarComponent
 from librarian_msgs.srv import *
 from librarian_msgs.msg import *
+from dmp.srv import *
+from dmp.msg import *
+import numpy as np
 
 class CostarDMP(CostarComponent):
 
@@ -28,6 +31,9 @@ class CostarDMP(CostarComponent):
         # self.list_service = rospy.ServiceProxy('/librarian/list', librarian_msgs.srv.List)
         # self.delete_service = rospy.ServiceProxy('/librarian/delete', librarian_msgs.srv.Delete)
 
+        rospy.wait_for_service('learn_dmp_from_demo')
+        self.lfd = rospy.ServiceProxy('learn_dmp_from_demo', LearnDMPFromDemo)
+
         self.folder = 'dmp'
         self.add_type_service(self.folder)
 
@@ -45,19 +51,38 @@ class CostarDMP(CostarComponent):
             print "DMP tick() method called without recording. "
 
     def start_rec_cb(self,req):
+        self.traj = {'trans':[], 'rot':[]}
         self.collecting = True
         # self.traj_name = req.name
         # self.reference_frame = req.refernce_frame
-        self.traj = {'trans':[], 'rot':[]}
         return
 
     def stop_rec_cb(self,req):
         self.collecting = False
 
         # call dmp service to compute/fit DMP from traj
+        demotraj = DMPTraj()
+        dims = 7		      # 3 for position and 4 for quaternion                
+    	dt = 10               # here we use the same time interval as tick(), which is 10ms
+    	K = 100               # K_gain value
+    	D = 2.0 * np.sqrt(K)  # D_gain value
+    	k_gains = [K]*dims
+    	d_gains = [D]*dims
+    	num_bases = len(self.traj['trans'])       
+
+        for i in range(len(self.traj['trans'])):
+        	pt = DMPPoint();
+        	lfd_traj = [self.traj['trans'][i][0],self.traj['trans'][i][1], self.traj['trans'][i][2],
+        			self.traj['rot'][i][0], self.traj['rot'][i][1], self.traj['rot'][i][2], self.traj['rot'][i][3]]
+        	pt.positions = lfd_traj
+        	demotraj.points.append(pt)
+        	demotraj.times.append(10*i) 
+
+        resp = self.lfd(demotraj, k_gains, d_gains, num_bases) # use service call to compute dmp
 
         # save to yaml with:
-        self.save_service(id=self.name.strip('/'),type=self.folder,text=yaml.dump(self.traj))
+        self.save_service(id=self.name.strip('/'),type=self.folder,text=yaml.dump(self.traj)) # original teach_traj
+        self.save_service(id="dmp_computed",type=self.folder,text=yaml.dump(resp))
 
         return
 
