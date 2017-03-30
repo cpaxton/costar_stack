@@ -46,8 +46,8 @@ class NodeHomeGUI(NodeGUI):
         self.layout_.addWidget(self.waypoint_ui)
 
         self.command_waypoint_name = None
-        self.command_vel = .75
-        self.command_acc = .75
+        self.command_vel = .5
+        self.command_acc = .5
         self.listener_ = tf.TransformListener()
 
         self.waypoint_ui.acc_slider.valueChanged.connect(self.acc_changed)
@@ -55,11 +55,11 @@ class NodeHomeGUI(NodeGUI):
 
     def vel_changed(self,t):
         self.waypoint_ui.vel_field.setText(str(float(t)))
-        self.command_vel = float(t)/100*1.5
+        self.command_vel = float(t)/100
 
     def acc_changed(self,t):
         self.waypoint_ui.acc_field.setText(str(float(t)))
-        self.command_acc = float(t)/100*1.5
+        self.command_acc = float(t)/100
 
     def save_data(self,data):
         data['vel'] = {'value':self.command_vel}
@@ -70,13 +70,13 @@ class NodeHomeGUI(NodeGUI):
         if data.has_key('vel'):
             if data['vel']['value']!=None:
                 self.command_vel = data['vel']['value']
-                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100/1.5))
-                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100/1.5))
+                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100))
+                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100))
         if data.has_key('acc'):
             if data['acc']['value']!=None:
                 self.command_acc = data['acc']['value']
-                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100/1.5))
-                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100/1.5))
+                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100))
+                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100))
 
     def generate(self):
         if all([self.name.full()]):
@@ -92,7 +92,7 @@ class NodeHome(Node):
         if plan:
             L = 'PLAN TO HOME'
         else:
-            L = 'MOVE TO HOME'
+            L = 'MOVE TO HOME\nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
         super(NodeHome,self).__init__(name,L,'#26A65B')
         self.command_vel = vel
         self.command_acc = acc

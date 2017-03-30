@@ -43,7 +43,6 @@ class NodeActionDetectObjects(Node):
     def __init__(self,name,label,wait_finish):
         rospy.logwarn('Creating Detect Object Node')
         color = colors['purple'].normal
-        rospy.logwarn(color)
         L = "DETECT OBJECTS"
         if wait_finish == 0:
             self.wait_finish = False

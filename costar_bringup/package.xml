@@ -40,13 +40,13 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+
   <build_depend>costar_gripper_manager</build_depend>
   <build_depend>costar_robot_manager</build_depend>
   <build_depend>costar_waypoint_manager</build_depend>
   <run_depend>costar_gripper_manager</run_depend>
   <run_depend>costar_robot_manager</run_depend>
   <run_depend>costar_waypoint_manager</run_depend>
-
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

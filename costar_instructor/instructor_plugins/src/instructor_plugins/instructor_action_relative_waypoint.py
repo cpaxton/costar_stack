@@ -19,8 +19,7 @@ import tf_conversions as tf_c
 import costar_robot_msgs
 from costar_robot_msgs.srv import *
 
-C = ColorOptions()
-
+colors = ColorOptions().colors
 
 # Node Wrappers -----------------------------------------------------------
 class NodeActionRelativeWaypointGUI(NodeGUI):
@@ -31,8 +30,8 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
         ui_path = rospack.get_path('instructor_plugins') + '/ui/action_waypoint.ui'
 
         self.title.setText('MOVE TO WAYPOINT ACTION')
-        self.title.setStyleSheet('background-color:'+C.colors['green'].normal+';color:#ffffff')
-        self.setStyleSheet('background-color:'+C.colors['green'].normal+' ; color:#ffffff')
+        self.title.setStyleSheet('background-color:'+colors['green'].normal+';color:#ffffff')
+        self.setStyleSheet('background-color:'+colors['green'].normal+' ; color:#ffffff')
 
         self.waypoint_ui = QWidget()
         uic.loadUi(ui_path, self.waypoint_ui)
@@ -41,8 +40,8 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
         self.new_waypoint_name = None
         self.waypoint_selected = False
         self.command_waypoint_name = None
-        self.command_vel = .75
-        self.command_acc = .75
+        self.command_vel = .5
+        self.command_acc = .5
         self.listener_ = tf.TransformListener()
 
         self.waypoint_ui.waypoint_list.itemClicked.connect(self.waypoint_selected_from_list)
@@ -68,11 +67,11 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
 
     def vel_changed(self,t):
         self.waypoint_ui.vel_field.setText(str(float(t)))
-        self.command_vel = float(t)/100*1.5
+        self.command_vel = float(t)/100
 
     def acc_changed(self,t):
         self.waypoint_ui.acc_field.setText(str(float(t)))
-        self.command_acc = float(t)/100*1.5
+        self.command_acc = float(t)/100
 
     def waypoint_selected_from_list(self,item):
         self.set_command_waypoint(str(item.text()))
@@ -80,7 +79,7 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
     def set_command_waypoint(self,waypoint_name):
         # rospy.logwarn('Setting Command Waypoint')
         self.waypoint_ui.waypoint_label.setText(waypoint_name)
-        self.waypoint_ui.waypoint_label.setStyleSheet('background-color:'+C.colors['green'].hover+' ; color:#ffffff')
+        self.waypoint_ui.waypoint_label.setStyleSheet('background-color:'+colors['green'].hover+' ; color:#ffffff')
         self.waypoint_selected = True
         self.command_waypoint_name = waypoint_name
 
@@ -98,13 +97,13 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
         if data.has_key('vel'):
             if data['vel']['value']!=None:
                 self.command_vel = data['vel']['value']
-                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100/1.5))
-                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100/1.5))
+                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100))
+                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100))
         if data.has_key('acc'):
             if data['acc']['value']!=None:
                 self.command_acc = data['acc']['value']
-                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100/1.5))
-                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100/1.5))
+                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100))
+                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100))
         self.update_relative_waypoints()
 
     def generate(self):
@@ -122,7 +121,9 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
 # Nodes -------------------------------------------------------------------
 class NodeActionRelativeWaypoint(Node):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
-        L = 'MOVE RELATIVE TO\\n ['+waypoint_name+']'
+        #L = 'MOVE RELATIVE TO\\n ['+waypoint_name.upper()+'] \nVelocity: %d%%\nAcceleration: %d%%'%(int(vel*100),int(acc*100))
+        L = 'MOVE TO ['+waypoint_name.upper()+']\n(relative to object)\nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
+        
         super(NodeActionRelativeWaypoint,self).__init__(name,L,'#26A65B')
         self.command_waypoint_name = waypoint_name
         self.command_acc = acc
@@ -154,6 +155,7 @@ class NodeActionRelativeWaypoint(Node):
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] thread failed')
                         self.running = False
                         self.needs_reset = True
+                        self.set_color(colors['gray'].normal)
                         return self.set_status('FAILURE')
                         
             else:# If thread is running
@@ -164,11 +166,13 @@ class NodeActionRelativeWaypoint(Node):
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] succeeded')
                         self.running = False
                         self.needs_reset = True
+                        self.set_color(colors['gray'].normal)
                         return self.set_status('SUCCESS')
                     else:
                         rospy.loginfo('Waypoint Service [' + self.name_ + '] failed')
                         self.running = False
                         self.needs_reset = True
+                        self.set_color(colors['gray'].normal)
                         return self.set_status('FAILURE')
 
     def reset_self(self):
@@ -176,6 +180,7 @@ class NodeActionRelativeWaypoint(Node):
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
+        self.set_color(colors['green'].normal)
 
     def make_service_call(self,request,*args):
         # Check to see if service exists

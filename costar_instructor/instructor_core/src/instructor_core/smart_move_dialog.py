@@ -59,12 +59,20 @@ class SmartMoveDialog(QWidget):
         self.found_objects = self.manager.get_detected_objects()
         # Populate objects in list
         if self.found_objects is not None:
-            for m in self.found_objects:
-                self.object_list.addItem(QListWidgetItem(m.strip('/')))
-            self.object_list.sortItems()
-            self.object_list.setCurrentRow(0)
-            if self.object_list.currentItem() is not None:
-                self.selected_object = str(self.object_list.currentItem().text())
+            self.found_objects.sort()
+            idx = None
+            for i,m in enumerate(self.found_objects):
+                name = m.strip('/')
+                if self.selected_object is not None and self.selected_object == name:
+                    idx = i
+                self.object_list.addItem(QListWidgetItem(name))
+
+            if idx is None:
+                self.object_list.setCurrentRow(0)
+                if self.object_list.currentItem() is not None:
+                    self.selected_object = str(self.object_list.currentItem().text())
+            else:
+                self.object_list.setCurrentRow(idx)
 
     def update_moves(self):
         if self.selected_object is not None:
@@ -74,12 +82,20 @@ class SmartMoveDialog(QWidget):
             self.manager.load_all()
             self.found_moves = self.manager.get_moves_for_object(self.selected_object)
             if self.found_moves is not None:
-                for m in self.found_moves:
-                    self.move_list.addItem(QListWidgetItem(m.strip('/')))
-                self.move_list.sortItems()
-                self.move_list.setCurrentRow(0)
-                if self.move_list.currentItem() is not None:
-                    self.selected_move = str(self.move_list.currentItem().text())
+                self.found_moves.sort()
+                idx = None
+                for i, m in enumerate(self.found_moves):
+                    name = m.strip('/')
+                    self.move_list.addItem(QListWidgetItem(name))
+                    if self.selected_move is not None and self.selected_move == name:
+                        idx = i
+
+                if idx is None:
+                    self.move_list.setCurrentRow(0)
+                    if self.move_list.currentItem() is not None:
+                        self.selected_move = str(self.move_list.currentItem().text())
+                else:
+                    self.move_list.setCurrentRow(idx)
 
     def add_move(self):
         self.update_objects()
