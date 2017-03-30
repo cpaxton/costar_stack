@@ -51,8 +51,8 @@ class CostarIIWADriver(CostarArm):
           print " -- %s"%(str(pt.positions))
           start_t = rospy.Time.now()
 
-          if self.cur_stamp > stamp:
-            return 'FAILURE - preempted'
+          if not self.valid_verify(stamp):
+            return 'FAILURE -- preempted'
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
@@ -68,9 +68,9 @@ class CostarIIWADriver(CostarArm):
             rate.sleep()
 
         if self.at_goal:
-            return 'SUCCESS - moved to pose'
+            return 'SUCCESS -- moved to pose'
         else:
-            return 'FAILURE - did not reach destination'
+            return 'FAILURE -- did not reach destination'
 
     def handle_tick(self):
         super(CostarIIWADriver,self).handle_tick()
