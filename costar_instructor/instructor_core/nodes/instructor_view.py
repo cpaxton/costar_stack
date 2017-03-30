@@ -1074,15 +1074,16 @@ class Instructor(QWidget):
                 if self.current_node_types[event] == 'LOGIC':
                     self.selected_node_field.set_color(colors['blue'])
                     if 'root' in event.lower():
-                        self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;
-border-radius: 0px;
-background-color: #3FC380;
-color:#ffffff}
-QPushButton#run_button:pressed{
-border: 2px solid #3FC380;
-border-radius: 0px;
-background-color: #3FC380;
-color:#ffffff}''')
+                        self.run_button.setStyleSheet('''
+                            QPushButton#run_button{border: 2px solid #3FC380;
+                            border-radius: 0px;
+                            background-color: #3FC380;
+                            color:#ffffff}
+                            QPushButton#run_button:pressed{
+                            border: 2px solid #3FC380;
+                            border-radius: 0px;
+                            background-color: #3FC380;
+                            color:#ffffff}''')
                         self.clear_btn.show()
                         # self.run_button.show()
                         pass
@@ -1151,20 +1152,31 @@ color:#ffffff}''')
         self.selected_node_field.set_color(colors['pink'])
         self.clear_node_info()
         self.open_drawer()
+        '''
+            self.current_node_generator = self.all_generators[name]
+            self.current_node_type = self.plugins[name]['type']
+            self.current_node_plugin_name = name
+            self.current_node_generator.name.set_field(self.get_node_counter_name(name))
+            self.current_node_generator.show()
+            self.drawer.node_info_layout.addWidget(self.current_node_generator)
+            self.right_selected_node = None
+        '''
         if self.left_selected_node:
-            self.current_node_generator = self.all_generators[self.current_plugin_names[self.left_selected_node]]
+            selected_node = self.left_selected_node
         else:
-            self.current_node_generator = self.all_generators[self.current_plugin_names[self.right_selected_node]]
+            selected_node = self.right_selected_node
+
+        self.current_node_generator = self.all_generators[
+            self.current_plugin_names[selected_node]]
+
+        # Refresh the current node -- make sure everything like waypoints, actions,
+        # parameters are all up to date.
         self.current_node_generator.refresh_data()
+        self.current_node_generator.show()
         self.current_node_generator.name.set_read_only(True)
-        if self.left_selected_node:
-            self.current_node_generator.load(self.current_node_info[self.left_selected_node])
-            self.current_node_type = self.current_node_types[self.left_selected_node]
-            self.current_node_plugin_name = self.current_plugin_names[self.left_selected_node]
-        else:    
-            self.current_node_generator.load(self.current_node_info[self.right_selected_node])
-            self.current_node_type = self.current_node_types[self.right_selected_node]
-            self.current_node_plugin_name = self.current_plugin_names[self.right_selected_node]
+        self.current_node_generator.load(self.current_node_info[selected_node])
+        self.current_node_type = self.current_node_types[selected_node]
+        self.current_node_plugin_name = self.current_plugin_names[selected_node]
         self.drawer.node_info_layout.addWidget(self.current_node_generator)
         self.regenerate_btn.show()
         self.context_popup.hide()
