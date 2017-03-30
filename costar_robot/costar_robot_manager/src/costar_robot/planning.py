@@ -1,6 +1,6 @@
-'''
-(c) 2016 Chris Paxton
-'''
+# By Chris Paxton and Felix Jonathan
+# (c) 2016-2017 The Johns Hopkins University
+# See license for more details
 
 import rospy
 
@@ -24,9 +24,20 @@ from geometry_msgs.msg import Pose
 ModeJoints = 'joints'
 ModeCart = 'cartesian'
 
+# SIMPLE PLANNING
+# This class is really just a wrapper for a bunch of parameters. It exposes
+# the various functions that we use to call MoveIt and acts as an interface of
+# sorts to generate some nice trajectories.
+#
+# You could think of this as a sort of sub-component of CoSTAR, if you'd like,
+# but it's very closely tied with the way that Arm works in order to produce
+# the various behaviors that we are interested in.
 class SimplePlanning:
     
-    def __init__(self,robot,base_link,end_link,group,
+    # How you set these options will determine how we do planning: 
+    # what inverse kinematics are used for queries, etc. Most of these are
+    # meant to be directly inherited/provided by the CoSTAR Arm class.
+    def __init__(self, robot, base_link, end_link, group,
             move_group_ns="move_group",
             planning_scene_topic="planning_scene",
             robot_ns="",
@@ -54,9 +65,9 @@ class SimplePlanning:
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
     
-    '''
-    ik: handles calls to KDL inverse kinematics
-    '''
+    # Basic ik() function call.
+    # It handles calls to KDL inverse kinematics or to the closed form ik
+    # solver that you provided.
     def ik(self, T, q0, dist=0.5):
       q = None
       if self.closed_form_IK_solver is not None:
@@ -65,11 +76,10 @@ class SimplePlanning:
       else:
         q = self.kdl_kin.inverse(T,q0)
 
-      # NOTE: this results in unsafe behavior; do not use without checks
-      #if q is None:
-      #    q = self.kdl_kin.inverse(T)
       return q
 
+    # Compute a nice joint trajectory. This is useful for checking collisions,
+    # and ensuring that we have nice, well defined behavior.
     def getJointMove(self,
         q_goal,
         q0,
@@ -142,6 +152,7 @@ class SimplePlanning:
       traj.joint_names = self.joint_names
       return traj
 
+    # Compute a simple trajectory.
     def getCartesianMove(self, frame, q0,
       base_steps=1000,
       steps_per_meter=1000,
