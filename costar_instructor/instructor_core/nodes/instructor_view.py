@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-#import roslib; roslib.load_manifest('instructor_core')
-#from roslib import rospack
-
 import rospy
 from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
@@ -22,15 +19,18 @@ import rospkg
 import tf; 
 import tf_conversions as tf_c
 from instructor_core.instructor_qt import *
-# Using roslib.rospack even though it is deprecated
+
 import threading
 import yaml
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
 import time
 import copy
+
+
 # import cProfile
 # from memory_profiler import profile
+
 # ==============================================================
 # SRVs
 import costar_robot_msgs
@@ -133,7 +133,7 @@ class Instructor(QWidget):
         self.types__ = ['LOGIC',
                 'ACTION',
                 'CONDITION',
-                'QUERY',
+                'TASK',
                 'PROCESS',
                 'SERVICE',
                 'VARIABLE']
@@ -147,7 +147,7 @@ class Instructor(QWidget):
         self.labels__ = ['BUILDING BLOCKS',
                 'ROBOT ACTIONS',
                 'SYSTEM KNOWLEDGE',
-                'QUERIES',
+                'TASK MODEL',
                 'PROCESSES',
                 'SERVICE',
                 'VARIABLES']
@@ -849,9 +849,15 @@ class Instructor(QWidget):
             selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
             #print selected_subtree_root_name
             if 'root' in selected_subtree_root_name.lower():
-                rospy.loginfo('You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.')
+                rospy.loginfo('You have selected a tree with a root node.'
+                    ' If a node is currently selected, this subtree will be added '
+                    'as a child tree of the selected node.  If the graph is empty, '
+                    'this subtree will be added as the entire tree.')
             else:
-                rospy.loginfo('The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.')
+                rospy.loginfo('The selected subtree has no root node.  If a node is '
+                    'currently selected, this subtree will be added as a child tree. '
+                    'If no node is selected, the subtree will be added along with a '
+                    'root node.')
         else:
             rospy.logerr('Subtree %s does not exist.'%val)
             self.selected_subtree = None
@@ -1152,15 +1158,7 @@ class Instructor(QWidget):
         self.selected_node_field.set_color(colors['pink'])
         self.clear_node_info()
         self.open_drawer()
-        '''
-            self.current_node_generator = self.all_generators[name]
-            self.current_node_type = self.plugins[name]['type']
-            self.current_node_plugin_name = name
-            self.current_node_generator.name.set_field(self.get_node_counter_name(name))
-            self.current_node_generator.show()
-            self.drawer.node_info_layout.addWidget(self.current_node_generator)
-            self.right_selected_node = None
-        '''
+
         if self.left_selected_node:
             selected_node = self.left_selected_node
         else:
