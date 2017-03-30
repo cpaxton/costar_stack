@@ -35,7 +35,7 @@ class NodeActionDetectObjectsGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionDetectObjects(self.get_name(),self.get_label(),int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
@@ -116,7 +116,7 @@ class NodeActionDetectObjects(Node):
         try:
             gripper_open_proxy = rospy.ServiceProxy(service_name,Empty)
             # Send Open Command
-            rospy.logwarn('SP Server '+self.get_node_type() +' Started')
+            rospy.loginfo('SP Server '+self.get_node_type() +' Started')
             # msg.state = self.open_gripper
             # msg.wait = self.wait_finish
             result = gripper_open_proxy()
@@ -130,7 +130,7 @@ class NodeActionDetectObjects(Node):
             return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

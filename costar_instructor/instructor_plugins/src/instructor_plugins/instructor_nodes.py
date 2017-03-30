@@ -168,7 +168,7 @@ class NodeActionSleep(Node):
             if not self.running: # Thread is not running
                 try:
                     self.sleep_thread.start()
-                    rospy.logwarn('SLEEP ACTION ['+self.name_+']: STARTED')
+                    rospy.loginfo('SLEEP ACTION ['+self.name_+']: STARTED')
                     self.running = True
                     return self.set_status('RUNNING')
                 except Exception,  errtxt:
