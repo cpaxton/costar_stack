@@ -92,12 +92,17 @@ class SimplePlanning:
       time_multiplier,
       percent_acc):
 
+      # We compute a number of steps to take along our trapezoidal trajectory
+      # curve. This gives us a nice, relatively dense trajectory that we can
+      # introspect on later -- we can use it to compute cost functions, to 
+      # detect collisions, etc.
       delta_q_norm = np.linalg.norm(dq_to_target)
-      steps = base_steps + delta_translation * steps_per_meter + delta_q_norm * steps_per_radians
+      steps = base_steps + delta_translation * steps_per_meter + delta_q_norm \
+          * steps_per_radians
+      # Number of steps must be an int.
       steps = int(np.round(steps))
-      print " -- Computing %d steps"%steps
 
-      # the time needed for constant velocity at 100% to reach the goal
+      # This is the time needed for constant velocity at 100% to reach the goal.
       t_v_constant = delta_translation + delta_q_norm
       ts = (t_v_constant / steps ) * time_multiplier
       
@@ -110,17 +115,26 @@ class SimplePlanning:
       # j_acceleration = np.array(dq_target) / t_v_constant * percent_acc
       t_v_setting_max = v_setting_max / acceleration
 
-      steps_to_max_speed = 0.5 * acceleration * t_v_setting_max **2 / (dq_max_target / steps) 
+      # Compute the number of trajectory points we want to make before we will
+      # get up to max speed.
+      steps_to_max_speed = 0.5 * acceleration * t_v_setting_max **2 \
+          / (dq_max_target / steps) 
       if steps_to_max_speed * 2 > steps:
-        print "-- Cannot reach the maximum velocity setting, steps required %.1f > total number of steps %d"%(steps_to_max_speed * 2,steps)
+        rospy.logwarn("Cannot reach the maximum velocity setting, steps "
+            "required %.1f > total number of steps %d"%(steps_to_max_speed * 2,steps))
         t_v_setting_max = np.sqrt(0.5 * dq_max_target / acceleration)
         steps_to_max_speed = (0.5 * steps)
         v_setting_max = t_v_setting_max * acceleration
-      print "-- Acceleration number of steps is set to %.1f and time elapsed to reach max velocity is %.3fs"%(steps_to_max_speed,t_v_setting_max)
+
+      rospy.loginfo("Acceleration number of steps is set to %.1f and time "
+            "elapsed to reach max velocity is %.3fs"%(steps_to_max_speed,
+              t_v_setting_max))
+
       const_velocity_max_step = np.max([steps - 2 * steps_to_max_speed, 0])
 
       return steps, ts, t_v_setting_max, steps_to_max_speed, const_velocity_max_step
 
+    # This is where we compute what time we want for each trajectory point.
     def calculateTimeOfTrajectoryStep(self,
       step_index,
       steps_to_max_speed,
