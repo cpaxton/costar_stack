@@ -47,15 +47,20 @@ class CostarUR5Driver(CostarArm):
 
     def acquire(self):
         stamp = rospy.Time.now().to_sec()
+
+        self.cur_stamp_mtx.acquire()
         if self.cur_stamp is not None:
             self.client.stop_tracking_goal()
             # self.client.wait_for_result()
             self.client.cancel_all_goals()
             rospy.sleep(0.1)
             # rospy.logwarn("[UR_DRIVER]: current stamp is not None?")
+        self.cur_stamp_mtx.release()
 
         if stamp > self.cur_stamp:
+            self.cur_stamp_mtx.acquire()
             self.cur_stamp = stamp
+            self.cur_stamp_mtx.release()
             return stamp
         else:
             return None
@@ -72,6 +77,9 @@ class CostarUR5Driver(CostarArm):
         # Make sure that the trajectory 0 is the current joint position
         traj.points[0].positions = self.q0
 
+        if not self.valid_verify(stamp):
+            return 'FAILURE - preempted'
+
         if self.simulation:
             if not linear:
                 for pt in traj.points[:-1]:
@@ -82,9 +90,6 @@ class CostarUR5Driver(CostarArm):
                     self.set_goal(pt.positions)
 
                     start_t = rospy.Time.now()
-
-                    if self.cur_stamp > stamp:
-                        return 'FAILURE - preempted'
 
                     rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
                     t = pt.time_from_start
@@ -112,7 +117,7 @@ class CostarUR5Driver(CostarArm):
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
 
-        if stamp >= self.cur_stamp:
+        if self.valid_verify(stamp):
             self.client.send_goal_and_wait(goal, preempt_timeout=rospy.Duration.from_sec(10.0))
             # max time before returning = 30 s
             self.client.wait_for_result(rospy.Duration.from_sec(30.0))

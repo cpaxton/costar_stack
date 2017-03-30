@@ -569,6 +569,12 @@ class Instructor(QWidget):
         rospy.loginfo('Updating Scene...DONE')
         self.update_scene_button.setEnabled(True)
 
+    def stop_robot_trajectory_cb(self):
+        rospy.loginfo('Stopping robot actions...')
+        self.toast('Stopping robot action...')
+        service_name = '/costar/StopTrajectory'
+        self.send_service_command(service_name)
+
     def gripper_mode_cb(self,text):
         mode = str(text).lower()
         if mode == 'scissor':
@@ -787,6 +793,7 @@ class Instructor(QWidget):
 
     def stop_tree(self):
         rospy.loginfo('INSTRUCTOR: Task Tree STOPPED')
+        self.stop_robot_trajectory_cb()
         self.run_timer_.stop()
         self.running__ = False
         # self.root_node.reset()
