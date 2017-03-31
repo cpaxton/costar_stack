@@ -10,6 +10,7 @@ from librarian_msgs.msg import *
 from dmp.srv import *
 from dmp.msg import *
 import numpy as np
+from costar_dmp.srv import *
 
 class CostarDMP(CostarComponent):
 
@@ -18,7 +19,7 @@ class CostarDMP(CostarComponent):
         self.namespace = "/costar/dmp"
         self.collecting = False
 
-        self.start_rec_srv = self.make_service('start_rec',EmptyService, self.start_rec_cb)
+        self.start_rec_srv = self.make_service('start_rec',DmpTeach, self.start_rec_cb)
         self.stop_rec_srv = self.make_service('stop_rec', EmptyService, self.stop_rec_cb)
 
         self.listener = tf.TransformListener();
@@ -43,18 +44,19 @@ class CostarDMP(CostarComponent):
     def tick(self):
         if self.collecting == True:
             (new_trans,new_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/PSM1_tool_tip_link_virtual',rospy.Time(0))
+            new_rot_euler = tf.transformations.euler_from_quaternion(new_rot);
             self.traj['trans'].append(new_trans);
-            self.traj['rot'].append(new_rot);
+            self.traj['rot'].append(new_rot_euler);
 
             print "DMP tick() method called with recording."
         else:
             print "DMP tick() method called without recording. "
 
     def start_rec_cb(self,req):
-        self.traj = {'trans':[], 'rot':[]}
+        self.traj = {'trans':[], 'rot':[], 'traj_name':[], 'reference_frame':[]}
         self.collecting = True
-        # self.traj_name = req.name
-        # self.reference_frame = req.refernce_frame
+        self.traj['traj_name']= req.teach_name
+        self.traj['reference_frame'] = req.reference_frame
         return
 
     def stop_rec_cb(self,req):
@@ -73,7 +75,7 @@ class CostarDMP(CostarComponent):
         for i in range(len(self.traj['trans'])):
         	pt = DMPPoint();
         	lfd_traj = [self.traj['trans'][i][0],self.traj['trans'][i][1], self.traj['trans'][i][2],
-        			self.traj['rot'][i][0], self.traj['rot'][i][1], self.traj['rot'][i][2], self.traj['rot'][i][3]]
+        			self.traj['rot'][i][0], self.traj['rot'][i][1], self.traj['rot'][i][2]]
         	pt.positions = lfd_traj
         	demotraj.points.append(pt)
         	demotraj.times.append(10*i) 
