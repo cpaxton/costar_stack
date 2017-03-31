@@ -253,7 +253,6 @@ class CostarArm(CostarComponent):
     listen to robot joint state information
     '''
     def js_cb(self,msg):
-     
         if len(msg.position) is self.dof:
             self.old_q0 = self.q0
             self.q0 = np.array(msg.position)
@@ -980,14 +979,10 @@ class CostarArm(CostarComponent):
                 (code2,res2) = self.planner.getPlan(T,q_2,obj=obj)
                 if ((not res2 is None) and len(res2.planned_trajectory.joint_trajectory.points) > 0):
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
-                    rospy.sleep(0.1)
-                    (code2,res2) = self.planner.getPlan(T,self.q0,obj=obj)
                     if msg[0:7] == 'SUCCESS':
                         msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                         if msg[0:7] == 'SUCCESS':
                             gripper_function(obj)
-
-                            rospy.sleep(0.1)
 
                             traj = res2.planned_trajectory.joint_trajectory
                             traj.points.reverse()
