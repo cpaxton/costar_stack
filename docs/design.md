@@ -1,7 +1,7 @@
 
 # Architecture Design
 
-## Components
+CoSTAR takes a page from most ROS system design.
 
 ### Arm
 
@@ -17,6 +17,7 @@ The `Arm` component has a few associated helper classes, created to isolate comp
 ### Gripper
 
 The gripper is configured so that we can set it into different modes, depending on what gripper is currently available.
+
 
 ## Predicator
 
