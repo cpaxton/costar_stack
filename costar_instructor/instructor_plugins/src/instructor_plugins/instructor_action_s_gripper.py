@@ -35,7 +35,7 @@ class NodeActionSGripperOpenGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'open',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 class NodeActionSGripperCloseGUI(NodeGUI):
@@ -52,7 +52,7 @@ class NodeActionSGripperCloseGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'close',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 class NodeActionSGripperBasicModeGUI(NodeGUI):
@@ -69,7 +69,7 @@ class NodeActionSGripperBasicModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'basic_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 class NodeActionSGripperPinchModeGUI(NodeGUI):
@@ -86,7 +86,7 @@ class NodeActionSGripperPinchModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'pinch_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 class NodeActionSGripperWideModeGUI(NodeGUI):
@@ -103,7 +103,7 @@ class NodeActionSGripperWideModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'wide_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 class NodeActionSGripperScissorModeGUI(NodeGUI):
@@ -120,7 +120,7 @@ class NodeActionSGripperScissorModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'scissor_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
@@ -226,7 +226,7 @@ class NodeActionSGripper(Node):
             return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

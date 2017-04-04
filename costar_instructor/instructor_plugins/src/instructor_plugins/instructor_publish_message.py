@@ -35,15 +35,14 @@ class NodePublishMessageGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionPublishMessage(self.get_name(),self.get_label(),int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionPublishMessage(Node):
     def __init__(self,name,label,wait_finish):
-        rospy.logwarn('Creating Publish Message Node')
+        rospy.loginfo('Creating Publish Message Node')
         color = colors['purple'].normal
-        rospy.logwarn(color)
         L = "Publish Message: " + label
         if wait_finish == 0:
             self.wait_finish = False

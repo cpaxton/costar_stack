@@ -61,7 +61,7 @@ class NodeActionStop(Node):
             if not self.running: # Thread is not running
                 try:
                     self.stop_thread.start()
-                    rospy.logwarn('STOP ACTION ['+self.name_+']: STARTED')
+                    rospy.loginfo('STOP ACTION ['+self.name_+']: STARTED')
                     self.running = True
                     return self.set_status('RUNNING')
                 except Exception,  errtxt:
@@ -103,8 +103,8 @@ class NodeActionStop(Node):
             return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 

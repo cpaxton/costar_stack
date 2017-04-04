@@ -25,6 +25,7 @@ from moveit_msgs.srv import *
 from predicator_landmark import GetWaypointsService
 
 import copy
+from threading import Lock
 
 class CostarArm(CostarComponent):
 
@@ -107,6 +108,8 @@ class CostarArm(CostarComponent):
         #[0] * self.dof
         self.old_q0 = [0] * self.dof
 
+        self.cur_stamp_mtx = Lock()
+
         self.cur_stamp = 0
         self.has_trajectory = 0
 
@@ -129,6 +132,8 @@ class CostarArm(CostarComponent):
         self.shutdown = self.make_service('ShutdownArm',EmptyService,self.shutdown_arm_cb)
         self.servo = self.make_service('ServoToPose',ServoToPose,self.servo_to_pose_cb)
         self.plan = self.make_service('PlanToPose',ServoToPose,self.plan_to_pose_cb)
+        self.cancel_trajectory = self.make_service('StopTrajectory',EmptyService,self.stop_robot_trajectory_cb)
+
         self.servo_home_srv = self.make_service('ServoToHome',ServoToPose,self.servo_to_home_cb)
         self.plan_home_srv = self.make_service('PlanToHome',ServoToPose,self.plan_to_home_cb)
         self.smartmove = self.make_service('SmartMove',SmartMove,self.smart_move_cb)
@@ -211,10 +216,27 @@ class CostarArm(CostarComponent):
     def acquire(self):
         stamp = rospy.Time.now().to_sec()
         if stamp > self.cur_stamp:
+            self.cur_stamp_mtx.acquire()
             self.cur_stamp = stamp
+            self.cur_stamp_mtx.release()
             return stamp
         else:
             return None
+
+    '''
+    Make sure we still own the mutex.
+    '''
+    def valid_verify(self, stamp):
+        self.cur_stamp_mtx.acquire()
+        if self.cur_stamp is not None:
+            valid = abs(self.cur_stamp - stamp) < 0.001
+            # if not valid:
+            #     rospy.logwarn('cur_stamp %.3f != %.3f'%(self.cur_stamp,stamp))
+        else:
+            valid = False
+            # rospy.logwarn('cur_stamp is None')
+        self.cur_stamp_mtx.release()
+        return valid
 
     '''
     Preemption logic -- release at the end of a trajectory.
@@ -222,14 +244,15 @@ class CostarArm(CostarComponent):
     by all means implement that.
     '''
     def release(self):
+        self.cur_stamp_mtx.acquire()
         self.cur_stamp = 0
+        self.cur_stamp_mtx.release()
 
     '''
     js_cb
     listen to robot joint state information
     '''
     def js_cb(self,msg):
-     
         if len(msg.position) is self.dof:
             self.old_q0 = self.q0
             self.q0 = np.array(msg.position)
@@ -303,11 +326,12 @@ class CostarArm(CostarComponent):
 
         if not self.driver_status == 'SERVO':
             rospy.logerr('DRIVER -- Not in servo mode!')
-            return 'FAILURE - not in servo mode'
+            return 'FAILURE -- not in servo mode'
 
         # Check acceleration and velocity limits
         (acceleration, velocity) = self.check_req_speed_params(req) 
         possible_goals = self.query(req)
+        stamp = self.acquire()
 
         if len(possible_goals) == 0:
             return 'FAILURE -- no valid poses found'
@@ -316,13 +340,21 @@ class CostarArm(CostarComponent):
             rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
             # plan to T
+            if not self.valid_verify(stamp):
+                rospy.logwarn('Stopping action because robot has been preempted by another process,')
+                return msg
             (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
-            msg = self.send_and_publish_planning_result(res,acceleration,velocity)
+            msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
 
             if msg[0:7] == 'SUCCESS':
                 break
 
         return msg
+
+    def stop_robot_trajectory_cb(self,req):
+        self.detach(actuate = False, add_back_to_planning_scene=False)
+        self.acquire()
+        return []
 
     def set_goal(self,q):
         self.at_goal = False
@@ -330,9 +362,8 @@ class CostarArm(CostarComponent):
         self.goal = pm.fromMatrix(self.kdl_kin.forward(q))
         # rospy.logwarn("set goal to " + str(self.goal))
 
-    def send_and_publish_planning_result(self,res,acceleration,velocity):
+    def send_and_publish_planning_result(self,res,stamp,acceleration,velocity):
         if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
-
             disp = DisplayTrajectory()
             disp.trajectory.append(res.planned_trajectory)
             disp.trajectory_start = res.trajectory_start
@@ -340,18 +371,16 @@ class CostarArm(CostarComponent):
 
             traj = res.planned_trajectory.joint_trajectory
             
-            stamp = self.acquire()
             if stamp is not None:
                 res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
-                self.release()
             else:
-                res = 'FAILURE - could not preempt current arm control.'
+                res = 'FAILURE -- could not preempt current arm control.'
 
             return res
 
         else:
             rospy.logerr('DRIVER -- PLANNING failed')
-            return 'FAILURE - not in servo mode'
+            return 'FAILURE -- not in servo mode'
 
 
     '''
@@ -365,15 +394,16 @@ class CostarArm(CostarComponent):
 
             # Check acceleration and velocity limits
             (acceleration, velocity) = self.check_req_speed_params(req) 
+            stamp = self.acquire()
 
             # Send command
             pt = JointTrajectoryPoint()
             pose = pm.fromMsg(req.target)
             (code,res) = self.planner.getPlan(frame=pose,q=self.q0)
-            return self.send_and_publish_planning_result(res,acceleration,velocity)
+            return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
-            return 'FAILURE - not in servo mode'
+            return 'FAILURE -- not in servo mode'
 
     '''
     Definitely do a planned motion to the home joint state.
@@ -385,22 +415,23 @@ class CostarArm(CostarComponent):
 
             # Check acceleration and velocity limits
             (acceleration, velocity) = self.check_req_speed_params(req) 
+            stamp = self.acquire()
 
             # Send command
             pt = JointTrajectoryPoint()
             (code,res) = self.planner.getPlan(q_goal=self.home_q,q=self.q0)
-            return self.send_and_publish_planning_result(res,acceleration,velocity)
+            return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
-            return 'FAILURE - not in servo mode'
+            return 'FAILURE -- not in servo mode'
 
     '''
     Send a whole joint trajectory message to a robot...
     that is listening to individual joint states.
     '''
-    def send_trajectory(self,traj,acceleration=0.5,velocity=0.5,cartesian=False):
+    def send_trajectory(self,traj,stamp,acceleration=0.5,velocity=0.5,cartesian=False):
         rospy.logerr("Function 'send_trajectory' not implemented for base class!")
-        return "FAILURE - running base class!"
+        return "FAILURE -- running base class!"
 
     '''
     Standard movement call.
@@ -413,6 +444,7 @@ class CostarArm(CostarComponent):
             # Check acceleration and velocity limits
             (acceleration, velocity) = self.check_req_speed_params(req)
 
+            stamp = self.acquire()
             # inverse kinematics
             traj = self.planner.getCartesianMove(T,
                 self.q0,
@@ -426,26 +458,27 @@ class CostarArm(CostarComponent):
 
             # Send command
             if len(traj.points) > 0:
-                stamp = self.acquire()
                 if stamp is not None:
                     rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
                     res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
                     self.release()
                 else:
-                    res = 'FAILURE - could not preempt current arm control.'
+                    res = 'FAILURE -- could not preempt current arm control.'
                 return res
             else:
                 rospy.logerr('SIMPLE DRIVER -- no trajectory points')
-                return 'FAILURE - no trajectory points'
+                return 'FAILURE -- no trajectory points'
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
-            return 'FAILURE - not in servo mode'
+            return 'FAILURE -- not in servo mode'
 
     def servo_to_home_cb(self,req): 
         if self.driver_status == 'SERVO':
 
             # Check acceleration and velocity limits
             (acceleration, velocity) = self.check_req_speed_params(req)
+
+            stamp = self.acquire()
 
             # inverse kinematics
             traj = self.planner.getJointMove(self.home_q,
@@ -460,20 +493,19 @@ class CostarArm(CostarComponent):
 
             # Send command
             if len(traj.points) > 0:
-                stamp = self.acquire()
                 if stamp is not None:
                     rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
                     res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
                     self.release()
                 else:
-                    res = 'FAILURE - could not preempt current arm control.'
+                    res = 'FAILURE -- could not preempt current arm control.'
                 return res
             else:
                 rospy.logerr('SIMPLE DRIVER -- IK failed')
-                return 'FAILURE - no trajectory points'
+                return 'FAILURE -- no trajectory points'
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
-            return 'FAILURE - not in servo mode'
+            return 'FAILURE -- not in servo mode'
 
     '''
     Standard move call.
@@ -484,11 +516,11 @@ class CostarArm(CostarComponent):
         if self.driver_status == 'SERVO':
             # Check acceleration and velocity limits
             (acceleration, velocity) = self.check_req_speed_params(req) 
-            return 'FAILURE - not yet implemented!'
+            return 'FAILURE -- not yet implemented!'
 
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
-            return 'FAILURE - not in servo mode'
+            return 'FAILURE -- not in servo mode'
         
 
     '''
@@ -548,11 +580,11 @@ class CostarArm(CostarComponent):
                 self.send_q(self.q0,0.1,0.1)
 
             self.driver_status = 'SERVO'
-            self.cur_stamp = self.release()
+            self.release()
             return 'SUCCESS - servo mode enabled'
         elif req.mode == 'DISABLE':
             self.detach(actuate = False, add_back_to_planning_scene=False)
-            self.cur_stamp = self.acquire()
+            self.acquire()
             self.driver_status = 'IDLE'
             return 'SUCCESS - servo mode disabled'
         else:
@@ -878,16 +910,20 @@ class CostarArm(CostarComponent):
 
         return possible_goals
 
-    def smartmove_multipurpose_gripper(self, possible_goals, distance, gripper_function, velocity, acceleration, backup_in_gripper_frame):
+    def smartmove_multipurpose_gripper(self, stamp, possible_goals, distance, gripper_function, velocity, acceleration, backup_in_gripper_frame):
         list_of_valid_sequence = list()
         list_of_invalid_sequence = list()
         self.backoff_waypoints = []
 
         if self.q0 is None:
-            return "FAILURE"
+            return "FAILURE -- Initial joint position is None"
 
         T_fwd = pm.fromMatrix(self.kdl_kin.forward(self.q0))
         for (dist,T,obj,name) in possible_goals:
+            if not self.valid_verify(stamp):
+                rospy.logwarn('Stopping action because robot has been preempted by another process,')
+                return "FAILURE -- Robot has been preempted by another process"
+
             if backup_in_gripper_frame:
                 backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
                 backup_waypoint = T * backup_waypoint
@@ -930,7 +966,11 @@ class CostarArm(CostarComponent):
         # print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
         for sequence_number, (backup_waypoint,T,obj,backup_dist,query_dist,name) in enumerate(sequence_to_execute,1):
-            rospy.logwarn("Trying sequence number %i: backup_dist: %.3f query_dist: %.3f"%(sequence_number,backup_dist,query_dist))
+            if not self.valid_verify(stamp):
+                rospy.logwarn('Stopping action because robot has been preempted by another process,')
+                return "FAILURE -- Robot has been preempted by another process"
+
+            rospy.loginfo("Trying sequence number %i: backup_dist: %.3f query_dist: %.3f"%(sequence_number,backup_dist,query_dist))
             # plan to T
             rospy.sleep(0.1)
             (code,res) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
@@ -938,15 +978,11 @@ class CostarArm(CostarComponent):
                 q_2 = res.planned_trajectory.joint_trajectory.points[-1].positions
                 (code2,res2) = self.planner.getPlan(T,q_2,obj=obj)
                 if ((not res2 is None) and len(res2.planned_trajectory.joint_trajectory.points) > 0):
-                    msg = self.send_and_publish_planning_result(res,acceleration,velocity)
-                    rospy.sleep(0.1)
-                    (code2,res2) = self.planner.getPlan(T,self.q0,obj=obj)
+                    msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
                     if msg[0:7] == 'SUCCESS':
-                        msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
+                        msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                         if msg[0:7] == 'SUCCESS':
                             gripper_function(obj)
-
-                            rospy.sleep(0.1)
 
                             traj = res2.planned_trajectory.joint_trajectory
                             traj.points.reverse()
@@ -959,7 +995,7 @@ class CostarArm(CostarComponent):
                             traj.points[0].positions = self.q0
                             traj.points[-1].velocities = [0.]*len(self.q0)
                             
-                            msg = self.send_and_publish_planning_result(res2,acceleration,velocity)
+                            msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                             return msg
                         else:
                             rospy.logwarn("Fail to move to grasp pose in sequence %i" % sequence_number)
@@ -969,12 +1005,12 @@ class CostarArm(CostarComponent):
                     rospy.logwarn("Plan to pose in sequence %i does not work" % sequence_number)
             else:
                 rospy.logwarn("Plan Backoff pose in sequence %i does not work" % sequence_number)
-        return msg
+        return "FAILURE -- No sequential motions work."
 
     def execute_planning_sequence(self, list_of_sequence, obj):
         pass
 
-    def smartmove_grasp(self, possible_goals, distance, velocity, acceleration):
+    def smartmove_grasp(self, stamp, possible_goals, distance, velocity, acceleration):
         # Execute the list of waypoints to the selected object
         # It receive one object frame from select, and do motion planning for that
         # close gripper
@@ -983,7 +1019,7 @@ class CostarArm(CostarComponent):
         # backup transform is [0, 0, -distance]
         # call /costar/gripper/close
         # move back to original tform
-        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.attach, velocity, acceleration, True)
+        return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.attach, velocity, acceleration, True)
 
     '''
     SmartMove Release:
@@ -992,7 +1028,7 @@ class CostarArm(CostarComponent):
     - open gripper
     - move back
     '''
-    def smartmove_release(self, possible_goals, distance, velocity, acceleration):
+    def smartmove_release(self, stamp, possible_goals, distance, velocity, acceleration):
         # Execute the list of waypoints to the selected object
         # open gripper
 
@@ -1001,28 +1037,30 @@ class CostarArm(CostarComponent):
         # call /costar/gripper/open
         # move back to original tform
 
-        return self.smartmove_multipurpose_gripper(possible_goals, distance, self.detach, velocity, acceleration, False)
+        return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.detach, velocity, acceleration, False)
 
 
     '''
     Wrapper for the RELEASE service
     '''
     def smartmove_release_cb(self, req):
+        stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
             return "FAILURE -- no suitable points found"
         distance = req.backoff
-        return self.smartmove_release(list_of_waypoints, distance, req.vel, req.accel)
+        return self.smartmove_release(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
     '''
     Wrapper for the GRASP service
     '''
     def smartmove_grasp_cb(self, req):
+        stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
             return "FAILURE -- no suitable points found"
         distance = req.backoff
-        return self.smartmove_grasp(list_of_waypoints, distance, req.vel, req.accel)
+        return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
     '''
     Wrapper for the QUERY service

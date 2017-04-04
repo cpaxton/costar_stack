@@ -186,7 +186,7 @@ class NodeActionSmartmoveGUI(NodeGUI):
 
     def generate(self):
         if all([self.name.full(), self.selected_object, self.selected_smartmove]):
-            rospy.logwarn('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
+            # rospy.logwarn('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
             return NodeActionSmartmove( self.get_name(),
                                         self.get_label(),
                                         self.selected_region,
@@ -294,25 +294,25 @@ class NodeActionSmartmove(Node):
             msg.vel = self.command_vel
             msg.accel = self.command_acc
             # Send SmartMove Command
-            rospy.logwarn('SmartMove Started')
+            rospy.loginfo('SmartMove Started')
             result = smartmove_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
+                rospy.loginfo('Single Servo Move Finished')
                 rospy.logwarn('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
-            rospy.logwarn('There was a problem with the tf lookup:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
         except rospy.ServiceException, e:
             rospy.logwarn('Service failed!')
-            rospy.logwarn(e)
+            rospy.logerr(e)
             self.finished_with_success = False
             return

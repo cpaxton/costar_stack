@@ -35,7 +35,7 @@ class NodeActionRecordDataGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionRecordData(self.get_name(),self.get_label(),int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
@@ -51,7 +51,7 @@ class NodeActionRecordData(Node):
         L = self.type
         super(NodeActionRecordData,self).__init__(name,L,'#26A65B')
         # Reset params
-        self.gripper_service_thread = Thread(target=self.make_service_call, args=('',1))
+        self.recorder_service_thread = Thread(target=self.make_service_call, args=('',1))
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
@@ -69,7 +69,7 @@ class NodeActionRecordData(Node):
             if not self.running: # Thread is not running
                 if self.finished_with_success == None: # Service was never called
                     try:
-                        self.gripper_service_thread.start()
+                        self.recorder_service_thread.start()
                         rospy.loginfo('SP Server '+self.type+' [' + self.name_ + '] running')
                         self.running = True
                         return self.set_status('RUNNING')
@@ -80,7 +80,7 @@ class NodeActionRecordData(Node):
                         return self.set_status('FAILURE')
                         
             else:# If thread is running
-                if self.gripper_service_thread.is_alive():
+                if self.recorder_service_thread.is_alive():
                     return self.set_status('RUNNING')
                 else:
                     if self.finished_with_success == True:
@@ -96,7 +96,7 @@ class NodeActionRecordData(Node):
                         return self.set_status('FAILURE')
 
     def reset_self(self):
-        self.gripper_service_thread = Thread(target=self.make_service_call, args=('',1))
+        self.recorder_service_thread = Thread(target=self.make_service_call, args=('',1))
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
@@ -113,23 +113,15 @@ class NodeActionRecordData(Node):
             return
         # Make servo call to set pose
         try:
-            gripper_open_proxy = rospy.ServiceProxy(service_name,Empty)
+            recorder_open_proxy = rospy.ServiceProxy(service_name,Empty)
             # Send Open Command
-            rospy.logwarn('Recorder '+self.type+' Started')
-            # msg.state = self.open_gripper
-            # msg.wait = self.wait_finish
-            result = gripper_open_proxy()
-            #if 'FAILURE' in str(result.ack):
-            #    rospy.logwarn('Gripper '+self.type+' failed with reply: '+ str(result.ack))
-            #    self.finished_with_success = False
-            #    return
-            #else:
-            #    rospy.logwarn('Gripper '+self.type+' Finished')
+            rospy.loginfo('Recorder '+self.type+' Started')
+            result = recorder_open_proxy()
             self.finished_with_success = True
             return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

@@ -59,7 +59,7 @@ class NodeForceEventGUI(NodeGUI):
             get_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetWaypointList',GetWaypointList)
             found_waypoints = get_waypoints_proxy('').names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            rospy.logerr(e)
         for w in found_waypoints:
             self.waypoint_ui.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
         self.waypoint_ui.waypoint_label.setText('NONE')
@@ -91,7 +91,6 @@ class NodeForceEventGUI(NodeGUI):
         return data
 
     def load_data(self,data):
-        rospy.logwarn(data)
         if data.has_key('waypoint_name'):
             if data['waypoint_name']['value']!=None:
                 self.set_command_waypoint(data['waypoint_name']['value'])
@@ -112,7 +111,7 @@ class NodeForceEventGUI(NodeGUI):
             # rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodeActionWaypoint(self.get_name(),self.get_label(),self.command_waypoint_name,self.command_vel,self.command_acc,self.listener_)
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
@@ -194,20 +193,20 @@ class NodeActionWaypoint(Node):
             msg.vel = self.command_vel
             msg.accel = self.command_acc
             # Send Servo Command
-            rospy.logwarn('Single Servo Move Started')
+            rospy.loginfo('Single Servo Move Started')
             result = pose_servo_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
+                rospy.loginfo('Single Servo Move Finished')
                 rospy.logwarn('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
             rospy.logwarn('There was a problem with the tf lookup or service:')
-            rospy.logwarn(e)
+            rospy.logerr(e)
             self.finished_with_success = False
             return

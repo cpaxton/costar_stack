@@ -83,7 +83,7 @@ class NodeHomeGUI(NodeGUI):
             # rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodeHome(self.get_name(),self.get_label(),self.command_vel,self.command_acc,self.plan)
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
@@ -171,21 +171,21 @@ class NodeHome(Node):
             msg.vel = self.command_vel
             msg.accel = self.command_acc
             # Send Servo Command
-            rospy.logwarn('Single Servo Move Started')
+            rospy.loginfo('Single Servo Move Started')
             result = pose_servo_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
-                rospy.logwarn('Robot driver reported: '+str(result.ack))
+                rospy.loginfo('Single Servo Move Finished')
+                rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the tf lookup or service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup or service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 

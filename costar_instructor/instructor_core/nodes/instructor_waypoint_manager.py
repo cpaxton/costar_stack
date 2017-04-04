@@ -33,7 +33,7 @@ def toc():
 class WaypointManager(object):
     def __init__(self):
         rospy.init_node('instructor_waypoint_manager',anonymous=True)
-        rospy.logwarn('Waypoint Manager Starting Up...')
+        rospy.loginfo('Waypoint Manager Starting Up...')
         self.broadcaster_ = tf.TransformBroadcaster()
         self.listener_ = tf.TransformListener()
         self.add_waypoint_service = rospy.Service('instructor_core/AddWaypoint', AddWaypoint, self.add_waypoint)
@@ -46,7 +46,7 @@ class WaypointManager(object):
         self.landmarks = {}
         self.saved_landmark_frames = {}
         # Set up librarian
-        rospy.logwarn('Waypoint Manager Waiting for Librarian Services')
+        rospy.loginfo('Waypoint Manager Waiting for Librarian Services')
         rospy.wait_for_service('/librarian/add_type',5)
         self.set_type_service = rospy.ServiceProxy('/librarian/add_type', librarian_msgs.srv.AddType)
         self.save_service = rospy.ServiceProxy('/librarian/save', librarian_msgs.srv.Save)
@@ -66,7 +66,7 @@ class WaypointManager(object):
 
         # load existing waypoints if any
         self.load()
-        rospy.logwarn('Waypoint Manager Running')
+        rospy.loginfo('Waypoint Manager Running')
         rospy.sleep(1.0)
 
         self.ms.applyChanges()
@@ -90,8 +90,8 @@ class WaypointManager(object):
             self.add_waypoint_marker('/' + name)
 
         relative_waypoint_names = self.list_service('instructor_relative_waypoint').entries
-        rospy.logwarn('Found Relative Waypoints:')
-        rospy.logwarn(relative_waypoint_names)
+        rospy.loginfo('Found Relative Waypoints:')
+        rospy.loginfo(relative_waypoint_names)
         for name in relative_waypoint_names:
             data = yaml.load(self.load_service(id=name,type='instructor_relative_waypoint').text)
             self.relative_waypoints['/' + name] = data

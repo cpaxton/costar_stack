@@ -60,7 +60,7 @@ class NodePlanRelativeWaypointGUI(NodeGUI):
             get_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetRelativeWaypointList',GetRelativeWaypointList)
             found_waypoints = get_waypoints_proxy('').names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            rospy.logerr(e)
         for w in found_waypoints:
             self.waypoint_ui.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
         self.waypoint_ui.waypoint_label.setText('NONE')
@@ -91,7 +91,6 @@ class NodePlanRelativeWaypointGUI(NodeGUI):
         return data
 
     def load_data(self,data):
-        rospy.logwarn(data)
         if data.has_key('waypoint_name'):
             if data['waypoint_name']['value']!=None:
                 self.set_command_waypoint(data['waypoint_name']['value'])
@@ -109,10 +108,10 @@ class NodePlanRelativeWaypointGUI(NodeGUI):
 
     def generate(self):
         if all([self.name.full(), self.command_waypoint_name]):
-            rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
+            # rospy.loginfo('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodePlanRelativeWaypoint(self.get_name(),self.get_label(),self.command_waypoint_name,self.command_vel,self.command_acc,self.listener_)
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
+            rospy.logerr('NODE NOT PROPERLY DEFINED')
             return 'ERROR: node not properly defined'
 
     def refresh_data(self):
@@ -216,8 +215,8 @@ class NodePlanRelativeWaypoint(Node):
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the tf lookup or service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup or service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 
