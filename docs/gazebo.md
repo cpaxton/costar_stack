@@ -45,3 +45,7 @@ Alright, that should at least let you compile Gazebo.
 ## 16.04 
 
 Not yet supported. Hope the binaries work.
+
+## References
+
+  - [Installing Gazebo from source](http://gazebosim.org/tutorials?tut=install_from_source)
