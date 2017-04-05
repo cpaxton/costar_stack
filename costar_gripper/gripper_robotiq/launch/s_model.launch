@@ -4,7 +4,7 @@
   <arg name="start_joint_state_publisher" default="false" doc="(bool) bring up joint state publisher with UI"/>
 
   <!-- Launch gripper endpoint setup -->
-  <include file="$(find gripper_manager)/launch/robotiq_s_model_endpoint.launch">
+  <include file="$(find gripper_robotiq)/launch/robotiq_s_model_endpoint.launch">
     <param name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 
@@ -23,6 +23,6 @@
     <param name="use_gui" value="true"/>
   </node>
 
-  <node name="simple_s_model_server" pkg="gripper_manager" type="s_model.py"/>
+  <node name="simple_s_model_server" pkg="gripper_robotiq" type="s_model.py"/>
 
 </launch>

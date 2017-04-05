@@ -34,6 +34,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from gripper_manager import CostarGripper
+
 import rospy
 from robotiq_c_model_control.msg import _CModel_robot_output  as outputMsg
 from robotiq_c_model_control.msg import _CModel_robot_input  as inputMsg
@@ -41,40 +43,29 @@ from os.path import join
 from std_srvs.srv import Empty
 from predicator_robotiq import CModelPredicator
 
-def getDefaultMsg():
-    command = outputMsg.CModel_robot_output();
-    command.rACT = 1
-    command.rGTO = 1
-    command.rSP = 255
-    command.rFR = 150
-    return command
-
-class SimpleCModelServer:
+class SimpleCModelServer(CostarGripper):
 
     def __init__(self,ns="/costar/gripper",verbose=False):
+        super(SimpleCModelServer, self).__init__(
+                "c_model",
+                input_topic="CModelRobotInput",
+                output_topic="CModelRobotOutput",
+                InputMsgType=inputMsg.CModel_robot_input,
+                OutputMsgType=outputMsg.CModel_robot_output,
+                GripperPredicatorType=CModelPredicator,
+                ns=ns,
+                verbose=verbose)
 
-        self.verbose = verbose
-        self.predicator = CModelPredicator(start_subscriber=False,publish_predicates=True,
-            gripper_name="c_model")
-
-        self.sub = rospy.Subscriber("CModelRobotInput", inputMsg.CModel_robot_input, self.status_cb)
-        self.pub = rospy.Publisher('CModelRobotOutput', outputMsg.CModel_robot_output, queue_size = 100)
-        self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
-        self.close = rospy.Service(join(ns,"close"), Empty, self.close_gripper)
-        self.wide_mode_srv = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)
-        self.pinch_mode_srv = rospy.Service(join(ns,"pinch_mode"), Empty, self.pinch_mode)
-        self.basic_mode_srv = rospy.Service(join(ns,"basic_mode"), Empty, self.basic_mode)
-        self.scissor_mode_srv = rospy.Service(join(ns,"scissor_mode"), Empty, self.scissor_mode)
-        self.reactivate_srv = rospy.Service(join(ns,"activate"), Empty, self.activate)
-        self.reset_srv = rospy.Service(join(ns,"reset"), Empty, self.reset)
-        self.command = getDefaultMsg()
-
-        self.activated = True;
-
-        self.activate()
+    def getDefaultMsg(cls):
+        command = outputMsg.CModel_robot_output();
+        command.rACT = 1
+        command.rGTO = 1
+        command.rSP = 255
+        command.rFR = 150
+        return command
 
     def activate(self,msg=None):
-        self.command = getDefaultMsg()
+        self.command = SimpleCModelServer.getDefaultMsg()
         self.pub.publish(self.command)
         return []
 
@@ -113,11 +104,6 @@ class SimpleCModelServer:
 
     def scissor_mode(self,msg=None):
         return []
-
-    def status_cb(self,msg):
-        if self.verbose:
-            rospy.loginfo(self.statusInterpreter(msg))
-        self.predicator.handle(msg)
 
     def statusInterpreter(self,status):
         """Generate a string according to the current value of the status variables."""

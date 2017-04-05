@@ -41,17 +41,19 @@ from os.path import join
 from std_srvs.srv import Empty
 from predicator_robotiq import SModelPredicator
 
-def getDefaultMsg():
-    command = outputMsg.SModel_robot_output();
-    command.rACT = 1
-    command.rGTO = 1
-    command.rSPA = 255
-    command.rFRA = 150
-    return command
-
 class SimpleSModelServer:
 
-    def __init__(self,ns="/costar/gripper"):
+    def __init__(self,ns="/costar/gripper",verbose=False)
+        super(SimpleCModelServer, self).__init__(
+                "s_model",
+                input_topic="CModelRobotInput",
+                output_topic="CModelRobotOutput",
+                InputMsgType=inputMsg.CModel_robot_input,
+                OutputMsgType=outputMsg.CModel_robot_output,
+                GripperPredicatorType=CModelPredicator,
+                ns=ns,
+                verbose=verbose)
+
         self.sub = rospy.Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.status_cb)
         self.pub = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output)
         self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
@@ -70,8 +72,16 @@ class SimpleSModelServer:
 
         self.activate()
 
+    def getDefaultMsg(cls):
+        command = outputMsg.SModel_robot_output();
+        command.rACT = 1
+        command.rGTO = 1
+        command.rSPA = 255
+        command.rFRA = 150
+        return command
+
     def activate(self,msg=None):
-        self.command = getDefaultMsg()
+        self.command = SimpleSModelServer.getDefaultMsg()
         self.pub.publish(self.command)
         return []
 
@@ -123,10 +133,6 @@ class SimpleSModelServer:
         self.pub.publish(self.command)
         rospy.sleep(0.5)
         return []
-
-    def status_cb(self,msg):
-        rospy.loginfo(self.statusInterpreter(msg))
-        self.predicator.handle(msg)
 
     def statusInterpreter(self,status):
         """Generate a string according to the current value of the status variables."""
