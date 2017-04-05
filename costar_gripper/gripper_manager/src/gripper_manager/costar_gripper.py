@@ -1,4 +1,7 @@
-from costar_component import MyComponent
+from costar_component import CostarComponent
+from os.path import join
+import rospy
+from std_srvs.srv import Empty
 
 # The CoSTAR Gripper component contains a lot less special logic than the
 # CoSTAR Arm does. It mostly just has a few tools.
@@ -15,7 +18,9 @@ class CostarGripper(CostarComponent):
       *args, **kwargs):
 
     self.verbose = verbose
-    self.predicator = GripperPredicator(start_subscriber=False,publish_predicates=True,
+    self.predicator = GripperPredicatorType(
+        start_subscriber=False,
+        publish_predicates=True,
         gripper_name=name)
 
     self.sub = rospy.Subscriber(input_topic, InputMsgType, self.status_cb)

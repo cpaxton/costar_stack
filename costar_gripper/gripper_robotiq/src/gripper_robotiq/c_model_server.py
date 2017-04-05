@@ -39,8 +39,6 @@ from gripper_manager import CostarGripper
 import rospy
 from robotiq_c_model_control.msg import _CModel_robot_output  as outputMsg
 from robotiq_c_model_control.msg import _CModel_robot_input  as inputMsg
-from os.path import join
-from std_srvs.srv import Empty
 from predicator_robotiq import CModelPredicator
 
 class SimpleCModelServer(CostarGripper):
@@ -65,7 +63,7 @@ class SimpleCModelServer(CostarGripper):
         return command
 
     def activate(self,msg=None):
-        self.command = SimpleCModelServer.getDefaultMsg()
+        self.command = self.getDefaultMsg()
         self.pub.publish(self.command)
         return []
 
