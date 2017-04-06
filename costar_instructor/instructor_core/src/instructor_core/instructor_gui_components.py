@@ -42,7 +42,7 @@ class Dialog(QWidget):
         self.button_layout.addWidget(self.save_cancel_btn,2,0)
 
 class Button(QPushButton):
-    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None):
+    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None, text_color=Color('#ffffff', '#ffffff', '#dddddd')):
         QPushButton.__init__(self, parent)
         self.setMouseTracking(True)
         self.name = name
@@ -50,8 +50,9 @@ class Button(QPushButton):
         self.setText(self.label)
         # COLOR
         self.color = color
-        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
-        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.text_color = text_color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+self.text_color.normal+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+self.text_color.normal+';border:none;'
         self.setStyleSheet(self.default_style)
         self.font = QtGui.QFont("Ubuntu", txtsz, QtGui.QFont.Bold)
         self.setFont(self.font)

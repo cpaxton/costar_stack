@@ -62,7 +62,7 @@ class RobotInterface():
         # self.status_label.setText('ROBOT MODE: ['+self.driver_status.upper()+']')
 
     def teach(self):
-        if self.driver_status == 'IDLE':
+        if self.driver_status == 'IDLE' or self.driver_status == 'SERVO':
             try:
                 rospy.wait_for_service('/costar/SetTeachMode',2)
             except rospy.ROSException as e:
@@ -95,7 +95,7 @@ class RobotInterface():
             self.toast('Driver is in ['+self.driver_status+'] mode!')
 
     def servo(self):
-        if self.driver_status == 'IDLE':
+        if self.driver_status == 'IDLE' or self.driver_status == 'TEACH':
             try:
                 rospy.wait_for_service('/costar/SetServoMode',2)
             except rospy.ROSException as e:
