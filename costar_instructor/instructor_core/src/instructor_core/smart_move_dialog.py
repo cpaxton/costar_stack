@@ -9,13 +9,13 @@ from beetree import *
 from smart_waypoint_manager import SmartWaypointManager
 
 class SmartMoveDialog(QWidget):
-    def __init__(self, show_hide_fn,parent=None):
+    def __init__(self, parent=None):
         QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
         # GUI
         rp = rospkg.RosPack()
         w_path = rp.get_path('instructor_core') + '/ui/smart_move.ui'
         uic.loadUi(w_path, self)
-        self.show_hide = show_hide_fn
+        self.show_hide = self.show_hide_slide
         self.selected_object = None
         self.selected_move = None
         self.saved_geom = None
@@ -33,6 +33,19 @@ class SmartMoveDialog(QWidget):
 
         self.update_objects()
         self.update_moves()
+
+
+    def show_hide_slide(self):
+        if self.smartmove_dialog.isVisible():
+            self.smartmove_dialog.saved_geom = self.smartmove_dialog.geometry()
+            self.smartmove_dialog.hide()
+        else:
+            if self.smartmove_dialog.saved_geom is not None:
+                self.smartmove_dialog.move(self.smartmove_dialog.saved_geom.x(),self.smartmove_dialog.saved_geom.y())
+            else:
+                self.smartmove_dialog.move(self.geometry().x()+self.geometry().width()/2-self.smartmove_dialog.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.smartmove_dialog.geometry().height()/2)
+            self.smartmove_dialog.show()
+            self.smartmove_dialog.update_all()
 
     def update_all(self):
         self.update_objects()

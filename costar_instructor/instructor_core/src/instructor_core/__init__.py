@@ -19,6 +19,7 @@ __all__ += ['NamedField']
 __all__ += ['NamedComboBox']
 __all__ += ['JogDialog']
 __all__ += ['SmartMoveDialog']
+__all__ += ['NotificationDialog']
 __all__ += ['RobotInterface']
 
 # NodeGUI Base Classes
