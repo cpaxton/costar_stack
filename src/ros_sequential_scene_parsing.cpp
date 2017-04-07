@@ -1,4 +1,3 @@
-#include <pcl/io/pcd_io.h>
 #include "ros_sequential_scene_parsing.h"
 #include "utility_ros.h"
 
@@ -38,6 +37,9 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	std::string objransac_model_location, objransac_model_list;
 	std::vector<std::string> object_names;
 
+	double data_forces_magnitude_per_point;
+	double data_forces_max_distance;
+
 	bool debug_mode, load_table;
 
 	nh.param("detected_object_topic", detected_object_topic,std::string("/detected_object"));
@@ -55,6 +57,9 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("object_hypotheses_topic",object_hypotheses_topic,std::string("/object_hypothesis"));
 	nh.param("objransac_model_directory",objransac_model_location,object_folder_location);
 	nh.param("objransac_model_names",objransac_model_list,std::string(""));
+
+	nh.param("data_forces_magnitude",data_forces_magnitude_per_point,0.5);
+	nh.param("data_forces_max_distance",data_forces_max_distance,0.01);
 
 	if (load_table){
 		nh.param("table_location",background_location,std::string(""));
@@ -88,6 +93,9 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	this->object_hypotheses_sub = this->nh_.subscribe(object_hypotheses_topic,1,
 		&RosSceneGraph::fillObjectHypotheses,this);
 	
+	// setup feedback force parameters
+	this->ros_scene_.setDataFeedbackForcesParameters(data_forces_magnitude_per_point, data_forces_max_distance);
+
 	// sleep for caching the initial TF frames.
 	sleep(1.0);
 	

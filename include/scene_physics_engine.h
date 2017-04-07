@@ -25,6 +25,7 @@
 
 #include "scene_physics_penalty.h"
 #include "scene_physics_support.h"
+#include "scene_data_forces.h"
 
 static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep);
 
@@ -72,6 +73,8 @@ public:
 	void stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step);
     void worldTickCallback(const btScalar &timeStep);
 
+    void setFeedbackDataForcesGenerator(FeedbackDataForcesGenerator *data_forces_generator);
+
 // Additional functions used for rendering:
     void initPhysics();
     void exitPhysics();
@@ -97,6 +100,7 @@ private:
 	bool checkSteadyState();
 	void cacheObjectVelocities(const btScalar &timeStep);
 	void stopAllObjectMotion();
+	void applyDataForces();
 	
 	bool debug_messages_;
 	bool have_background_;
@@ -123,6 +127,8 @@ private:
 	
 	std::map<std::string, ObjectPenaltyParameters> object_penalty_parameter_database_by_id_;
     std::map<std::string, ObjectPenaltyParameters> * object_penalty_parameter_database_;
+    std::map<std::string, std::string> object_label_class_map_;
+    
     double gravity_magnitude_;
     btVector3 gravity_vector_;
     
@@ -141,6 +147,7 @@ private:
 	unsigned int number_of_world_tick_;
 
 	double best_scene_probability_;
+	FeedbackDataForcesGenerator * data_forces_generator_;
 };
 
 #endif

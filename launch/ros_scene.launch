@@ -11,11 +11,14 @@
   <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3"/>
   <arg name="tf_publisher_initial"           default="scene"/>
   <arg name="debug"                          default="false"/>
-  <arg name="load_table"                     default="true"/>
+  <arg name="load_table"                     default="false"/>
   <arg name="table_location"                 default="$(find sequential_scene_parsing)/mesh/table.pcd"/>
   <arg name="render_scene"                   default="true" />
-  <arg name="objransac_model_directory"      default="$(find sp_segmenter)/data/mesh"/>
+  <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
   <arg name="objransac_model_names"          default="node_uniform,link_uniform" />
+
+  <arg name="data_forces_magnitude"          default="1000.0"/>
+  <arg name="data_forces_max_distance"       default="0.05"/>
 
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros"
   output="screen"
@@ -38,8 +41,12 @@
 
     <param name="render_scene"            type="bool"    value="$(arg render_scene)"/>
 
+    <param name="data_forces_magnitude"        type="double"  value="$(arg data_forces_magnitude)"/>
+    <param name="data_forces_max_distance"     type="double"  value="$(arg data_forces_max_distance)"/>
+
     <param name="objransac_model_directory"    type="str"     value="$(arg objransac_model_directory)"/>
     <param name="objransac_model_names"        type="str"     value="$(arg objransac_model_names)"/>
+
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sequential_scene_parsing)/mesh/object_property_database.yaml" />

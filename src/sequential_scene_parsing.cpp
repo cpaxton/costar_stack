@@ -1,5 +1,3 @@
-
-
 #include "sequential_scene_parsing.h"
 
 
@@ -15,7 +13,7 @@ void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
 {
 	if (this->debug_messages_) std::cerr <<"Setting physics engine into the scene graph.\n";
 	this->physics_engine_ = physics_engine;
-
+	this->physics_engine_->setFeedbackDataForcesGenerator(&data_forces_generator_);
 	// Check if physics engine exist
 	this->physics_engine_ready_ = (physics_engine_ != NULL);
 	if (this->physics_engine_ready_)
@@ -159,6 +157,7 @@ void SceneGraph::addScenePointCloud(ImagePtr scene_image)
 	pcl::PointCloud<pcl::PointXYZ>::Ptr point_coordinates_only(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::copyPointCloud(*scene_image, *point_coordinates_only);
 	data_probability_check_.setPointCloudData(point_coordinates_only);
+	data_forces_generator_.setSceneData(point_coordinates_only);
 }
 
 void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
@@ -180,7 +179,9 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 {
 	if (this->debug_messages_) std::cerr <<"Getting corrected object transform from the scene graph.\n";
 	seq_mtx_.lock();
+
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./200,30);
+	// this->physics_engine_->setSimulationMode(BULLET_DEFAULT,1./200,30);
 	std::map<std::string, ObjectParameter> result = this->physics_engine_->getUpdatedObjectPose();
 	this->getCurrentSceneSupportGraph();
 	write_graphviz(std::cout, this->scene_support_graph_, label_writer(this->scene_support_graph_));
@@ -201,7 +202,21 @@ bool SceneGraph::loadObjectModels(const std::string &input_model_directory_path,
 	        model_path += "/";
 
 	    for (std::vector<std::string>::const_iterator it = object_names.begin(); it != object_names.end(); ++it)
-		    data_probability_check_.addModelFromPath(model_path + *it, *it);
+	    {
+	    	data_probability_check_.addModelFromPath(model_path + *it, *it);
+	    	
+	    	std::stringstream ss;
+	    	ss << model_path << *it << ".pcd";
+	    	pcl::PCDReader reader;
+			pcl::PointCloud<pcl::PointXYZ>::Ptr surface_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+			if (reader.read(ss.str(),*surface_cloud) == 0){
+				data_forces_generator_.setModelCloud(surface_cloud, *it);
+				std::cerr << "Model point cloud loaded successfully\n";
+			}
+			else
+				std::cerr << "Failed to load " << *it << " model point cloud\n"; 
+	    }
+
 		std::cerr << "Done.\n";
 		return true;
 	}
@@ -393,12 +408,12 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 			std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" << ++counter << std::endl;
 			int i = 0;
 			std::map<std::string, ObjectParameter> tmp_object_pose_config;
-			// for (int i = 0; i < 5; i++)
-			// {
+			for (int i = 0; i < 5; i++)
+			{
 				seq_mtx_.lock();
 				double scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
 					object_pose_label, object_model_name, updated_background_support_status,
-					object_pose, true);
+					object_pose, i == 0);
 				// get updated object pose from the scene simulation
 				// object_pose = this->scene_support_graph_[it->second].object_pose_;
 
@@ -423,8 +438,8 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 				std::cerr << "Scene probability = " << scene_hypothesis_probability
 					<< " current best: " << best_object_probability_effect << std::endl;
 
-				// this->physics_engine_->stepSimulationWithoutEvaluation(0.2,1/100.);
-			// }
+				this->physics_engine_->stepSimulationWithoutEvaluation(0.2,1/100.);
+			}
 			// std::cerr << "-------------------------------------------------------------\n\n";
 		}
 		

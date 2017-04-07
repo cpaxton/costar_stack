@@ -15,3 +15,5 @@ This package requires these dependencies:
 Additionally, this package has a ros compatible bundling. To install this with ros capability:
 
 # Usage
+	1. Use obj_convex_decomposition on your input obj mesh file to generate a collision mesh (.bcs). Put the generated file into the mesh directory
+	2. Use pcl_mesh_sampling to generate surface sampled point cloud of your input obj mesh file, and put it into the mesh directory.

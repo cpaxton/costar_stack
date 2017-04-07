@@ -11,6 +11,7 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/io/pcd_io.h>
 
 // use detected object list instead of tf name convention
 #include <costar_objrec_msgs/ObjectSymmetry.h>

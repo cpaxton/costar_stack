@@ -209,7 +209,8 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 		this->rigid_body_[it->getID()]->setUserPointer(object_name);
 
 		object_penalty_parameter_database_by_id_[it->getID()] = (*object_penalty_parameter_database_)[it->getObjectClass()];
-		
+		object_label_class_map_[it->getID()] = it->getObjectClass();
+
 		if (this->debug_messages_)
 		{
 			std::cerr << "Object " << it->getID() <<", address: " << this->rigid_body_[it->getID()]  <<": \n";
@@ -276,14 +277,15 @@ void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, c
 {
 	int number_of_world_tick_to_step = delta_time / simulation_step;
 	mtx_.lock();
+	this->in_simulation_ = true;
 	// set world tick counter so that it never evaluates the scene graph
 	this->world_tick_counter_ = this->number_of_world_tick_ + 1;
+	mtx_.unlock();
 	for (int i = 0; i < number_of_world_tick_to_step; i++)
 	{
 		m_dynamicsWorld->stepSimulation(simulation_step, 10);
 		// if (this->checkSteadyState()) break;
 	}
-	mtx_.unlock();
 }
 
 bool PhysicsEngine::checkSteadyState()
@@ -428,6 +430,11 @@ void PhysicsEngine::renderingLaunched()
 	this->rendering_launched_ = true;
 }
 
+void PhysicsEngine::setFeedbackDataForcesGenerator(FeedbackDataForcesGenerator *data_forces_generator)
+{
+	this->data_forces_generator_ = data_forces_generator;
+}
+
 void PhysicsEngine::initPhysics()
 {
 	setTexturing(true);
@@ -543,9 +550,10 @@ void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenalty
 void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 	mtx_.lock();
 	++world_tick_counter_;
-    // calculate the scene analysis here
     this->cacheObjectVelocities(timeStep);
+    this->applyDataForces();
 
+	// calculate the scene analysis here
     if (world_tick_counter_ == this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
     {
 	    scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
@@ -658,6 +666,16 @@ void PhysicsEngine::changeBestTestPoseMap(const std::map<std::string, btTransfor
 btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id) const
 {
 	return getContentOfConstantMap(object_id, this->object_best_pose_from_data_);
+}
+
+void PhysicsEngine::applyDataForces()
+{
+    // calculate data feedback forces to apply
+    for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
+	{
+	    this->data_forces_generator_->applyFeedbackForces(*(it->second),object_label_class_map_[it->first]);
+	}
 }
 
 // vertex_t PhysicsEngine::getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position)

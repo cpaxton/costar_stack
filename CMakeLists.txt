@@ -85,7 +85,7 @@ add_library(objectDataProperty ${ObjectDataProperty})
 
 add_library(ObjRecRANSACTool include/ObjRecRANSACTool/ObjRecRANSACTool.cpp) 
 
-set(PhysicsEngine src/scene_physics_engine.cpp src/scene_physics_support.cpp)
+set(PhysicsEngine src/scene_physics_engine.cpp src/scene_physics_support.cpp src/scene_data_forces.cpp)
 add_library(physicsEngine ${PhysicsEngine})
 
 set(SequentialSceneParsing src/sequential_scene_parsing.cpp)
@@ -127,7 +127,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- physicsEngine objectDataProperty OpenGLSupport ${BULLET_LIBRARIES} ${Boost_LIBRARIES}
+ physicsEngine objectDataProperty OpenGLSupport ${BULLET_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES}
 )
 
 target_link_libraries(

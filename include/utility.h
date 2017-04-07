@@ -5,6 +5,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <pcl/point_types.h>
 #include <map>
+#include "physics_world_parameters.h"
 
 template <typename container_type1, typename container_type2>
 container_type2 getContentOfConstantMap(const container_type1 &key, const std::map<container_type1, container_type2> &database)
@@ -79,6 +80,23 @@ template <typename PointT>
 btVector3 pclPointToBulletVector(const PointT &input)
 {
 	return btVector3(input.x,input.y,input.z);
+}
+
+
+inline
+btTransform scaleTransformToPhysicsEngine(const btTransform &input)
+{
+	btTransform bt = input;
+	bt.setOrigin(bt.getOrigin()*SCALING);
+	return bt;
+}
+
+inline
+btTransform rescaleTransformFromPhysicsEngine(const btTransform &input)
+{
+	btTransform bt = input;
+	bt.setOrigin(bt.getOrigin()/SCALING);
+	return bt;
 }
 
 #endif

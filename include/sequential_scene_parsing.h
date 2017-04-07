@@ -19,6 +19,8 @@
 #include <pcl/surface/gp3.h>
 #include <pcl/conversions.h>
 
+#include <pcl/io/pcd_io.h>
+
 #include <boost/filesystem.hpp>
 
 #include <boost/graph/graph_traits.hpp>
@@ -33,6 +35,7 @@
 #include "utility.h"
 
 #include "scene_physics_engine.h"
+#include "scene_data_forces.h"
 
  // ObjectParameter == Object Pose
 typedef btTransform ObjectParameter;
@@ -69,6 +72,12 @@ public:
 	bool loadObjectModels(const std::string &input_model_directory_path, const std::vector<std::string> &object_names);
 	void setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map);
 
+	template <typename numericStandard>
+	void setDataFeedbackForcesParameters(const numericStandard &forces_magnitude_per_point, const numericStandard &max_point_distance_threshold)
+	{
+		data_forces_generator_.setForcesParameter(btScalar(forces_magnitude_per_point),btScalar(max_point_distance_threshold));
+	}
+
 private:
 	void getCurrentSceneSupportGraph();
 	void getUpdatedSceneSupportGraph();
@@ -83,6 +92,8 @@ private:
 
 	PhysicsEngine * physics_engine_;
 	SceneSupportGraph scene_support_graph_;
+	FeedbackDataForcesGenerator data_forces_generator_;
+
 	// std::vector<SceneSupportGraph> scene_support_graph_;
 	std::map<std::string, vertex_t> vertex_map_;
 
