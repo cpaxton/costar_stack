@@ -18,9 +18,11 @@ class CostarDMP(CostarComponent):
         self.name = "dmp"
         self.namespace = "/costar/dmp"
         self.collecting = False
+        self.tau = 0 # A time constant (in seconds) that will cause the DMPs to replay at the same speed they were demonstrated.
 
         self.start_rec_srv = self.make_service('start_rec',DmpTeach, self.start_rec_cb)
         self.stop_rec_srv = self.make_service('stop_rec', EmptyService, self.stop_rec_cb)
+        self.dmp_move_srv = self.make_service('dmp_move', EmptyService, self.dmp_move_cb)
 
         self.listener = tf.TransformListener();
 
@@ -34,6 +36,10 @@ class CostarDMP(CostarComponent):
 
         rospy.wait_for_service('learn_dmp_from_demo')
         self.lfd = rospy.ServiceProxy('learn_dmp_from_demo', LearnDMPFromDemo)
+        rospy.wait_for_service('set_active_dmp')
+        self.sad = rospy.ServiceProxy('set_active_dmp',SetActiveDMP)
+        rospy.wait_for_service('get_dmp_plan')
+        self.gdp = rospy.ServiceProxy('get_dmp_plan', GetDMPPlan)
 
         self.folder = 'dmp'
         self.add_type_service(self.folder)
@@ -57,7 +63,7 @@ class CostarDMP(CostarComponent):
         self.collecting = True
         self.traj['traj_name']= req.teach_name
         self.traj['reference_frame'] = req.reference_frame
-        return
+        return []
 
     def stop_rec_cb(self,req):
         self.collecting = False
@@ -81,11 +87,35 @@ class CostarDMP(CostarComponent):
         	demotraj.times.append(10*i) 
 
         resp = self.lfd(demotraj, k_gains, d_gains, num_bases) # use service call to compute dmp
+        self.tau = resp.tau
+        self.sad(resp.dmp_list) # set the latest recorded dmp traj as active dmp
 
         # save to yaml with:
         self.save_service(id=self.name.strip('/'),type=self.folder,text=yaml.dump(self.traj)) # original teach_traj
         self.save_service(id="dmp_computed",type=self.folder,text=yaml.dump(resp))
 
-        return
+        return []
 
+    def dmp_move_cb(self,req):
+    	#Now, generate a plan
+    	(start_trans,start_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/PSM1_tool_tip_link_virtual',rospy.Time(0))
+    	start_rot_euler = tf.transformations.euler_from_quaternion(start_rot)
+    	(end_trans,end_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/endpoint',rospy.Time(0))
+    	end_rot_euler = tf.transformations.euler_from_quaternion(end_rot)
+    	
+    	start_pose = start_trans + start_rot_euler
+    	start_velocity = [0.0,0.0,0.0,0.0,0.0,0.0]
+    	end_pose = end_trans + end_rot_euler
+    	end_thresh = [0.2,0.2,0.2,0.2,0.2,0.2]
+    	t_0 = 0
+    	                
+    	seg_length = -1          #Plan until convergence to goal
+    	tau = 2 * self.tau       #Desired plan should take twice as long as demo
+    	dt = 10
+    	integrate_iter = 5       #dt is rather large, so this is > 1  
+    	plan = self.gdp(start_pose, start_velocity, t_0, end_pose, end_thresh, 
+                           	   seg_length, tau, dt, integrate_iter)
+    	self.save_service(id="dmp_plan",type=self.folder,text=yaml.dump(plan))
+
+    	return []
 
