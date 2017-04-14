@@ -85,7 +85,7 @@ private:
 	double evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 
 		const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 		const btTransform &object_pose_hypothesis, const bool &reset_position);
-
+	double evaluateSceneProbabilityFromGraph();
 
 	bool debug_messages_;
 	bool physics_engine_ready_;

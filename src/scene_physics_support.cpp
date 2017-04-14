@@ -1,13 +1,5 @@
 #include "scene_physics_support.h"
 
-std::string getObjectIDFromCollisionObject(const btCollisionObject* object)
-{
-    if (object->getUserPointer() != NULL)
-        return *(std::string*)object->getUserPointer();
-    else
-        return std::string("unrecognized_object");
-}
-
 OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
 {
     // Use breadth-first search to get the vertex order of hypothesis check

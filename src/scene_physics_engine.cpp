@@ -7,7 +7,9 @@ static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
 }
 
 PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), 
-	rendering_launched_(false), use_background_normal_as_gravity_(false), simulation_step_(1/200.)
+	rendering_launched_(false), in_simulation_(false),
+	use_background_normal_as_gravity_(false), simulation_step_(1/200.), 
+	skip_scene_evaluation_(false)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
 	this->initPhysics();
@@ -170,7 +172,6 @@ void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transf
 
 void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 {
-	// mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Setting physics engine gravity vector.\n";
 	this->gravity_vector_ = gravity / gravity.norm() * GRAVITY_MAGNITUDE * SCALING;
 	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_vector_[0] << ", "
@@ -178,7 +179,6 @@ void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 		<< gravity_vector_[2] << std::endl;
 	m_dynamicsWorld->setGravity(gravity_vector_);
 	this->gravity_magnitude_ = gravity_vector_.norm();
-	// mtx_.unlock();
 }
 
 void PhysicsEngine::setGravityFromBackgroundNormal(const bool &input)
@@ -210,6 +210,10 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 
 		object_penalty_parameter_database_by_id_[it->getID()] = (*object_penalty_parameter_database_)[it->getObjectClass()];
 		object_label_class_map_[it->getID()] = it->getObjectClass();
+		
+		// add the best pose from hypothesis to cached icp result
+		data_forces_generator_->manualSetCachedIcpResultMapFromPose(
+			*(this->rigid_body_[it->getID()]), it->getObjectClass());
 
 		if (this->debug_messages_)
 		{
@@ -230,8 +234,6 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 
 void PhysicsEngine::simulate()
 {
-	// mtx_.lock();
-
 	if (this->debug_messages_) std::cerr << "Simulating the physics engine.\n";
 	// If do not have background, do not update the scene
 	
@@ -256,11 +258,12 @@ void PhysicsEngine::simulate()
 		while (this->in_simulation_ && this->world_tick_counter_ < this->number_of_world_tick_ )
 		{
 			// Do nothing;
-			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+			boost::this_thread::sleep(boost::posix_time::milliseconds(1));
 		}
 	}
-	else
+	else if (this->in_simulation_ && !this->rendering_launched_)
 	{
+		// TODO: Find out why the simulation step not syncing with the internal step callback.
 		for (int i = 0; i < this->number_of_world_tick_; i++)
 		{
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
@@ -277,15 +280,16 @@ void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, c
 {
 	int number_of_world_tick_to_step = delta_time / simulation_step;
 	mtx_.lock();
-	this->in_simulation_ = true;
-	// set world tick counter so that it never evaluates the scene graph
-	this->world_tick_counter_ = this->number_of_world_tick_ + 1;
+	this->skip_scene_evaluation_ = true;
+	// this->in_simulation_ = true;
+	this->world_tick_counter_ = 0;
 	mtx_.unlock();
 	for (int i = 0; i < number_of_world_tick_to_step; i++)
 	{
-		m_dynamicsWorld->stepSimulation(simulation_step, 10);
+		m_dynamicsWorld->stepSimulation(simulation_step, 1);
 		// if (this->checkSteadyState()) break;
 	}
+	this->skip_scene_evaluation_ = false;
 }
 
 bool PhysicsEngine::checkSteadyState()
@@ -494,12 +498,6 @@ void PhysicsEngine::clientMoveAndDisplay()
 	{
 		if (this->in_simulation_){
 			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
-			// if (this->checkSteadyState())
-			// {
-			// 	mtx_.lock();
-			// 	this->in_simulation_ = false;
-			// 	mtx_.unlock();
-			// }
 		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
@@ -552,9 +550,12 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 	++world_tick_counter_;
     this->cacheObjectVelocities(timeStep);
     this->applyDataForces();
+    // std::cerr << world_tick_counter_ << " " << this->number_of_world_tick_ << std::endl;
 
 	// calculate the scene analysis here
-    if (world_tick_counter_ == this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
+    if ( !skip_scene_evaluation_ &&
+    	 (world_tick_counter_ >= this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
+    	)
     {
 	    scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
 		// put the stability penalty into the scene graph
@@ -584,7 +585,6 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 void PhysicsEngine::stopAllObjectMotion()
 {
 	btVector3 zero_vector(0,0,0);
-	// mtx_.lock()
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
@@ -599,7 +599,6 @@ void PhysicsEngine::resetObjectMotionState(const bool &reset_object_pose,
 	const std::map<std::string, btTransform> &target_pose_map)
 {
 	btVector3 zero_vector(0,0,0);
-	// mtx_.lock()
 	for (std::map<std::string, btTransform>::const_iterator it = target_pose_map.begin(); 
 		it != target_pose_map.end(); ++it)
 	{
@@ -619,9 +618,8 @@ void PhysicsEngine::resetObjectMotionState(const bool &reset_object_pose,
 		rigid_body_[it->first]->setAngularVelocity(zero_vector);
 
 		// force the object to be active again
-		rigid_body_[it->first]->activate(true);
+		// rigid_body_[it->first]->activate(true);
 	}
-	// mtx_.unlock()
 }
 
 SceneSupportGraph PhysicsEngine::getCurrentSceneGraph(std::map<std::string, vertex_t> &vertex_map)
@@ -646,6 +644,7 @@ void PhysicsEngine::prepareSimulationForOneTestHypothesis(const std::string &obj
 	object_test_pose_map_ = this->object_best_test_pose_map_;
 	object_test_pose_map_[object_id] = object_pose;
 	this->resetObjectMotionState(resetObjectPosition, object_test_pose_map_);
+	rigid_body_[object_id]->activate(true);
 	mtx_.unlock();
 }
 

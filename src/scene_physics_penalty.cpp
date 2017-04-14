@@ -87,3 +87,9 @@ btScalar getObjectCollisionPenalty(const scene_support_vertex_properties &suppor
 	// return 1.;
 }
 
+btScalar dataProbabilityScale(const btScalar &hypothesis_confidence)
+{
+	// Scaling for hypothesis confidence
+	return logisticFunction(20, 1, 0.18, hypothesis_confidence);
+}
+

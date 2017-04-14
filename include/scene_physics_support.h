@@ -117,8 +117,6 @@ private:
 };
 
 
-std::string getObjectIDFromCollisionObject(const btCollisionObject* object);
-
 // will produce order of vertices correction starting the background
 OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
 

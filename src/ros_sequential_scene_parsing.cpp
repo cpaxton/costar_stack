@@ -209,8 +209,8 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 	this->ros_scene_.addNewObjectTransforms(objects);
 	this->ros_scene_.setObjectSymmetryMap(object_symmetry_map);
 	std::cerr << "Getting corrected object transform...\n";
-	this->mtx_.lock();
 	std::map<std::string, ObjectParameter> object_transforms = this->ros_scene_.getCorrectedObjectTransform();
+	this->mtx_.lock();
 	this->updateTfFromObjTransformMap(object_transforms);
 	this->mtx_.unlock();
 	
@@ -307,8 +307,8 @@ void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelH
 		ros::Duration(0.5).sleep();
 	}
 
-	this->mtx_.lock();
 	this->ros_scene_.evaluateAllObjectHypothesisProbability();
+	this->mtx_.lock();
 	this->updateTfFromObjTransformMap(this->ros_scene_.getCorrectedObjectTransformFromSceneGraph());
 	this->mtx_.unlock();
 }

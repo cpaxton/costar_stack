@@ -99,4 +99,14 @@ btTransform rescaleTransformFromPhysicsEngine(const btTransform &input)
 	return bt;
 }
 
+
+static
+std::string getObjectIDFromCollisionObject(const btCollisionObject* object)
+{
+    if (object->getUserPointer() != NULL)
+        return *(std::string*)object->getUserPointer();
+    else
+        return std::string("unrecognized_object");
+}
+
 #endif

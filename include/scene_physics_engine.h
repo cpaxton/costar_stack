@@ -144,6 +144,7 @@ private:
 	bool reset_obj_vel_every_frame_;
 	bool reset_interaction_forces_every_frame_;
 	bool stop_simulation_after_have_support_graph_;
+	bool skip_scene_evaluation_;
 	unsigned int number_of_world_tick_;
 
 	double best_scene_probability_;
