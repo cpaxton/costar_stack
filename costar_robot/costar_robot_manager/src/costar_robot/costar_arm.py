@@ -529,10 +529,10 @@ class CostarArm(CostarComponent):
     def set_teach_mode_cb(self,req):
         if req.enable == True:
             self.driver_status = 'TEACH'
-            return 'SUCCESS - teach mode enabled'
+            return 'SUCCESS -- teach mode enabled'
         else:
             self.driver_status = 'IDLE'
-            return 'SUCCESS - teach mode disabled'
+            return 'SUCCESS -- teach mode disabled'
 
     '''
     send a single point
@@ -581,14 +581,14 @@ class CostarArm(CostarComponent):
 
             self.driver_status = 'SERVO'
             self.release()
-            return 'SUCCESS - servo mode enabled'
+            return 'SUCCESS -- servo mode enabled'
         elif req.mode == 'DISABLE':
             self.detach(actuate = False, add_back_to_planning_scene=False)
             self.acquire()
             self.driver_status = 'IDLE'
-            return 'SUCCESS - servo mode disabled'
+            return 'SUCCESS -- servo mode disabled'
         else:
-            return 'FAILURE'
+            return 'FAILURE -- invalid servo mode'
 
     def shutdown_arm_cb(self,req):
         self.driver_status = 'SHUTDOWN'

@@ -285,6 +285,10 @@ class NodeActionSmartmove(Node):
             smartmove_proxy = rospy.ServiceProxy('/costar/SmartMove',SmartMove)
             msg = SmartMoveRequest()
             msg.pose = self.manager.lookup_waypoint(self.selected_object,self.selected_smartmove)
+            if msg.pose = None:
+                rospy.logerr('Invalid Smartmove Waypoint')
+                self.finished_with_success = False
+                return 
             msg.obj_class = self.selected_object
             msg.name = self.selected_smartmove
             predicate = PredicateStatement()
