@@ -1,8 +1,6 @@
 # How to Install CoSTAR
 
-Instructions by Baichuan Jiang
-
-Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
+Note: CoSTAR installation has only been tested on ROS Indigo (Ubuntu 14.04 LTS). For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
 
 ## Prerequisites
 
