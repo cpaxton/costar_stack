@@ -2,12 +2,12 @@
   <arg name="ee_frame"/>
 
   <!-- Launch gripper endpoint setup -->
-  <include file="$(find costar_gripper_manager)/launch/robotiq_c_model_endpoint.launch">
+  <include file="$(find gripper_robotiq)/launch/robotiq_c_model_endpoint.launch">
     <arg name="ee_frame" value="$(arg ee_frame)"/>
   </include>
 
   <node name="simple_c_model_server"
-    pkg="costar_gripper_manager"
+    pkg="gripper_robotiq"
     type="c_model.py"/>
 
 </launch>

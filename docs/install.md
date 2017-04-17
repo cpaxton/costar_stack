@@ -1,8 +1,6 @@
 # How to Install CoSTAR
 
-Instructions by Baichuan Jiang
-
-Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
+Note: CoSTAR installation has only been tested on ROS Indigo (Ubuntu 14.04 LTS). For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
 
 ## Prerequisites
 
@@ -91,3 +89,7 @@ The top should say "Robot Mode: Idle." If you installed the sample workspace, op
 CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms.
 
 If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton@jhu.edu).
+
+##  Other Information
+
+ - [Notes on installing Gazebo](docs/gazebo.md)

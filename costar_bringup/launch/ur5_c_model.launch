@@ -44,7 +44,7 @@
 
     <!-- gripper bringup: connect to s model via TCP/IP -->
     <node name="robotiq_c_model_interface" pkg="robotiq_c_model_control" type="CModelTcpNode.py" args="$(arg gripper_ip_address)"/>
-    <include file="$(find costar_gripper_manager)/launch/c_model.launch">
+    <include file="$(find gripper_robotiq)/launch/c_model.launch">
       <arg name="ee_frame" value="$(arg ee_frame)"/>
     </include>
 

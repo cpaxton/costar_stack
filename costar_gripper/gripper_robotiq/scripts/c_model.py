@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from costar_gripper import SimpleCModelServer
+from gripper_robotiq import SimpleCModelServer
 
 rospy.init_node("simple_c_model_server")
 verbose = rospy.get_param('~verbose',False)
