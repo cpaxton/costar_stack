@@ -124,7 +124,7 @@ class SmartWaypointManager:
 
     def lookup_waypoint(self,obj_class,name):
       rospy.logwarn("Smart Waypoint Manager looking for %s with class %s"%(name,obj_class))
-      if obj_class is in self.waypoints:
+      if obj_class in self.waypoints:
         return self.waypoints[obj_class][self.waypoint_names[obj_class].index(name)]
       else:
         rospy.logerr("There is no smartmove waypoint %s with class %s"%(name,obj_class))
