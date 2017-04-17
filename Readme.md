@@ -23,7 +23,7 @@ This is a project by members of the JHU Laboratory for Computational Sensing and
 }
 ```
 
-Interested in contributing? Check out the [development guidelines](Development.md)
+Interested in contributing? Check out the [development guidelines](docs/development.md)
 
 ## Installation
 
@@ -42,7 +42,7 @@ rosrun costar_bringup iiwa_test.py
 
 It will start gazebo and move the arm to a new position. If this test passes, CoSTAR is set up right.
 
-There is a more detailed [startup guide](Startup.md).
+There is a more detailed [startup guide](docs/startup.md).
 
 ## CoSTAR Packages
 
