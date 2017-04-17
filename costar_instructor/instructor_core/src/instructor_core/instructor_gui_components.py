@@ -359,13 +359,14 @@ class NotificationDialog(QWidget):
         self.done_button.clicked.connect(self.done)
         # self.name_field.textChanged.connect(self.move_name_cb)
         self.notification_list.itemClicked.connect(self.object_selected)
-        self.move_list.itemClicked.connect(self.move_selected)
+        print(vars(self))
+        self.notification_list.itemClicked.connect(self.move_selected)
 
         # self.add_move_button.clicked.connect(self.add_move)
         # self.delete_move_button.clicked.connect(self.delete_move)
 
-        self.update_objects()
-        self.update_moves()
+        # self.update_objects()
+        # self.update_moves()
 
     def notify(self, message, severity='info'):
         """Adds a message to the notification dialog, showing it if not visible.

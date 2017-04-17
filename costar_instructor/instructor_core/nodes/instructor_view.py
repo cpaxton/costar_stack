@@ -165,7 +165,7 @@ class Instructor(QWidget):
         uic.loadUi(ui_path, self)
 
         # Notification DIALOG
-        self.notification_dialog = NotificationDialog()
+        self.notification_dialog = NotificationDialog(self)
 
         # Create the Graph Visualization Pane
         self.drawer = Drawer(self)
@@ -1291,7 +1291,7 @@ class Instructor(QWidget):
         if self.current_node_type != None:
             rospy.loginfo('adding node of type ' + str(self.current_node_type))
             if self.left_selected_node == None:
-                rospy.logerr('There is no parent node selected')
+                self.notification_dialog.notify('There is no parent node selected', 'error')
             else:
 
                 if not self.current_node_types[self.left_selected_node] == 'LOGIC':
