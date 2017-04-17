@@ -17,11 +17,11 @@
   <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
   <arg name="objransac_model_names"          default="node_uniform,link_uniform" />
 
-  <arg name="data_forces_magnitude"          default="1000.0"/>
-  <arg name="data_forces_max_distance"       default="0.05"/>
+  <arg name="data_forces_magnitude"          default="0.005"/>
+  <arg name="data_forces_max_distance"       default="0.015"/>
 
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros"
-  output="screen"
+  output="screen" 
   >  
     <!-- sequential_scene_ros common Node arg pass -->
     <param name="background_pcl2_topic"   type="str"     value="$(arg background_pcl2_topic)" />

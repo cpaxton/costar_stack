@@ -1,6 +1,18 @@
 #include "scene_data_forces.h"
 #include <pcl/io/pcd_io.h>
 
+inline
+btVector3 attractionForceModel(const btVector3 &force_vector, 
+	const btScalar &distance, const btScalar &distance_threshold)
+{
+	// y = -(x - 0)( x - 2 * distance_threshold )
+	// dy/dx = 2x - x * 2 distance_thres = 0
+	// x = distance_thres
+	// max_y = distance_threshold * distance_threshold
+	// y_reg = - x * (x - 2*distance_threshold)/distance_threshold^2
+	return force_vector * (2*distance_threshold - distance)/(distance_threshold*distance_threshold);
+}
+
 FeedbackDataForcesGenerator::FeedbackDataForcesGenerator() : 
 	have_scene_data_(false), force_data_model_(CACHED_ICP_CORRESPONDENCE), 
 	forces_magnitude_coefficient_(0.5), max_point_distance_threshold_(0.01),
@@ -77,6 +89,7 @@ void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const btRigidBody &ob
 		*transformed_object_mesh_cloud, object_pose_eigen);
 
 	model_cloud_icp_result_map_[object_id] = this->doICP(transformed_object_mesh_cloud);
+	pcl::io::savePCDFile("icp_"+object_id+".pcd",*model_cloud_icp_result_map_[object_id],true);
 }
 
 
@@ -92,6 +105,7 @@ void FeedbackDataForcesGenerator::manualSetCachedIcpResultMapFromPose(const btRi
 		*transformed_object_mesh_cloud, object_pose_eigen);
 
 	model_cloud_icp_result_map_[object_id] = transformed_object_mesh_cloud;
+	pcl::io::savePCDFile("manual_"+object_id+".pcd",*model_cloud_icp_result_map_[object_id],true);
 }
 
 void FeedbackDataForcesGenerator::resetCachedIcpResult()
@@ -202,46 +216,29 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::calculateDataForceF
 	const PointCloudXYZ input_cloud, const PointCloudXYZ target_cloud, const btVector3 &object_cog) const
 {
 	btVector3 total_forces, total_torque;
+	// std::cerr << "max cloud: " << input_cloud.size() << " " << target_cloud.size() << std::endl;
 	int counter = 1;
 	int max_cloud_size = input_cloud.size() > target_cloud.size() ? target_cloud.size() : input_cloud.size();
 	for (int i = 0; i < max_cloud_size; i++)
 	{
 		const pcl::PointXYZ &point = input_cloud.points[i];
 		const pcl::PointXYZ &target_point = target_cloud.points[i];
-		btVector3 force_direction(target_point.x - point.x,
+		btVector3 force_vector(target_point.x - point.x,
 								  target_point.y - point.y,
 								  target_point.z - point.z);
-		double distance = force_direction.norm();
-		if (distance < this->max_point_distance_threshold_)
+		double distance = force_vector.norm();
+		if (distance < 2 * this->max_point_distance_threshold_)
 		{
-			counter++;
-			// spring-like attraction force for point correspondence
-			// the attraction force = force_magnitude_coefficient * distance**2
-			btVector3 attraction_force = forces_magnitude_coefficient_ * distance * force_direction;
+			btVector3 attraction_force = attractionForceModel(force_vector, 
+				distance, this->max_point_distance_threshold_);
 			total_forces += attraction_force;
-			// total_torque += (btVector3(point.x, point.y, point.z) - object_cog).cross(attraction_force);
+			total_torque += (btVector3(point.x, point.y, point.z) - object_cog).cross(attraction_force);	
 		}
 	}
 	
-	btVector3 avg_forces = total_forces / counter;
 
-	for (int i = 0; i < max_cloud_size; i++)
-	{
-		const pcl::PointXYZ &point = input_cloud.points[i];
-		const pcl::PointXYZ &target_point = target_cloud.points[i];
-		btVector3 force_direction(target_point.x - point.x,
-								  target_point.y - point.y,
-								  target_point.z - point.z);
-		double distance = force_direction.norm();
-		if (distance < this->max_point_distance_threshold_)
-		{
-			btVector3 attraction_force = forces_magnitude_coefficient_ * distance * force_direction;
-			total_torque += (btVector3(point.x, point.y, point.z) - object_cog).cross(attraction_force - avg_forces);
-		}
-	}
-
-	total_forces *= SCALING;
-	total_torque *= SCALING * SCALING;
+	total_forces *= forces_magnitude_coefficient_ * SCALING;
+	total_torque *= forces_magnitude_coefficient_ * SCALING;
 
 	return std::make_pair(total_forces, total_torque);
 }
