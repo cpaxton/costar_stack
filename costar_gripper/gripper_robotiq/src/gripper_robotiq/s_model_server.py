@@ -34,44 +34,36 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from gripper_manager import CostarGripper
+
 import rospy
 from robotiq_s_model_control.msg import _SModel_robot_output  as outputMsg
 from robotiq_s_model_control.msg import _SModel_robot_input  as inputMsg
-from os.path import join
-from std_srvs.srv import Empty
 from predicator_robotiq import SModelPredicator
 
-def getDefaultMsg():
-    command = outputMsg.SModel_robot_output();
-    command.rACT = 1
-    command.rGTO = 1
-    command.rSPA = 255
-    command.rFRA = 150
-    return command
+class SimpleSModelServer(CostarGripper):
 
-class SimpleSModelServer:
+    def __init__(self, ns="/costar/gripper", verbose=False):
+        super(SimpleSModelServer, self).__init__(
+                "s_model",
+                input_topic="SModelRobotInput",
+                output_topic="SModelRobotOutput",
+                InputMsgType=inputMsg.SModel_robot_input,
+                OutputMsgType=outputMsg.SModel_robot_output,
+                GripperPredicatorType=SModelPredicator,
+                ns=ns,
+                verbose=verbose)
 
-    def __init__(self,ns="/costar/gripper"):
-        self.sub = rospy.Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.status_cb)
-        self.pub = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output)
-        self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
-        self.close = rospy.Service(join(ns,"close"), Empty, self.close_gripper)
-        self.wide_mode_srv = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)
-        self.pinch_mode_srv = rospy.Service(join(ns,"pinch_mode"), Empty, self.pinch_mode)
-        self.basic_mode_srv = rospy.Service(join(ns,"basic_mode"), Empty, self.basic_mode)
-        self.scissor_mode_srv = rospy.Service(join(ns,"scissor_mode"), Empty, self.scissor_mode)
-        self.reactivate_srv = rospy.Service(join(ns,"activate"), Empty, self.activate)
-        self.reset_srv = rospy.Service(join(ns,"reset"), Empty, self.reset)
-        self.command = getDefaultMsg()
-
-        self.predicator = SModelPredicator(start_subscriber=False,publish_predicates=True,gripper_name="s_model")
-
-        self.activated = True;
-
-        self.activate()
+    def getDefaultMsg(cls):
+        command = outputMsg.SModel_robot_output();
+        command.rACT = 1
+        command.rGTO = 1
+        command.rSPA = 255
+        command.rFRA = 150
+        return command
 
     def activate(self,msg=None):
-        self.command = getDefaultMsg()
+        self.command = self.getDefaultMsg()
         self.pub.publish(self.command)
         return []
 
@@ -123,10 +115,6 @@ class SimpleSModelServer:
         self.pub.publish(self.command)
         rospy.sleep(0.5)
         return []
-
-    def status_cb(self,msg):
-        rospy.loginfo(self.statusInterpreter(msg))
-        self.predicator.handle(msg)
 
     def statusInterpreter(self,status):
         """Generate a string according to the current value of the status variables."""

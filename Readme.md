@@ -27,7 +27,7 @@ Interested in contributing? Check out the [development guidelines](Development.m
 
 ## Installation
 
-Check out [installation instructions](INSTALL.md).
+Check out [installation instructions](docs/install.md).
 
 We are working on experimental install scripts:
   - [ROS Indigo/Ubuntu 14.04 LTS](install_indigo.sh)
