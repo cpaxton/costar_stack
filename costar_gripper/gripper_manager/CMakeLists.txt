@@ -1,13 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(costar_gripper_robotiq)
+project(gripper_manager)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  costar_gripper_manager
-  predicator_robotiq
-  robotiq_c_model_control
   robotiq_s_model_control
 )
 
@@ -18,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -102,8 +99,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES costar_gripper_robotiq
-#  CATKIN_DEPENDS costar_gripper_manager predicator_robotiq robotiq_c_model_control robotiq_s_model_control
+#  LIBRARIES simple_s_model_server
+#  CATKIN_DEPENDS robotiq_s_model_control
 #  DEPENDS system_lib
 )
 
@@ -119,24 +116,24 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(costar_gripper_robotiq
-#   src/${PROJECT_NAME}/costar_gripper_robotiq.cpp
+# add_library(simple_s_model_server
+#   src/${PROJECT_NAME}/simple_s_model_server.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(costar_gripper_robotiq ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(simple_s_model_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(costar_gripper_robotiq_node src/costar_gripper_robotiq_node.cpp)
+# add_executable(simple_s_model_server_node src/simple_s_model_server_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(costar_gripper_robotiq_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(simple_s_model_server_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(costar_gripper_robotiq_node
+# target_link_libraries(simple_s_model_server_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -155,7 +152,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS costar_gripper_robotiq costar_gripper_robotiq_node
+# install(TARGETS simple_s_model_server simple_s_model_server_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -180,7 +177,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_costar_gripper_robotiq.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_simple_s_model_server.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

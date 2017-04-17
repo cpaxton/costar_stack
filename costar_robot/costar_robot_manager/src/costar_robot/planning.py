@@ -1,6 +1,6 @@
-'''
-(c) 2016 Chris Paxton
-'''
+# By Chris Paxton and Felix Jonathan
+# (c) 2016-2017 The Johns Hopkins University
+# See license for more details
 
 import rospy
 
@@ -24,11 +24,22 @@ from geometry_msgs.msg import Pose
 ModeJoints = 'joints'
 ModeCart = 'cartesian'
 
+# SIMPLE PLANNING
+# This class is really just a wrapper for a bunch of parameters. It exposes
+# the various functions that we use to call MoveIt and acts as an interface of
+# sorts to generate some nice trajectories.
+#
+# You could think of this as a sort of sub-component of CoSTAR, if you'd like,
+# but it's very closely tied with the way that Arm works in order to produce
+# the various behaviors that we are interested in.
 class SimplePlanning:
 
     skip_tol = 1e-6
     
-    def __init__(self,robot,base_link,end_link,group,
+    # How you set these options will determine how we do planning: 
+    # what inverse kinematics are used for queries, etc. Most of these are
+    # meant to be directly inherited/provided by the CoSTAR Arm class.
+    def __init__(self, robot, base_link, end_link, group,
             move_group_ns="move_group",
             planning_scene_topic="planning_scene",
             robot_ns="",
@@ -57,9 +68,9 @@ class SimplePlanning:
         self.verbose = verbose
         self.closed_form_IK_solver = closed_form_IK_solver
     
-    '''
-    ik: handles calls to KDL inverse kinematics
-    '''
+    # Basic ik() function call.
+    # It handles calls to KDL inverse kinematics or to the closed form ik
+    # solver that you provided.
     def ik(self, T, q0, dist=0.5):
       q = None
       if self.closed_form_IK_solver is not None:
@@ -68,26 +79,30 @@ class SimplePlanning:
       else:
         q = self.kdl_kin.inverse(T,q0)
 
-      # NOTE: this results in unsafe behavior; do not use without checks
-      #if q is None:
-      #    q = self.kdl_kin.inverse(T)
       return q
 
+    # Compute parameters for a nice trapezoidal motion. This will let us create
+    # movements with the basic move() operation that actually look pretty nice.
     def calculateAccelerationProfileParameters(self, 
-      dq_to_target,
-      base_steps,
-      steps_per_meter,
-      steps_per_radians,
+      dq_to_target, # joint space offset to target
+      base_steps, # number of trajectory points to create
+      steps_per_meter, # number of extra traj pts to make
+      steps_per_radians, # as above
       delta_translation,
       time_multiplier,
       percent_acc):
 
+      # We compute a number of steps to take along our trapezoidal trajectory
+      # curve. This gives us a nice, relatively dense trajectory that we can
+      # introspect on later -- we can use it to compute cost functions, to 
+      # detect collisions, etc.
       delta_q_norm = np.linalg.norm(dq_to_target)
-      steps = base_steps + delta_translation * steps_per_meter + delta_q_norm * steps_per_radians
+      steps = base_steps + delta_translation * steps_per_meter + delta_q_norm \
+          * steps_per_radians
+      # Number of steps must be an int.
       steps = int(np.round(steps))
-      print " -- Computing %d steps"%steps
 
-      # the time needed for constant velocity at 100% to reach the goal
+      # This is the time needed for constant velocity at 100% to reach the goal.
       t_v_constant = delta_translation + delta_q_norm
       ts = (t_v_constant / steps ) * time_multiplier
       
@@ -100,17 +115,26 @@ class SimplePlanning:
       # j_acceleration = np.array(dq_target) / t_v_constant * percent_acc
       t_v_setting_max = v_setting_max / acceleration
 
-      steps_to_max_speed = 0.5 * acceleration * t_v_setting_max **2 / (dq_max_target / steps) 
+      # Compute the number of trajectory points we want to make before we will
+      # get up to max speed.
+      steps_to_max_speed = 0.5 * acceleration * t_v_setting_max **2 \
+          / (dq_max_target / steps) 
       if steps_to_max_speed * 2 > steps:
-        print "-- Cannot reach the maximum velocity setting, steps required %.1f > total number of steps %d"%(steps_to_max_speed * 2,steps)
+        rospy.logwarn("Cannot reach the maximum velocity setting, steps "
+            "required %.1f > total number of steps %d"%(steps_to_max_speed * 2,steps))
         t_v_setting_max = np.sqrt(0.5 * dq_max_target / acceleration)
         steps_to_max_speed = (0.5 * steps)
         v_setting_max = t_v_setting_max * acceleration
-      print "-- Acceleration number of steps is set to %.1f and time elapsed to reach max velocity is %.3fs"%(steps_to_max_speed,t_v_setting_max)
+
+      rospy.loginfo("Acceleration number of steps is set to %.1f and time "
+            "elapsed to reach max velocity is %.3fs"%(steps_to_max_speed,
+              t_v_setting_max))
+
       const_velocity_max_step = np.max([steps - 2 * steps_to_max_speed, 0])
 
       return steps, ts, t_v_setting_max, steps_to_max_speed, const_velocity_max_step
 
+    # This is where we compute what time we want for each trajectory point.
     def calculateTimeOfTrajectoryStep(self,
       step_index,
       steps_to_max_speed,
@@ -130,6 +154,8 @@ class SimplePlanning:
       return acceleration_time + const_vel_time + deceleration_time
 
 
+    # Compute a nice joint trajectory. This is useful for checking collisions,
+    # and ensuring that we have nice, well defined behavior.
     def getJointMove(self,
         q_goal,
         q0,
@@ -212,6 +238,7 @@ class SimplePlanning:
       traj.joint_names = self.joint_names
       return traj
 
+    # Compute a simple trajectory.
     def getCartesianMove(self, frame, q0,
       base_steps=1000,
       steps_per_meter=1000,

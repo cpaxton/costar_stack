@@ -1,3 +1,8 @@
+# Inverse Kinematics UR5
+# By Felix Jonathan
+# (c) 2017 The Johns Hopkins University
+# See license for more details
+
 # import PyKDL
 # import tf_conversions.posemath
 from math import *
@@ -284,7 +289,7 @@ class InverseKinematicsUR5:
 					index += 1
 
 		if self.debug:
-			print 'Number of solution: ', number_of_solution
+			print 'Number of solutions: ', number_of_solution
 			print Q
 
 		return Q

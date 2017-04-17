@@ -34,3 +34,9 @@ if len(installed_robot_driver) > 0:
 else:
 	print 'Missing robot driver: ', missing_robot_driver
 	raise ImportError('No ros robot driver is installed')
+
+
+# UR5
+from inverseKinematicsUR5 import InverseKinematicsUR5
+from ur_driver import CostarUR5Driver
+__all__ = ['CostarArm','SimplePlanning','InverseKinematicsUR5','CostarUR5Driver']
