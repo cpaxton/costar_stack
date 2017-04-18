@@ -42,6 +42,7 @@ class WaypointManagerDialog(QWidget):
         self.info_textbox = TextEdit(self,'INFO_TEXTBOX','',color=colors['gray_light'])
         self.info_textbox.setReadOnly(True)
         self.info_textbox.hide()
+        self.info_textbox.setMaximumSize(QtCore.QSize(16777215, 200))
         self.button_layout.addWidget(self.info_textbox)
 
         # BUTTONS #
@@ -60,6 +61,9 @@ class WaypointManagerDialog(QWidget):
         self.servo_to_waypoint_btn = InterfaceButton('SERVO TO WAYPOINT',colors['purple'])
         self.button_layout.addWidget(self.servo_to_waypoint_btn)
         self.servo_to_waypoint_btn.clicked.connect(self.servo_to_waypoint)
+
+        self.waypoint_page_widget.waypoint_list.itemClicked.connect(self.fixed_waypoint_selected)
+        self.relative_page_widget.waypoint_list.itemClicked.connect(self.relative_waypoint_selected)
 
         self.waypoint_page_widget.name_field.textChanged.connect(self.waypoint_name_cb)
         self.relative_page_widget.name_field.textChanged.connect(self.waypoint_name_cb)
@@ -82,11 +86,13 @@ class WaypointManagerDialog(QWidget):
         self.update_waypoints()
 
     def show_waypoint_page(self):
+        self.info_textbox.hide()
         self.stack.setCurrentIndex(0)
         self.mode = 'FIXED'
         self.update_waypoints()
 
     def show_relative_page(self):
+        self.info_textbox.hide()
         self.stack.setCurrentIndex(1)
         self.mode = 'RELATIVE'
         self.update_waypoints()
@@ -97,7 +103,14 @@ class WaypointManagerDialog(QWidget):
         else:
             self.new_relative_name = str(t)
 
+    def relative_waypoint_selected(self,item):
+        self.info_textbox.hide()
+
+    def fixed_waypoint_selected(self,item):
+        self.info_textbox.hide()
+
     def landmark_selected(self,item):
+        self.info_textbox.hide()
         if item == None:
             self.relative_page_widget.landmark_field.setText('NONE')
             self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
