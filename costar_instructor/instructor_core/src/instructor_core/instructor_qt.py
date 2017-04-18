@@ -6,9 +6,10 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 class Color:
-    def __init__(self,normal,hover):
+    def __init__(self,normal,hover, disabled='#dddddd'):
         self.normal = normal
         self.hover = hover
+        self.disabled = disabled
 
 class ColorOptions:
     def __init__(self):

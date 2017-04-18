@@ -42,7 +42,7 @@ class Dialog(QWidget):
         self.button_layout.addWidget(self.save_cancel_btn,2,0)
 
 class Button(QPushButton):
-    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None):
+    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None, text_color=Color('#ffffff', '#ffffff', '#dddddd')):
         QPushButton.__init__(self, parent)
         self.setMouseTracking(True)
         self.name = name
@@ -50,8 +50,9 @@ class Button(QPushButton):
         self.setText(self.label)
         # COLOR
         self.color = color
-        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
-        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.text_color = text_color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+self.text_color.normal+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+self.text_color.normal+';border:none;'
         self.setStyleSheet(self.default_style)
         self.font = QtGui.QFont("Ubuntu", txtsz, QtGui.QFont.Bold)
         self.setFont(self.font)
@@ -127,7 +128,7 @@ class ItemButton(Button):
 
 class HeadingContainer(QWidget):
     def __init__(self, name, label, color, size='small',parent=None):
-        QWidget.__init__(self,parent)
+        QWidget.__init__(self, parent)
         self.label = label
         self.name = name
         self.color = color
@@ -141,7 +142,7 @@ class HeadingContainer(QWidget):
         self.scrollArea.hide()
 
 class Container(QWidget):
-    def __init__(self, name, label, color, size='small',parent=None):
+    def __init__(self, name, label, color, size='small', parent=None):
         QWidget.__init__(self,parent)
         self.label = label
         self.name = name
@@ -164,7 +165,7 @@ class Container(QWidget):
         self.groups = {}
         self.group_members = {}
 
-    def register_callbacks(self,contract_cb,selected_cb=None):
+    def register_callbacks(self,contract_cb, selected_cb=None):
         self.contract_cb = contract_cb
         self.selected_cb = selected_cb
 
@@ -183,7 +184,7 @@ class Container(QWidget):
         self.button.setStyleSheet(self.button.default_style)
         self.button.current_style = self.button.default_style
 
-    def add_item(self,name):
+    def add_item(self, name):
         pass
 
     def remove_all(self):
@@ -330,6 +331,159 @@ class Drawer(QWidget):
         rp = rospkg.RosPack()
         w_path = rp.get_path('instructor_core') + '/ui/drawer_2.ui'
         uic.loadUi(w_path, self)
+
+    def window_resized(self,event):
+        visible = self.drawer.isVisible()
+        self.resize(360,self.container_widget.geometry().height()-100)
+        self.move(self.container_widget.geometry().left()-360,50)
+        if visible:
+            self.show()
+        else:
+            self.hide()
+
+class NotificationDialog(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
+        # GUI
+        rp = rospkg.RosPack()
+        w_path = rp.get_path('instructor_core') + '/ui/notifications.ui'
+        uic.loadUi(w_path, self)
+        self.show_hide = self.show_hide_slide
+        self.selected_object = None
+        self.selected_move = None
+        self.saved_geom = None
+        self.new_move_name = None
+
+        # self.manager = SmartWaypointManager(ns="")
+        
+        self.done_button.clicked.connect(self.done)
+        # self.name_field.textChanged.connect(self.move_name_cb)
+        self.notification_list.itemClicked.connect(self.object_selected)
+        print(vars(self))
+        self.notification_list.itemClicked.connect(self.move_selected)
+
+        # self.add_move_button.clicked.connect(self.add_move)
+        # self.delete_move_button.clicked.connect(self.delete_move)
+
+        # self.update_objects()
+        # self.update_moves()
+
+    def notify(self, message, severity='info'):
+        """Adds a message to the notification dialog, showing it if not visible.
+
+        # Arguments
+
+        message: string message to show in the dialog
+        severity: one of 'info', 'warn', 'error'
+        """
+        self.notification_list.addItem(QListWidgetItem(message))
+        if not self.isVisible():
+             self.show_hide_slide()
+        
+        if severity is 'warn':
+            rospy.logwarn(message)
+        elif severity is 'error':
+            rospy.logerr(message)
+        else:
+            rospy.loginfo(message)
+
+    def show_hide_slide(self):
+        if self.isVisible():
+            self.saved_geom = self.geometry()
+            self.hide()
+        else:
+            if self.saved_geom is not None:
+                self.move(self.saved_geom.x(),self.saved_geom.y())
+            else:
+                self.move(self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.smartmove_dialog.geometry().height()/2)
+            self.show()
+            self.update_all()
+
+    def update_all(self):
+        self.update_objects()
+        self.update_moves()
+
+    def done(self):
+        self.notification_list.clear()
+        self.show_hide()
+
+    # def move_name_cb(self,text):
+    #     self.new_move_name = str(text)
+    #     self.update_objects()
+
+    def object_selected(self,item):
+        self.selected_object = str(item.text())
+        self.object_field.setText(self.selected_object)
+        self.update_moves()
+
+    def move_selected(self,item):
+        # self.update_objects()
+        self.selected_move = str(item.text())
+
+    # def update_objects(self):
+    #     self.notification_list.clear()
+    #     self.found_objects = self.manager.get_detected_objects()
+    #     # Populate objects in list
+    #     if self.found_objects is not None:
+    #         self.found_objects.sort()
+    #         idx = None
+    #         for i,m in enumerate(self.found_objects):
+    #             name = m.strip('/')
+    #             if self.selected_object is not None and self.selected_object == name:
+    #                 idx = i
+    #             self.notification_list.addItem(QListWidgetItem(name))
+
+    #         if idx is None:
+    #             self.notification_list.setCurrentRow(0)
+    #             if self.notification_list.currentItem() is not None:
+    #                 self.selected_object = str(self.notification_list.currentItem().text())
+    #         else:
+    #             self.notification_list.setCurrentRow(idx)
+
+    # def update_moves(self):
+    #     if self.selected_object is not None:
+    #         self.move_list.clear()
+
+    #         # Populate moves in list
+    #         self.manager.load_all()
+    #         self.found_moves = self.manager.get_moves_for_object(self.selected_object)
+    #         if self.found_moves is not None:
+    #             self.found_moves.sort()
+    #             idx = None
+    #             for i, m in enumerate(self.found_moves):
+    #                 name = m.strip('/')
+    #                 self.move_list.addItem(QListWidgetItem(name))
+    #                 if self.selected_move is not None and self.selected_move == name:
+    #                     idx = i
+
+    #             if idx is None:
+    #                 self.move_list.setCurrentRow(0)
+    #                 if self.move_list.currentItem() is not None:
+    #                     self.selected_move = str(self.move_list.currentItem().text())
+    #             else:
+    #                 self.move_list.setCurrentRow(idx)
+
+    # def add_move(self):
+    #     self.update_objects()
+    #     rospy.loginfo('add move %s'%self.new_move_name)
+    #     if self.new_move_name is not None and self.selected_object is not None:
+    #         # librarian call to add a new move with new_move_name
+    #         self.manager.save_new_waypoint(self.selected_object,self.new_move_name)
+    #         # Update moves
+    #         self.update_moves()
+    #         pass
+
+    # def delete_move(self):
+    #     self.update_objects()
+    #     rospy.loginfo('delete move %s'%self.selected_move)
+    #     if self.selected_move is not None:
+    #         # librarian call to remove move for selected class
+    #         self.manager.delete(self.selected_move)
+
+    #         # Update moves
+    #         self.update_moves()
+    #     pass
+
 
 class Popup(QWidget):
     def __init__(self,parent):
