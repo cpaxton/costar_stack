@@ -34,6 +34,7 @@ class ServiceNode(Node):
         self.needs_reset = False
         self.service_description = service_description
         self.display_name = display_name
+        self.reset_self()
 
     def get_node_type(self):
         return 'SERVICE'

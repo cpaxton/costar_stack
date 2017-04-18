@@ -774,7 +774,7 @@ class Instructor(QWidget):
         #rospy.logwarn(result)
         # self.regenerate_tree()
         if result[:7] == 'SUCCESS':
-            self.notification_dialog.notify('INSTRUCTOR: Task Tree FINISHED WITH SUCCESS: %s'%result)
+            self.notification_dialog.notify('INSTRUCTOR: Task Tree FINISHED WITH %s'%result)
             self.sound_pub.publish(String("notify_4_succeed"))
             self.run_timer_.stop()
             self.running__ = False
@@ -783,7 +783,7 @@ class Instructor(QWidget):
             self.run_button.setText('EXECUTE PLAN')
             self.regenerate_tree()
         elif result[:7] == 'FAILURE':
-            self.notification_dialog.notify('INSTRUCTOR: Task Tree FINISHED WITH FAILURE: %s'%result,'error')
+            self.notification_dialog.notify('INSTRUCTOR: Task Tree FINISHED WITH %s'%result,'error')
             self.run_timer_.stop()
             self.running__ = False
             # self.root_node.reset()
