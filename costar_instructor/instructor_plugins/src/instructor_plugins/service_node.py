@@ -88,6 +88,7 @@ class ServiceNode(Node):
                         rospy.logwarn(self.status_msg)
                         self.running = False
                         self.needs_reset = True
+                        rospy.logerr('failed -- %s'%self.status_msg)
                         return self.set_status('FAILURE -- %s'%self.status_msg)
 
     #def make_service_call(self,request,*args):
