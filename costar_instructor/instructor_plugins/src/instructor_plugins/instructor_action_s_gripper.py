@@ -35,8 +35,8 @@ class NodeActionSGripperOpenGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'open',int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperCloseGUI(NodeGUI):
     def __init__(self):
@@ -52,8 +52,8 @@ class NodeActionSGripperCloseGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'close',int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperBasicModeGUI(NodeGUI):
     def __init__(self):
@@ -69,8 +69,8 @@ class NodeActionSGripperBasicModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'basic_mode',int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperPinchModeGUI(NodeGUI):
     def __init__(self):
@@ -86,8 +86,8 @@ class NodeActionSGripperPinchModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'pinch_mode',int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperWideModeGUI(NodeGUI):
     def __init__(self):
@@ -103,8 +103,8 @@ class NodeActionSGripperWideModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'wide_mode',int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperScissorModeGUI(NodeGUI):
     def __init__(self):
@@ -120,8 +120,8 @@ class NodeActionSGripperScissorModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'scissor_mode',int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionSGripper(ServiceNode):

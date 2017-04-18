@@ -110,8 +110,8 @@ class NodeActionRelativeWaypointGUI(NodeGUI):
             # # rospy.loginfo('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodeActionRelativeWaypoint(self.get_name(),self.get_label(),self.command_waypoint_name,self.command_vel,self.command_acc,self.listener_)
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def refresh_data(self):
         self.update_relative_waypoints()

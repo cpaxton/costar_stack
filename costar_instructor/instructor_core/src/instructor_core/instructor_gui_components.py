@@ -359,7 +359,7 @@ class NotificationDialog(QWidget):
         self.notification_list.itemClicked.connect(self.move_selected)        
         self.hide()
 
-    def notify(self, message, severity='info'):
+    def notify(self, message, severity='warn'):
         """Adds a message to the notification dialog, showing it if not visible.
 
         # Arguments

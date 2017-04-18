@@ -214,8 +214,8 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
                                         self.grasp)
 
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def refresh_data(self):
         self.manager.load_all()

@@ -33,8 +33,8 @@ class NodeActionPedalGUI(NodeGUI):
         if all([self.name.full(),self.duration.full()]):
             return NodeActionPedal(self.get_name(),self.get_label(),int(self.duration.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionPedal(Node):

@@ -60,8 +60,13 @@ class Button(QPushButton):
 
 
 class TextEdit(QTextEdit):
+
     def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None):
         QTextEdit.__init__(self, parent)
+        self.document().contentsChanged.connect(self.sizeChange)
+
+        self.heightMin = 0
+        self.heightMax = 65000
         # self.setMouseTracking(True)
         self.name = name
         self.label = label
@@ -93,6 +98,11 @@ class TextEdit(QTextEdit):
             rospy.logerr(message)
         else:
             rospy.loginfo(message)
+
+    def sizeChange(self):
+        docHeight = self.document().size().height()
+        if self.heightMin <= docHeight <= self.heightMax:
+            self.setMaximumHeight(docHeight)
 
 
 

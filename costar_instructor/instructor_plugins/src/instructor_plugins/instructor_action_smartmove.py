@@ -199,8 +199,8 @@ class NodeActionSmartmoveGUI(NodeGUI):
 
             #"%s %s %s %s"%(self.selected_smartmove,self.selected_objet,self.selected_region,self.selected_reference),
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def refresh_data(self):
         self.manager.load_all()

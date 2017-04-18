@@ -34,7 +34,7 @@ class NodeActionStopGUI(NodeGUI):
         if all([self.name.full(),  self.stop_time.full()]):
             return NodeActionStop(self.get_name(),  self.get_label(),  float(self.stop_time.get()))
         else:
-            return 'ERROR: STOP action node not properly defined'
+            return 'ERROR: STOP action check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionStop(Node):
