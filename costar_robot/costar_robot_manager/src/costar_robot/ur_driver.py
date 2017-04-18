@@ -11,12 +11,6 @@ from trajectory_msgs.msg import JointTrajectory
 
 # for creating client for ur_modern_driver
 import actionlib
-from actionlib import GoalStatus
-
-class SimpleGoalState:
-    PENDING = 0
-    ACTIVE = 1
-    DONE = 2
 
 # for actions
 from control_msgs.msg import FollowJointTrajectoryAction
