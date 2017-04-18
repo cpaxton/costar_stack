@@ -123,7 +123,7 @@ class NodeActionRelativeWaypoint(ServiceNode):
         #L = 'MOVE RELATIVE TO\\n ['+waypoint_name.upper()+'] \nVelocity: %d%%\nAcceleration: %d%%'%(int(vel*100),int(acc*100))
         L = 'MOVE TO ['+waypoint_name.upper()+']\n(relative to object)\nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
         
-        super(NodeActionRelativeWaypoint,self).__init__(name,L,'#26A65B',"Relative Waypoint Service")
+        super(NodeActionRelativeWaypoint,self).__init__(name,L,'#26A65B',"Relative Waypoint Service",display_name=waypoint_name)
         self.command_waypoint_name = waypoint_name
         self.command_acc = acc
         self.command_vel = vel

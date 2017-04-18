@@ -125,7 +125,7 @@ class NodePlanRelativeWaypointGUI(NodeGUI):
 class NodePlanRelativeWaypoint(ServiceNode):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
         L = 'PLAN RELATIVE TO\\n ['+waypoint_name+']'
-        super(NodePlanRelativeWaypoint,self).__init__(name,L,'#26A65B',"Waypoint Service")
+        super(NodePlanRelativeWaypoint,self).__init__(name,L,'#26A65B',"Relative Waypoint Plan Service",display_name=waypoint_name)
         self.command_waypoint_name = waypoint_name
         self.command_acc = acc
         self.command_vel = vel

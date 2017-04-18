@@ -123,7 +123,7 @@ class NodePlanWaypointGUI(NodeGUI):
 class NodePlanWaypoint(ServiceNode):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
         L = 'PLAN TO ['+waypoint_name.upper()+']'
-        super(NodePlanWaypoint,self).__init__(name,L,'#26A65B',"Waypoint Service")
+        super(NodePlanWaypoint,self).__init__(name,L,'#26A65B',"Plan Waypoint Service",display_name=waypoint_name)
         self.command_waypoint_name = waypoint_name
         self.command_vel = vel
         self.command_acc = acc

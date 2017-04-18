@@ -212,7 +212,7 @@ class NodeActionSmartmoveGUI(NodeGUI):
 class NodeActionSmartmove(ServiceNode):
     def __init__(self,name,label,selected_region,selected_object,selected_smartmove,selected_reference,vel,acc,smartmove_manager):
         L = 'SMART MOVE to \\n ['+selected_smartmove+'] \\n [' + selected_region + ' ' + selected_reference + ']'
-        super(NodeActionSmartmove,self).__init__(name,L,'#26A65B',"SmartMove Service")
+        super(NodeActionSmartmove,self).__init__(name,L,'#26A65B',"SmartMove Service",display_name=selected_smartmove)
         self.selected_region = selected_region
         self.selected_reference = selected_reference
         self.selected_object = selected_object

@@ -179,7 +179,7 @@ class NodeActionQueryGUI(NodeGUI):
 class NodeActionQuery(ServiceNode):
     def __init__(self,name,label,selected_region,selected_object,selected_smartmove,selected_reference,smartmove_manager):
         L = 'QUERY \\n ['+selected_smartmove+'] \\n [' + selected_region + ' ' + selected_reference + ']'
-        super(NodeActionQuery,self).__init__(name,L,colors['purple'].normal,"Query Service")
+        super(NodeActionQuery,self).__init__(name,L,colors['purple'].normal,"Query Service",display_name = selected_smartmove)
         self.selected_region = selected_region
         self.selected_reference = selected_reference
         self.selected_object = selected_object
@@ -316,7 +316,7 @@ class NodeActionCollision(ServiceNode):
             info="DISABLE COLLISION"
             self.srv_name = "/costar/DisableCollision"
         L = '%s WITH [%s]'%(info,selected_object)
-        super(NodeActionCollision,self).__init__(name,L,colors['purple'].normal,"Disable Collision")
+        super(NodeActionCollision,self).__init__(name,L,colors['purple'].normal,"Disable Collision",display_name=selected_object)
         self.selected_object = selected_object
         self.manager = smartmove_manager
 

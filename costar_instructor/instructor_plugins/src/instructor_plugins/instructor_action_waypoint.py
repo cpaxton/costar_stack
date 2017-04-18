@@ -121,7 +121,7 @@ class NodeActionWaypointGUI(NodeGUI):
 class NodeActionWaypoint(ServiceNode):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
         L = 'MOVE TO ['+waypoint_name.upper()+'] \nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
-        super(NodeActionWaypoint,self).__init__(name,L,'#26A65B',"Waypoint Service")
+        super(NodeActionWaypoint,self).__init__(name,L,'#26A65B',"Servo To Waypoint Service",display_name=waypoint_name)
         self.command_waypoint_name = waypoint_name
         self.command_vel = vel
         self.command_acc = acc

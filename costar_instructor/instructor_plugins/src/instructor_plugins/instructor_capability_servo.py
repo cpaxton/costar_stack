@@ -113,7 +113,7 @@ class WaypointUI(QWidget):
 # Nodes -------------------------------------------------------------------
 class NodeActionWaypoint(ServiceNode):
     def __init__(self,name,label,waypoint_name,vel,acc):
-        super(NodeActionWaypoint,self).__init__(name,label,'#26A65B',"Waypoint Service")
+        super(NodeActionWaypoint,self).__init__(name,label,'#26A65B',"Waypoint Service",display_name=waypoint_name)
         self.command_waypoint_name = waypoint_name
         self.command_vel = vel
         self.command_acc = acc

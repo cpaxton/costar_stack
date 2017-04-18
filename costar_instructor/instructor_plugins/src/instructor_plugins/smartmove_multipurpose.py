@@ -248,7 +248,8 @@ class NodeActionSmartmoveMultiPurpose(ServiceNode):
         super(NodeActionSmartmoveMultiPurpose,self).__init__(name,
             L,
             colors['green'].normal,
-            service_description)
+            service_description,
+            display_name = selected_smartmove)
         self.selected_region = selected_region
         self.selected_reference = selected_reference
         self.selected_object = selected_object
