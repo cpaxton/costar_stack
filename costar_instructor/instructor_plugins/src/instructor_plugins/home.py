@@ -125,18 +125,14 @@ class NodeHome(ServiceNode):
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
-                return
             else:
                 rospy.loginfo('Single Servo Move Finished')
                 rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
-                return
-
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
             rospy.logerr('There was a problem with the tf lookup or service:')
             rospy.logerr(e)
             self.finished_with_success = False
-            return
 
 class PlanToHomeGUI(NodeHomeGUI):
     def __init__(self):
