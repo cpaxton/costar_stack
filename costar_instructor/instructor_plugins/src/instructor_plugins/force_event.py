@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, ColorOptions
 import rospkg
@@ -115,62 +115,14 @@ class NodeForceEventGUI(NodeGUI):
             return 'ERROR: node not properly defined'
 
 # Nodes -------------------------------------------------------------------
-class NodeActionWaypoint(Node):
+class NodeActionWaypoint(ServiceNode):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
         L = 'MOVE TO\\n ['+waypoint_name+']'
-        super(NodeActionWaypoint,self).__init__(name,L,'#26A65B')
+        super(NodeActionWaypoint,self).__init__(name,L,'#26A65B', "Force Event Service")
         self.command_waypoint_name = waypoint_name
         self.command_vel = vel
         self.command_acc = acc
         self.listener_ = tfl
-        # Reset params
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-    def get_node_type(self):
-        return 'SERVICE'
-    def get_node_name(self):
-        return 'Service'
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
 
     def make_service_call(self,request,*args):
         # Check to see if service exists
