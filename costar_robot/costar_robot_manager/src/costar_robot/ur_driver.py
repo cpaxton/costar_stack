@@ -11,6 +11,12 @@ from trajectory_msgs.msg import JointTrajectory
 
 # for creating client for ur_modern_driver
 import actionlib
+from actionlib import GoalStatus
+
+class SimpleGoalState:
+    PENDING = 0
+    ACTIVE = 1
+    DONE = 2
 
 # for actions
 from control_msgs.msg import FollowJointTrajectoryAction
@@ -118,15 +124,17 @@ class CostarUR5Driver(CostarArm):
         goal = FollowJointTrajectoryGoal(trajectory=traj)
 
         if self.valid_verify(stamp):
-            self.client.send_goal_and_wait(goal, preempt_timeout=rospy.Duration.from_sec(10.0))
+            self.client.send_goal(goal)
             # max time before returning = 30 s
-            self.client.wait_for_result(rospy.Duration.from_sec(30.0))
+            done = False
+            while self.valid_verify(stamp) and not done:
+                done = self.client.wait_for_result(rospy.Duration.from_sec(0.1))
             res = self.client.get_result()
 
-        if res is not None and res.error_code >= 0:
+        if res is not None and res.error_code >= 0 and self.valid_verify(stamp):
             return "SUCCESS"
         elif res is None:
-            return "FAILUE - UR actionlib call aborted"
+            return "FAILURE - UR actionlib call aborted"
         else:
             return "FAILURE - %s"%res.error_code
 
