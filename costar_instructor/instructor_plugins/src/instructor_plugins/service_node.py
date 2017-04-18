@@ -22,6 +22,8 @@ import tf_conversions as tf_c
 import costar_robot_msgs
 from costar_robot_msgs.srv import *
 
+colors = ColorOptions().colors
+
 class ServiceNode(Node):
 
     def __init__(self, name, label, color,service_description):
@@ -43,22 +45,23 @@ class ServiceNode(Node):
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
-        self.set_color(self.color)
+        self.set_color(self.color_)
 
     def execute(self):
+        running_service = '%s [%s]'%(self.service_description,self.name_)
         if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
+            rospy.loginfo('%s already [%s], needs reset'%(running_service,self.get_status()))
             return self.get_status()
         else:
             if not self.running: # Thread is not running
                 if self.finished_with_success == None: # Service was never called
                     try:
                         self.service_thread.start()
-                        rospy.loginfo('%s [' + self.name_ + '] running'%self.service_description)
+                        rospy.loginfo('%s running'%running_service)
                         self.running = True
                         return self.set_status('RUNNING')
                     except Exception, errtxt:
-                        self.status_msg = '%s [' + self.name_ + '] thread failed'%self.service_description
+                        self.status_msg = '%s thread failed'%running_service
                         rospy.logwarn(self.status_msg)
                         self.running = False
                         self.needs_reset = True
@@ -69,13 +72,13 @@ class ServiceNode(Node):
                     return self.set_status('RUNNING')
                 else:
                     if self.finished_with_success == True:
-                        rospy.loginfo('%s [' + self.name_ + '] succeeded'%self.service_description)
+                        rospy.loginfo('%s succeeded'%running_service)
                         self.running = False
                         self.needs_reset = True
                         self.set_color(colors['gray'].normal)
                         return self.set_status('SUCCESS')
                     else:
-                        self.status_msg = '%s [' + self.name_ + '] failed'%self.service_description
+                        self.status_msg = '%s failed'%running_service
                         rospy.logwarn(self.status_msg)
                         self.running = False
                         self.needs_reset = True
