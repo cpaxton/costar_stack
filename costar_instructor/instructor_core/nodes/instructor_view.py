@@ -764,7 +764,7 @@ class Instructor(QWidget):
                 self.sound_pub.publish(String("notify_4"))
                 self.running__ = True
                 self.run_timer_.start(5)
-                self.info_textbox.notify('INSTRUCTOR: Task Tree STARTING')
+                self.info_textbox.notify('Task Tree starting')
                 self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #F62459;border-radius: 0px;background-color: #F62459;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #F62459;border-radius: 0px;background-color: #F62459;color:#ffffff}''')
                 self.run_button.setText('STOP EXECUTION')
 
@@ -774,7 +774,7 @@ class Instructor(QWidget):
         #rospy.logwarn(result)
         # self.regenerate_tree()
         if result[:7] == 'SUCCESS':
-            self.notification_dialog.notify('INSTRUCTOR: Task Tree FINISHED WITH SUCCESS: %s'%result)
+            self.notification_dialog.notify('Task Tree finished with %s'%result)
             self.sound_pub.publish(String("notify_4_succeed"))
             self.run_timer_.stop()
             self.running__ = False
@@ -783,7 +783,7 @@ class Instructor(QWidget):
             self.run_button.setText('EXECUTE PLAN')
             self.regenerate_tree()
         elif result[:7] == 'FAILURE':
-            self.notification_dialog.notify('INSTRUCTOR: Task Tree FINISHED WITH FAILURE: %s'%result,'error')
+            self.notification_dialog.notify('Task Tree finished with %s'%result,'error')
             self.run_timer_.stop()
             self.running__ = False
             # self.root_node.reset()
@@ -793,7 +793,7 @@ class Instructor(QWidget):
             rospy.sleep(.5)
             self.sound_pub.publish(String("notify_4_fail"))
         elif result == 'NODE_ERROR':
-            self.notification_dialog.notify('INSTRUCTOR: Task Tree ERROR','error')
+            self.notification_dialog.notify('Task Tree error','error')
             self.run_timer_.stop()
             self.running__ = False
             # self.root_node.reset()
@@ -805,7 +805,7 @@ class Instructor(QWidget):
             pass
 
     def stop_tree(self):
-        self.notification_dialog.notify('INSTRUCTOR: Task Tree STOPPED')
+        self.notification_dialog.notify('Task Tree stopped')
         self.stop_robot_trajectory_cb()
         self.run_timer_.stop()
         self.running__ = False
@@ -935,8 +935,8 @@ class Instructor(QWidget):
                     
                     self.info_textbox.notify('Tree ' + self.selected_subtree.upper() + ' loaded.')
                 except Exception as e:
-                    self.notification_dialog.notify(load_error_message, 'error')
-                    rospy.logerr(str(e))
+                    # TODO(ahundt): set the correct error message here
+                    self.notification_dialog.notify('Failed to load tree with %s'%str(e), 'error')
 
             # Finish
             self.load_sub_btn.hide()

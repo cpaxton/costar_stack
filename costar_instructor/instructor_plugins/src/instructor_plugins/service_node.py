@@ -28,6 +28,7 @@ class ServiceNode(Node):
 
     def __init__(self, name, label, color,service_description, display_name = None):
         super(ServiceNode,self).__init__(name,label,color)
+        self.ready_color = color
         self.status_msg = ''
         self.running = False
         self.finished_with_success = None
@@ -46,7 +47,7 @@ class ServiceNode(Node):
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
-        self.set_color(self.color_)
+        self.set_color(self.ready_color)
 
     def execute(self):
         if self.display_name is not None:
@@ -89,6 +90,6 @@ class ServiceNode(Node):
                         self.needs_reset = True
                         return self.set_status('FAILURE -- %s'%self.status_msg)
 
-    def make_service_call(self,request,*args):
-        raise NotImplementedError('make_service_call must be implemented in child class')
+    #def make_service_call(self,request,*args):
+    #    raise NotImplementedError('make_service_call must be implemented in child class')
 
