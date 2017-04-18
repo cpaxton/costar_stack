@@ -935,8 +935,8 @@ class Instructor(QWidget):
                     
                     self.info_textbox.notify('Tree ' + self.selected_subtree.upper() + ' loaded.')
                 except Exception as e:
-                    self.notification_dialog.notify(load_error_message, 'error')
-                    rospy.logerr(str(e))
+                    # TODO(ahundt): set the correct error message here
+                    self.notification_dialog.notify('Failed to load tree with %s'%str(e), 'error')
 
             # Finish
             self.load_sub_btn.hide()
