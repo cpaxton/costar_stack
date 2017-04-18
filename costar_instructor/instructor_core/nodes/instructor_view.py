@@ -308,14 +308,21 @@ class Instructor(QWidget):
         self.drawer.move(self.container_widget.geometry().left()-360,50)
         self.drawer.hide()
 
-    def window_resized(self,event):
+    def update_drawer_geometry(self):
         visible = self.drawer.isVisible()
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
         self.drawer.move(self.container_widget.geometry().left()-360,50)
+        self.drawer_open_geo = QRect(self.drawer.geometry())
+        self.drawer_close_geo = QRect(self.drawer.geometry().x()+360,self.drawer.geometry().y(),0,self.drawer.geometry().height())
+        self.drawer.hide()
         if visible:
             self.drawer.show()
         else:
             self.drawer.hide()
+
+    def window_resized(self,event):
+        self.update_drawer_geometry()
+
     
     def collapse_unused(self,id):
         self.hide_menu()
@@ -383,11 +390,12 @@ class Instructor(QWidget):
     def set_up_gui(self):
 
         ### DRAWER ###
-        self.drawer.resize(360,self.container_widget.geometry().height()-100)
-        self.drawer.move(self.container_widget.geometry().left()-360,50)
-        self.drawer_open_geo = QRect(self.drawer.geometry())
-        self.drawer_close_geo = QRect(self.drawer.geometry().x()+360,self.drawer.geometry().y(),0,self.drawer.geometry().height())
-        self.drawer.hide()
+        #self.drawer.resize(360,self.container_widget.geometry().height()-100)
+        #self.drawer.move(self.container_widget.geometry().left()-360,50)
+        #self.drawer_open_geo = QRect(self.drawer.geometry())
+        #self.drawer_close_geo = QRect(self.drawer.geometry().x()+360,self.drawer.geometry().y(),0,self.drawer.geometry().height())
+        #self.drawer.hide()
+        self.update_drawer_geometry()
         self.drawer_state = 'CLOSED'
         self.add_node_above_btn = InterfaceButton('ADD ABOVE',colors['gray_light'])
         self.add_node_above_btn.clicked.connect(self.add_sibling_before_cb)
