@@ -26,13 +26,14 @@ colors = ColorOptions().colors
 
 class ServiceNode(Node):
 
-    def __init__(self, name, label, color,service_description):
+    def __init__(self, name, label, color,service_description, display_name = None):
         super(ServiceNode,self).__init__(name,label,color)
         self.status_msg = ''
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
         self.service_description = service_description
+        self.display_name = display_name
 
     def get_node_type(self):
         return 'SERVICE'
@@ -48,7 +49,11 @@ class ServiceNode(Node):
         self.set_color(self.color_)
 
     def execute(self):
-        running_service = '%s [%s]'%(self.service_description,self.name_)
+        if self.display_name is not None:
+            running_service = '%s [%s]'%(self.service_description,self.display_name)
+        else:
+            running_service = '%s [%s]'%(self.service_description,self.name_)
+
         if self.needs_reset:
             rospy.loginfo('%s already [%s], needs reset'%(running_service,self.get_status()))
             return self.get_status()
