@@ -129,9 +129,14 @@ class CostarUR5Driver(CostarArm):
             done = False
             while self.valid_verify(stamp) and not done:
                 done = self.client.wait_for_result(rospy.Duration.from_sec(0.1))
+
+        # Check to make sure we weren't preempted.
+        if not self.valid_verify(stamp):
+            res = None
+        else:
             res = self.client.get_result()
 
-        if res is not None and res.error_code >= 0 and self.valid_verify(stamp):
+        if res is not None and res.error_code >= 0:
             return "SUCCESS"
         elif res is None:
             return "FAILURE - UR actionlib call aborted"
