@@ -132,8 +132,10 @@ class CostarUR5Driver(CostarArm):
 
         # Check to make sure we weren't preempted.
         if not self.valid_verify(stamp):
+            rospy.logerr('verify failed:'+ str(stamp) + ", " + str(self.cur_stamp))
             res = None
         else:
+            rospy.logerr('verify succeeded:'+ str(stamp) + ", " + str(self.cur_stamp))
             res = self.client.get_result()
 
         if res is not None and res.error_code >= 0:
