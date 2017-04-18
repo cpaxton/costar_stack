@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, ColorOptions
 import rospkg
@@ -83,77 +83,26 @@ class NodeHomeGUI(NodeGUI):
             # rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodeHome(self.get_name(),self.get_label(),self.command_vel,self.command_acc,self.plan)
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
-class NodeHome(Node):
+class NodeHome(ServiceNode):
     def __init__(self,name,label,vel,acc,plan):
         if plan:
             L = 'PLAN TO HOME'
+            service_description = "Plan to home Service"
         else:
             L = 'MOVE TO HOME\nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
-        super(NodeHome,self).__init__(name,L,'#26A65B')
+            service_description = "Move to home Service"
+        super(NodeHome,self).__init__(name,L,'#26A65B',"%s Service"%service_description)
         self.command_vel = vel
         self.command_acc = acc
-        # Reset params
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
 
         if plan:
             self.srv_name = 'Plan'
         else:
             self.srv_name = 'Servo'
-
-    def get_node_type(self):
-        return 'SERVICE'
-    def get_node_name(self):
-        return 'Service'
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-        self.set_color('#26A65B')
 
     def make_service_call(self,request,*args):
         # Check to see if service exists

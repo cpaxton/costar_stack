@@ -125,6 +125,8 @@ class CostarUR5Driver(CostarArm):
 
         if res is not None and res.error_code >= 0:
             return "SUCCESS"
+        elif res is None:
+            return "FAILUE - UR actionlib call aborted"
         else:
             return "FAILURE - %s"%res.error_code
 

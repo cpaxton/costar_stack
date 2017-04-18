@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, ColorOptions
 import rospkg
@@ -199,8 +199,8 @@ class NodeActionSmartmoveGUI(NodeGUI):
 
             #"%s %s %s %s"%(self.selected_smartmove,self.selected_objet,self.selected_region,self.selected_reference),
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def refresh_data(self):
         self.manager.load_all()
@@ -209,10 +209,10 @@ class NodeActionSmartmoveGUI(NodeGUI):
         self.update_objects()
 
 # Nodes -------------------------------------------------------------------
-class NodeActionSmartmove(Node):
+class NodeActionSmartmove(ServiceNode):
     def __init__(self,name,label,selected_region,selected_object,selected_smartmove,selected_reference,vel,acc,smartmove_manager):
         L = 'SMART MOVE to \\n ['+selected_smartmove+'] \\n [' + selected_region + ' ' + selected_reference + ']'
-        super(NodeActionSmartmove,self).__init__(name,L,'#26A65B')
+        super(NodeActionSmartmove,self).__init__(name,L,'#26A65B',"SmartMove Service",display_name=selected_smartmove)
         self.selected_region = selected_region
         self.selected_reference = selected_reference
         self.selected_object = selected_object
@@ -221,56 +221,8 @@ class NodeActionSmartmove(Node):
         self.command_vel = vel
         self.manager = smartmove_manager
         self.listener_ = smartmove_manager.listener
-        # Thread
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        # Reset params
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-        self.set_color(colors['green'].normal)
 
     def make_service_call(self,request,*args):
-
         self.manager.load_all()
 
         # Check to see if service exists
@@ -285,6 +237,10 @@ class NodeActionSmartmove(Node):
             smartmove_proxy = rospy.ServiceProxy('/costar/SmartMove',SmartMove)
             msg = SmartMoveRequest()
             msg.pose = self.manager.lookup_waypoint(self.selected_object,self.selected_smartmove)
+            if msg.pose is None:
+                rospy.logerr('Invalid Smarresulttmove Waypoint')
+                self.finished_with_success = False
+                return 
             msg.obj_class = self.selected_object
             msg.name = self.selected_smartmove
             predicate = PredicateStatement()

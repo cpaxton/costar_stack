@@ -151,7 +151,7 @@ class NodeKnowledgeTestGUI(NodeGUI):
         if all([self.name.full(), self.selected_target != None, self.selected_value != None, self.selected_pred != None]):
             return NodeKnowledgeTest(self.get_name(), self.get_label(), self.selected_target, self.selected_value, self.selected_pred)
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def save_data(self,data):
         data['target'] = {'value':self.selected_target}

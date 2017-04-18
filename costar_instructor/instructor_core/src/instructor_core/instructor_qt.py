@@ -6,9 +6,10 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 class Color:
-    def __init__(self,normal,hover):
+    def __init__(self,normal,hover, disabled='#dddddd'):
         self.normal = normal
         self.hover = hover
+        self.disabled = disabled
 
 class ColorOptions:
     def __init__(self):
@@ -56,6 +57,53 @@ class Button(QPushButton):
         self.setStyleSheet(self.hover_style)
     def leaveEvent(self, event):
         self.setStyleSheet(self.default_style)
+
+
+class TextEdit(QTextEdit):
+
+    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None):
+        QTextEdit.__init__(self, parent)
+        self.document().contentsChanged.connect(self.sizeChange)
+
+        self.heightMin = 0
+        self.heightMax = 65000
+        # self.setMouseTracking(True)
+        self.name = name
+        self.label = label
+        self.setText(self.label)
+        # COLOR
+        self.color = color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.setStyleSheet(self.default_style)
+        # self.font = QtGui.QFont("Ubuntu", txtsz, QtGui.QFont.Bold)
+        # self.setCurrentFont(self.font)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setMinimumHeight(30)
+    def set_color(self,color):
+        self.color = color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.setStyleSheet(self.default_style)
+    # def enterEvent(self, event):
+    #     self.setStyleSheet(self.hover_style)
+    # def leaveEvent(self, event):
+    #     self.setStyleSheet(self.default_style)
+    def notify(self, message, severity='info'):
+        self.show()
+        self.setText(message)
+        if severity is 'warn':
+            rospy.logwarn(message)
+        elif severity is 'error':
+            rospy.logerr(message)
+        else:
+            rospy.loginfo(message)
+
+    def sizeChange(self):
+        docHeight = self.document().size().height()
+        if self.heightMin <= docHeight <= self.heightMax:
+            self.setMaximumHeight(docHeight)
+
 
 
 class OverlayDialog(QWidget):

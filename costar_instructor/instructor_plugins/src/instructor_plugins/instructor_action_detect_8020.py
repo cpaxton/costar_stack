@@ -28,8 +28,8 @@ class NodeActionDetect8020GUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeActionDetect8020(self.get_name(),self.get_label())
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionDetect8020(Node):
