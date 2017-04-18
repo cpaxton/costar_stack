@@ -36,16 +36,16 @@ class SmartMoveDialog(QWidget):
 
 
     def show_hide_slide(self):
-        if self.smartmove_dialog.isVisible():
-            self.smartmove_dialog.saved_geom = self.smartmove_dialog.geometry()
-            self.smartmove_dialog.hide()
+        if self.isVisible():
+            self.saved_geom = self.geometry()
+            self.hide()
         else:
-            if self.smartmove_dialog.saved_geom is not None:
-                self.smartmove_dialog.move(self.smartmove_dialog.saved_geom.x(),self.smartmove_dialog.saved_geom.y())
+            if self.saved_geom is not None:
+                self.move(self.saved_geom.x(),self.saved_geom.y())
             else:
-                self.smartmove_dialog.move(self.geometry().x()+self.geometry().width()/2-self.smartmove_dialog.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.smartmove_dialog.geometry().height()/2)
-            self.smartmove_dialog.show()
-            self.smartmove_dialog.update_all()
+                self.move(self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.geometry().height()/2)
+            self.show()
+            self.update_all()
 
     def update_all(self):
         self.update_objects()

@@ -59,6 +59,43 @@ class Button(QPushButton):
         self.setStyleSheet(self.default_style)
 
 
+class TextEdit(QTextEdit):
+    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None):
+        QTextEdit.__init__(self, parent)
+        # self.setMouseTracking(True)
+        self.name = name
+        self.label = label
+        self.setText(self.label)
+        # COLOR
+        self.color = color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.setStyleSheet(self.default_style)
+        # self.font = QtGui.QFont("Ubuntu", txtsz, QtGui.QFont.Bold)
+        # self.setCurrentFont(self.font)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setMinimumHeight(30)
+    def set_color(self,color):
+        self.color = color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.setStyleSheet(self.default_style)
+    # def enterEvent(self, event):
+    #     self.setStyleSheet(self.hover_style)
+    # def leaveEvent(self, event):
+    #     self.setStyleSheet(self.default_style)
+    def notify(self, message, severity='info'):
+        self.show()
+        self.setText(message)
+        if severity is 'warn':
+            rospy.logwarn(message)
+        elif severity is 'error':
+            rospy.logerr(message)
+        else:
+            rospy.loginfo(message)
+
+
+
 class OverlayDialog(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)

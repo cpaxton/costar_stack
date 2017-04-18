@@ -10,6 +10,7 @@ from beetree import *
 import costar_robot_msgs
 from costar_robot_msgs.srv import *
 from instructor_gui_components import *
+from instructor_core.instructor_qt import *
 from std_srvs.srv import Empty
 
 from instructor_gui_components import *
@@ -36,6 +37,12 @@ class WaypointManagerDialog(QWidget):
         self.relative_page_btn.clicked.connect(self.show_relative_page)
         self.page_button_layout.addWidget(self.waypoint_page_btn)
         self.page_button_layout.addWidget(self.relative_page_btn)
+
+        # INFO #
+        self.info_textbox = TextEdit(self,'INFO_TEXTBOX','',color=colors['gray_light'])
+        self.info_textbox.setReadOnly(True)
+        self.info_textbox.hide()
+        self.button_layout.addWidget(self.info_textbox)
 
         # BUTTONS #
         self.add_waypoint_btn = InterfaceButton('ADD WAYPOINT',colors['blue'])
@@ -125,47 +132,47 @@ class WaypointManagerDialog(QWidget):
                     msg = AddWaypointRequest()
                     msg.name = '/' + self.new_fixed_name
                     msg.world_pose = tf_c.toMsg(F_waypoint)
-                    rospy.loginfo(add_waypoint_proxy(msg))
+                    self.info_textbox.notify(add_waypoint_proxy(msg))
                     self.update_waypoints()
                     self.waypoint_page_widget.name_field.setText('')
                 except rospy.ServiceException, e:
-                    rospy.logwarn(e)
+                    self.info_textbox.notify(e,'warn')
             else:
-                rospy.logerr('You need to input a name for the waypoint')
+                self.info_textbox.notify('You need to input a name for the waypoint','warn')
         else:
-            rospy.logwarn('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
+            self.info_textbox.notify('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
             if self.selected_landmark != None:
                 landmark_frame = self.landmarks[str(self.selected_landmark)].strip('/')
-                rospy.logwarn(landmark_frame)
+                self.info_textbox.notify(landmark_frame)
                 try:
                     F_landmark = tf_c.fromTf(self.listener_.lookupTransform('/world',landmark_frame,rospy.Time(0)))
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                    rospy.logerr('Selected landmark not found')
+                    self.info_textbox.notify('Selected landmark not found','error')
                     return                
             else:
-                rospy.logerr('You did not select a landmark')
+                self.info_textbox.notify('You did not select a landmark','error')
                 return
             if not self.new_relative_name:
-                rospy.logwarn('You did not enter a waypoint name')
+                self.info_textbox.notify('You did not enter a waypoint name')
                 return
 
             # Get relative pose
             try:
                 F_landmark_endpoint = tf_c.fromTf(self.listener_.lookupTransform('/'+landmark_frame,'/endpoint',rospy.Time(0)))
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                rospy.logerr(e)
+                self.info_textbox.notify(e,'error')
                 return
 
             try:
                 rospy.wait_for_service('/instructor_core/AddWaypoint',2)
             except rospy.ROSException as e:
-                rospy.logerr(e)
+                self.info_textbox.notify(e,'error')
                 return
 
             for w in self.found_rel_waypoints:
                 if '--' in w:
                     if self.new_relative_name == w.split('--')[0].replace('/',''):
-                        rospy.logerr('YOU MUST PICK A NAME THAT IS NOT A SEQUENCE')
+                        self.info_textbox.notify('You must pick a name that is not a sequence')
                         return
             try:
                 add_waypoint_proxy = rospy.ServiceProxy('/instructor_core/AddWaypoint',AddWaypoint)
@@ -173,7 +180,7 @@ class WaypointManagerDialog(QWidget):
                 msg.name = '/' + self.new_relative_name
                 msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
                 msg.relative_frame_name = '/'+landmark_frame
-                rospy.loginfo(add_waypoint_proxy(msg))
+                self.info_textbox.notify(add_waypoint_proxy(msg))
                 self.update_waypoints()
                 # Reset
                 self.relative_page_widget.name_field.setText('')
@@ -181,7 +188,7 @@ class WaypointManagerDialog(QWidget):
                 self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
                 self.selected_landmark = None
             except rospy.ServiceException, e:
-                rospy.logwarn(e)
+                self.info_textbox.notify(e,'warn')
 
     def add_waypoint_seq(self):
         if self.mode == 'FIXED':
@@ -208,10 +215,9 @@ class WaypointManagerDialog(QWidget):
                 # Look for existing sequence and get index if present
                 wp = [w.split('--')[0].replace('/','') for w in self.found_waypoints]
                 index = 0
-                rospy.logwarn('wp: '+str(wp))
-                rospy.logwarn('name: '+self.new_fixed_name)
+                self.info_textbox.notify('wp: '+str(wp) + '\nname: '+self.new_fixed_name)
                 if self.new_fixed_name in wp:
-                    rospy.logwarn('name found... ' + self.new_fixed_name)
+                    self.info_textbox.notify('name found... ' + self.new_fixed_name)
                     index = -1
                     for w in self.found_waypoints:
                         if self.new_fixed_name in w:
@@ -224,28 +230,28 @@ class WaypointManagerDialog(QWidget):
                     msg = AddWaypointRequest()
                     msg.name = '/' + self.new_fixed_name + '--' + str(index)
                     msg.world_pose = tf_c.toMsg(F_waypoint)
-                    rospy.loginfo(add_waypoint_proxy(msg))
+                    self.info_textbox.notify(add_waypoint_proxy(msg))
                     self.update_waypoints()
                     # self.waypoint_page_widget.name_field.setText('')
                 except rospy.ServiceException, e:
-                    rospy.logwarn(e)
+                    self.info_textbox.notify(e)
             else:
-                rospy.logerr('You need to input a name for the waypoint')
+                self.info_textbox.notify('You need to input a name for the waypoint')
         else:
-            rospy.logwarn('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
+            message = ('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
             if self.selected_landmark != None:
                 landmark_frame = self.landmarks[str(self.selected_landmark)].strip('/')
-                rospy.logwarn(landmark_frame)
+                rospy.logwarn(message + landmark_frame)
                 try:
                     F_landmark = tf_c.fromTf(self.listener_.lookupTransform('/world',landmark_frame,rospy.Time(0)))
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                    rospy.logerr('Selected landmark not found')
+                    self.info_textbox.notify(message+'\nSelected landmark not found','error')
                     return                
             else:
-                rospy.logerr('You did not select a landmark')
+                self.info_textbox.notify('You did not select a landmark')
                 return
             if not self.new_relative_name:
-                rospy.logwarn('You did not enter a waypoint name')
+                self.info_textbox.notify('You did not enter a waypoint name')
                 return
 
             # Check for non-sequence waypoints with sequence name
@@ -283,7 +289,7 @@ class WaypointManagerDialog(QWidget):
                 msg.name = '/' + self.new_relative_name + '--' + str(index)
                 msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
                 msg.relative_frame_name = '/'+landmark_frame
-                rospy.loginfo(add_waypoint_proxy(msg))
+                self.info_textbox.notify(add_waypoint_proxy(msg))
                 self.update_waypoints()
                 # Reset
                 # self.relative_page_widget.name_field.setText('')
@@ -291,7 +297,7 @@ class WaypointManagerDialog(QWidget):
                 # self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
                 # self.selected_landmark = None
             except rospy.ServiceException, e:
-                rospy.logwarn(e)
+                self.info_textbox.notify(e)
 
     def remove_waypoint(self):
         if self.mode is 'FIXED':
@@ -309,10 +315,10 @@ class WaypointManagerDialog(QWidget):
                 remove_waypoint_proxy = rospy.ServiceProxy('/instructor_core/RemoveWaypoint',RemoveWaypoint)
                 msg = RemoveWaypointRequest()
                 msg.name = str('/' + current_selected_name)
-                rospy.loginfo(remove_waypoint_proxy(msg))
+                self.info_textbox.notify(remove_waypoint_proxy(msg))
                 self.update_waypoints()
             except rospy.ServiceException, e:
-                rospy.logwarn(e)
+                self.info_textbox.notify(e,'error')
 
     def update_waypoints(self):
         # Update FIXED Waypoints
@@ -323,7 +329,7 @@ class WaypointManagerDialog(QWidget):
             get_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetWaypointList',GetWaypointList)
             self.found_waypoints = get_waypoints_proxy('').names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            self.info_textbox.notify(e,'error')
         for w in self.found_waypoints:
             self.waypoint_page_widget.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
         self.waypoint_page_widget.waypoint_list.sortItems()
@@ -336,7 +342,7 @@ class WaypointManagerDialog(QWidget):
             get_relative_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetRelativeWaypointList',GetRelativeWaypointList)
             self.found_rel_waypoints = get_relative_waypoints_proxy('').names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            self.info_textbox.notify(e,'error')
         for w in self.found_rel_waypoints:
             self.relative_page_widget.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
         self.relative_page_widget.waypoint_list.sortItems()
@@ -353,7 +359,7 @@ class WaypointManagerDialog(QWidget):
             landmark_names = found_landmarks.names
             landmark_frames = found_landmarks.frame_names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            self.info_textbox.notify(e,'error')
         for name,frame in zip(landmark_names,landmark_frames):
             self.landmarks[name] = frame
         # rospy.logwarn(self.landmarks)
@@ -384,19 +390,17 @@ class WaypointManagerDialog(QWidget):
                 msg.vel = .25
                 msg.accel = .25
                 # Send Servo Command
-                rospy.logwarn('Single Servo Move Started')
+                self.info_textbox.notify('Single Servo Move Started')
                 result = pose_servo_proxy(msg)
                 if 'FAILURE' in str(result.ack):
-                    rospy.logwarn('Servo failed with reply: '+ str(result.ack))
+                    self.info_textbox.notify('Servo failed with reply: '+ str(result.ack))
                     return
                 else:
-                    rospy.logwarn('Single Servo Move Finished')
-                    rospy.logwarn('Robot driver reported: '+str(result.ack))
+                    self.info_textbox.notify('Single Servo Move Finished' + 'Robot driver reported: '+str(result.ack))
                     return
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
-                rospy.logwarn('There was a problem with the tf lookup or service:')
-                rospy.logwarn(e)
+                self.info_textbox.notify('There was a problem with the tf lookup or service:\n'+e,'error')
                 return
 
 
