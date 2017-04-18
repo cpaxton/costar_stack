@@ -375,11 +375,11 @@ class NotificationDialog(QWidget):
              self.show_hide_slide()
         
         if severity is 'warn':
-            rospy.logwarn(message)
+            rospy.logwarn("Instructor: " + message)
         elif severity is 'error':
-            rospy.logerr(message)
+            rospy.logerr("Instructor: " + message)
         else:
-            rospy.loginfo(message)
+            rospy.loginfo("Instructor: " + message)
 
     def show_hide_slide(self):
         if self.isVisible():
