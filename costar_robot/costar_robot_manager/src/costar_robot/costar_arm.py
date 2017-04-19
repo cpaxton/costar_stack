@@ -245,7 +245,7 @@ class CostarArm(CostarComponent):
     '''
     def release(self):
         self.cur_stamp_mtx.acquire()
-        self.cur_stamp = 0
+        # custom logic here; just maintaining this as an example.
         self.cur_stamp_mtx.release()
 
     '''
