@@ -567,7 +567,7 @@ class Instructor(QWidget):
         self.info_textbox.hide()
 
     def calibrate_cb(self):
-        self.info_textbox.notify('Calibrating...')
+        #self.info_textbox.notify('Calibrating...')
         self.toast('Please wait... calibrating...')
         self.calibrate_button.setEnabled(False)
         service_name = '/calibrate'
@@ -576,21 +576,21 @@ class Instructor(QWidget):
         self.calibrate_button.setEnabled(True)
 
     def detect_objects_cb(self):
-        self.info_textbox.notify('Detecting objects...')
+        #self.info_textbox.notify('Detecting objects...')
         self.toast('Please wait... Detecting Objects')
         self.detect_objects_button.setEnabled(False)
         service_name = '/SPServer/SPSegmenter'
         self.send_service_command(service_name)
-        self.info_textbox.notify('Detecting objects...DONE')
+        #self.info_textbox.notify('Detecting objects...DONE')
         self.detect_objects_button.setEnabled(True)
 
     def update_scene_cb(self):
-        self.info_textbox.notify('Updating Scene objects...')
+        #self.info_textbox.notify('Updating Scene objects...')
         self.toast('Please wait... Updating Scene')
         self.update_scene_button.setEnabled(False)
         service_name = '/planningSceneGenerator/planningSceneGenerator'
         self.send_service_command(service_name)
-        self.info_textbox.notify('Updating Scene...DONE')
+        #self.info_textbox.notify('Updating Scene...DONE')
         self.update_scene_button.setEnabled(True)
 
     def stop_robot_trajectory_cb(self):

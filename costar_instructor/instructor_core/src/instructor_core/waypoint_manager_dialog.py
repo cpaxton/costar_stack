@@ -159,7 +159,7 @@ class WaypointManagerDialog(QWidget):
             self.info_textbox.notify('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
             if self.selected_landmark != None:
                 landmark_frame = self.landmarks[str(self.selected_landmark)].strip('/')
-                self.info_textbox.notify(landmark_frame)
+                self.info_textbox.notify('Selected landmark [%s]'%str(landmark_frame))
                 try:
                     F_landmark = tf_c.fromTf(self.listener_.lookupTransform('/world',landmark_frame,rospy.Time(0)))
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
@@ -196,7 +196,7 @@ class WaypointManagerDialog(QWidget):
                 msg.name = '/' + self.new_relative_name
                 msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
                 msg.relative_frame_name = '/'+landmark_frame
-                self.info_textbox.notify(add_waypoint_proxy(msg))
+                self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                 self.update_waypoints()
                 # Reset
                 self.relative_page_widget.name_field.setText('')
@@ -231,7 +231,7 @@ class WaypointManagerDialog(QWidget):
                 # Look for existing sequence and get index if present
                 wp = [w.split('--')[0].replace('/','') for w in self.found_waypoints]
                 index = 0
-                self.info_textbox.notify('wp: '+str(wp) + '\nname: '+self.new_fixed_name)
+                self.info_textbox.notify('Waypoint: '+str(wp) + '\nname: '+self.new_fixed_name)
                 if self.new_fixed_name in wp:
                     self.info_textbox.notify('name found... ' + self.new_fixed_name)
                     index = -1
@@ -246,7 +246,7 @@ class WaypointManagerDialog(QWidget):
                     msg = AddWaypointRequest()
                     msg.name = '/' + self.new_fixed_name + '--' + str(index)
                     msg.world_pose = tf_c.toMsg(F_waypoint)
-                    self.info_textbox.notify(add_waypoint_proxy(msg))
+                    self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                     self.update_waypoints()
                     # self.waypoint_page_widget.name_field.setText('')
                 except rospy.ServiceException, e:
@@ -305,7 +305,7 @@ class WaypointManagerDialog(QWidget):
                 msg.name = '/' + self.new_relative_name + '--' + str(index)
                 msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
                 msg.relative_frame_name = '/'+landmark_frame
-                self.info_textbox.notify(add_waypoint_proxy(msg))
+                self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                 self.update_waypoints()
                 # Reset
                 # self.relative_page_widget.name_field.setText('')
