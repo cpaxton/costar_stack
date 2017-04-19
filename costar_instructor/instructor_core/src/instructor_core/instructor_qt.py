@@ -80,15 +80,13 @@ class TextEdit(QTextEdit):
         # self.setCurrentFont(self.font)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setMinimumHeight(30)
+
     def set_color(self,color):
         self.color = color
         self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
         self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
         self.setStyleSheet(self.default_style)
-    # def enterEvent(self, event):
-    #     self.setStyleSheet(self.hover_style)
-    # def leaveEvent(self, event):
-    #     self.setStyleSheet(self.default_style)
+
     def notify(self, message, severity='info'):
         self.show()
         self.setText(message)
@@ -98,10 +96,11 @@ class TextEdit(QTextEdit):
             rospy.logerr(message)
         else:
             rospy.loginfo(message)
+        self.sizeChange()
 
     def sizeChange(self):
         docHeight = self.document().size().height()
-        if self.heightMin <= docHeight <= self.heightMax:
+        if self.heightMin <= docHeight and docHeight <= self.heightMax:
             self.setMaximumHeight(docHeight)
 
 
