@@ -65,8 +65,8 @@ class TextEdit(QTextEdit):
         QTextEdit.__init__(self, parent)
         self.document().contentsChanged.connect(self.sizeChange)
 
-        self.heightMin = 0
-        self.heightMax = 65000
+        self.heightMin = 100
+        self.heightMax = 300
         # self.setMouseTracking(True)
         self.name = name
         self.label = label

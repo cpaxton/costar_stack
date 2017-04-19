@@ -804,7 +804,7 @@ class Instructor(QWidget):
             self.regenerate_tree(True)
             pass
 
-    def stop_tree(self):
+    def stop_tree(self, notify=True):
         self.notification_dialog.notify('Task Tree stopped')
         self.stop_robot_trajectory_cb()
         self.run_timer_.stop()
@@ -1316,7 +1316,7 @@ class Instructor(QWidget):
     
     def add_child_cb(self):
         if self.current_node_type != None:
-            self.info_textbox.notify('adding node of type ' + str(self.current_node_type))
+            self.info_textbox.notify('Adding node of type ' + str(self.current_node_type))
             if self.root_node is None:
                 self.notification_dialog.notify('First create a root node under BUILDING BLOCKS', 'warn')
             if self.left_selected_node == None:
@@ -1339,7 +1339,7 @@ class Instructor(QWidget):
                         self.node_leftclick_cb(current_name)
 
     def add_sibling_before_cb(self):
-        print 'adding sibling node of type ' + self.current_node_type
+        self.info_textbox.notify('Adding sibling node of type ' + self.current_node_type)
         if self.current_node_type != None:
             if self.left_selected_node == None:
               self.notification_dialog.notify('There is no left sibling node selected')
@@ -1439,7 +1439,7 @@ class Instructor(QWidget):
             # Stop Execution if running
             if self.root_node is not None:
                 self.dot_widget.zoom_image(1, center=True)
-                self.stop_tree()
+                self.stop_tree(notify=False)
 
                 # self.root_node = None
 

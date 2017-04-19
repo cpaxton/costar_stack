@@ -84,6 +84,7 @@ class WaypointManagerDialog(QWidget):
         self.found_rel_waypoints = []
         # Initialize
         self.update_waypoints()
+        self.show_waypoint_page()
 
     def show_waypoint_page(self):
         self.info_textbox.hide()
@@ -145,7 +146,7 @@ class WaypointManagerDialog(QWidget):
                     msg = AddWaypointRequest()
                     msg.name = '/' + self.new_fixed_name
                     msg.world_pose = tf_c.toMsg(F_waypoint)
-                    self.info_textbox.notify(add_waypoint_proxy(msg))
+                    self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                     self.update_waypoints()
                     self.waypoint_page_widget.name_field.setText('')
                 except rospy.ServiceException, e:
@@ -328,7 +329,7 @@ class WaypointManagerDialog(QWidget):
                 remove_waypoint_proxy = rospy.ServiceProxy('/instructor_core/RemoveWaypoint',RemoveWaypoint)
                 msg = RemoveWaypointRequest()
                 msg.name = str('/' + current_selected_name)
-                self.info_textbox.notify(remove_waypoint_proxy(msg))
+                self.info_textbox.notify(remove_waypoint_proxy(msg).ack)
                 self.update_waypoints()
             except rospy.ServiceException, e:
                 self.info_textbox.notify(e,'error')
