@@ -102,6 +102,8 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
+        00 Home:
+          Value: true
         01 Center:
           Value: false
         All Enabled: false
@@ -133,14 +135,6 @@ Visualization Manager:
           Value: false
         C1 25 Place:
           Value: false
-        C3 01 Over:
-          Value: false
-        C3 02 Pick:
-          Value: false
-        C3 03 Over:
-          Value: false
-        C3 04 Pick:
-          Value: false
         base:
           Value: false
         base_link:
@@ -169,39 +163,11 @@ Visualization Manager:
           Value: false
         marker_link:
           Value: false
-        obj_link_uniform_1:
-          Value: true
-        obj_link_uniform_2:
-          Value: true
-        obj_node_uniform_1:
-          Value: true
-        obj_node_uniform_2:
-          Value: true
-        obj_node_uniform_3:
-          Value: true
-        obj_node_uniform_4:
-          Value: true
-        objects/link_uniform/1:
-          Value: false
-        objects/link_uniform/2:
-          Value: false
-        objects/node_uniform/1:
-          Value: false
-        objects/node_uniform/2:
-          Value: false
-        objects/node_uniform/3:
-          Value: false
-        objects/node_uniform/4:
-          Value: false
         preferred_orientation:
           Value: false
         shoulder_link:
           Value: false
         table_frame:
-          Value: false
-        test:
-          Value: false
-        test_place_link:
           Value: false
         tool0_controller:
           Value: false
@@ -227,19 +193,10 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              obj_link_uniform_1:
-                {}
-              obj_link_uniform_2:
-                {}
-              obj_node_uniform_1:
-                {}
-              obj_node_uniform_2:
-                {}
-              obj_node_uniform_3:
-                {}
-              obj_node_uniform_4:
-                {}
+              {}
           world:
+            00 Home:
+              {}
             01 Center:
               {}
             C1 01 Over:
@@ -270,14 +227,6 @@ Visualization Manager:
               {}
             C1 25 Place:
               {}
-            C3 01 Over:
-              {}
-            C3 02 Pick:
-              {}
-            C3 03 Over:
-              {}
-            C3 04 Pick:
-              {}
             base_link:
               preferred_orientation:
                 {}
@@ -289,32 +238,17 @@ Visualization Manager:
                         wrist_3_link:
                           ee_link:
                             endpoint:
-                              endpoint_marker:
-                                {}
-                              gripper_center:
-                                {}
+                              {}
+                            endpoint_marker:
+                              {}
+                            gripper_center:
+                              {}
                             gripper_link:
                               {}
                             marker_link:
                               {}
               table_frame:
                 {}
-            objects/link_uniform/1:
-              {}
-            objects/link_uniform/2:
-              {}
-            objects/node_uniform/1:
-              {}
-            objects/node_uniform/2:
-              {}
-            objects/node_uniform/3:
-              {}
-            objects/node_uniform/4:
-              {}
-            test:
-              {}
-            test_place_link:
-              {}
       Update Interval: 0
       Value: true
     - Alpha: 0.5
@@ -681,10 +615,10 @@ Visualization Manager:
         Z: 0.055867
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.754796
+      Pitch: 0.774796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.3483
+      Yaw: 5.3633
     Saved: ~
 Window Geometry:
   Displays:
