@@ -380,7 +380,7 @@ class CostarArm(CostarComponent):
 
         else:
             rospy.logerr('DRIVER -- PLANNING failed')
-            return 'FAILURE -- not in servo mode'
+            return 'FAILURE -- planning failed'
 
 
     '''

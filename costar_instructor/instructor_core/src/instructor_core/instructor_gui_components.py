@@ -389,7 +389,9 @@ class NotificationDialog(QWidget):
             if self.saved_geom is not None:
                 self.move(self.saved_geom.x(),self.saved_geom.y())
             else:
-                self.move(self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,self.geometry().y()+self.geometry().height()/2)
+                self.move(
+                    self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,
+                    self.geometry().y()+self.geometry().height()/2)
             self.show()
 
     def done(self):
