@@ -185,7 +185,7 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 	// Setup the feedback data forces to be very high when running thru the best data
 	// this->data_forces_generator_.setForcesParameter(10,0.05);
 
-	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./200,100);
+	this->physics_engine_->setSimulationMode(BULLET_DEFAULT,1./200,30);
 	// this->physics_engine_->setSimulationMode(BULLET_DEFAULT,1./200,30);
 
 	std::map<std::string, ObjectParameter> result = this->physics_engine_->getUpdatedObjectPose();
@@ -323,14 +323,14 @@ double SceneGraph::evaluateSceneOnObjectHypothesis(std::map<std::string, btTrans
 
 		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first], verbose);
 
-		vertex_t &object_in_graph = this->vertex_map_[object_label];
-		object_pose_from_graph[object_label] = this->scene_support_graph_[object_in_graph].object_pose_;
+		vertex_t &object_in_graph = this->vertex_map_[it->first];
+		object_pose_from_graph[it->first] = this->scene_support_graph_[object_in_graph].object_pose_;
 
 		if (obj_probability == 0)
 		{
 			if (background_support_status)
 			{
-				scene_hypothesis *= 1e-10;
+				scene_hypothesis *= 1e-20;
 			}
 			else
 			{
@@ -424,7 +424,9 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 			// std::cerr << "-------------------------------------------------------------\n";
 			std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
 				<< ++counter << "/" << number_of_object_hypotheses << std::endl;
-			int i = 0;
+			
+			// if (counter > 10 ) break;
+
 			std::map<std::string, ObjectParameter> tmp_object_pose_config;
 			for (int i = 0; i < 4; i++)
 			{
@@ -465,8 +467,8 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 		if (update_from_this_object)
 		{
 			seq_mtx_.lock();
-			this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
-			// this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
+			// this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
+			this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
 			seq_mtx_.unlock();
 		}
 	}
@@ -489,13 +491,12 @@ double SceneGraph::evaluateSceneProbabilityFromGraph()
 		if (object_label_class_map.find(it->first) == object_label_class_map.end()) continue;
 		std::cerr << it->first << " ";
 		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first], true);
-
 		// skips the object if it has no probability
 		if (obj_probability == 0) 
 		{
 			if (!current_background_support_status && best_background_support_status)
 			{
-				scene_hypothesis *= 1e-10;
+				scene_hypothesis *= 1e-20;
 			}
 			else
 			{
