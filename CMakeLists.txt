@@ -123,7 +123,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- ObjRecRANSACTool ${PCL_LIBRARIES} ${VTK_LIBS} ${ObjRecRANSAC_LIBRARY}
+ ObjRecRANSACTool ${PCL_LIBRARIES} ${VTK_LIBS} ${BULLET_LIBRARIES} ${ObjRecRANSAC_LIBRARY}
 )
 
 target_link_libraries(

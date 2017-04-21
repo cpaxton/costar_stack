@@ -51,7 +51,7 @@ double ObjRecRANSACTool::getConfidence(const std::string &model_name, const btTr
 
 	AcceptedHypothesis hypothesis_tmp;
 	
-	btScalar gl_matrix[15];
+	btScalar gl_matrix[16];
 	transform.getOpenGLMatrix(gl_matrix);
 
 	double rigid_transform[12];

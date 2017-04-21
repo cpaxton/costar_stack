@@ -23,17 +23,17 @@
 // 	return bt;
 // }
 
-inline
+static
 btTransform convertRosTFToBulletTF(const tf::Transform & input)
 {
-	double gl_matrix[15];
+	double gl_matrix[16];
 	input.getOpenGLMatrix(gl_matrix);
 	btTransform bt;
 #if defined(BT_USE_DOUBLE_PRECISION)
 	bt.setFromOpenGLMatrix(gl_matrix);
 #else
-	btScalar gl_matrix_bt[15];
-	for (int i = 0; i < 15; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
+	btScalar gl_matrix_bt[16];
+	for (int i = 0; i < 16; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
 	bt.setFromOpenGLMatrix(gl_matrix_bt);
 #endif
 	// Scale the translation factor 
@@ -41,17 +41,17 @@ btTransform convertRosTFToBulletTF(const tf::Transform & input)
 	return bt;
 }
 
-inline
+static
 btTransform convertRosTFToBulletTF(const tf::StampedTransform & input)
 {
-	double gl_matrix[15];
+	double gl_matrix[16];
 	input.getOpenGLMatrix(gl_matrix);
 	btTransform bt;
 #if defined(BT_USE_DOUBLE_PRECISION)
 	bt.setFromOpenGLMatrix(gl_matrix);
 #else
-	btScalar gl_matrix_bt[15];
-	for (int i = 0; i < 15; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
+	btScalar gl_matrix_bt[16];
+	for (int i = 0; i < 16; i++) gl_matrix_bt[i] = btScalar(gl_matrix[i]);
 	bt.setFromOpenGLMatrix(gl_matrix_bt);
 #endif
 	// Scale the translation factor 
@@ -59,11 +59,11 @@ btTransform convertRosTFToBulletTF(const tf::StampedTransform & input)
 	return bt;
 }
 
-inline
+static
 tf::Transform convertBulletTFToRosTF(const btTransform & input)
 {
 	tf::Transform tf_transform;
-	btScalar gl_matrix_bt[15];
+	btScalar gl_matrix_bt[16];
 
 	// Scale back the translation factor
 	btTransform input_rescaled = input;
@@ -73,8 +73,8 @@ tf::Transform convertBulletTFToRosTF(const btTransform & input)
 #if defined(BT_USE_DOUBLE_PRECISION)
 	tf_transform.setFromOpenGLMatrix(gl_matrix_bt);
 #else
-	double gl_matrix[15];
-	for (int i = 0; i < 15; i++) gl_matrix[i] = double(gl_matrix_bt[i]);
+	double gl_matrix[16];
+	for (int i = 0; i < 16; i++) gl_matrix[i] = double(gl_matrix_bt[i]);
 	tf_transform.setFromOpenGLMatrix(gl_matrix);
 #endif
 	return tf_transform;
