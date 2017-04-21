@@ -122,8 +122,8 @@ class CostarUR5Driver(CostarArm):
             self.client.send_goal(goal)
             # max time before returning = 30 s
             done = False
-            while self.valid_verify(stamp) and not done:
-                done = self.client.wait_for_result(rospy.Duration.from_sec(0.1))
+            #while self.valid_verify(stamp) and not done:
+            self.client.wait_for_result()#rospy.Duration.from_sec(1.0))
 
         # Check to make sure we weren't preempted.
         if not self.valid_verify(stamp):
