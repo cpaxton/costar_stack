@@ -52,22 +52,32 @@ public:
 	int force_data_model_;
 
 private:
+	std::pair<btVector3, btVector3> generateDataForceWithICP(PointCloudXYZPtr input_cloud,
+		const btTransform &object_pose, const std::string &object_id);
+	std::pair<btVector3, btVector3> generateDataForceWithSavedICP(PointCloudXYZPtr input_cloud,
+		const btTransform &object_pose, const std::string &object_id);
+	void updateCachedIcpResultMap(const PointCloudXYZPtr icp_result, const std::string &object_id);
+
 	std::pair<btVector3, btVector3> calculateDataForceFromCorrespondence(
-	const PointCloudXYZ input_cloud, const PointCloudXYZ target_cloud, const btVector3 &object_cog) const;
+		const PointCloudXYZPtr input_cloud, const PointCloudXYZPtr target_cloud,
+		const btVector3 &object_cog, const double &icp_confidence = 1.0) const;
 	PointCloudXYZPtr doICP(const PointCloudXYZPtr input_cloud) const;
 	std::pair<btVector3, btVector3> generateDataForceWithClosestPointPair(PointCloudXYZPtr input_cloud,
 		const btTransform &object_pose) const;
-	std::pair<btVector3, btVector3> generateDataForceWithICP(PointCloudXYZPtr input_cloud,
-		const btTransform &object_pose) const;
-	
-	std::pair<btVector3, btVector3> generateDataForceWithSavedICP(PointCloudXYZPtr input_cloud,
-		const btTransform &object_pose, const std::string object_id);
+	double getIcpConfidenceResult(const PointCloudXYZPtr icp_result) const;
+	PointCloudXYZPtr generateCorrespondenceCloud(PointCloudXYZPtr input_cloud, 
+		const bool &filter_distance = false, const double &max_distance = 0.0) const;
+	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
+		const std::string &model_name) const;
+	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
+		const std::string &model_name, btTransform &object_real_pose) const;
 
 	bool have_scene_data_;
 	PointCloudXYZPtr scene_data_;
 	pcl::KdTreeFLANN<pcl::PointXYZ> scene_data_tree_;
 	std::map<std::string, PointCloudXYZPtr> model_cloud_map_;
 	std::map<std::string, PointCloudXYZPtr> model_cloud_icp_result_map_;
+	std::map<std::string, double> icp_result_confidence_map_;
 	btScalar forces_magnitude_coefficient_;
 	btScalar max_point_distance_threshold_;
 	int max_icp_iteration_;
