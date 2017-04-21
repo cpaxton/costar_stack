@@ -185,7 +185,7 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 	// Setup the feedback data forces to be very high when running thru the best data
 	// this->data_forces_generator_.setForcesParameter(10,0.05);
 
-	this->physics_engine_->setSimulationMode(BULLET_DEFAULT,1./200,30);
+	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./200,30);
 	// this->physics_engine_->setSimulationMode(BULLET_DEFAULT,1./200,30);
 
 	std::map<std::string, ObjectParameter> result = this->physics_engine_->getUpdatedObjectPose();
@@ -353,122 +353,142 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 {
 	// Set the best test pose map based on the best data
 	this->data_forces_generator_.resetCachedIcpResult();
-	std::map<vertex_t, bool> vertex_background_support_status;
+	std::map<std::string, bool> object_background_support_status;
 
 	seq_mtx_.lock();
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH, 1./500);
 	vertex_t &ground_vertex = this->vertex_map_["background"];
 	OrderedVertexVisitor vis  = getOrderedVertexList(this->scene_support_graph_, ground_vertex);
+	std::map<std::size_t, std::vector<vertex_t> > vertex_visit_by_dist = vis.getVertexVisitOrderByDistances();
+	
+	// DO NOT USE THE VERTEX IDX DIRECTLY, SINCE IT MAY CHANGE WHEN SCENE GRAPH IS UPDATED
 
-	std::map<vertex_t,std::size_t> ordered_vertex_map =  vis.getVertexVisitMap();
-	std::vector<vertex_t> v_ordered = vis.getVertexVisitList();
-	std::vector<vertex_t> disconnected_root_vertex;
+	// only optimize the scene probability by the distance to the ground vertex
+	std::vector< std::map<std::string, btTransform> > object_test_pose_map_by_dist;
+	std::map<std::string, btTransform> disconnected_vertices_poses;
+	object_test_pose_map_by_dist.reserve(vertex_visit_by_dist.size());
 
-	// get disconnected components from the ground and add it to the ordered vertex map
-	// TODO: Actually finds all roots of disconnected components, then find and add the ordered vertex visitor
-	// to the list of vertex
-	std::size_t counter = ordered_vertex_map.size();
-	for (std::map<std::string, vertex_t>::iterator it = this->vertex_map_.begin();
-		it != this->vertex_map_.end(); ++it)
+	for (std::map<std::size_t, std::vector<vertex_t> >::iterator it = vertex_visit_by_dist.begin();
+		it != vertex_visit_by_dist.end(); ++it)
 	{
-		if (ordered_vertex_map.find(it->second) == ordered_vertex_map.end())
+		std::map<std::string, btTransform> pose_of_vertices = this->physics_engine_->getAssociatedBestPoseDataFromStringVector(
+			getAssociatedIdFromVertexVector(scene_support_graph_, it->second) );
+
+		for (std::vector<vertex_t>::iterator it_2 = it->second.begin(); it_2 != it->second.end(); ++it_2)
 		{
-			ordered_vertex_map[it->second] = ++counter;
+			const std::string &object_pose_label = this->scene_support_graph_[*it_2].object_id_;	
+			object_background_support_status[object_pose_label] = this->scene_support_graph_[*it_2].ground_supported_;
+		}
+
+		if (it->first != 0)
+		{
+			object_test_pose_map_by_dist.push_back( pose_of_vertices );
+		}
+		else
+		{
+			disconnected_vertices_poses = pose_of_vertices;
 		}
 	}
-
-	std::map<std::size_t, vertex_t> value_ordered_vertex_map;
-	for (std::map<vertex_t, std::size_t>::iterator it = ordered_vertex_map.begin(); 
-		it != ordered_vertex_map.end(); ++it)
+	if (disconnected_vertices_poses.size() > 0) 
 	{
-		value_ordered_vertex_map[it->second] = it->first;
+		object_test_pose_map_by_dist.push_back(disconnected_vertices_poses);
 	}
-
-	std::cerr << "Vertex fix order: \n";
-	for (std::map<vertex_t, std::size_t>::iterator it = value_ordered_vertex_map.begin(); 
-		it != value_ordered_vertex_map.end(); ++it)
-	{
-		std::cerr << this->scene_support_graph_[it->second].object_id_ << " " << it->first << std::endl;
-		vertex_background_support_status[it->first] = this->scene_support_graph_[it->second].ground_supported_;
-	}
+	this->physics_engine_->removeAllRigidBodyFromWorld();
 
 	seq_mtx_.unlock();
 
 	double best_object_probability_effect = 0;
-	for (std::map<std::size_t, vertex_t>::iterator it = value_ordered_vertex_map.begin();
-		it != value_ordered_vertex_map.end(); ++it)
-	// for (std::map<std::string, ObjectHypothesesData >::const_iterator it = this->object_hypotheses_map_.begin();
-	// 	it != this->object_hypotheses_map_.end(); ++it)
+	for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
 	{
-		const std::string &object_pose_label = this->scene_support_graph_[it->second].object_id_;
-		const ObjectHypothesesData &obj_hypotheses = this->object_hypotheses_map_[object_pose_label];
-		const std::string &object_model_name = obj_hypotheses.first;
-		// const std::string &object_pose_label = it->first;
-		// const std::string &object_model_name = it->second.first;
-		const std::vector<ObjectParameter> &object_pose_hypotheses = obj_hypotheses.second;
-		bool &current_background_support_status = vertex_background_support_status[it->second];
-		bool updated_background_support_status = current_background_support_status;
+		this->physics_engine_->addExistingRigidBodyBackFromMap(object_test_pose_map_by_dist[dist_idx]);
 		
-		bool update_from_this_object = false;
-		ObjectParameter best_object_pose;
-		std::map<std::string, ObjectParameter> best_object_pose_from_graph;
+		// Force best scene to update when the distance increased.
+		bool force_update_by_increased_distance = true;
 
-		std::size_t counter = 0;
-		std::size_t number_of_object_hypotheses = object_pose_hypotheses.size();
-		for (std::vector<ObjectParameter>::const_iterator it2 = object_pose_hypotheses.begin();
-			it2 != object_pose_hypotheses.end(); ++it2)
+		for (std::map<std::string, btTransform>::iterator it = object_test_pose_map_by_dist[dist_idx].begin();
+			it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
 		{
-			ObjectParameter object_pose = *it2;
-			// std::cerr << "-------------------------------------------------------------\n";
-			std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
-				<< ++counter << "/" << number_of_object_hypotheses << std::endl;
-			
-			if (counter > 5 ) break;
+			const std::string &object_pose_label = it->first;
+			if (!keyExistInConstantMap(object_pose_label, this->object_hypotheses_map_))
+			{
+				std::cerr << "Skipped " << object_pose_label << " because its hypothesis does not exist\n";
+				continue;
+			}
 
-			std::map<std::string, ObjectParameter> tmp_object_pose_config;
-			for (int i = 0; i < 3; i++)
+			const ObjectHypothesesData &obj_hypotheses = this->object_hypotheses_map_[object_pose_label];
+			const std::string &object_model_name = obj_hypotheses.first;
+			const std::vector<ObjectParameter> &object_pose_hypotheses = obj_hypotheses.second;
+			bool &current_background_support_status = object_background_support_status[it->first];
+			bool updated_background_support_status = current_background_support_status;
+			
+			bool update_from_this_object = false;
+			ObjectParameter best_object_pose;
+			std::map<std::string, ObjectParameter> best_object_pose_from_graph;
+
+			std::size_t counter = 0;
+			std::size_t number_of_object_hypotheses = object_pose_hypotheses.size();
+			for (std::vector<ObjectParameter>::const_iterator it2 = object_pose_hypotheses.begin();
+				it2 != object_pose_hypotheses.end(); ++it2)
+			{
+				std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
+					<< ++counter << "/" << number_of_object_hypotheses << std::endl;
+
+				ObjectParameter object_pose = *it2;
+				// std::cerr << "-------------------------------------------------------------\n";
+
+				std::map<std::string, ObjectParameter> tmp_object_pose_config;
+				for (int i = 0; i < 3; i++)
+				{
+					seq_mtx_.lock();
+					double scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
+						object_pose_label, object_model_name, updated_background_support_status,
+						object_pose, i == 0);
+
+					// get updated object pose from the scene simulation
+					const vertex_t updated_vertex = this->vertex_map_[it->first];
+					object_pose = this->scene_support_graph_[updated_vertex].object_pose_;
+
+					seq_mtx_.unlock();
+
+					// update the best scene if the current scene probability is better or there is
+					// a change from not background supported to background supported on this object hypothesis
+					if ((best_object_probability_effect < scene_hypothesis_probability) ||
+						(!current_background_support_status && updated_background_support_status) ||
+						force_update_by_increased_distance
+						)
+					{
+						if (!current_background_support_status && updated_background_support_status)
+						{
+							current_background_support_status = updated_background_support_status;
+						}
+						best_object_pose = object_pose;
+						best_object_probability_effect = scene_hypothesis_probability;
+						best_object_pose_from_graph = tmp_object_pose_config;
+						update_from_this_object = true;
+						force_update_by_increased_distance = false;
+					}
+
+					std::cerr << "Scene probability = " << scene_hypothesis_probability
+						<< " best: " << best_object_probability_effect << std::endl;
+
+					this->physics_engine_->stepSimulationWithoutEvaluation(1., 1/75.);
+				}
+				// std::cerr << "-------------------------------------------------------------\n\n";
+			}
+			
+			// only update if this object provides valid best object pose
+			if (update_from_this_object)
 			{
 				seq_mtx_.lock();
-				double scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
-					object_pose_label, object_model_name, updated_background_support_status,
-					object_pose, i == 0);
-				// get updated object pose from the scene simulation
-				object_pose = this->scene_support_graph_[it->second].object_pose_;
-
+				std::cerr << " ========================= \n";
+				std::cerr << " Update the best map from object: " << object_pose_label <<" \n";
+				std::cerr << " ========================= \n";
+				// this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
+				this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
 				seq_mtx_.unlock();
-
-				// update the best scene if the current scene probability is better or there is
-				// a change from not background supported to background supported on this object hypothesis
-				if ((best_object_probability_effect < scene_hypothesis_probability) ||
-					(!current_background_support_status && updated_background_support_status)
-					)
-				{
-					if (!current_background_support_status && updated_background_support_status)
-					{
-						current_background_support_status = updated_background_support_status;
-					}
-					best_object_pose = object_pose;
-					best_object_probability_effect = scene_hypothesis_probability;
-					best_object_pose_from_graph = tmp_object_pose_config;
-					update_from_this_object = true;
-				}
-
-				std::cerr << "Scene probability = " << scene_hypothesis_probability
-					<< " best: " << best_object_probability_effect << std::endl;
-
-				this->physics_engine_->stepSimulationWithoutEvaluation(1., 1/75.);
 			}
-			// std::cerr << "-------------------------------------------------------------\n\n";
 		}
 		
-		// only update if this object provides valid best object pose
-		if (update_from_this_object)
-		{
-			seq_mtx_.lock();
-			// this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
-			this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
-			seq_mtx_.unlock();
-		}
 	}
 
 	this->getUpdatedSceneSupportGraph();

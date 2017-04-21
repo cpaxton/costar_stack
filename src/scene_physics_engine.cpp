@@ -292,6 +292,44 @@ void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, c
 	this->skip_scene_evaluation_ = false;
 }
 
+void PhysicsEngine::removeAllRigidBodyFromWorld()
+{
+	mtx_.lock();
+	for (std::map<std::string, btRigidBody*>::iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
+	{
+		m_dynamicsWorld->removeRigidBody(it->second);
+		if (this->debug_messages_) std::cerr << "Removed object "<<  it->first <<" from world.\n";
+	}
+	this->object_best_test_pose_map_.clear();
+	mtx_.unlock();
+}
+
+void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies)
+{
+	mtx_.lock();
+	for (std::map<std::string, btTransform>::const_iterator it = rigid_bodies.begin(); 
+		it != rigid_bodies.end(); ++it)
+	{
+		if (it->first == "background") continue;
+		
+		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
+		this->object_best_test_pose_map_[it->first] = it->second;
+		if (this->debug_messages_) std::cerr << "Add object "<<  it->first <<" back to world.\n";
+	}
+	mtx_.unlock();
+}
+
+std::map<std::string, btTransform> PhysicsEngine::getAssociatedBestPoseDataFromStringVector(const std::vector<std::string> &input)
+{
+	std::map<std::string, btTransform> result;
+	for (std::vector<std::string>::const_iterator it = input.begin(); it != input.end(); ++it)
+    {
+        result[*it] = this->object_best_pose_from_data_[*it];
+    }
+    return result;
+}
+
 bool PhysicsEngine::checkSteadyState()
 {
 	bool steady_state = true;

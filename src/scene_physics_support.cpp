@@ -59,6 +59,32 @@ OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const 
     return vis;
 }
 
+
+std::map<std::string, btTransform> getAssociatedTransformMapFromVertexVector( SceneSupportGraph &input_graph,
+    const std::vector<vertex_t> &vertices)
+{
+    std::map<std::string, btTransform> result;
+    for (std::vector<vertex_t>::const_iterator it = vertices.begin(); it != vertices.end(); ++it)
+    {
+        const scene_support_vertex_properties &vertex_property = input_graph[*it];
+        result[vertex_property.object_id_] = vertex_property.object_pose_;
+    }
+    return result;
+}
+
+std::vector<std::string> getAssociatedIdFromVertexVector( SceneSupportGraph &input_graph,
+    const std::vector<vertex_t> &vertices)
+{
+    std::vector<std::string> result;
+    result.reserve(vertices.size());
+    for (std::vector<vertex_t>::const_iterator it = vertices.begin(); it != vertices.end(); ++it)
+    {
+        const scene_support_vertex_properties &vertex_property = input_graph[*it];
+        result.push_back(vertex_property.object_id_);
+    }
+    return result;
+}
+
 void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
 {
     OrderedVertexVisitor vis  = getOrderedVertexList(input_graph, parent_vertex);
