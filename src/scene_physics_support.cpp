@@ -1,11 +1,61 @@
 #include "scene_physics_support.h"
 
+void OrderedVertexVisitor::setDataFromDistanceVector(const std::vector<std::size_t> &distances, 
+    const vertex_t &parent_vertex)
+{
+    // the indices of distance vector is the vertex index
+
+    this->vertex_visit_order_by_distances_.clear();
+    this->vertex_distance_map_.clear();
+    this->vertex_visit_order_.clear();
+
+    for (std::size_t i = 0; i < distances.size(); ++i)
+    {
+        if (i == parent_vertex) continue; // do not add the source/parent vertex
+
+        this->vertex_visit_order_by_distances_[distances[i]].push_back(i);
+        this->vertex_distance_map_[i] = distances[i];
+    }
+
+    vertex_visit_order_.reserve(distances.size());
+    for (std::map<std::size_t, std::vector<vertex_t> >::iterator it = vertex_visit_order_by_distances_.begin();
+        it != vertex_visit_order_by_distances_.end(); ++it)
+    {
+        if (it->first == 0) continue; // distance = 0: disconnected vertex
+
+        vertex_visit_order_.insert( vertex_visit_order_.end(), it->second.begin(), it->second.end() );
+    }
+
+    for (std::size_t i = 0; i < vertex_visit_order_.size(); ++i)
+    {
+        vertex_visit_order_map_[vertex_visit_order_[i]] = i;
+    }
+}
+
 OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
 {
     // Use breadth-first search to get the vertex order of hypothesis check
     OrderedVertexVisitor vis;
-    
-    boost::breadth_first_search(input_graph, parent_vertex, boost::visitor(vis));
+    std::vector<std::size_t> distances(num_vertices(input_graph));
+
+    //get an index map, from Graph definition property< vertex_index_t, size_t>
+    typedef boost::property_map< SceneSupportGraph, boost::vertex_index_t>::type VertexIndexMap;
+    VertexIndexMap v_index = get(boost::vertex_index, input_graph);
+
+    // Create the external property map, this map wraps the storage vector d
+    boost::iterator_property_map< std::vector< size_t >::iterator, VertexIndexMap >
+        d_map(distances.begin(), v_index);
+
+
+    //Start at 0
+    boost::breadth_first_search(input_graph, parent_vertex,
+        boost::visitor(boost::make_bfs_visitor(
+          boost::record_distances(d_map, boost::on_tree_edge())
+          )));
+
+    // boost::breadth_first_search(input_graph, parent_vertex, boost::visitor(vis));
+    vis.setDataFromDistanceVector(distances, parent_vertex);
+
     return vis;
 }
 

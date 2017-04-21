@@ -346,8 +346,6 @@ double SceneGraph::evaluateSceneOnObjectHypothesis(std::map<std::string, btTrans
 			scene_hypothesis *= obj_probability;
 		}
 	}
-	// double hypothesis_probability = this->evaluateObjectProbability(object_label, object_model_name);
-	// std::cerr << "Getting object probability.\n";
 	return scene_hypothesis;
 }
 
@@ -425,10 +423,10 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 			std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
 				<< ++counter << "/" << number_of_object_hypotheses << std::endl;
 			
-			// if (counter > 10 ) break;
+			if (counter > 5 ) break;
 
 			std::map<std::string, ObjectParameter> tmp_object_pose_config;
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < 3; i++)
 			{
 				seq_mtx_.lock();
 				double scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
@@ -458,7 +456,7 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 				std::cerr << "Scene probability = " << scene_hypothesis_probability
 					<< " best: " << best_object_probability_effect << std::endl;
 
-				this->physics_engine_->stepSimulationWithoutEvaluation(0.5,1/200.);
+				this->physics_engine_->stepSimulationWithoutEvaluation(1., 1/75.);
 			}
 			// std::cerr << "-------------------------------------------------------------\n\n";
 		}

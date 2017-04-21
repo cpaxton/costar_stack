@@ -86,34 +86,54 @@ private:
 };
 
 
-class OrderedVertexVisitor : public boost::default_bfs_visitor
+// class OrderedVertexVisitor : public boost::default_bfs_visitor
+// {
+// public:
+//     OrderedVertexVisitor() : 
+//         vertex_visit_index_(0),
+//         vertex_visit_order_map_(new std::map<vertex_t, std::size_t>() ),
+//         vertex_visit_order_(new std::vector<vertex_t>() )
+//     {}
+
+//     void discover_vertex(vertex_t v, const SceneSupportGraph& g)
+//     {
+//         (*vertex_visit_order_map_)[v] = vertex_visit_index_++;
+//         vertex_visit_order_->push_back(v);
+//     }
+
+//     std::vector<vertex_t> getVertexVisitList() const
+//     {
+//         return *(this->vertex_visit_order_);
+//     }
+
+//     std::map<vertex_t,std::size_t> getVertexVisitMap() const
+//     {
+//         return *(this->vertex_visit_order_map_);
+//     }
+// private:
+//     std::size_t vertex_visit_index_;
+//     boost::shared_ptr<  std::map<vertex_t, std::size_t> > vertex_visit_order_map_;
+//     boost::shared_ptr<  std::vector<vertex_t> > vertex_visit_order_;
+// };
+
+class OrderedVertexVisitor
 {
 public:
-    OrderedVertexVisitor() : 
-        vertex_visit_index_(0),
-        vertex_visit_order_map_(new std::map<vertex_t, std::size_t>() ),
-        vertex_visit_order_(new std::vector<vertex_t>() )
-    {}
-
-    void discover_vertex(vertex_t v, const SceneSupportGraph& g)
-    {
-        (*vertex_visit_order_map_)[v] = vertex_visit_index_++;
-        vertex_visit_order_->push_back(v);
-    }
-
+    void setDataFromDistanceVector(const std::vector<std::size_t> &distances, const vertex_t &parent_vertex);
     std::vector<vertex_t> getVertexVisitList() const
-    {
-        return *(this->vertex_visit_order_);
-    }
-
+        { return vertex_visit_order_; }
+    std::map<std::size_t, std::vector<vertex_t> > getVertexVisitOrderByDistances() const
+        { return vertex_visit_order_by_distances_;}
+    std::map<vertex_t, std::size_t> getVertexDistanceMap() const
+        { return vertex_distance_map_; }
     std::map<vertex_t,std::size_t> getVertexVisitMap() const
-    {
-        return *(this->vertex_visit_order_map_);
-    }
+        { return vertex_visit_order_map_; }
+
 private:
-    std::size_t vertex_visit_index_;
-    boost::shared_ptr<  std::map<vertex_t, std::size_t> > vertex_visit_order_map_;
-    boost::shared_ptr<  std::vector<vertex_t> > vertex_visit_order_;
+    std::map<vertex_t, std::size_t> vertex_visit_order_map_;
+    std::map<vertex_t, std::size_t> vertex_distance_map_;
+    std::map<std::size_t, std::vector<vertex_t> > vertex_visit_order_by_distances_;
+    std::vector<vertex_t> vertex_visit_order_;
 };
 
 
