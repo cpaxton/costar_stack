@@ -141,6 +141,7 @@ class WaypointManager(object):
                 landmark_tf_name = rospy.get_param(L)
             except KeyError:
                 rospy.logerr("Could not find landmark %s!"%(L))
+                continue
             #rospy.logwarn(landmark_tf_name)
 
             try:
