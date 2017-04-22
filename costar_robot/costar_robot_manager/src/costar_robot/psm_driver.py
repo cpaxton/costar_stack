@@ -84,13 +84,13 @@ class CostarPSMDriver(CostarArm):
         elif self.driver_status == 'SERVO':
             br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(),
                              "/endpoint", self.end_link)
-            print "HANDLING SERVO MODE"
+            # print "HANDLING SERVO MODE"
         elif self.driver_status == 'IDLE':
             br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(),
                              "/endpoint",self.end_link)
-            print "DRIVER IN IDLE"
+            # print "DRIVER IN IDLE"
         elif self.driver_status == 'TEACH':
-            print "HANDLING TEACH MODE"
+            # print "HANDLING TEACH MODE"
             br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(), "/endpoint", "/world")
             print "<<<<<", self.last_marker_trans, self.last_marker_rot, ">>>>>"
 
@@ -109,7 +109,28 @@ class CostarPSMDriver(CostarArm):
 
     def js_cb(self,msg):
         pass
-    # clear the issues with base class
+        # # if len(msg.position) is self.dof:
+        #     self.old_q0 = self.q0
+        #     self.q0 = np.array(msg.position[0:6])
+        # # else:
+        #     # rospy.logwarn('Incorrect joint dimensionality')
+        #     print(msg.position[0:6])
+
+    def set_servo_mode_cb(self,req):
+        if req.mode == 'SERVO':
+            if self.q0 is not None:
+                self.send_q(self.q0,0.1,0.1)
+
+            self.driver_status = 'SERVO'
+            self.cur_stamp = self.release()
+            return 'SUCCESS - servo mode enabled'
+        elif req.mode == 'DISABLE':
+            # self.detach(actuate = False, add_back_to_planning_scene=False)
+            self.cur_stamp = self.acquire()
+            self.driver_status = 'IDLE'
+            return 'SUCCESS - servo mode disabled'
+        else:
+            return 'FAILURE'
 
     def save_frame_cb(self,req):
       rospy.logwarn('Save frame does not check to see if your frame already exists!')
@@ -120,6 +141,7 @@ class CostarPSMDriver(CostarArm):
 
     def servo_to_pose_cb(self,req):
         if self.driver_status == 'SERVO':
+            print(req.target)
             T = pm.fromMsg(req.target)
             self.dvrk_arm.move(T)
             return 'SUCCESS - moved to pose'
