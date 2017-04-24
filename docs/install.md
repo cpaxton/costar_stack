@@ -42,6 +42,8 @@ git clone https://github.com/ThomasTimm/ur_modern_driver.git
 rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
 ```
 
+***Important driver note:*** UR modern driver is somewhat unstable. We recommend following the advice from this [pull request addressing thread safety](https://github.com/ThomasTimm/ur_modern_driver/pull/101). For our tests, we used the [thread safety branch](https://github.com/xqms/ur_modern_driver/tree/thread_safety) from Max Schwarz. This has not been tested on a wide variety of Universal Robot platforms, and still has its issues.
+
 ## Step 2. Build catkin workspace
 
 Change directory into catkin workspace folder and run:
