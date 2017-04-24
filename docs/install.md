@@ -38,11 +38,13 @@ git clone https://github.com/jbohren/rqt_dot.git
 git clone https://github.com/sniekum/ar_track_alvar.git  
 git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git
-git clone https://github.com/ThomasTimm/ur_modern_driver.git
+git clone https://github.com/xqms/ur_modern_driver.git --branch thread_safety
 rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
 ```
 
-***Important driver note:*** UR modern driver is somewhat unstable. We recommend following the advice from this [pull request addressing thread safety](https://github.com/ThomasTimm/ur_modern_driver/pull/101). For our tests, we used the [thread safety branch](https://github.com/xqms/ur_modern_driver/tree/thread_safety) from Max Schwarz. This has not been tested on a wide variety of Universal Robot platforms, and still has its issues.
+***IMPORTANT NOTE ON UR MODERN DRIVER:*** UR modern driver is somewhat unstable. We recommend following the advice from this [pull request addressing thread safety](https://github.com/ThomasTimm/ur_modern_driver/pull/101). For our tests, we used the [thread safety branch](https://github.com/xqms/ur_modern_driver/tree/thread_safety) from Max Schwarz. This has not been tested on a wide variety of Universal Robot platforms, and still has its issues.
+
+We observed unpredictable and dangerous behavior using the base branch of UR Modern Driver. For more information check out [the original UR modern driver repo](https://github.com/ThomasTimm/ur_modern_driver).
 
 ## Step 2. Build catkin workspace
 
