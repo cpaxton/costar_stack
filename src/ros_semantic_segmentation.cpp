@@ -262,14 +262,22 @@ void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inpu
 
     this->setCropBoxSize(crop_box_size);
     this->setCropBoxPose(crop_box_pose_table_);
-    if (need_preferred_tf_ && listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+    if (need_preferred_tf_)
     {
-        listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
-        Eigen::Affine3d preferred_transform_eigen;
-        tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
-        Eigen::Quaterniond q(preferred_transform_eigen.rotation());
-        this->setPreferredOrientation(q);
-        this->need_preferred_tf_ = false;
+        if (listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+        {
+            listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
+            Eigen::Affine3d preferred_transform_eigen;
+            tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
+            Eigen::Quaterniond q(preferred_transform_eigen.rotation());
+            this->setPreferredOrientation(q);
+            this->need_preferred_tf_ = false;
+        }
+        else
+        {
+            ROS_WARN("Cannot find preferred orientation frame");
+            return;
+        }
     }
 
     pcl::PointCloud<PointLT>::Ptr labelled_point_cloud_result;
@@ -354,14 +362,22 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
     // The callback from main only update the cloud data
     inputCloud = pc;
 
-    if (need_preferred_tf_ && listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+    if (need_preferred_tf_)
     {
-        listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
-        Eigen::Affine3d preferred_transform_eigen;
-        tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
-        Eigen::Quaterniond q(preferred_transform_eigen.rotation());
-        this->setPreferredOrientation(q);
-        this->need_preferred_tf_ = false;
+        if (listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+        {
+            listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
+            Eigen::Affine3d preferred_transform_eigen;
+            tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
+            Eigen::Quaterniond q(preferred_transform_eigen.rotation());
+            this->setPreferredOrientation(q);
+            this->need_preferred_tf_ = false;
+        }
+        else
+        {
+            ROS_WARN("Cannot find preferred orientation frame");
+            return;
+        }
     }
 
     if (!has_crop_box_pose_table_ && use_crop_box_)
@@ -522,6 +538,11 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
       ROS_ERROR("Class is not ready!");
       return false;
     }
+    else if (this->need_preferred_tf_)
+    {
+        ROS_ERROR("Does not have preferred frame yet. Cannot do semantic segmentation.");
+        return false;
+    }
     // Service call will run SPSegmenter
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     
@@ -608,6 +629,15 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
 #if COSTAR
 bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response)
 {
+    if (!this->class_ready_) {
+      ROS_ERROR("Class is not ready!");
+      return false;
+    }
+    else if (this->need_preferred_tf_)
+    {
+        ROS_ERROR("Does not have preferred frame yet. Cannot do semantic segmentation.");
+        return false;
+    }
     ROS_INFO("Segmenting object on gripper...");
     int objRecRANSAC_mode_original = this->objRecRANSAC_mode_;
     // Use the detector for objects in the gripper
