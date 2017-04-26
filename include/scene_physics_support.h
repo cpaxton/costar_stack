@@ -25,6 +25,7 @@ struct scene_support_vertex_properties
     double colliding_volume_;
     bool ground_supported_;
     double stability_penalty_;
+    std::size_t distance_to_ground_;
 
     scene_support_vertex_properties(): 
     	object_id_(""),
@@ -33,7 +34,8 @@ struct scene_support_vertex_properties
     	penetration_distance_(0.),
         colliding_volume_(0.),
     	ground_supported_(false),
-        stability_penalty_(0)
+        stability_penalty_(0),
+        distance_to_ground_(0)
     {};
 };
 
@@ -85,37 +87,6 @@ private:
     SceneSupportGraph graph_;
 };
 
-
-// class OrderedVertexVisitor : public boost::default_bfs_visitor
-// {
-// public:
-//     OrderedVertexVisitor() : 
-//         vertex_visit_index_(0),
-//         vertex_visit_order_map_(new std::map<vertex_t, std::size_t>() ),
-//         vertex_visit_order_(new std::vector<vertex_t>() )
-//     {}
-
-//     void discover_vertex(vertex_t v, const SceneSupportGraph& g)
-//     {
-//         (*vertex_visit_order_map_)[v] = vertex_visit_index_++;
-//         vertex_visit_order_->push_back(v);
-//     }
-
-//     std::vector<vertex_t> getVertexVisitList() const
-//     {
-//         return *(this->vertex_visit_order_);
-//     }
-
-//     std::map<vertex_t,std::size_t> getVertexVisitMap() const
-//     {
-//         return *(this->vertex_visit_order_map_);
-//     }
-// private:
-//     std::size_t vertex_visit_index_;
-//     boost::shared_ptr<  std::map<vertex_t, std::size_t> > vertex_visit_order_map_;
-//     boost::shared_ptr<  std::vector<vertex_t> > vertex_visit_order_;
-// };
-
 class OrderedVertexVisitor
 {
 public:
@@ -139,6 +110,12 @@ private:
 
 // will produce order of vertices correction starting the background
 OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
+
+std::map<std::string, btTransform> getAssociatedTransformMapFromVertexVector( SceneSupportGraph &input_graph,
+    const std::vector<vertex_t> &vertices);
+
+std::vector<std::string> getAssociatedIdFromVertexVector( SceneSupportGraph &input_graph,
+    const std::vector<vertex_t> &vertices);
 
 void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
 

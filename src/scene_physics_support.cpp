@@ -55,6 +55,12 @@ OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const 
 
     // boost::breadth_first_search(input_graph, parent_vertex, boost::visitor(vis));
     vis.setDataFromDistanceVector(distances, parent_vertex);
+    
+    for (std::size_t i = 0; i < distances.size(); ++i)
+    {
+        input_graph[i].distance_to_ground_ = distances[i];
+        input_graph[i].ground_supported_ = (distances[i] != 0);
+    }
 
     return vis;
 }
@@ -88,12 +94,12 @@ std::vector<std::string> getAssociatedIdFromVertexVector( SceneSupportGraph &inp
 void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
 {
     OrderedVertexVisitor vis  = getOrderedVertexList(input_graph, parent_vertex);
-    std::vector<vertex_t> parent_connected_vertices = vis.getVertexVisitList();
-    for (std::vector<vertex_t>::iterator it = parent_connected_vertices.begin();
-        it != parent_connected_vertices.end(); ++it)
-    {
-        input_graph[*it].ground_supported_ = true;
-    }
+    // std::vector<vertex_t> parent_connected_vertices = vis.getVertexVisitList();
+    // for (std::vector<vertex_t>::iterator it = parent_connected_vertices.begin();
+    //     it != parent_connected_vertices.end(); ++it)
+    // {
+    //     input_graph[*it].ground_supported_ = true;
+    // }
 }
 
 btAABB getCollisionAABB(const btCollisionObject* obj, const btManifoldPoint &pt, const bool &is_body_0, int &shape_index)

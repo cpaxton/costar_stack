@@ -1,15 +1,15 @@
 #include "sequential_scene_parsing.h"
 
 
-SceneGraph::SceneGraph(ImagePtr input, ImagePtr background_image)
+SceneHypothesisAssessor::SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image)
 {
 	this->addBackground(background_image);
 	// this->processImage(input);
 	this->physics_engine_ready_ = false;
 }
 
-// void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
-void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
+// void SceneHypothesisAssessor::setPhysicsEngine(PhysicsEngine* physics_engine)
+void SceneHypothesisAssessor::setPhysicsEngine(PhysicsEngine* physics_engine)
 {
 	if (this->debug_messages_) std::cerr <<"Setting physics engine into the scene graph.\n";
 	this->physics_engine_ = physics_engine;
@@ -22,7 +22,7 @@ void SceneGraph::setPhysicsEngine(PhysicsEngine* physics_engine)
 	}
 }
 
-void SceneGraph::addBackground(ImagePtr background_image, int mode)
+void SceneHypothesisAssessor::addBackground(ImagePtr background_image, int mode)
 {
 	if (this->debug_messages_) std::cerr <<"Adding background into the scene graph.\n";
 	
@@ -147,7 +147,7 @@ void SceneGraph::addBackground(ImagePtr background_image, int mode)
 	}
 }
 
-void SceneGraph::addScenePointCloud(ImagePtr scene_image)
+void SceneHypothesisAssessor::addScenePointCloud(ImagePtr scene_image)
 {
 	if (scene_image->empty())
 	{
@@ -160,7 +160,7 @@ void SceneGraph::addScenePointCloud(ImagePtr scene_image)
 	data_forces_generator_.setSceneData(point_coordinates_only);
 }
 
-void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
+void SceneHypothesisAssessor::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
 {
 	this->physics_engine_->resetObjects();
 	// object_label_.reserve(objects.size());
@@ -175,7 +175,7 @@ void SceneGraph::addNewObjectTransforms(const std::vector<ObjectWithID> &objects
 	this->physics_engine_->addObjects(objects);
 }
 
-std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
+std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObjectTransform()
 {
 	if (this->debug_messages_) std::cerr <<"Getting corrected object transform from the scene graph.\n";
 	seq_mtx_.lock();
@@ -185,7 +185,7 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 	// Setup the feedback data forces to be very high when running thru the best data
 	// this->data_forces_generator_.setForcesParameter(10,0.05);
 
-	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./200,30);
+	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./120,30);
 	// this->physics_engine_->setSimulationMode(BULLET_DEFAULT,1./200,30);
 
 	std::map<std::string, ObjectParameter> result = this->physics_engine_->getUpdatedObjectPose();
@@ -204,7 +204,7 @@ std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransform()
 	return result;
 }
 
-bool SceneGraph::loadObjectModels(const std::string &input_model_directory_path, 
+bool SceneHypothesisAssessor::loadObjectModels(const std::string &input_model_directory_path, 
 	const std::vector<std::string> &object_names)
 {
 	std::cerr << "Adding objrecransac model.\n";
@@ -241,32 +241,32 @@ bool SceneGraph::loadObjectModels(const std::string &input_model_directory_path,
 	}
 }
 
-void SceneGraph::setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map)
+void SceneHypothesisAssessor::setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map)
 {
 	this->object_symmetry_map_ = object_symmetry_map;
 }
 
-void SceneGraph::setDebugMode(bool debug)
+void SceneHypothesisAssessor::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
 }
 
-void SceneGraph::getCurrentSceneSupportGraph()
+void SceneHypothesisAssessor::getCurrentSceneSupportGraph()
 {
 	this->scene_support_graph_ = this->physics_engine_->getCurrentSceneGraph(this->vertex_map_);
 }
 
-void SceneGraph::getUpdatedSceneSupportGraph()
+void SceneHypothesisAssessor::getUpdatedSceneSupportGraph()
 {
 	this->scene_support_graph_ = this->physics_engine_->getUpdatedSceneGraph(this->vertex_map_);
 }
 
-void SceneGraph::setObjectHypothesesMap(std::map<std::string, ObjectHypothesesData > &object_hypotheses_map)
+void SceneHypothesisAssessor::setObjectHypothesesMap(std::map<std::string, ObjectHypothesesData > &object_hypotheses_map)
 {
 	this->object_hypotheses_map_ = object_hypotheses_map;
 }
 
-double SceneGraph::evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name, const bool &verbose)
+double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name, const bool &verbose)
 {
 	// std::cerr << "Accessing support graph data.\n";
 	vertex_t object_in_graph = this->vertex_map_[object_label];
@@ -304,7 +304,7 @@ double SceneGraph::evaluateObjectProbability(const std::string &object_label, co
 	return object_total_probability;
 }
 
-double SceneGraph::evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 
+double SceneHypothesisAssessor::evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 
 	const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 	const btTransform &object_pose_hypothesis, const bool &reset_position)
 {
@@ -349,14 +349,14 @@ double SceneGraph::evaluateSceneOnObjectHypothesis(std::map<std::string, btTrans
 	return scene_hypothesis;
 }
 
-void SceneGraph::evaluateAllObjectHypothesisProbability()
+void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 {
 	// Set the best test pose map based on the best data
 	this->data_forces_generator_.resetCachedIcpResult();
 	std::map<std::string, bool> object_background_support_status;
 
 	seq_mtx_.lock();
-	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH, 1./500);
+	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH, 1./120);
 	vertex_t &ground_vertex = this->vertex_map_["background"];
 	OrderedVertexVisitor vis  = getOrderedVertexList(this->scene_support_graph_, ground_vertex);
 	std::map<std::size_t, std::vector<vertex_t> > vertex_visit_by_dist = vis.getVertexVisitOrderByDistances();
@@ -425,8 +425,9 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 			ObjectParameter best_object_pose;
 			std::map<std::string, ObjectParameter> best_object_pose_from_graph;
 
-			std::size_t counter = 0;
+			std::size_t counter = 1;
 			std::size_t number_of_object_hypotheses = object_pose_hypotheses.size();
+			double best_ransac_confidence;
 			for (std::vector<ObjectParameter>::const_iterator it2 = object_pose_hypotheses.begin();
 				it2 != object_pose_hypotheses.end(); ++it2)
 			{
@@ -434,10 +435,25 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 					<< ++counter << "/" << number_of_object_hypotheses << std::endl;
 
 				ObjectParameter object_pose = *it2;
+				double ransac_confidence = this->data_probability_check_.getConfidence(object_model_name, object_pose);
+				if (it2 == object_pose_hypotheses.begin())
+				{
+					best_ransac_confidence = ransac_confidence;
+					std::cerr << "Best hypothesis confidence: " << best_ransac_confidence << std::endl;
+				}
+
+				if (ransac_confidence < 0.5 * best_ransac_confidence)
+				{
+					std::cerr << "Skipped hypothesis with confidence: " << ransac_confidence << std::endl;
+					continue;
+				}
+
+				if (counter > 10) break;
+
 				// std::cerr << "-------------------------------------------------------------\n";
 
 				std::map<std::string, ObjectParameter> tmp_object_pose_config;
-				for (int i = 0; i < 3; i++)
+				for (int i = 0; i < 2; i++)
 				{
 					seq_mtx_.lock();
 					double scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
@@ -452,7 +468,7 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 
 					// update the best scene if the current scene probability is better or there is
 					// a change from not background supported to background supported on this object hypothesis
-					if ((best_object_probability_effect < scene_hypothesis_probability) ||
+					if (((best_object_probability_effect < scene_hypothesis_probability) && i == 1) ||
 						(!current_background_support_status && updated_background_support_status) ||
 						force_update_by_increased_distance
 						)
@@ -471,7 +487,7 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 					std::cerr << "Scene probability = " << scene_hypothesis_probability
 						<< " best: " << best_object_probability_effect << std::endl;
 
-					this->physics_engine_->stepSimulationWithoutEvaluation(1., 1/75.);
+					this->physics_engine_->stepSimulationWithoutEvaluation(1., 1/120.);
 				}
 				// std::cerr << "-------------------------------------------------------------\n\n";
 			}
@@ -483,8 +499,8 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 				std::cerr << " ========================= \n";
 				std::cerr << " Update the best map from object: " << object_pose_label <<" \n";
 				std::cerr << " ========================= \n";
-				// this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
-				this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
+				this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
+				// this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
 				seq_mtx_.unlock();
 			}
 		}
@@ -497,7 +513,7 @@ void SceneGraph::evaluateAllObjectHypothesisProbability()
 	// return scene_hypothesis;
 }
 
-double SceneGraph::evaluateSceneProbabilityFromGraph()
+double SceneHypothesisAssessor::evaluateSceneProbabilityFromGraph()
 {
 	double scene_hypothesis = 1;
 	for (std::map<std::string, vertex_t>::iterator it = this->vertex_map_.begin();
@@ -526,7 +542,7 @@ double SceneGraph::evaluateSceneProbabilityFromGraph()
 	return scene_hypothesis;
 }
 
-std::map<std::string, ObjectParameter> SceneGraph::getCorrectedObjectTransformFromSceneGraph()
+std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObjectTransformFromSceneGraph()
 {
 	std::map<std::string, ObjectParameter> result;
 	this->seq_mtx_.lock();

@@ -239,7 +239,7 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::calculateDataForceF
 	
 
 	total_forces *= icp_confidence * forces_magnitude_coefficient_ * SCALING;
-	total_torque *= icp_confidence * forces_magnitude_coefficient_ * SCALING;
+	total_torque *= icp_confidence * forces_magnitude_coefficient_ * SCALING * SCALING;
 
 	return std::make_pair(total_forces, total_torque);
 }

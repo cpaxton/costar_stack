@@ -43,16 +43,51 @@ typedef btTransform ObjectParameter;
 typedef pcl::PointCloud<pcl::PointXYZRGBA>::Ptr ImagePtr;
 typedef pcl::PointXYZRGBA ImagePoint;
 typedef pcl::PointCloud<pcl::PointXYZRGBA> Image;
-typedef std::vector<bool> DecisionVector;
 
 // this contains model name and pose hypothesis of a single object
 typedef std::pair<std::string, std::vector<ObjectParameter> > ObjectHypothesesData;
 
-class SceneGraph
+struct SceneHypothesis
+{
+	std::map<std::string, vertex_t> vertex_map_;
+	SceneSupportGraph scene_support_graph_;
+};
+
+typedef std::vector<SceneHypothesis> OneFrameSceneHypotheses;
+
+struct SceneObservation
+{
+	SceneHypothesis best_scene_hypothesis_;
+	OneFrameSceneHypotheses other_stable_hypotheses_;
+};
+
+class SequentialSceneHypothesis
 {
 public:
-	SceneGraph() : physics_engine_ready_(false) {};
-	SceneGraph(ImagePtr input, ImagePtr background_image);
+	// set the best data scene structure to guess the resulting structure of the hypothesis
+	SceneHypothesis setCurrentDataSceneStructure();
+
+	// accumulate the scene observation from the previous scene
+	void setPreviousSceneObservation();
+	
+	// add good previous stable object hypothesis to the current hypothesis
+	void generateAdditionalObjectHypothesesFromPreviousKnowledge();
+
+	// calculate the effect of scene change on the scene confidence
+	void estimateSequentialSceneConfidence();
+
+private:
+	void findChanges();
+
+	SceneHypothesis current_best_data_scene_structure_;
+	SceneObservation previous_scene_observation_;
+};
+
+class SceneHypothesisAssessor
+{
+public:
+	SceneHypothesisAssessor() : physics_engine_ready_(false) {};
+	SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image);
 	
 	// set physics engine environment to be used.
 	void setPhysicsEngine(PhysicsEngine* physics_engine);

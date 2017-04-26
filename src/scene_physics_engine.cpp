@@ -8,7 +8,7 @@ static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep)
 
 PhysicsEngine::PhysicsEngine() : have_background_(false), debug_messages_(false), 
 	rendering_launched_(false), in_simulation_(false),
-	use_background_normal_as_gravity_(false), simulation_step_(1/200.), 
+	use_background_normal_as_gravity_(false), simulation_step_(1./200.), 
 	skip_scene_evaluation_(false)
 {
 	if (this->debug_messages_) std::cerr << "Setting up physics engine.\n";
@@ -266,7 +266,7 @@ void PhysicsEngine::simulate()
 		// TODO: Find out why the simulation step not syncing with the internal step callback.
 		for (int i = 0; i < this->number_of_world_tick_; i++)
 		{
-			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
+			m_dynamicsWorld->stepSimulation(simulation_step_, 2, 1./120);
 			// if (this->checkSteadyState()) break;
 		}
 	}
@@ -286,7 +286,8 @@ void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, c
 	mtx_.unlock();
 	for (int i = 0; i < number_of_world_tick_to_step; i++)
 	{
-		m_dynamicsWorld->stepSimulation(simulation_step, 1);
+		m_dynamicsWorld->stepSimulation(simulation_step, 1, 1./60);
+		this->applyDataForces();
 		// if (this->checkSteadyState()) break;
 	}
 	this->skip_scene_evaluation_ = false;
@@ -308,6 +309,7 @@ void PhysicsEngine::removeAllRigidBodyFromWorld()
 void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies)
 {
 	mtx_.lock();
+	// data_forces_generator_->resetCachedIcpResult();
 	for (std::map<std::string, btTransform>::const_iterator it = rigid_bodies.begin(); 
 		it != rigid_bodies.end(); ++it)
 	{
@@ -535,7 +537,7 @@ void PhysicsEngine::clientMoveAndDisplay()
 	if (m_dynamicsWorld)
 	{
 		if (this->in_simulation_){
-			m_dynamicsWorld->stepSimulation(simulation_step_, 10);
+			m_dynamicsWorld->stepSimulation(simulation_step_, 2, 1./120);
 		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
@@ -587,7 +589,6 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 	mtx_.lock();
 	++world_tick_counter_;
     this->cacheObjectVelocities(timeStep);
-    this->applyDataForces();
     // std::cerr << world_tick_counter_ << " " << this->number_of_world_tick_ << std::endl;
 
 	// calculate the scene analysis here

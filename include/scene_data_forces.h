@@ -35,9 +35,6 @@ public:
 	void setFeedbackForceMode(int mode);
 	void applyFeedbackForces(btRigidBody &object, const std::string &model_name);
 
-	// Generate feedback central forces and torque based on model distance to the cloud
-	std::pair<btVector3, btVector3>  generateDataForce(
-		const btRigidBody &object, const std::string &model_name);
 	void setSceneData(PointCloudXYZPtr scene_data);
 
 	// Input sampled point cloud from the mesh
@@ -52,6 +49,10 @@ public:
 	int force_data_model_;
 
 private:
+	// Generate feedback central forces and torque based on model distance to the cloud
+	std::pair<btVector3, btVector3>  generateDataForce(
+		const btRigidBody &object, const std::string &model_name);
+	
 	std::pair<btVector3, btVector3> generateDataForceWithICP(PointCloudXYZPtr input_cloud,
 		const btTransform &object_pose, const std::string &object_id);
 	std::pair<btVector3, btVector3> generateDataForceWithSavedICP(PointCloudXYZPtr input_cloud,
