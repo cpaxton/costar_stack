@@ -17,7 +17,7 @@ from costar_robot_msgs.srv import ServoToPose
 class CostarDMP(CostarComponent):
 
     def __init__(self):
-        self.name = "dmp"
+        self.name = "dmp_teach_traj"
         self.namespace = "/costar/dmp"
         self.collecting = False
         self.dmp_computed = False
@@ -49,6 +49,10 @@ class CostarDMP(CostarComponent):
 
         self.folder = 'dmp'
         self.add_type_service(self.folder)
+        self.current_dmp_name = 'dmp_default'
+
+        self.old_trans = [0.0,0.0,0.0]
+        self.old_rot = [0.0,0.0,0.0,0.0]
 
         super(CostarDMP, self).__init__(self.name, self.namespace)
 
@@ -57,10 +61,14 @@ class CostarDMP(CostarComponent):
         if self.collecting == True:
             try:
                 (new_trans,new_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/PSM1_tool_tip_link_virtual',rospy.Time(0))
-                new_rot_euler = tf.transformations.euler_from_quaternion(new_rot);
-                self.traj['trans'].append(new_trans);
-                self.traj['rot'].append(new_rot_euler);
-                print new_trans, new_rot, 
+                if self.old_trans != new_trans and self.old_rot != new_rot:
+	                new_rot_euler = tf.transformations.euler_from_quaternion(new_rot);
+	                self.traj['trans'].append(new_trans);
+	                self.traj['rot'].append(new_rot_euler);
+	                self.old_trans = new_trans
+	                self.old_ros = new_rot 
+	                print new_trans, new_rot,
+
             except Exception, e:
                 pass
 
@@ -71,8 +79,9 @@ class CostarDMP(CostarComponent):
     def start_rec_cb(self,req):
         self.traj = {'trans':[], 'rot':[], 'traj_name':[], 'reference_frame':[]}
         self.collecting = True
-        self.traj['traj_name']= req.teach_name
+        self.traj['traj_name']= req.dmp_name
         self.traj['reference_frame'] = req.reference_frame
+        self.current_dmp_name = req.dmp_name
         return []
 
     def stop_rec_cb(self,req):
@@ -102,21 +111,21 @@ class CostarDMP(CostarComponent):
 
         # save to yaml with:
         self.save_service(id=self.name.strip('/'),type=self.folder,text=yaml.dump(self.traj)) # original teach_traj
-        self.save_service(id="dmp_computed",type=self.folder,text=yaml.dump(resp))
+        self.save_service(id=self.traj['traj_name'],type=self.folder,text=yaml.dump(resp))
         self.dmp_computed = True
 
         return []
 
     def dmp_move_cb(self,req):
     	if self.dmp_computed == False:
-    		resp = yaml.load(self.load_service(id="dmp_computed",type=self.folder).text)
+    		resp = yaml.load(self.load_service(id='dmp_default',type=self.folder).text)
     		self.tau = resp.tau
     		self.sad(resp.dmp_list)
 
     	#Now, generate a plan
     	(start_trans,start_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/PSM1_tool_tip_link_virtual',rospy.Time(0))
     	start_rot_euler = tf.transformations.euler_from_quaternion(start_rot)
-    	(end_trans,end_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/endpoint',rospy.Time(0))
+    	(end_trans,end_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/psm_kinetic3',rospy.Time(0))
     	end_rot_euler = tf.transformations.euler_from_quaternion(end_rot)
     	
     	start_pose = start_trans + start_rot_euler

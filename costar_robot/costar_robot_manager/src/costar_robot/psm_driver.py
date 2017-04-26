@@ -92,7 +92,7 @@ class CostarPSMDriver(CostarArm):
         elif self.driver_status == 'TEACH':
             # print "HANDLING TEACH MODE"
             br.sendTransform(self.last_marker_trans, self.last_marker_rot, rospy.Time.now(), "/endpoint", "/world")
-            print "<<<<<", self.last_marker_trans, self.last_marker_rot, ">>>>>"
+            # print "<<<<<", self.last_marker_trans, self.last_marker_rot, ">>>>>"
 
 
     '''
