@@ -62,13 +62,35 @@ struct SceneObservation
 	SceneObservation() : is_empty(true) { };
 };
 
+struct SceneChanges
+{
+	// Contains tf ID of the objects that are changed
+
+	// added objects will only contains new object hypotheses
+	std::vector<std::string> added_objects_;
+
+	// removed object has no futher processing in scene_assessor
+	std::set<std::string> removed_objects_;
+
+	// objects that are retained, but has movement > threshold
+	std::vector<std::string> perturbed_objects_;
+
+	// objects that are retained, but has movement < threshold
+	std::vector<std::string> steady_objects_;
+
+	// objects that are retained (excluded from removal) because there is support/data as
+	// the evidence of its existance
+	std::vector<std::string> support_retained_object_;
+	// std::vector<std::string> data_retained_object;
+};
+
 class SequentialSceneHypothesis
 {
 public:
 	SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1) {};
 	
 	// set the best data scene structure to guess the resulting structure of the hypothesis
-	void setCurrentDataSceneStructure(const SceneHypothesis &current_best_data_scene_structure_);
+	void setCurrentDataSceneStructure(const SceneHypothesis &current_best_data_scene_structure);
 
 	// accumulate the scene observation from the previous scene
 	void setPreviousSceneObservation(const SceneObservation &previous_scene);
@@ -84,11 +106,17 @@ public:
 	void setMinimalDataConfidence(const double &min_confidence);
 
 private:
-	void findChanges();
+	SceneChanges findChanges();
+	SceneChanges analyzeChanges();
 	bool judgeHypothesis(const std::string &model_name, const btTransform &transform);
 
 	// minimum objRecRANSAC confidence for the old hypothesis
 	double minimum_data_probability_threshold_;
+
+	// threshold for retained object movement
+	double max_steady_object_translation_;
+	double max_steady_object_rotation_;
+
 	ObjRecRANSACTool* data_probability_check_;
 	SceneHypothesis current_best_data_scene_structure_;
 	SceneObservation previous_scene_observation_;
