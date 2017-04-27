@@ -3,8 +3,6 @@
 
 #include <iostream>
 #include <utility>
-#include <vector>
-#include <map>
 
 // For plane segmentation
 #include <pcl/ModelCoefficients.h>
@@ -25,63 +23,15 @@
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
 #include <Eigen/Geometry>
 
 #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
 #include "symmetric_orientation_realignment.h"
 #include "utility.h"
+#include "typedef.h"
 
 #include "scene_physics_engine.h"
 #include "scene_data_forces.h"
-
- // ObjectParameter == Object Pose
-typedef btTransform ObjectParameter;
-// typedef Eigen::Transform< double,3,Eigen::Affine > ObjectParameter;
-typedef pcl::PointCloud<pcl::PointXYZRGBA>::Ptr ImagePtr;
-typedef pcl::PointXYZRGBA ImagePoint;
-typedef pcl::PointCloud<pcl::PointXYZRGBA> Image;
-
-// this contains model name and pose hypothesis of a single object
-typedef std::pair<std::string, std::vector<ObjectParameter> > ObjectHypothesesData;
-
-struct SceneHypothesis
-{
-	std::map<std::string, vertex_t> vertex_map_;
-	SceneSupportGraph scene_support_graph_;
-};
-
-typedef std::vector<SceneHypothesis> OneFrameSceneHypotheses;
-
-struct SceneObservation
-{
-	SceneHypothesis best_scene_hypothesis_;
-	OneFrameSceneHypotheses other_stable_hypotheses_;
-};
-
-class SequentialSceneHypothesis
-{
-public:
-	// set the best data scene structure to guess the resulting structure of the hypothesis
-	SceneHypothesis setCurrentDataSceneStructure();
-
-	// accumulate the scene observation from the previous scene
-	void setPreviousSceneObservation();
-	
-	// add good previous stable object hypothesis to the current hypothesis
-	void generateAdditionalObjectHypothesesFromPreviousKnowledge();
-
-	// calculate the effect of scene change on the scene confidence
-	void estimateSequentialSceneConfidence();
-
-private:
-	void findChanges();
-
-	SceneHypothesis current_best_data_scene_structure_;
-	SceneObservation previous_scene_observation_;
-};
 
 class SceneHypothesisAssessor
 {
