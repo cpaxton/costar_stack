@@ -930,6 +930,7 @@ class CostarArm(CostarComponent):
             else:
                 backup_waypoint = kdl.Frame(kdl.Vector(0.,0.,distance))
                 backup_waypoint = backup_waypoint * T
+
             self.backoff_waypoints.append(("%s/%s_backoff/%f"%(obj,name,dist),backup_waypoint))
             self.backoff_waypoints.append(("%s/%s_grasp/%f"%(obj,name,dist),T))
 
@@ -977,10 +978,15 @@ class CostarArm(CostarComponent):
             if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
                 q_2 = res.planned_trajectory.joint_trajectory.points[-1].positions
                 (code2,res2) = self.planner.getPlan(T,q_2,obj=obj)
+
                 if ((not res2 is None) and len(res2.planned_trajectory.joint_trajectory.points) > 0):
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
+                    rospy.sleep(0.1)
+
                     if msg[0:7] == 'SUCCESS':
                         msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
+                        rospy.sleep(0.1)
+                        
                         if msg[0:7] == 'SUCCESS':
                             gripper_function(obj)
 
