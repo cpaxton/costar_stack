@@ -59,19 +59,23 @@ public:
 	void setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map);
 
 	template <typename numericStandard>
-	void setDataFeedbackForcesParameters(const numericStandard &forces_magnitude_per_point, const numericStandard &max_point_distance_threshold)
+	void setDataFeedbackForcesParameters(const numericStandard &forces_magnitude_per_point, 
+		const numericStandard &max_point_distance_threshold)
 	{
-		data_forces_generator_.setForcesParameter(btScalar(forces_magnitude_per_point),btScalar(max_point_distance_threshold));
+		data_forces_generator_.setForcesParameter(
+			btScalar(forces_magnitude_per_point),btScalar(max_point_distance_threshold));
 	}
 
 private:
 	void getCurrentSceneSupportGraph();
 	void getUpdatedSceneSupportGraph();
-	double evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name, const bool &verbose = false);
+	double evaluateObjectProbability(const std::string &object_label, 
+		const std::string &object_model_name, const int &object_action,
+		const bool &verbose = false);
 	double evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 
 		const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
-		const btTransform &object_pose_hypothesis, const bool &reset_position);
-	double evaluateSceneProbabilityFromGraph();
+		const btTransform &object_pose_hypothesis, const int &object_action,const bool &reset_position);
+	double evaluateSceneProbabilityFromGraph(const std::map<std::string, int> &object_action_map);
 	void getSceneSupportGraphFromBestData(
 		std::map<std::string, bool> &object_background_support_status,
 		std::vector< std::map<std::string, btTransform> > &object_test_pose_map_by_dist,

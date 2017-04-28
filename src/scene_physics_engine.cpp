@@ -705,6 +705,13 @@ void PhysicsEngine::prepareSimulationForOneTestHypothesis(const std::string &obj
 	mtx_.unlock();
 }
 
+void PhysicsEngine::prepareSimulationForWithBestTestPose()
+{
+	mtx_.lock();
+	this->resetObjectMotionState(true, object_best_test_pose_map_);
+	mtx_.unlock();
+}
+
 void PhysicsEngine::changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose)
 {
 	mtx_.lock();

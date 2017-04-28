@@ -65,6 +65,7 @@ public:
 	SceneSupportGraph getCurrentSceneGraph(std::map<std::string, vertex_t> &vertex_map);
 	SceneSupportGraph getUpdatedSceneGraph(std::map<std::string, vertex_t> &vertex_map);
 	void prepareSimulationForOneTestHypothesis(const std::string &object_id, const btTransform &object_pose, const bool &resetObjectPosition = true);
+	void prepareSimulationForWithBestTestPose();
 	void changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose);
 	void changeBestTestPoseMap(const std::map<std::string, btTransform> &object_best_pose_from_data);
 	btTransform getTransformOfBestData(const std::string &object_id) const;

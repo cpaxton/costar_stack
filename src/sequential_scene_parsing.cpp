@@ -193,8 +193,12 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	this->getCurrentSceneSupportGraph();
 
 	write_graphviz(std::cout, this->scene_support_graph_, label_writer(this->scene_support_graph_));
-	
-	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph();
+	std::map<std::string, int> object_action_map;
+	for (std::map<std::string, ObjectParameter>::iterator it = result.begin(); it != result.end(); ++it)
+	{
+		object_action_map[it->first] = ADD_OBJECT;
+	}
+	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph(object_action_map);
 	std::cerr << "Final Scene probability = " << scene_hypothesis << std::endl;
 
 	// set test pose to the converged best data pose
@@ -267,7 +271,8 @@ void SceneHypothesisAssessor::setObjectHypothesesMap(std::map<std::string, Objec
 	this->object_hypotheses_map_ = object_hypotheses_map;
 }
 
-double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &object_label, const std::string &object_model_name, const bool &verbose)
+double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &object_label, 
+	const std::string &object_model_name, const int &object_action, const bool &verbose)
 {
 	// std::cerr << "Accessing support graph data.\n";
 	vertex_t object_in_graph = this->vertex_map_[object_label];
@@ -289,7 +294,11 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 	
 	// std::cerr << "Calculating data match probability criterion.\n";
 	double ransac_confidence = this->data_probability_check_.getConfidence(object_model_name, object_pose);
-	double object_data_compliance = dataProbabilityScale(ransac_confidence);
+
+	// ignore data compliance if it is support retained object
+	double object_data_compliance = object_action != SUPPORT_RETAINED_OBJECT ? 
+		dataProbabilityScale(ransac_confidence) : 1.0;
+	
 	double object_total_probability = object_data_compliance * support_probability * stability_probability * collision_probability;
 
 	if (verbose)
@@ -307,7 +316,7 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 
 double SceneHypothesisAssessor::evaluateSceneOnObjectHypothesis(std::map<std::string, btTransform> &object_pose_from_graph, 
 	const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
-	const btTransform &object_pose_hypothesis, const bool &reset_position)
+	const btTransform &object_pose_hypothesis, const int &object_action, const bool &reset_position)
 {
 	this->physics_engine_->prepareSimulationForOneTestHypothesis(object_label, object_pose_hypothesis, reset_position);
 	this->getUpdatedSceneSupportGraph();
@@ -322,7 +331,7 @@ double SceneHypothesisAssessor::evaluateSceneOnObjectHypothesis(std::map<std::st
 		// only check probability for object that are exist in the dictionary
 		if (object_label_class_map.find(it->first) == object_label_class_map.end()) continue;
 
-		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first], verbose);
+		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first], object_action, verbose);
 
 		vertex_t &object_in_graph = this->vertex_map_[it->first];
 		object_pose_from_graph[it->first] = this->scene_support_graph_[object_in_graph].object_pose_;
@@ -365,13 +374,15 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 
 	SceneHypothesis current_best_scene(vertex_map_,scene_support_graph_);
 	this->sequential_scene_hypothesis_.setCurrentDataSceneStructure(current_best_scene);
-
+	std::map<std::string, AdditionalHypotheses> hypotheses_to_test = 
+		sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(this->object_hypotheses_map_);
 	this->physics_engine_->removeAllRigidBodyFromWorld();
 
 	std::map<std::string, map_string_transform> child_of_vertices;
 	
 	OneFrameSceneHypotheses scene_hypotheses_list;
 	std::map<std::string, int> scene_object_hypothesis_id;
+	std::map<std::string, int> object_action_map;
 
 	for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
 	{
@@ -397,10 +408,11 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 				std::cerr << "Skipped " << object_pose_label << " because its hypothesis does not exist\n";
 				continue;
 			}
+			const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[object_pose_label];
+			const std::string &object_model_name = obj_hypotheses.model_name_;
+			const std::vector<ObjectParameter> &object_pose_hypotheses = obj_hypotheses.poses_;
+			object_action_map[object_pose_label] = obj_hypotheses.object_action_;
 
-			const ObjectHypothesesData &obj_hypotheses = this->object_hypotheses_map_[object_pose_label];
-			const std::string &object_model_name = obj_hypotheses.first;
-			const std::vector<ObjectParameter> &object_pose_hypotheses = obj_hypotheses.second;
 			bool &current_background_support_status = object_background_support_status[it->first];
 			bool updated_background_support_status = current_background_support_status;
 			
@@ -440,12 +452,12 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 				std::map<std::string, ObjectParameter> tmp_object_pose_config;
 				for (int i = 0; i < 2; i++)
 				{
-					this->physics_engine_->stepSimulationWithoutEvaluation(.5, 1/120.);
+					this->physics_engine_->stepSimulationWithoutEvaluation(.75, 1/120.);
 
 					seq_mtx_.lock();
 					scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
 						object_pose_label, object_model_name, updated_background_support_status,
-						object_pose, i == 0);
+						object_pose, obj_hypotheses.object_action_, i == 0);
 
 					// get updated object pose from the scene simulation
 					const vertex_t updated_vertex = this->vertex_map_[it->first];
@@ -464,7 +476,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 					seq_mtx_.lock();
 					scene_hypothesis_probability = this->evaluateSceneOnObjectHypothesis(tmp_object_pose_config,
 						object_pose_label, object_model_name, updated_background_support_status,
-						object_pose, false);
+						object_pose, obj_hypotheses.object_action_, false);
 
 					// get updated object pose from the scene simulation
 					const vertex_t updated_vertex = this->vertex_map_[it->first];
@@ -505,9 +517,10 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			// if (update_from_this_object)
 			// {
 			seq_mtx_.lock();
-			std::cerr << " ========================= \n";
-			std::cerr << " Update the best map from object: " << object_pose_label <<" \n";
-			std::cerr << " ========================= \n";
+			std::cerr << "========================= \n";
+			std::cerr << "Update the best map from object: " << object_pose_label 
+				<< " hypothesis #" << best_hypothesis_id << std::endl;
+			std::cerr << "========================= \n";
 			this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
 			scene_object_hypothesis_id[object_pose_label] = best_hypothesis_id;
 			// this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
@@ -516,9 +529,10 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 		}
 		
 	}
-
+	// set the position to the best result for all objects
+	this->physics_engine_->prepareSimulationForWithBestTestPose();
 	this->getUpdatedSceneSupportGraph();
-	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph();
+	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph(object_action_map);
 	std::cerr << "Final Scene probability = " << scene_hypothesis << std::endl;
 	SceneHypothesis final_scene(vertex_map_,scene_support_graph_,
 		scene_hypothesis, scene_object_hypothesis_id);
@@ -528,7 +542,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	// return scene_hypothesis;
 }
 
-double SceneHypothesisAssessor::evaluateSceneProbabilityFromGraph()
+double SceneHypothesisAssessor::evaluateSceneProbabilityFromGraph(const std::map<std::string, int> &object_action_map)
 {
 	double scene_hypothesis = 1;
 	for (std::map<std::string, vertex_t>::iterator it = this->vertex_map_.begin();
@@ -539,7 +553,8 @@ double SceneHypothesisAssessor::evaluateSceneProbabilityFromGraph()
 		// only check probability for object that are exist in the dictionary
 		if (object_label_class_map.find(it->first) == object_label_class_map.end()) continue;
 		std::cerr << it->first << " ";
-		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first], true);
+		double obj_probability = this->evaluateObjectProbability(it->first, 
+			object_label_class_map[it->first], getContentOfConstantMap(it->first,object_action_map), true);
 		// skips the object if it has no probability
 		if (obj_probability == 0) 
 		{
