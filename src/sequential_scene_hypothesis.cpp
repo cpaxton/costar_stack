@@ -9,6 +9,18 @@ SceneObservation::SceneObservation(const OneFrameSceneHypotheses &input,
 	this->best_scene_hypothesis_ = this->scene_hypotheses_list_[0];
 }
 
+SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1) 
+{
+	// These action implies these objects are not present in previous scene
+	num_of_hypotheses_to_add_each_action_[INVALID_ACTION] = 0;
+	num_of_hypotheses_to_add_each_action_[ADD_OBJECT] = 0;
+	num_of_hypotheses_to_add_each_action_[REMOVE_OBJECT] = 0;
+
+	num_of_hypotheses_to_add_each_action_[PERTURB_OBJECT] = 10;
+	num_of_hypotheses_to_add_each_action_[STEADY_OBJECT] = 5;
+	num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT] = 10;
+}
+
 void SequentialSceneHypothesis::setCurrentDataSceneStructure(
 	const SceneHypothesis &current_best_data_scene_structure)
 {
@@ -20,106 +32,43 @@ void SequentialSceneHypothesis::setPreviousSceneObservation(const SceneObservati
 	this->previous_scene_observation_ = previous_scene;	
 }
 
-void SequentialSceneHypothesis::generateAdditionalObjectHypothesesFromPreviousKnowledge(
-		std::map<std::string, ObjectHypothesesData > &object_hypotheses_map, 
-		const int &max_good_hypotheses_to_add)
+std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateObjectHypothesesWithPreviousKnowledge( 
+	const std::map<std::string, ObjectHypothesesData > &object_hypotheses_map)
 {
-	// For adding hypothesis to perturbed objects
+	std::map<std::string, AdditionalHypotheses> result;
+	SceneChanges change_in_scene = analyzeChanges();
 
-	std::map<std::string, int> added_unique_hypotheses;
-	std::map<std::string, std::set<int> > added_hypotheses_id;
-	std::map<std::string, std::vector<btTransform> > hypotheses_to_be_inserted_;
+	std::map<std::string, AdditionalHypotheses>  additional_perturbed = generateAdditionalHypothesesForObjectList(
+		change_in_scene.perturbed_objects_,PERTURB_OBJECT,
+		num_of_hypotheses_to_add_each_action_[PERTURB_OBJECT]);
 
-	if (this->previous_scene_observation_.is_empty)
-	{
-		// No additional hypothesis can be added, since there is no previous scene
-		return;
-	}
+	std::map<std::string, AdditionalHypotheses>  additional_steady = generateAdditionalHypothesesForObjectList(
+		change_in_scene.steady_objects_,STEADY_OBJECT,
+		num_of_hypotheses_to_add_each_action_[STEADY_OBJECT]);
+
+	std::map<std::string, AdditionalHypotheses>  additional_support_retained = generateAdditionalHypothesesForObjectList(
+		change_in_scene.support_retained_object_,SUPPORT_RETAINED_OBJECT,
+		num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT]);
 	
-	std::map<std::string, std::string> &object_label_class_map = this->previous_scene_observation_.object_label_class_map_;
-	SceneHypothesis &previous_best_scene_hypothesis = this->previous_scene_observation_.best_scene_hypothesis_;
+	result.insert(additional_perturbed.begin(),additional_perturbed.end());
+	result.insert(additional_steady.begin(),additional_steady.end());
+	result.insert(additional_support_retained.begin(),additional_support_retained.end());
 
-	std::map<std::string, vertex_t> &previous_vertex_map = previous_best_scene_hypothesis.vertex_map_;
-	// Initialize added hypotheses to contain all objects that are present in the previous scene hypothesis
 	for (std::map<std::string, ObjectHypothesesData >::const_iterator it = object_hypotheses_map.begin();
 		it != object_hypotheses_map.end(); ++it)
 	{
-		if (keyExistInConstantMap(it->first,previous_vertex_map))
+		const std::vector<btTransform> &object_pose_hypotheses = it->second.second;
+		if (keyExistInConstantMap(it->first, result))
 		{
-			added_unique_hypotheses[it->first] = 0;
-			hypotheses_to_be_inserted_[it->first].reserve(max_good_hypotheses_to_add);
-		}
-	}
-
-	bool done = false;
-	for (OneFrameSceneHypotheses::iterator it = this->previous_scene_observation_.scene_hypotheses_list_.begin();
-		it != this->previous_scene_observation_.scene_hypotheses_list_.end(); ++it)
-	{
-		std::map<std::string, vertex_t> &vertex_map = it->vertex_map_;
-		SceneSupportGraph &scene_support_graph = it->scene_support_graph_;
-		double &scene_probability = it->scene_probability_;
-		std::map<std::string, int> &scene_object_hypothesis_id = it->scene_object_hypothesis_id_;
-
-		for (std::map<std::string, int >::iterator it2 = added_unique_hypotheses.begin();
-			it2 != added_unique_hypotheses.end();)
-		{
-			const std::string &object_tf_id = it2->first;
-			int &add_hypothesis_count = it2->second;
-			if (add_hypothesis_count < max_good_hypotheses_to_add)
-			{
-				int &hypothesis_id = scene_object_hypothesis_id[object_tf_id];
-				if (added_hypotheses_id[object_tf_id].find(hypothesis_id) != added_hypotheses_id[object_tf_id].end())
-				{
-					// This stable object hypothesis is already added.
-					continue;
-				}
-				else
-				{
-					// Add this object hypothesis.
-					vertex_t &vertex_id = vertex_map[object_tf_id];
-					hypotheses_to_be_inserted_[object_tf_id].push_back(scene_support_graph[vertex_id].object_pose_);
-					added_hypotheses_id[object_tf_id].insert(scene_object_hypothesis_id[object_tf_id]);
-					++add_hypothesis_count;
-				}
-				++it2;
-			}
-			else
-			{
-				// the amount needed for this object_id has reached, we can savely remove this hypothesis.
-				added_unique_hypotheses.erase(it2++);
-			}
-		}
-
-		// stop the loop if all needed amount of hypothesis had been added
-		if (added_unique_hypotheses.size() == 0) break;
-	}
-
-	for (std::map<std::string, std::vector<btTransform> >::iterator it = hypotheses_to_be_inserted_.begin();
-		 it != hypotheses_to_be_inserted_.end(); ++it)
-	{
-		const std::string &model_name = object_label_class_map[it->first];
-		
-		std::vector<btTransform> valid_hypotheses_to_add;
-		valid_hypotheses_to_add.reserve(it->second.size());
-		for (std::vector<btTransform>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			if (this->judgeHypothesis(model_name, *it2))
-			{
-				valid_hypotheses_to_add.push_back(*it2);
-			}
-		}
-		if (keyExistInConstantMap(it->first, object_hypotheses_map))
-		{
-			std::vector<btTransform> &hypothesis_list_to_be_modified = object_hypotheses_map[it->first].second;
-			// add all valid hypotheses to the original hypothesis
-			hypothesis_list_to_be_modified.insert(hypothesis_list_to_be_modified.end(), 
-				valid_hypotheses_to_add.begin(), valid_hypotheses_to_add.end());
+			result[it->first].poses_.insert(result[it->first].poses_.end(),
+				object_pose_hypotheses.begin(),object_pose_hypotheses.end());
 		}
 		else
 		{
-			object_hypotheses_map[it->first] = std::make_pair(model_name, valid_hypotheses_to_add);
+			result[it->first] = AdditionalHypotheses(it->second.first, object_pose_hypotheses, ADD_OBJECT);
 		}
 	}
+	return result;
 }
 
 void SequentialSceneHypothesis::setMinimalDataConfidence(const double &min_confidence)
@@ -260,6 +209,99 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 	}
 
 	return compare_scene_result;
+}
+
+AdditionalHypotheses SequentialSceneHypothesis::generateAdditionalObjectHypothesesFromPreviousKnowledge(
+	const std::string &object_id, const int &scene_change_mode,
+	const int &max_good_hypotheses_to_add)
+{
+	int added_unique_hypotheses = 0;
+	std::set<int> added_hypotheses_id;
+	std::vector<btTransform> hypotheses_to_be_inserted_;
+
+	if (this->previous_scene_observation_.is_empty)
+	{
+		// No additional hypothesis can be added, since there is no previous scene
+		return AdditionalHypotheses();
+	}
+	SceneHypothesis &previous_best_scene_hypothesis = this->previous_scene_observation_.best_scene_hypothesis_;
+	std::map<std::string, vertex_t> &previous_vertex_map = previous_best_scene_hypothesis.vertex_map_;
+	if (!keyExistInConstantMap(object_id,previous_vertex_map))
+	{
+		// No additional hypothesis can be added, since this object does not exist in previous scene
+		return AdditionalHypotheses();
+	}
+
+	std::map<std::string, std::string> &object_label_class_map = this->previous_scene_observation_.object_label_class_map_;
+	hypotheses_to_be_inserted_.reserve(max_good_hypotheses_to_add);
+
+	bool done = false;
+	for (OneFrameSceneHypotheses::iterator it = this->previous_scene_observation_.scene_hypotheses_list_.begin();
+		it != this->previous_scene_observation_.scene_hypotheses_list_.end(); ++it)
+	{
+		std::map<std::string, vertex_t> &vertex_map = it->vertex_map_;
+		SceneSupportGraph &scene_support_graph = it->scene_support_graph_;
+		double &scene_probability = it->scene_probability_;
+		std::map<std::string, int> &scene_object_hypothesis_id = it->scene_object_hypothesis_id_;
+
+		if (added_unique_hypotheses < max_good_hypotheses_to_add)
+		{
+			int &hypothesis_id = scene_object_hypothesis_id[object_id];
+			if (added_hypotheses_id.find(hypothesis_id) == added_hypotheses_id.end())
+			{
+				// This object hypothesis has not been added before
+				vertex_t &vertex_id = vertex_map[object_id];
+				hypotheses_to_be_inserted_.push_back(scene_support_graph[vertex_id].object_pose_);
+				added_hypotheses_id.insert(scene_object_hypothesis_id[object_id]);
+				++added_unique_hypotheses;
+			}
+		}
+		else
+		{
+			// stop the loop if all needed amount of hypothesis had been added
+			break;
+		}
+	}
+
+	if (hypotheses_to_be_inserted_.size() == 0)
+	{
+		// return invalid additional hypotheses if it contains no additional hypotheses
+		return AdditionalHypotheses();
+	}
+
+	std::vector<btTransform> valid_hypotheses_to_add;
+	valid_hypotheses_to_add.reserve(hypotheses_to_be_inserted_.size());
+	const std::string &model_name = object_label_class_map[object_id];
+
+	for (std::vector<btTransform>::iterator it = hypotheses_to_be_inserted_.begin();
+		 it != hypotheses_to_be_inserted_.end(); ++it)
+	{
+		if (this->judgeHypothesis(model_name, *it))
+		{
+			valid_hypotheses_to_add.push_back(*it);
+		}
+	}
+
+	return AdditionalHypotheses(model_name, valid_hypotheses_to_add, scene_change_mode);
+}
+
+
+std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateAdditionalHypothesesForObjectList(
+	const std::vector<std::string> &object_id_list,const int &scene_change_mode,
+	const int &max_good_hypotheses_to_add)
+{
+	std::map<std::string, AdditionalHypotheses> result;
+	for (std::vector<std::string>::const_iterator it = object_id_list.begin();
+		 it != object_id_list.end(); ++it)
+	{
+		AdditionalHypotheses additional_obj_hypotheses = generateAdditionalObjectHypothesesFromPreviousKnowledge(
+			*it, scene_change_mode, max_good_hypotheses_to_add);
+		if (additional_obj_hypotheses.object_action_ != INVALID_ACTION)
+		{
+			result[*it]=additional_obj_hypotheses;
+		}
+	}
+	return result;
 }
 
 

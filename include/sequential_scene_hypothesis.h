@@ -84,10 +84,35 @@ struct SceneChanges
 	// std::vector<std::string> data_retained_object;
 };
 
+enum SceneChangeMode
+{
+	INVALID_ACTION,
+	ADD_OBJECT,
+	REMOVE_OBJECT,
+	PERTURB_OBJECT,
+	STEADY_OBJECT,
+	SUPPORT_RETAINED_OBJECT
+};
+
+struct AdditionalHypotheses
+{
+	std::string model_name_;
+	std::vector<btTransform> poses_;
+	int object_action_;
+	AdditionalHypotheses(const std::string &model_name,
+		const std::vector<btTransform> &poses, const int &object_action) : 
+			model_name_(model_name),
+			poses_(poses),
+			object_action_(object_action)
+	{}
+
+	AdditionalHypotheses(): object_action_(INVALID_ACTION) {}
+};
+
 class SequentialSceneHypothesis
 {
 public:
-	SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1) {};
+	SequentialSceneHypothesis();
 	
 	// set the best data scene structure to guess the resulting structure of the hypothesis
 	void setCurrentDataSceneStructure(const SceneHypothesis &current_best_data_scene_structure);
@@ -96,9 +121,8 @@ public:
 	void setPreviousSceneObservation(const SceneObservation &previous_scene);
 	
 	// add good previous stable object hypotheses to the current hypothesis
-	void generateAdditionalObjectHypothesesFromPreviousKnowledge(
-		std::map<std::string, ObjectHypothesesData > &object_hypotheses_map, 
-		const int &max_good_hypotheses_to_add = 10);
+	std::map<std::string, AdditionalHypotheses> generateObjectHypothesesWithPreviousKnowledge(
+		const std::map<std::string, ObjectHypothesesData > &object_hypotheses_map);
 
 	// calculate the effect of scene change on the scene confidence
 	void estimateSequentialSceneConfidence();
@@ -108,6 +132,14 @@ public:
 private:
 	SceneChanges findChanges();
 	SceneChanges analyzeChanges();
+	AdditionalHypotheses generateAdditionalObjectHypothesesFromPreviousKnowledge(const std::string &object_id,
+		const int &scene_change_mode,
+		const int &max_good_hypotheses_to_add);
+
+	std::map<std::string, AdditionalHypotheses>  generateAdditionalHypothesesForObjectList(
+		const std::vector<std::string> &object_id_list,const int &scene_change_mode,
+		const int &max_good_hypotheses_to_add);
+
 	bool judgeHypothesis(const std::string &model_name, const btTransform &transform);
 
 	// minimum objRecRANSAC confidence for the old hypothesis
@@ -120,6 +152,7 @@ private:
 	ObjRecRANSACTool* data_probability_check_;
 	SceneHypothesis current_best_data_scene_structure_;
 	SceneObservation previous_scene_observation_;
+	std::map<int, int> num_of_hypotheses_to_add_each_action_;
 };
 
 #endif
