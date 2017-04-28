@@ -79,6 +79,7 @@ public:
     	const std::vector<std::string> &input);
     void removeAllRigidBodyFromWorld();
     void addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies);
+    void removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies);
 
 // Additional functions used for rendering:
     void initPhysics();

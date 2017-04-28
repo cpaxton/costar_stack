@@ -18,5 +18,5 @@ typedef pcl::PointCloud<pcl::PointXYZRGBA> Image;
 // this contains model name and pose hypothesis of a single object
 typedef std::pair<std::string, std::vector<ObjectParameter> > ObjectHypothesesData;
 
-
+typedef std::map<std::string, btTransform> map_string_transform;
 #endif

@@ -138,7 +138,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- sequentialSceneParsing objectDataProperty physicsEngine ObjRecRANSACTool
+ sequentialSceneParsing SequentialSceneHypothesis objectDataProperty physicsEngine ObjRecRANSACTool
 )
 
 target_link_libraries(

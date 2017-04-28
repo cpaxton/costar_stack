@@ -111,6 +111,8 @@ private:
 // will produce order of vertices correction starting the background
 OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
 
+std::vector<vertex_t> getAllChildVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
+
 std::map<std::string, btTransform> getAssociatedTransformMapFromVertexVector( SceneSupportGraph &input_graph,
     const std::vector<vertex_t> &vertices);
 

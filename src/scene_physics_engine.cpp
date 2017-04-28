@@ -322,6 +322,24 @@ void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, 
 	mtx_.unlock();
 }
 
+void PhysicsEngine::removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies)
+{
+	mtx_.lock();
+	// data_forces_generator_->resetCachedIcpResult();
+	for (std::map<std::string, btTransform>::const_iterator it = rigid_bodies.begin(); 
+		it != rigid_bodies.end(); ++it)
+	{
+		if (it->first == "background") continue;
+		if (keyExistInConstantMap(it->first, this->object_best_test_pose_map_))
+		{
+			m_dynamicsWorld->removeRigidBody(this->rigid_body_[it->first]);
+			this->object_best_test_pose_map_.erase(it->first);
+			if (this->debug_messages_) std::cerr << "Removed object "<<  it->first <<" from world.\n";
+		}
+	}
+	mtx_.unlock();
+}
+
 std::map<std::string, btTransform> PhysicsEngine::getAssociatedBestPoseDataFromStringVector(const std::vector<std::string> &input)
 {
 	std::map<std::string, btTransform> result;

@@ -32,6 +32,7 @@
 
 #include "scene_physics_engine.h"
 #include "scene_data_forces.h"
+#include "sequential_scene_hypothesis.h"
 
 class SceneHypothesisAssessor
 {
@@ -71,6 +72,13 @@ private:
 		const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 		const btTransform &object_pose_hypothesis, const bool &reset_position);
 	double evaluateSceneProbabilityFromGraph();
+	void getSceneSupportGraphFromBestData(
+		std::map<std::string, bool> &object_background_support_status,
+		std::vector< std::map<std::string, btTransform> > &object_test_pose_map_by_dist,
+		std::map<std::string, map_string_transform> &object_childs_map);
+	std::map<std::string, map_string_transform> getAllChildTransformsOfVertices(
+		const std::map<vertex_t, std::size_t> &vertex_distance_map);
+	// void processHypothesis();
 
 	bool debug_messages_;
 	bool physics_engine_ready_;
@@ -90,6 +98,8 @@ private:
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map_;
 	std::map<std::string, ObjectSymmetry> object_symmetry_map_;
+
+	SequentialSceneHypothesis sequential_scene_hypothesis_;
 
 	boost::mutex seq_mtx_;
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 

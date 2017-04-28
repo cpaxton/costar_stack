@@ -65,6 +65,17 @@ OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const 
     return vis;
 }
 
+std::vector<vertex_t> getAllChildVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
+{
+    std::vector<vertex_t> result;
+    boost::graph_traits<SceneSupportGraph>::out_edge_iterator ei, ei_end;
+    for (boost::tie(ei, ei_end) = out_edges(parent_vertex, input_graph); ei != ei_end; ++ei)
+    {
+        result.push_back(boost::target ( *ei, input_graph));
+    }
+    return result;
+}
+
 
 std::map<std::string, btTransform> getAssociatedTransformMapFromVertexVector( SceneSupportGraph &input_graph,
     const std::vector<vertex_t> &vertices)

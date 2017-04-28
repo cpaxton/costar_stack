@@ -1,12 +1,14 @@
 #include "sequential_scene_hypothesis.h"
 
-SceneObservation::SceneObservation(const OneFrameSceneHypotheses &input, 
+SceneObservation::SceneObservation(const SceneHypothesis &final_scene_hypothesis,
+	const OneFrameSceneHypotheses &input, 
 	const std::map<std::string, std::string> &object_label_class_map) : 
+		best_scene_hypothesis_(final_scene_hypothesis),
 		scene_hypotheses_list_(input),
 		object_label_class_map_(object_label_class_map), is_empty(false)
 {
 	std::sort(this->scene_hypotheses_list_.begin(),this->scene_hypotheses_list_.end(),compare_greater);
-	this->best_scene_hypothesis_ = this->scene_hypotheses_list_[0];
+	// this->best_scene_hypothesis_ = this->scene_hypotheses_list_[0];
 }
 
 SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1) 
@@ -32,6 +34,11 @@ void SequentialSceneHypothesis::setPreviousSceneObservation(const SceneObservati
 	this->previous_scene_observation_ = previous_scene;	
 }
 
+void SequentialSceneHypothesis::setObjRansacTool(ObjRecRANSACTool &data_probability_check)
+{
+	this->data_probability_check_ = &data_probability_check;
+}
+
 std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateObjectHypothesesWithPreviousKnowledge( 
 	const std::map<std::string, ObjectHypothesesData > &object_hypotheses_map)
 {
@@ -49,10 +56,10 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 	std::map<std::string, AdditionalHypotheses>  additional_support_retained = generateAdditionalHypothesesForObjectList(
 		change_in_scene.support_retained_object_,SUPPORT_RETAINED_OBJECT,
 		num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT]);
-	
-	result.insert(additional_perturbed.begin(),additional_perturbed.end());
-	result.insert(additional_steady.begin(),additional_steady.end());
-	result.insert(additional_support_retained.begin(),additional_support_retained.end());
+
+	if (additional_perturbed.size() > 0) result.insert(additional_perturbed.begin(),additional_perturbed.end());
+	if (additional_steady.size() > 0) result.insert(additional_steady.begin(),additional_steady.end());
+	if (additional_support_retained.size() > 0) result.insert(additional_support_retained.begin(),additional_support_retained.end());
 
 	for (std::map<std::string, ObjectHypothesesData >::const_iterator it = object_hypotheses_map.begin();
 		it != object_hypotheses_map.end(); ++it)
@@ -173,11 +180,10 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 			// check if there is any object supported by this object in previous scene
 			// that still exists in current scene
 			vertex_t &observed_removed_vertex = prev_vertex_map[*it];
-			OrderedVertexVisitor vis  = getOrderedVertexList(previous_best_scene_graph, observed_removed_vertex);
-			std::map<std::size_t, std::vector<vertex_t> > vertex_visit_by_dist = vis.getVertexVisitOrderByDistances();
-			if (keyExistInConstantMap(1ul,vertex_visit_by_dist))
+			std::vector<vertex_t> supported_objects = getAllChildVertices(previous_best_scene_graph, observed_removed_vertex);
+
+			if (supported_objects.size() > 0)
 			{
-				std::vector<vertex_t> &supported_objects = vertex_visit_by_dist[1];
 				bool exclude_removed_object = false;
 				// if any directly supported object is not in the list of removed object, do not remove this object
 
@@ -200,6 +206,10 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 					compare_scene_result.support_retained_object_.push_back(*it);
 					removed_objects.erase(it++);
 				}
+				else
+				{
+					++it;
+				}
 			}
 			else
 			{
@@ -207,7 +217,6 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 			}
 		}
 	}
-
 	return compare_scene_result;
 }
 
@@ -303,5 +312,4 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateA
 	}
 	return result;
 }
-
 

@@ -25,10 +25,16 @@ struct SceneHypothesis
 	std::map<std::string, int> scene_object_hypothesis_id_;
 
 	SceneHypothesis(const std::map<std::string, vertex_t> &vertex_map, 
+		const SceneSupportGraph &scene_support_graph) :
+			vertex_map_(vertex_map),
+			scene_support_graph_(scene_support_graph),
+			scene_probability_(-0.5)
+	{}
+
+	SceneHypothesis(const std::map<std::string, vertex_t> &vertex_map, 
 		const SceneSupportGraph &scene_support_graph,
 		const double &scene_probability,
-		const std::map<std::string, int> &obj_hypothesis_id,
-		const std::map<std::string, std::string> &object_label_class_map) : 
+		const std::map<std::string, int> &obj_hypothesis_id) : 
 			vertex_map_(vertex_map),
 			scene_support_graph_(scene_support_graph), scene_probability_(scene_probability),
 			scene_object_hypothesis_id_(obj_hypothesis_id)
@@ -57,7 +63,8 @@ struct SceneObservation
 	std::map<std::string, std::string> object_label_class_map_;
 	bool is_empty;
 
-	SceneObservation(const OneFrameSceneHypotheses &input, 
+	SceneObservation(const SceneHypothesis &final_scene_hypothesis,
+		const OneFrameSceneHypotheses &input, 
 		const std::map<std::string, std::string> &object_label_class_map);
 	SceneObservation() : is_empty(true) { };
 };
@@ -128,6 +135,8 @@ public:
 	void estimateSequentialSceneConfidence();
 
 	void setMinimalDataConfidence(const double &min_confidence);
+
+	void setObjRansacTool(ObjRecRANSACTool &data_probability_check);
 
 private:
 	SceneChanges findChanges();
