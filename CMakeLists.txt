@@ -88,6 +88,9 @@ add_library(ObjRecRANSACTool include/ObjRecRANSACTool/ObjRecRANSACTool.cpp)
 set(PhysicsEngine src/scene_physics_engine.cpp src/scene_physics_support.cpp src/scene_data_forces.cpp)
 add_library(physicsEngine ${PhysicsEngine})
 
+set(SequentialSceneHypothesis src/sequential_scene_hypothesis)
+add_library(SequentialSceneHypothesis ${SequentialSceneHypothesis})
+
 set(SequentialSceneParsing src/sequential_scene_parsing.cpp)
 add_library(sequentialSceneParsing ${SequentialSceneParsing})
 
@@ -119,7 +122,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- objectDataProperty ${catkin_LIBRARIES} ${BULLET_LIBRARIES}  BulletWorldImporter BulletFileLoader
+ objectDataProperty ${BULLET_LIBRARIES}  BulletWorldImporter BulletFileLoader
 )
 
 target_link_libraries(
@@ -131,11 +134,15 @@ target_link_libraries(
 )
 
 target_link_libraries(
- sequentialSceneParsing objectDataProperty physicsEngine ObjRecRANSACTool ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${BULLET_LIBRARIES} ${SymmetricOrientationRealignment}
+ SequentialSceneHypothesis physicsEngine ObjRecRANSACTool ${Boost_LIBRARIES} ${BULLET_LIBRARIES} ${PCL_LIBRARIES}
 )
 
 target_link_libraries(
- rosSequentialSceneParsing objectDataProperty sequentialSceneParsing
+ sequentialSceneParsing SequentialSceneHypothesis objectDataProperty physicsEngine ObjRecRANSACTool
+)
+
+target_link_libraries(
+ rosSequentialSceneParsing objectDataProperty sequentialSceneParsing ${catkin_LIBRARIES}
 )
 
 target_link_libraries(

@@ -27,11 +27,11 @@
 #include "symmetric_orientation_realignment.h"
 
 // Ros bundling for scene parsing
-class RosSceneGraph : public SceneGraph
+class RosSceneHypothesisAssessor : public SceneHypothesisAssessor
 {
 public:
-	RosSceneGraph();
-	RosSceneGraph(const ros::NodeHandle &nh);
+	RosSceneHypothesisAssessor();
+	RosSceneHypothesisAssessor(const ros::NodeHandle &nh);
 	void setNodeHandle(const ros::NodeHandle &nh);
 	
 	void publishTf();
@@ -69,7 +69,7 @@ private:
 	ros::NodeHandle nh_;
 	tf::TransformListener listener_;
 	tf::TransformBroadcaster tf_broadcaster_;
-	SceneGraph ros_scene_;
+	SceneHypothesisAssessor ros_scene_;
 	
 	// PhysicsEngine physics_engine_;
 	std::map<std::string, tf::Transform> object_transforms_tf_;

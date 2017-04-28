@@ -1,7 +1,7 @@
 #include "ros_sequential_scene_parsing.h"
 #include "utility_ros.h"
 
-RosSceneGraph::RosSceneGraph()
+RosSceneHypothesisAssessor::RosSceneHypothesisAssessor()
 {
 	this->ros_scene_.setPhysicsEngine(&this->physics_engine_);
 	this->class_ready_ = false;
@@ -9,20 +9,20 @@ RosSceneGraph::RosSceneGraph()
 	this->has_tf_ = false;
 }
 
-RosSceneGraph::RosSceneGraph(const ros::NodeHandle &nh)
+RosSceneHypothesisAssessor::RosSceneHypothesisAssessor(const ros::NodeHandle &nh)
 {
 	this->ros_scene_.setPhysicsEngine(&this->physics_engine_);
 	this->physics_gravity_direction_set_ = false;
 	this->setNodeHandle(nh);
 }
 
-void RosSceneGraph::callGlutMain(int argc, char* argv[])
+void RosSceneHypothesisAssessor::callGlutMain(int argc, char* argv[])
 {
 	this->physics_engine_.renderingLaunched();
 	glutmain(argc, argv,1024,600,"Scene Parsing Demo",&this->physics_engine_);
 }
 
-void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
+void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 {
 	this->nh_ = nh;
 	this->has_background_ = false;
@@ -83,15 +83,15 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	this->physics_engine_.setObjectPenaltyDatabase(this->obj_database_.getObjectPenaltyDatabase());
 	
 	this->detected_object_sub = this->nh_.subscribe(detected_object_topic,1,
-		&RosSceneGraph::updateSceneFromDetectedObjectMsgs,this);
-	this->background_pcl_sub = this->nh_.subscribe(background_pcl2_topic,1,&RosSceneGraph::addBackground,this);
-	this->scene_pcl_sub = this->nh_.subscribe(scene_pcl2_topic,1,&RosSceneGraph::addSceneCloud,this);
+		&RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs,this);
+	this->background_pcl_sub = this->nh_.subscribe(background_pcl2_topic,1,&RosSceneHypothesisAssessor::addBackground,this);
+	this->scene_pcl_sub = this->nh_.subscribe(scene_pcl2_topic,1,&RosSceneHypothesisAssessor::addSceneCloud,this);
 
 	// setup objrecransac tool
 	boost::split(object_names,objransac_model_list,boost::is_any_of(","));
 	this->ros_scene_.loadObjectModels(objransac_model_location, object_names);
 	this->object_hypotheses_sub = this->nh_.subscribe(object_hypotheses_topic,1,
-		&RosSceneGraph::fillObjectHypotheses,this);
+		&RosSceneHypothesisAssessor::fillObjectHypotheses,this);
 	
 	// setup feedback force parameters
 	this->ros_scene_.setDataFeedbackForcesParameters(data_forces_magnitude_per_point, data_forces_max_distance);
@@ -102,7 +102,7 @@ void RosSceneGraph::setNodeHandle(const ros::NodeHandle &nh)
 	this->class_ready_ = true;
 }
 
-void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
+void RosSceneHypothesisAssessor::addBackground(const sensor_msgs::PointCloud2 &pc)
 {
 	if (!this->has_background_)
 	{
@@ -117,7 +117,7 @@ void RosSceneGraph::addBackground(const sensor_msgs::PointCloud2 &pc)
 	}
 }
 
-void RosSceneGraph::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
+void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
 {
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 	pcl::fromROSMsg(pc, *cloud);
@@ -132,7 +132,7 @@ void RosSceneGraph::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
 	}
 }
 
-void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
+void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
 {
 	std::cerr << "Updating scene based on detected object message.\n";
 	std::vector<ObjectWithID> objects;
@@ -222,7 +222,7 @@ void RosSceneGraph::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::
 
 }
 
-void RosSceneGraph::updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map)
+void RosSceneHypothesisAssessor::updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map)
 {
 	this->object_transforms_tf_.clear();
 	for (std::map<std::string, ObjectParameter>::const_iterator it = input_tf_map.begin(); 
@@ -236,7 +236,7 @@ void RosSceneGraph::updateTfFromObjTransformMap(const std::map<std::string, Obje
 	}
 }
 
-void RosSceneGraph::publishTf()
+void RosSceneHypothesisAssessor::publishTf()
 {
 	if (!this->has_tf_) return;
 
@@ -248,7 +248,7 @@ void RosSceneGraph::publishTf()
 	}
 }
 
-void RosSceneGraph::setDebugMode(bool debug)
+void RosSceneHypothesisAssessor::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
 	this->ros_scene_.setDebugMode(debug);
@@ -256,7 +256,7 @@ void RosSceneGraph::setDebugMode(bool debug)
 	this->obj_database_.setDebugMode(debug);
 }
 
-bool RosSceneGraph::fillObjectPropertyDatabase()
+bool RosSceneHypothesisAssessor::fillObjectPropertyDatabase()
 {
 	if (! this->nh_.hasParam("object_property")) return false;
 	XmlRpc::XmlRpcValue object_params;
@@ -275,7 +275,7 @@ bool RosSceneGraph::fillObjectPropertyDatabase()
 	return true;
 }
 
-void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses)
+void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses)
 {
 	std::cerr << "Received input hypotheses list.\n";
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map;
@@ -292,7 +292,7 @@ void RosSceneGraph::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelH
 		{
 			tf::Transform transform;
 			tf::transformMsgToTF(model_hypo.model_hypothesis[i].transform, transform);
-			double gl_matrix[15];
+			double gl_matrix[16];
 			transform.getOpenGLMatrix(gl_matrix);
 			btTransform bt = convertRosTFToBulletTF(transform);
             object_pose_hypotheses.push_back(bt);

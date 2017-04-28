@@ -3,7 +3,7 @@
 #include "ros_sequential_scene_parsing.h"
 #include <boost/thread.hpp>
 
-void rosMainloop(ros::Rate &r, RosSceneGraph &test)
+void rosMainloop(ros::Rate &r, RosSceneHypothesisAssessor &test)
 {
     while (ros::ok())
     {
@@ -23,13 +23,19 @@ int main(int argc, char* argv[])
     ros::init(argc,argv, "scene_graph_test");
     ros::NodeHandle nh ("~");
     ros::Rate r(10); //10Hz
-    RosSceneGraph test(nh);
+    RosSceneHypothesisAssessor test(nh);
 
     bool render_scene;
     nh.param("render_scene",render_scene, true);
     if (!render_scene)
     {
-        rosMainloop(r,test);
+        // rosMainloop(r,test);
+        while (ros::ok())
+        {
+            test.publishTf();
+            r.sleep();
+            ros::spinOnce();
+        }
     }
     else
     {

@@ -3,8 +3,6 @@
 
 #include <iostream>
 #include <utility>
-#include <vector>
-#include <map>
 
 // For plane segmentation
 #include <pcl/ModelCoefficients.h>
@@ -25,34 +23,22 @@
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
 #include <Eigen/Geometry>
 
 #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
 #include "symmetric_orientation_realignment.h"
 #include "utility.h"
+#include "typedef.h"
 
 #include "scene_physics_engine.h"
 #include "scene_data_forces.h"
+#include "sequential_scene_hypothesis.h"
 
- // ObjectParameter == Object Pose
-typedef btTransform ObjectParameter;
-// typedef Eigen::Transform< double,3,Eigen::Affine > ObjectParameter;
-typedef pcl::PointCloud<pcl::PointXYZRGBA>::Ptr ImagePtr;
-typedef pcl::PointXYZRGBA ImagePoint;
-typedef pcl::PointCloud<pcl::PointXYZRGBA> Image;
-typedef std::vector<bool> DecisionVector;
-
-// this contains model name and pose hypothesis of a single object
-typedef std::pair<std::string, std::vector<ObjectParameter> > ObjectHypothesesData;
-
-class SceneGraph
+class SceneHypothesisAssessor
 {
 public:
-	SceneGraph() : physics_engine_ready_(false) {};
-	SceneGraph(ImagePtr input, ImagePtr background_image);
+	SceneHypothesisAssessor() : physics_engine_ready_(false) {};
+	SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image);
 	
 	// set physics engine environment to be used.
 	void setPhysicsEngine(PhysicsEngine* physics_engine);
@@ -86,6 +72,13 @@ private:
 		const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 		const btTransform &object_pose_hypothesis, const bool &reset_position);
 	double evaluateSceneProbabilityFromGraph();
+	void getSceneSupportGraphFromBestData(
+		std::map<std::string, bool> &object_background_support_status,
+		std::vector< std::map<std::string, btTransform> > &object_test_pose_map_by_dist,
+		std::map<std::string, map_string_transform> &object_childs_map);
+	std::map<std::string, map_string_transform> getAllChildTransformsOfVertices(
+		const std::map<vertex_t, std::size_t> &vertex_distance_map);
+	// void processHypothesis();
 
 	bool debug_messages_;
 	bool physics_engine_ready_;
@@ -105,6 +98,8 @@ private:
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map_;
 	std::map<std::string, ObjectSymmetry> object_symmetry_map_;
+
+	SequentialSceneHypothesis sequential_scene_hypothesis_;
 
 	boost::mutex seq_mtx_;
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 
