@@ -102,38 +102,8 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        00 Home:
-          Value: true
-        01 Center:
-          Value: false
         All Enabled: false
-        C1 01 Over:
-          Value: false
-        C1 02 Pick:
-          Value: false
-        C1 03 Lift:
-          Value: false
-        C1 04 Place:
-          Value: false
-        C1 05 Escape:
-          Value: false
-        C1 11 Over:
-          Value: false
-        C1 12 Pick:
-          Value: false
-        C1 13 Lift:
-          Value: false
-        C1 14 Place:
-          Value: false
-        C1 21 Over:
-          Value: false
-        C1 22 Pick:
-          Value: false
-        C1 23 Avoid:
-          Value: false
-        C1 24 Over:
-          Value: false
-        C1 25 Place:
+        ar_marker_0:
           Value: false
         base:
           Value: false
@@ -162,6 +132,18 @@ Visualization Manager:
         gripper_link:
           Value: false
         marker_link:
+          Value: false
+        obj_link_uniform_1:
+          Value: true
+        obj_node_uniform_1:
+          Value: true
+        obj_node_uniform_2:
+          Value: true
+        objects/link_uniform/1:
+          Value: false
+        objects/node_uniform/1:
+          Value: false
+        objects/node_uniform/2:
           Value: false
         preferred_orientation:
           Value: false
@@ -193,40 +175,15 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              {}
+              ar_marker_0:
+                {}
+              obj_link_uniform_1:
+                {}
+              obj_node_uniform_1:
+                {}
+              obj_node_uniform_2:
+                {}
           world:
-            00 Home:
-              {}
-            01 Center:
-              {}
-            C1 01 Over:
-              {}
-            C1 02 Pick:
-              {}
-            C1 03 Lift:
-              {}
-            C1 04 Place:
-              {}
-            C1 05 Escape:
-              {}
-            C1 11 Over:
-              {}
-            C1 12 Pick:
-              {}
-            C1 13 Lift:
-              {}
-            C1 14 Place:
-              {}
-            C1 21 Over:
-              {}
-            C1 22 Pick:
-              {}
-            C1 23 Avoid:
-              {}
-            C1 24 Over:
-              {}
-            C1 25 Place:
-              {}
             base_link:
               preferred_orientation:
                 {}
@@ -249,6 +206,12 @@ Visualization Manager:
                               {}
               table_frame:
                 {}
+            objects/link_uniform/1:
+              {}
+            objects/node_uniform/1:
+              {}
+            objects/node_uniform/2:
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 0.5
@@ -615,10 +578,10 @@ Visualization Manager:
         Z: 0.055867
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.774796
+      Pitch: 0.724796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.3633
+      Yaw: 5.5033
     Saved: ~
 Window Geometry:
   Displays:
