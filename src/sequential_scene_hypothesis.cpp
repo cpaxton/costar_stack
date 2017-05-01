@@ -118,6 +118,10 @@ SceneChanges SequentialSceneHypothesis::findChanges()
 	// If not, find mapping
 	SceneChanges result;
 	std::map<std::string, vertex_t> cur_vertex_map = this->current_best_data_scene_structure_.vertex_map_;
+	
+	// ignore background in findChanges
+	cur_vertex_map.erase("background");
+	
 	if (this->previous_scene_observation_.is_empty)
 	{
 		// all objects are added object
@@ -132,6 +136,9 @@ SceneChanges SequentialSceneHypothesis::findChanges()
 
 	SceneHypothesis &previous_best_scene_hypothesis = this->previous_scene_observation_.best_scene_hypothesis_;
 	std::map<std::string, vertex_t> prev_vertex_map = previous_best_scene_hypothesis.vertex_map_;
+	// ignore background in findChanges
+	prev_vertex_map.erase("background");
+
 	for (std::map<std::string, vertex_t>::iterator it = cur_vertex_map.begin(); it != cur_vertex_map.end();)
 	{
 		if (keyExistInConstantMap(it->first, prev_vertex_map))

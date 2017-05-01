@@ -68,10 +68,16 @@ OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const 
 std::vector<vertex_t> getAllChildVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
 {
     std::vector<vertex_t> result;
+    const std::size_t &parent_distance_to_ground = input_graph[parent_vertex].distance_to_ground_;
     boost::graph_traits<SceneSupportGraph>::out_edge_iterator ei, ei_end;
     for (boost::tie(ei, ei_end) = out_edges(parent_vertex, input_graph); ei != ei_end; ++ei)
     {
-        result.push_back(boost::target ( *ei, input_graph));
+        vertex_t child_vertex = boost::target ( *ei, input_graph);
+        const std::size_t &child_distance_to_ground = input_graph[child_vertex].distance_to_ground_;
+        if (child_distance_to_ground > parent_distance_to_ground)
+        {
+            result.push_back(child_vertex);
+        }
     }
     return result;
 }
