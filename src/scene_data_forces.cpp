@@ -290,7 +290,8 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::generateCorrespondenceCloud(PointC
 
 double FeedbackDataForcesGenerator::getIcpConfidenceResult(const PointCloudXYZPtr icp_result) const
 {
-	PointCloudXYZPtr nearest_point_correspondence_cloud = generateCorrespondenceCloud(icp_result, true, 0.003 * 0.003);
+	// If voxel size used is 3mm, the max distance need to be around 3 * sqrt(3) mm.
+	PointCloudXYZPtr nearest_point_correspondence_cloud = generateCorrespondenceCloud(icp_result, true, 0.004 * 0.004);
 	return double(nearest_point_correspondence_cloud->size())/icp_result->size();
 }
 
