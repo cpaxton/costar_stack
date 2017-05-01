@@ -625,6 +625,10 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
         std::cerr << "Please set compute pose to true and initialize semantic segmentation before calculating obj transform\n";
         return std::vector<objectTransformInformation>();
     }
+    
+#ifdef SCENE_PARSING
+    hypothesis_list_.clear();
+#endif
 
     std::vector<poseT> all_poses;
 
