@@ -316,6 +316,7 @@ void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, 
 		if (it->first == "background") continue;
 		
 		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
+		this->rigid_body_[it->first]->setWorldTransform(it->second);
 		this->object_best_test_pose_map_[it->first] = it->second;
 		if (this->debug_messages_) std::cerr << "Add object "<<  it->first <<" back to world.\n";
 	}

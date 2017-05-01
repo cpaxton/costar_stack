@@ -134,7 +134,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- SequentialSceneHypothesis physicsEngine ObjRecRANSACTool ${Boost_LIBRARIES} ${BULLET_LIBRARIES} ${PCL_LIBRARIES}
+ SequentialSceneHypothesis physicsEngine ${Boost_LIBRARIES} ${BULLET_LIBRARIES} ${PCL_LIBRARIES}
 )
 
 target_link_libraries(

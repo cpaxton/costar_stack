@@ -15,7 +15,7 @@ btVector3 attractionForceModel(const btVector3 &force_vector,
 
 FeedbackDataForcesGenerator::FeedbackDataForcesGenerator() : 
 	have_scene_data_(false), force_data_model_(CACHED_ICP_CORRESPONDENCE), 
-	forces_magnitude_coefficient_(0.5), max_point_distance_threshold_(0.01),
+	percent_gravity_max_correction_(0.5), max_point_distance_threshold_(0.01),
 	max_icp_iteration_(10)
 {
 	icp_.setMaximumIterations(max_icp_iteration_);
@@ -38,10 +38,15 @@ void FeedbackDataForcesGenerator::applyFeedbackForces(btRigidBody &object, const
 		std::pair<btVector3, btVector3> force_and_torque = this->generateDataForce(object, 
 			model_name);
 		
+		if (model_forces_scale_map_.find(model_name) == model_forces_scale_map_.end())
+		{
+			model_forces_scale_map_[model_name] = object.getInvMass() * percent_gravity_max_correction_ * gravity_force_per_point_[model_name];
+		}
+
 		object.clearForces();
 		object.applyGravity();
-		object.applyCentralForce(force_and_torque.first);
-		object.applyTorque(force_and_torque.second);
+		object.applyCentralForce(force_and_torque.first * model_forces_scale_map_[model_name]);
+		object.applyTorque(force_and_torque.second * model_forces_scale_map_[model_name]);
 		// std::cerr << *(std::string*)object.getUserPointer() << " gets " << force_and_torque.first.norm()/SCALING << "N and " 
 		// 	<< force_and_torque.second.norm() << " Nm.\n";
 	}
@@ -87,6 +92,13 @@ void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const PointCloudXYZPt
 	icp_result_confidence_map_[object_id] = getIcpConfidenceResult(icp_result);
 }
 
+double FeedbackDataForcesGenerator::getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose) const
+{
+	btTransform dummy_transform;
+	PointCloudXYZPtr dummy =  getTransformedObjectCloud(object_pose, model_name, dummy_transform);
+	return getIcpConfidenceResult(dummy);
+}
+
 void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const btRigidBody &object, 
 	const std::string &model_name)
 {
@@ -106,13 +118,18 @@ void FeedbackDataForcesGenerator::manualSetCachedIcpResultMapFromPose(const btRi
 	PointCloudXYZPtr transformed_object_mesh_cloud = this->getTransformedObjectCloud(object, model_name);
 
 	this->updateCachedIcpResultMap(transformed_object_mesh_cloud, object_id);
-	pcl::io::savePCDFile("manual_"+object_id+".pcd",*model_cloud_icp_result_map_[object_id],true);
+	// pcl::io::savePCDFile("manual_"+object_id+".pcd",*model_cloud_icp_result_map_[object_id],true);
 }
 
 void FeedbackDataForcesGenerator::resetCachedIcpResult()
 {
 	model_cloud_icp_result_map_.clear();
 	icp_result_confidence_map_.clear();
+}
+
+void FeedbackDataForcesGenerator::removeCachedIcpResult(const std::string &object_id)
+{
+	model_cloud_icp_result_map_.erase(object_id);
 }
 
 void FeedbackDataForcesGenerator::setSceneData(PointCloudXYZPtr scene_data)
@@ -122,7 +139,7 @@ void FeedbackDataForcesGenerator::setSceneData(PointCloudXYZPtr scene_data)
 		this->have_scene_data_ = true;
 		this->scene_data_ = scene_data;
 		this->scene_data_tree_.setInputCloud(scene_data);
-		pcl::io::savePCDFile("scene_data.pcd",*scene_data,true);
+		// pcl::io::savePCDFile("scene_data.pcd",*scene_data,true);
 	}
 	else
 	{
@@ -137,6 +154,7 @@ void FeedbackDataForcesGenerator::setModelCloud(const PointCloudXYZPtr mesh_surf
 	if (mesh_surface_sampled_cloud->size() > 0)
 	{
 		this->model_cloud_map_[model_name] =  mesh_surface_sampled_cloud;
+		this->gravity_force_per_point_[model_name] = GRAVITY_MAGNITUDE * SCALING / mesh_surface_sampled_cloud->size();
 	}
 	else
 	{
@@ -147,7 +165,7 @@ void FeedbackDataForcesGenerator::setModelCloud(const PointCloudXYZPtr mesh_surf
 void FeedbackDataForcesGenerator::setForcesParameter(const btScalar &forces_magnitude_per_point, 
 	const btScalar &max_point_distance_threshold)
 {
-	this->forces_magnitude_coefficient_ = forces_magnitude_per_point;
+	this->percent_gravity_max_correction_ = forces_magnitude_per_point;
 	this->max_point_distance_threshold_ = max_point_distance_threshold;
 	// make this into parameter
 	this->icp_.setMaxCorrespondenceDistance(0.005);
@@ -236,10 +254,9 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::calculateDataForceF
 			total_torque += (btVector3(point.x, point.y, point.z) - object_cog).cross(attraction_force);	
 		}
 	}
-	
 
-	total_forces *= icp_confidence * forces_magnitude_coefficient_ * SCALING;
-	total_torque *= icp_confidence * forces_magnitude_coefficient_ * SCALING * SCALING;
+	total_forces *= icp_confidence;
+	total_torque *= icp_confidence * SCALING;
 
 	return std::make_pair(total_forces, total_torque);
 }
@@ -267,7 +284,7 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::generateCorrespondenceCloud(PointC
 		}
 	}
 	nearest_point_correspondence_cloud->width = nearest_point_correspondence_cloud->size();
-	pcl::io::savePCDFile("icp_res_correspondence.pcd",*nearest_point_correspondence_cloud,true);
+	// pcl::io::savePCDFile("icp_res_correspondence.pcd",*nearest_point_correspondence_cloud,true);
 	return nearest_point_correspondence_cloud;
 }
 
@@ -288,6 +305,12 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::getTransformedObjectCloud(const bt
 	const std::string &model_name, btTransform &object_real_pose) const
 {
 	const btTransform &object_pose = object.getCenterOfMassTransform();
+	return getTransformedObjectCloud(object_pose,model_name,object_real_pose);
+}
+
+PointCloudXYZPtr FeedbackDataForcesGenerator::getTransformedObjectCloud(const btTransform &object_pose, 
+	const std::string &model_name, btTransform &object_real_pose) const
+{
 	object_real_pose = rescaleTransformFromPhysicsEngine(object_pose);
 	Eigen::Transform <float,3,Eigen::Affine > object_pose_eigen = convertBulletToEigenTransform<float>(object_real_pose);
 	PointCloudXYZPtr transformed_object_mesh_cloud (new PointCloudXYZ);

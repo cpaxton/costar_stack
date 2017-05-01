@@ -157,8 +157,8 @@ void SceneHypothesisAssessor::addScenePointCloud(ImagePtr scene_image)
 	pcl::PointCloud<pcl::PointXYZ>::Ptr point_coordinates_only(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::copyPointCloud(*scene_image, *point_coordinates_only);
 	data_probability_check_.setPointCloudData(point_coordinates_only);
-	sequential_scene_hypothesis_.setObjRansacTool(data_probability_check_);
 	data_forces_generator_.setSceneData(point_coordinates_only);
+	sequential_scene_hypothesis_.setConfidenceCheckTool(data_forces_generator_);
 }
 
 void SceneHypothesisAssessor::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
@@ -293,7 +293,8 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 	double collision_probability = getObjectCollisionPenalty(object_physics_status);
 	
 	// std::cerr << "Calculating data match probability criterion.\n";
-	double ransac_confidence = this->data_probability_check_.getConfidence(object_model_name, object_pose);
+	// double ransac_confidence = this->data_probability_check_.getConfidence(object_model_name, object_pose);
+	double ransac_confidence = this->data_forces_generator_.getIcpConfidenceResult(object_model_name, object_pose);
 
 	// ignore data compliance if it is support retained object
 	double object_data_compliance = object_action != SUPPORT_RETAINED_OBJECT ? 
@@ -304,7 +305,8 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 	if (verbose)
 	{
 		std::cerr << "Probability =  " <<  object_total_probability << "; "
-			<< "data = " << object_data_compliance << ", "
+			<< "object_data_compliance = " << object_data_compliance<< ", "
+			<< "data = " << ransac_confidence << ", "
 			<< "stability = " << stability_probability << ", "
 			<< "support = " << support_probability << ", "
 			<< "collision = " << collision_probability
@@ -403,11 +405,12 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			double best_object_probability_effect = 0;
 
 			const std::string &object_pose_label = it->first;
-			if (!keyExistInConstantMap(object_pose_label, this->object_hypotheses_map_))
+			if (!keyExistInConstantMap(object_pose_label, hypotheses_to_test))
 			{
 				std::cerr << "Skipped " << object_pose_label << " because its hypothesis does not exist\n";
 				continue;
 			}
+			
 			const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[object_pose_label];
 			const std::string &object_model_name = obj_hypotheses.model_name_;
 			const std::vector<ObjectParameter> &object_pose_hypotheses = obj_hypotheses.poses_;
@@ -430,9 +433,10 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			{
 				std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
 					<< ++counter << "/" << number_of_object_hypotheses << std::endl;
+				std::cerr << "Transform: " << printTransform(*it2);
 				scene_object_hypothesis_id[object_pose_label] = counter - 1;
 				ObjectParameter object_pose = *it2;
-				double ransac_confidence = this->data_probability_check_.getConfidence(object_model_name, object_pose);
+				double ransac_confidence = this->data_forces_generator_.getIcpConfidenceResult(object_model_name, object_pose);
 				if (it2 == object_pose_hypotheses.begin())
 				{
 					best_ransac_confidence = ransac_confidence;
@@ -523,6 +527,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			std::cerr << "========================= \n";
 			this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
 			scene_object_hypothesis_id[object_pose_label] = best_hypothesis_id;
+			this->data_forces_generator_.removeCachedIcpResult(object_pose_label);
 			// this->physics_engine_->changeBestTestPoseMap(best_object_pose_from_graph);
 			seq_mtx_.unlock();
 			// }

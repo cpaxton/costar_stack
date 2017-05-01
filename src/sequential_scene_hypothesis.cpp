@@ -11,7 +11,8 @@ SceneObservation::SceneObservation(const SceneHypothesis &final_scene_hypothesis
 	// this->best_scene_hypothesis_ = this->scene_hypotheses_list_[0];
 }
 
-SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1) 
+SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1),
+	max_static_object_translation_(0.003), max_static_object_rotation_(2.5)
 {
 	// These action implies these objects are not present in previous scene
 	num_of_hypotheses_to_add_each_action_[INVALID_ACTION] = 0;
@@ -19,8 +20,9 @@ SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probabilit
 	num_of_hypotheses_to_add_each_action_[REMOVE_OBJECT] = 0;
 
 	num_of_hypotheses_to_add_each_action_[PERTURB_OBJECT] = 10;
-	num_of_hypotheses_to_add_each_action_[STEADY_OBJECT] = 5;
+	num_of_hypotheses_to_add_each_action_[STATIC_OBJECT] = 5;
 	num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT] = 10;
+	max_static_object_rotation_ *= boost::math::constants::pi<double>()/180.;
 }
 
 void SequentialSceneHypothesis::setCurrentDataSceneStructure(
@@ -34,9 +36,21 @@ void SequentialSceneHypothesis::setPreviousSceneObservation(const SceneObservati
 	this->previous_scene_observation_ = previous_scene;	
 }
 
-void SequentialSceneHypothesis::setObjRansacTool(ObjRecRANSACTool &data_probability_check)
+// void SequentialSceneHypothesis::setObjRansacTool(ObjRecRANSACTool &data_probability_check)
+// {
+// 	this->data_probability_check_ = &data_probability_check;
+// }
+
+void SequentialSceneHypothesis::setConfidenceCheckTool(FeedbackDataForcesGenerator &data_probability_check)
 {
 	this->data_probability_check_ = &data_probability_check;
+}
+
+void SequentialSceneHypothesis::setStaticObjectThreshold(const double &translation_meter, 
+	const double &rotation_degree)
+{
+	max_static_object_translation_ = translation_meter;
+	max_static_object_rotation_ = rotation_degree * boost::math::constants::pi<double>()/180.;
 }
 
 std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateObjectHypothesesWithPreviousKnowledge( 
@@ -44,21 +58,26 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 {
 	std::map<std::string, AdditionalHypotheses> result;
 	SceneChanges change_in_scene = analyzeChanges();
+	std::cerr << "Added objects: " << printVecString(change_in_scene.added_objects_);
+	std::cerr << "Removed objects: " << printSetString(change_in_scene.removed_objects_);
+	std::cerr << "Perturbed objects: " << printVecString(change_in_scene.perturbed_objects_);
+	std::cerr << "Static objects: " << printVecString(change_in_scene.static_objects_);
+	std::cerr << "Support retained objects: " << printVecString(change_in_scene.support_retained_object_);
 
 	std::map<std::string, AdditionalHypotheses>  additional_perturbed = generateAdditionalHypothesesForObjectList(
 		change_in_scene.perturbed_objects_,PERTURB_OBJECT,
 		num_of_hypotheses_to_add_each_action_[PERTURB_OBJECT]);
 
-	std::map<std::string, AdditionalHypotheses>  additional_steady = generateAdditionalHypothesesForObjectList(
-		change_in_scene.steady_objects_,STEADY_OBJECT,
-		num_of_hypotheses_to_add_each_action_[STEADY_OBJECT]);
+	std::map<std::string, AdditionalHypotheses>  additional_static = generateAdditionalHypothesesForObjectList(
+		change_in_scene.static_objects_,STATIC_OBJECT,
+		num_of_hypotheses_to_add_each_action_[STATIC_OBJECT]);
 
 	std::map<std::string, AdditionalHypotheses>  additional_support_retained = generateAdditionalHypothesesForObjectList(
 		change_in_scene.support_retained_object_,SUPPORT_RETAINED_OBJECT,
 		num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT]);
 
 	if (additional_perturbed.size() > 0) result.insert(additional_perturbed.begin(),additional_perturbed.end());
-	if (additional_steady.size() > 0) result.insert(additional_steady.begin(),additional_steady.end());
+	if (additional_static.size() > 0) result.insert(additional_static.begin(),additional_static.end());
 	if (additional_support_retained.size() > 0) result.insert(additional_support_retained.begin(),additional_support_retained.end());
 
 	for (std::map<std::string, ObjectHypothesesData >::const_iterator it = object_hypotheses_map.begin();
@@ -87,7 +106,8 @@ bool SequentialSceneHypothesis::judgeHypothesis(const std::string &model_name, c
 {
 	if (data_probability_check_ == NULL) return false;
 
-	double data_confidence = data_probability_check_->getConfidence(model_name, transform);
+	// double data_confidence = data_probability_check_->getConfidence(model_name, transform);
+	double data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, transform);
 	return (data_confidence < minimum_data_probability_threshold_);
 }
 
@@ -122,13 +142,13 @@ SceneChanges SequentialSceneHypothesis::findChanges()
 			const btTransform &previous_pose = previous_best_scene_hypothesis.scene_support_graph_[prev_vertex].object_pose_;
 			btScalar orientation_change = cur_pose.getRotation().angleShortestPath(previous_pose.getRotation());
 			btScalar translation_change = cur_pose.getOrigin().distance(previous_pose.getOrigin());
-			if (orientation_change > max_steady_object_rotation_ || translation_change > max_steady_object_translation_)
+			if (orientation_change > max_static_object_rotation_ || translation_change > max_static_object_translation_)
 			{
 				result.perturbed_objects_.push_back(it->first);
 			}
 			else
 			{
-				result.steady_objects_.push_back(it->first);
+				result.static_objects_.push_back(it->first);
 			}
 			prev_vertex_map.erase(it->first);
 		}
