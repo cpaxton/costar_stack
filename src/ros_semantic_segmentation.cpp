@@ -721,6 +721,17 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
     objrec_hypothesis_msgs::AllModelHypothesis result;
     result.all_hypothesis.reserve(vec_greedy_hypo.size());
 
+    pcl::KdTreeFLANN<pcl::PointXYZ> tf_coordinate_tree;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr tf_coordinate_points(new pcl::PointCloud<pcl::PointXYZ>());
+
+    for (std::size_t i = 0; i < segmentedObjectTFV.size(); i++){
+        const tf::Transform &t = segmentedObjectTFV[i].transform;
+        pcl::PointXYZ p(t.getOrigin().x(), 
+            t.getOrigin().y(), t.getOrigin().z());
+        tf_coordinate_points->points.push_back(p);
+    }
+    tf_coordinate_tree.setInputCloud(tf_coordinate_points);
+
     for (std::vector<GreedyHypothesis>::iterator it = vec_greedy_hypo.begin(); it != vec_greedy_hypo.end(); ++it)
     {
         std::map< std::size_t, std::vector<AcceptedHypothesis> > &object_hypotheses = it->by_object_hypothesis;
@@ -728,9 +739,6 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
             it_2 != object_hypotheses.end(); ++it_2)
         {
             objrec_hypothesis_msgs::ModelHypothesis object_i;
-            std::stringstream ss;
-            ss << "obj_" << it->model_id << "_" << it_2->first;
-            object_i.tf_name = ss.str();
             object_i.model_hypothesis.reserve( it_2->second.size() );
             object_i.model_name = it->model_id;
             for (std::vector<AcceptedHypothesis>::iterator it_3 = it_2->second.begin(); 
@@ -755,6 +763,16 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
                 tmp.transform.rotation.z = q.z(); 
                 tmp.transform.rotation.w = q.w();
                 object_i.model_hypothesis.push_back(tmp);
+
+                if (it_3 == it_2->second.begin())
+                {
+                    pcl::PointXYZ p(rigid_transform[9], rigid_transform[10], rigid_transform[11]);
+                    std::vector< int > k_indices(1);
+                    std::vector< float > distances(1);
+                    tf_coordinate_tree.nearestKSearch(p, 1, k_indices, distances);
+                    std::size_t vector_index = k_indices[0];
+                    object_i.tf_name = segmentedObjectTFV[vector_index].TFname;
+                }
             }
             result.all_hypothesis.push_back(object_i);
         }

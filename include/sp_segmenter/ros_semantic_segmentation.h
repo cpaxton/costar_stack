@@ -36,11 +36,9 @@
 // ros service messages for segmenting gripper
 #include "sp_segmenter/SegmentInGripper.h"
 
-class segmentedObjectTF
+struct segmentedObjectTF
 {
-private:
     tf::Transform transform;
-public:
     std::string TFname;
     segmentedObjectTF(const objectTransformInformation &input);
     segmentedObjectTF();
