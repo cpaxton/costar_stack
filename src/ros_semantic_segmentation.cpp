@@ -734,14 +734,14 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
 
     for (std::vector<GreedyHypothesis>::iterator it = vec_greedy_hypo.begin(); it != vec_greedy_hypo.end(); ++it)
     {
-        std::map< std::size_t, std::vector<AcceptedHypothesis> > &object_hypotheses = it->by_object_hypothesis;
-        for (std::map< std::size_t, std::vector<AcceptedHypothesis> >::iterator it_2 = object_hypotheses.begin();
+        std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> > &object_hypotheses = it->by_object_hypothesis;
+        for (std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> >::iterator it_2 = object_hypotheses.begin();
             it_2 != object_hypotheses.end(); ++it_2)
         {
             objrec_hypothesis_msgs::ModelHypothesis object_i;
             object_i.model_hypothesis.reserve( it_2->second.size() );
             object_i.model_name = it->model_id;
-            for (std::vector<AcceptedHypothesis>::iterator it_3 = it_2->second.begin(); 
+            for (std::vector<AcceptedHypothesisWithConfidence>::iterator it_3 = it_2->second.begin(); 
                 it_3 != it_2->second.end(); ++it_3)
             {
                 objrec_hypothesis_msgs::Hypothesis tmp;
@@ -762,6 +762,7 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
                 tmp.transform.rotation.y = q.y(); 
                 tmp.transform.rotation.z = q.z(); 
                 tmp.transform.rotation.w = q.w();
+                tmp.confidence = it_3->confidence;
                 object_i.model_hypothesis.push_back(tmp);
 
                 if (it_3 == it_2->second.begin())

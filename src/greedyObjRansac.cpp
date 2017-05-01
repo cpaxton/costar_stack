@@ -514,7 +514,7 @@ void greedyObjRansac::getPairFeas(const pcl::PointCloud<myPointXYZ>::Ptr cloud, 
 #if SCENE_PARSING
 GreedyHypothesis greedyObjRansac::getLatestAcceptedHypothesis(const bool &combined_ransac)
 {
-    std::vector<std::vector<AcceptedHypothesis> > acc_hypothesis = objrec.getShapeHypothesis();
+    std::vector<std::vector<AcceptedHypothesisWithConfidence> > acc_hypothesis = objrec.getShapeHypothesis();
     GreedyHypothesis result;
     if (acc_hypothesis.size() > 0)
     {
