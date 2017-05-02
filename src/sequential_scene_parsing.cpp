@@ -163,7 +163,8 @@ void SceneHypothesisAssessor::addScenePointCloud(ImagePtr scene_image)
 
 void SceneHypothesisAssessor::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
 {
-	this->physics_engine_->resetObjects();
+	// TODO:: Only permanently remove rigid bodies that are removed by sequential_scene_hypothesis
+	this->physics_engine_->resetObjects(false);
 	// object_label_.reserve(objects.size());
 	object_label_class_map.clear();
 	for (std::vector<ObjectWithID>::const_iterator it = objects.begin(); it != objects.end(); ++it)
@@ -367,7 +368,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	this->data_forces_generator_.resetCachedIcpResult();
 	std::map<std::string, bool> object_background_support_status;
 
-	// only optimize the scene probability by the distance to the ground vertex
+	// optimize the scene probability by the distance to the ground vertex
 	std::vector<map_string_transform> object_test_pose_map_by_dist;
 	std::map<std::string, map_string_transform> object_childs_map;
 
@@ -377,9 +378,11 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	SceneHypothesis current_best_scene(vertex_map_,scene_support_graph_);
 	this->sequential_scene_hypothesis_.setCurrentDataSceneStructure(current_best_scene);
 	std::map<std::string, AdditionalHypotheses> hypotheses_to_test = 
-		sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(this->object_hypotheses_map_);
-	this->physics_engine_->removeAllRigidBodyFromWorld();
+		sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(object_test_pose_map_by_dist,
+			object_childs_map,
+			this->object_hypotheses_map_);
 
+	this->physics_engine_->removeAllRigidBodyFromWorld();
 	std::map<std::string, map_string_transform> child_of_vertices;
 	
 	OneFrameSceneHypotheses scene_hypotheses_list;
@@ -433,7 +436,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			{
 				std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
 					<< ++counter << "/" << number_of_object_hypotheses << std::endl;
-				std::cerr << "Transform: " << printTransform(*it2);
+				// std::cerr << "Transform: " << printTransform(*it2);
 				scene_object_hypothesis_id[object_pose_label] = counter - 1;
 				ObjectParameter object_pose = *it2;
 				double ransac_confidence = this->data_forces_generator_.getIcpConfidenceResult(object_model_name, object_pose);
@@ -449,7 +452,9 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 					continue;
 				}
 
-				if (counter > 15) break;
+				// limit observation to 3 best previous hypothesis for static object
+				if (obj_hypotheses.object_action_ == STATIC_OBJECT && counter > 3) break;
+				else if (counter > 15) break;
 
 				// std::cerr << "-------------------------------------------------------------\n";
 				double scene_hypothesis_probability;
@@ -523,7 +528,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			seq_mtx_.lock();
 			std::cerr << "========================= \n";
 			std::cerr << "Update the best map from object: " << object_pose_label 
-				<< " hypothesis #" << best_hypothesis_id << std::endl;
+				<< " hypothesis #" << best_hypothesis_id + 1 << std::endl;
 			std::cerr << "========================= \n";
 			this->physics_engine_->changeBestTestPoseMap(object_pose_label, best_object_pose);
 			scene_object_hypothesis_id[object_pose_label] = best_hypothesis_id;
@@ -536,12 +541,16 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	}
 	// set the position to the best result for all objects
 	this->physics_engine_->prepareSimulationForWithBestTestPose();
+	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./120,30);
+	// this->physics_engine_->stepSimulationWithoutEvaluation(.75, 1/120.);
 	this->getUpdatedSceneSupportGraph();
 	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph(object_action_map);
 	std::cerr << "Final Scene probability = " << scene_hypothesis << std::endl;
 	SceneHypothesis final_scene(vertex_map_,scene_support_graph_,
 		scene_hypothesis, scene_object_hypothesis_id);
-	
+	std::cerr << "Final scene structure:\n";
+	write_graphviz(std::cerr, this->scene_support_graph_, label_writer(this->scene_support_graph_));
+
 	this->sequential_scene_hypothesis_.setPreviousSceneObservation(SceneObservation(
 		final_scene, scene_hypotheses_list, this->object_label_class_map));
 	// return scene_hypothesis;
@@ -617,7 +626,7 @@ void SceneHypothesisAssessor::getSceneSupportGraphFromBestData(
 	seq_mtx_.lock();
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH, 1./120);
 	vertex_t &ground_vertex = this->vertex_map_["background"];
-	OrderedVertexVisitor vis  = getOrderedVertexList(this->scene_support_graph_, ground_vertex);
+	OrderedVertexVisitor vis = getOrderedVertexList(this->scene_support_graph_, ground_vertex, false);
 	object_childs_map = getAllChildTransformsOfVertices(vis.getVertexDistanceMap());
 
 	std::map<std::size_t, std::vector<vertex_t> > vertex_visit_by_dist = vis.getVertexVisitOrderByDistances();

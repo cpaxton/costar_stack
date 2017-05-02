@@ -95,8 +95,16 @@ void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const PointCloudXYZPt
 double FeedbackDataForcesGenerator::getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose) const
 {
 	btTransform dummy_transform;
-	PointCloudXYZPtr dummy =  getTransformedObjectCloud(object_pose, model_name, dummy_transform);
-	return getIcpConfidenceResult(dummy);
+	if (keyExistInConstantMap(model_name,model_cloud_map_))
+	{
+		PointCloudXYZPtr dummy =  getTransformedObjectCloud(object_pose, model_name, dummy_transform);
+		return getIcpConfidenceResult(dummy);	
+	}
+	else
+	{
+		std::cerr << "ERROR, model name " << model_name << " does not exist in the database.\n";
+		return 0;
+	}
 }
 
 void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const btRigidBody &object, 
@@ -288,10 +296,11 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::generateCorrespondenceCloud(PointC
 	return nearest_point_correspondence_cloud;
 }
 
-double FeedbackDataForcesGenerator::getIcpConfidenceResult(const PointCloudXYZPtr icp_result) const
+double FeedbackDataForcesGenerator::getIcpConfidenceResult(const PointCloudXYZPtr icp_result,
+	const double &voxel_size) const
 {
 	// If voxel size used is 3mm, the max distance need to be around 3 * sqrt(3) mm.
-	PointCloudXYZPtr nearest_point_correspondence_cloud = generateCorrespondenceCloud(icp_result, true, 0.004 * 0.004);
+	PointCloudXYZPtr nearest_point_correspondence_cloud = generateCorrespondenceCloud(icp_result, true, voxel_size * voxel_size * 3);
 	return double(nearest_point_correspondence_cloud->size())/icp_result->size();
 }
 

@@ -50,7 +50,7 @@ public:
 	void setGravityFromBackgroundNormal(const bool &input);
 	void addObjects(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, btTransform>  getUpdatedObjectPose();
-	void resetObjects();
+	void resetObjects(const bool &permanent_removal);
 
 	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
 

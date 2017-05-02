@@ -32,36 +32,47 @@ void OrderedVertexVisitor::setDataFromDistanceVector(const std::vector<std::size
     }
 }
 
-OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex)
+OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex,
+    const bool &modify_original_graphs)
 {
     // Use breadth-first search to get the vertex order of hypothesis check
     OrderedVertexVisitor vis;
     std::vector<std::size_t> distances(num_vertices(input_graph));
-
-    //get an index map, from Graph definition property< vertex_index_t, size_t>
-    typedef boost::property_map< SceneSupportGraph, boost::vertex_index_t>::type VertexIndexMap;
-    VertexIndexMap v_index = get(boost::vertex_index, input_graph);
-
-    // Create the external property map, this map wraps the storage vector d
-    boost::iterator_property_map< std::vector< size_t >::iterator, VertexIndexMap >
-        d_map(distances.begin(), v_index);
-
-
-    //Start at 0
-    boost::breadth_first_search(input_graph, parent_vertex,
-        boost::visitor(boost::make_bfs_visitor(
-          boost::record_distances(d_map, boost::on_tree_edge())
-          )));
-
-    // boost::breadth_first_search(input_graph, parent_vertex, boost::visitor(vis));
-    vis.setDataFromDistanceVector(distances, parent_vertex);
     
-    for (std::size_t i = 0; i < distances.size(); ++i)
+    if (modify_original_graphs)
     {
-        input_graph[i].distance_to_ground_ = distances[i];
-        input_graph[i].ground_supported_ = (distances[i] != 0);
-    }
+        //get an index map, from Graph definition property< vertex_index_t, size_t>
+        typedef boost::property_map< SceneSupportGraph, boost::vertex_index_t>::type VertexIndexMap;
+        VertexIndexMap v_index = get(boost::vertex_index, input_graph);
 
+        // Create the external property map, this map wraps the storage vector d
+        boost::iterator_property_map< std::vector< size_t >::iterator, VertexIndexMap >
+            d_map(distances.begin(), v_index);
+
+
+        //Start at 0
+        boost::breadth_first_search(input_graph, parent_vertex,
+            boost::visitor(boost::make_bfs_visitor(
+              boost::record_distances(d_map, boost::on_tree_edge())
+              )));
+
+        // boost::breadth_first_search(input_graph, parent_vertex, boost::visitor(vis));
+
+        vis.setDataFromDistanceVector(distances, parent_vertex);
+        for (std::size_t i = 0; i < distances.size(); ++i)
+        {
+            input_graph[i].distance_to_ground_ = distances[i];
+            input_graph[i].ground_supported_ = (distances[i] != 0);
+        }
+    }
+    else
+    {
+        for (std::size_t i = 0; i < distances.size(); ++i)
+        {
+            distances[i] = input_graph[i].distance_to_ground_;
+        }
+        vis.setDataFromDistanceVector(distances, parent_vertex);
+    }
     return vis;
 }
 
@@ -221,7 +232,7 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
                     shapeAABB_a = getCollisionAABB(obj_a, pt, true, shape_index_a);
                     shapeAABB_b = getCollisionAABB(obj_b, pt, false, shape_index_b);
 
-                    total_volume_penetration += getIntersectingVolume(shapeAABB_a,shapeAABB_b);
+                    // total_volume_penetration += getIntersectingVolume(shapeAABB_a,shapeAABB_b);
                 }
             }
 
@@ -317,8 +328,8 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
                 {
                     // if (debug_mode) std::cerr << "Adding collision pair information\n";
                     scene_support_graph[edge_to_update].add_pair(shape_index_lower, shape_index_upper);
-                    scene_support_graph[object_u].colliding_volume_ += total_volume_penetration;
-                    scene_support_graph[supported_object].colliding_volume_ += total_volume_penetration;
+                    // scene_support_graph[object_u].colliding_volume_ += total_volume_penetration;
+                    // scene_support_graph[supported_object].colliding_volume_ += total_volume_penetration;
                 }
                 // if (debug_mode) std::cerr << "Done\n";
             }

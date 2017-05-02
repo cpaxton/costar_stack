@@ -54,6 +54,8 @@ void SequentialSceneHypothesis::setStaticObjectThreshold(const double &translati
 }
 
 std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateObjectHypothesesWithPreviousKnowledge( 
+	std::vector<map_string_transform> &object_pose_by_dist,
+	std::map<std::string, map_string_transform> &object_childs_map,
 	const std::map<std::string, ObjectHypothesesData > &object_hypotheses_map)
 {
 	std::map<std::string, AdditionalHypotheses> result;
@@ -72,10 +74,67 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 		change_in_scene.static_objects_,STATIC_OBJECT,
 		num_of_hypotheses_to_add_each_action_[STATIC_OBJECT]);
 
-	std::map<std::string, AdditionalHypotheses>  additional_support_retained = generateAdditionalHypothesesForObjectList(
+	std::map<std::string, AdditionalHypotheses> additional_support_retained = generateAdditionalHypothesesForObjectList(
 		change_in_scene.support_retained_object_,SUPPORT_RETAINED_OBJECT,
 		num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT]);
 
+	SceneHypothesis &previous_best_scene_hypothesis = this->previous_scene_observation_.best_scene_hypothesis_;
+	std::map<std::string, vertex_t> prev_vertex_map = previous_best_scene_hypothesis.vertex_map_;
+	// last element of object_pose_by_dist
+	std::size_t disconnected_object_dist = object_pose_by_dist.size() - 1;
+	std::map<std::string, vertex_t> cur_vertex_map = this->current_best_data_scene_structure_.vertex_map_;
+	for (std::vector<std::string>::const_iterator it = change_in_scene.support_retained_object_.begin();
+		it != change_in_scene.support_retained_object_.end(); ++it)
+	{
+		// add the object pose by distance information for support retained objects
+		const std::string &object_id = *it;
+		const vertex_t &obj_vertex = prev_vertex_map[object_id];
+		
+		// the object_pose_by_dist starts at 0 (already excludes background)
+		const std::size_t dist = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].distance_to_ground_ - 1;
+		const btTransform &transform = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].object_pose_;
+		object_pose_by_dist[dist][object_id] = transform;
+		// add the child information of this object and move the optimization order of the child to its proper distance
+		// if properly supported
+		// if (keyExistInConstantMap())
+		const std::vector<std::string> &list_object_supported = flying_object_support_retained_[*it];
+		map_string_transform obj_child_tf_supported;
+		for (std::vector<std::string>::const_iterator obj_it = list_object_supported.begin();
+			obj_it != list_object_supported.end(); ++obj_it) 
+		{
+			std::size_t distance_to_ground = cur_vertex_map[*obj_it];
+			if (distance_to_ground == 0) distance_to_ground = disconnected_object_dist;
+			if (keyExistInConstantMap(*obj_it, object_pose_by_dist[disconnected_object_dist]))
+			{
+				// move the pose information to its proper distance
+				const btTransform supp_obj_pose = object_pose_by_dist[disconnected_object_dist][*obj_it];
+				obj_child_tf_supported[*obj_it] = supp_obj_pose;
+				if (disconnected_object_dist == dist + 1)
+				{
+					std::cerr << *obj_it << " is already in proper distance map\n";
+					continue;
+				}
+				else if (object_pose_by_dist.size() - 1 < dist + 1)
+				{
+					std::cerr << *obj_it << " needs to add new distance map vector\n";
+					map_string_transform new_map_tf;
+					new_map_tf[*obj_it] = supp_obj_pose;
+					object_pose_by_dist.push_back(new_map_tf);
+				}
+				else
+				{
+					std::cerr << "Adding " << *obj_it << " in proper distance map\n";
+					object_pose_by_dist[dist + 1][*obj_it] = supp_obj_pose;
+				}
+				object_pose_by_dist[disconnected_object_dist].erase(*obj_it);
+			}
+			else
+			{
+				std::cerr << "Warning, found inconsistency of object " << *obj_it << " in current scene graph\n";
+			}
+		}
+		object_childs_map[object_id] = obj_child_tf_supported;
+	}
 	if (additional_perturbed.size() > 0) result.insert(additional_perturbed.begin(),additional_perturbed.end());
 	if (additional_static.size() > 0) result.insert(additional_static.begin(),additional_static.end());
 	if (additional_support_retained.size() > 0) result.insert(additional_support_retained.begin(),additional_support_retained.end());
@@ -117,6 +176,7 @@ SceneChanges SequentialSceneHypothesis::findChanges()
 	// Assume ID stays the same
 	// If not, find mapping
 	SceneChanges result;
+	flying_object_support_retained_.clear();
 	std::map<std::string, vertex_t> cur_vertex_map = this->current_best_data_scene_structure_.vertex_map_;
 	
 	// ignore background in findChanges
@@ -208,12 +268,12 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 			// that still exists in current scene
 			vertex_t &observed_removed_vertex = prev_vertex_map[*it];
 			std::vector<vertex_t> supported_objects = getAllChildVertices(previous_best_scene_graph, observed_removed_vertex);
-
+			std::cerr << *it << " previously support: " << supported_objects.size() << std::endl;
 			if (supported_objects.size() > 0)
 			{
 				bool exclude_removed_object = false;
 				// if any directly supported object is not in the list of removed object, do not remove this object
-
+				std::vector<std::string> flying_object_had_support;
 				for (std::vector<vertex_t>::iterator sup_it = supported_objects.begin(); 
 					sup_it != supported_objects.end(); ++sup_it)
 				{
@@ -224,13 +284,16 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 						(!cur_best_graph[cur_vertex_map[supported_object_id]].ground_supported_))
 					{
 						exclude_removed_object = true;
-						break;
+						flying_object_had_support.push_back(supported_object_id);
+						std::cerr << supported_object_id << " used to be supported" << std::endl;
+						// break;
 					}
 				}
 
 				if (exclude_removed_object)
 				{
 					compare_scene_result.support_retained_object_.push_back(*it);
+					flying_object_support_retained_[*it] = flying_object_had_support;
 					removed_objects.erase(it++);
 				}
 				else
@@ -271,7 +334,6 @@ AdditionalHypotheses SequentialSceneHypothesis::generateAdditionalObjectHypothes
 	std::map<std::string, std::string> &object_label_class_map = this->previous_scene_observation_.object_label_class_map_;
 	hypotheses_to_be_inserted_.reserve(max_good_hypotheses_to_add);
 
-	bool done = false;
 	for (OneFrameSceneHypotheses::iterator it = this->previous_scene_observation_.scene_hypotheses_list_.begin();
 		it != this->previous_scene_observation_.scene_hypotheses_list_.end(); ++it)
 	{
@@ -312,7 +374,8 @@ AdditionalHypotheses SequentialSceneHypothesis::generateAdditionalObjectHypothes
 	for (std::vector<btTransform>::iterator it = hypotheses_to_be_inserted_.begin();
 		 it != hypotheses_to_be_inserted_.end(); ++it)
 	{
-		if (this->judgeHypothesis(model_name, *it))
+		// do not judge hypothesis for support retained object, as there is not enough data to support it
+		if (scene_change_mode == SUPPORT_RETAINED_OBJECT || this->judgeHypothesis(model_name, *it))
 		{
 			valid_hypotheses_to_add.push_back(*it);
 		}

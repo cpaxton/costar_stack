@@ -109,7 +109,8 @@ private:
 
 
 // will produce order of vertices correction starting the background
-OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
+OrderedVertexVisitor getOrderedVertexList(SceneSupportGraph &input_graph, const vertex_t &parent_vertex,
+    const bool &modify_original_graphs = true);
 
 std::vector<vertex_t> getAllChildVertices(SceneSupportGraph &input_graph, const vertex_t &parent_vertex);
 

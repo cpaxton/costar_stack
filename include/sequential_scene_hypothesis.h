@@ -131,6 +131,8 @@ public:
 	
 	// add good previous stable object hypotheses to the current hypothesis
 	std::map<std::string, AdditionalHypotheses> generateObjectHypothesesWithPreviousKnowledge(
+		std::vector<map_string_transform> &object_pose_by_dist,
+		std::map<std::string, map_string_transform> &object_childs_map,
 		const std::map<std::string, ObjectHypothesesData > &object_hypotheses_map);
 
 	// calculate the effect of scene change on the scene confidence
@@ -169,6 +171,7 @@ private:
 	SceneHypothesis current_best_data_scene_structure_;
 	SceneObservation previous_scene_observation_;
 	std::map<int, int> num_of_hypotheses_to_add_each_action_;
+	std::map<std::string, std::vector<std::string> > flying_object_support_retained_;
 };
 
 #endif

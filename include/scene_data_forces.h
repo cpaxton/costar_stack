@@ -67,7 +67,7 @@ private:
 	PointCloudXYZPtr doICP(const PointCloudXYZPtr input_cloud) const;
 	std::pair<btVector3, btVector3> generateDataForceWithClosestPointPair(PointCloudXYZPtr input_cloud,
 		const btTransform &object_pose) const;
-	double getIcpConfidenceResult(const PointCloudXYZPtr icp_result) const;
+	double getIcpConfidenceResult(const PointCloudXYZPtr icp_result, const double &voxel_size = 0.003) const;
 	PointCloudXYZPtr generateCorrespondenceCloud(PointCloudXYZPtr input_cloud, 
 		const bool &filter_distance = false, const double &max_distance = 0.0) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
