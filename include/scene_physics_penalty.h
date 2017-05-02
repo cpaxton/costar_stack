@@ -45,6 +45,6 @@ btScalar getObjectSupportContribution(const scene_support_vertex_properties &sup
 
 btScalar getObjectCollisionPenalty(const scene_support_vertex_properties &support_graph_vertex);
 
-btScalar dataProbabilityScale(const btScalar &hypothesis_confidence);
+btScalar dataProbabilityScale(const btScalar &hypothesis_confidence, const btScalar &max_confidence = 0.5);
 
 #endif

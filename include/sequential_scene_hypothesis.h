@@ -13,9 +13,11 @@
 #include <Eigen/Geometry>
 
 #include "scene_physics_support.h"
-#include "ObjRecRANSACTool/ObjRecRANSACTool.h"
+#include "scene_data_forces.h"
+// #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
 #include "utility.h"
 #include "typedef.h"
+#include <boost/math/constants/constants.hpp>
 
 struct SceneHypothesis
 {
@@ -83,7 +85,7 @@ struct SceneChanges
 	std::vector<std::string> perturbed_objects_;
 
 	// objects that are retained, but has movement < threshold
-	std::vector<std::string> steady_objects_;
+	std::vector<std::string> static_objects_;
 
 	// objects that are retained (excluded from removal) because there is support/data as
 	// the evidence of its existance
@@ -97,7 +99,7 @@ enum SceneChangeMode
 	ADD_OBJECT,
 	REMOVE_OBJECT,
 	PERTURB_OBJECT,
-	STEADY_OBJECT,
+	STATIC_OBJECT,
 	SUPPORT_RETAINED_OBJECT
 };
 
@@ -129,6 +131,8 @@ public:
 	
 	// add good previous stable object hypotheses to the current hypothesis
 	std::map<std::string, AdditionalHypotheses> generateObjectHypothesesWithPreviousKnowledge(
+		std::vector<map_string_transform> &object_pose_by_dist,
+		std::map<std::string, map_string_transform> &object_childs_map,
 		const std::map<std::string, ObjectHypothesesData > &object_hypotheses_map);
 
 	// calculate the effect of scene change on the scene confidence
@@ -136,7 +140,10 @@ public:
 
 	void setMinimalDataConfidence(const double &min_confidence);
 
-	void setObjRansacTool(ObjRecRANSACTool &data_probability_check);
+	// void setObjRansacTool(ObjRecRANSACTool &data_probability_check);
+	void setConfidenceCheckTool(FeedbackDataForcesGenerator &data_probability_check);
+
+	void setStaticObjectThreshold(const double &translation_meter, const double &rotation_degree);
 
 private:
 	SceneChanges findChanges();
@@ -155,13 +162,16 @@ private:
 	double minimum_data_probability_threshold_;
 
 	// threshold for retained object movement
-	double max_steady_object_translation_;
-	double max_steady_object_rotation_;
+	double max_static_object_translation_;
+	double max_static_object_rotation_;
 
-	ObjRecRANSACTool* data_probability_check_;
+	// ObjRecRANSACTool* data_probability_check_;
+	FeedbackDataForcesGenerator* data_probability_check_;
+
 	SceneHypothesis current_best_data_scene_structure_;
 	SceneObservation previous_scene_observation_;
 	std::map<int, int> num_of_hypotheses_to_add_each_action_;
+	std::map<std::string, std::vector<std::string> > flying_object_support_retained_;
 };
 
 #endif

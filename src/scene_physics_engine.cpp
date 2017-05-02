@@ -314,8 +314,15 @@ void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, 
 		it != rigid_bodies.end(); ++it)
 	{
 		if (it->first == "background") continue;
+		else if (!keyExistInConstantMap(it->first, this->rigid_body_))
+		{
+			// need to generate new rigid body
+			std::cerr << "ERROR: UNIMPLEMENTED AUTO ADD OBJECT BACK.\n";
+			continue;
+		}
 		
 		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
+		this->rigid_body_[it->first]->setWorldTransform(it->second);
 		this->object_best_test_pose_map_[it->first] = it->second;
 		if (this->debug_messages_) std::cerr << "Add object "<<  it->first <<" back to world.\n";
 	}
@@ -394,7 +401,7 @@ std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
 	return result_pose;
 }
 
-void PhysicsEngine::resetObjects()
+void PhysicsEngine::resetObjects(const bool &permanent_removal)
 {
 	mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Removing all scene objects.\n";
@@ -403,12 +410,15 @@ void PhysicsEngine::resetObjects()
 		it != this->rigid_body_.end(); ++it)
 	{
 		m_dynamicsWorld->removeRigidBody(it->second);
-		delete (std::string*) it->second->getUserPointer();
-		delete it->second->getMotionState();
-		delete it->second;
+		if (permanent_removal)
+		{
+			delete (std::string*) it->second->getUserPointer();
+			delete it->second->getMotionState();
+			delete it->second;
+		}
 		if (this->debug_messages_) std::cerr << "Removed objects: "<<  it->first <<".\n";
 	}
-	this->rigid_body_.clear();
+	if (permanent_removal) this->rigid_body_.clear();
 	this->object_best_pose_from_data_.clear();
 	if (this->debug_messages_) std::cerr << "Done removing all scene objects.\n";
 
@@ -517,7 +527,7 @@ void PhysicsEngine::exitPhysics()
 	// Clean up pointers
 	if (this->debug_messages_) std::cerr << "Shutting down physics engine.\n";
 	// delete all object contents
-	this->resetObjects();
+	this->resetObjects(true);
 
 	// removes background
 	for (int i = 0; i < m_collisionShapes.size(); i++)
@@ -623,6 +633,13 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 				scene_graph_[it->second].stability_penalty_ = calculateStabilityPenalty(this->object_acceleration_[it->first], 
 					object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
 
+				// if the object is really not stable, assume that it is not a ground supported vertices
+				if (scene_graph_[it->second].stability_penalty_ < 1e-4)
+				{
+					scene_graph_[it->second].ground_supported_ = false;
+					scene_graph_[it->second].distance_to_ground_ = 0;
+				}
+
 				double supp_contrib = getObjectSupportContribution(scene_graph_[it->second]);
 				if (debug_messages_)
 				{
@@ -705,6 +722,13 @@ void PhysicsEngine::prepareSimulationForOneTestHypothesis(const std::string &obj
 	mtx_.unlock();
 }
 
+void PhysicsEngine::prepareSimulationForWithBestTestPose()
+{
+	mtx_.lock();
+	this->resetObjectMotionState(true, object_best_test_pose_map_);
+	mtx_.unlock();
+}
+
 void PhysicsEngine::changeBestTestPoseMap(const std::string &object_id, const btTransform &object_pose)
 {
 	mtx_.lock();
@@ -730,7 +754,10 @@ void PhysicsEngine::applyDataForces()
     for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
-	    this->data_forces_generator_->applyFeedbackForces(*(it->second),object_label_class_map_[it->first]);
+		if (it->second->getActivationState() != ISLAND_SLEEPING)
+		{
+			this->data_forces_generator_->applyFeedbackForces(*(it->second),object_label_class_map_[it->first]);
+		}
 	}
 }
 

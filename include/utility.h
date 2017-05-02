@@ -5,6 +5,9 @@
 #include <btBulletDynamicsCommon.h>
 #include <pcl/point_types.h>
 #include <map>
+#include <vector>
+#include <set>
+#include <sstream>
 #include "physics_world_parameters.h"
 
 template <typename container_type1, typename container_type2>
@@ -107,6 +110,70 @@ std::string getObjectIDFromCollisionObject(const btCollisionObject* object)
         return *(std::string*)object->getUserPointer();
     else
         return std::string("unrecognized_object");
+}
+
+static
+std::string printTransform(const btTransform &transform)
+{
+	std::stringstream ss;
+	btVector3 origin = transform.getOrigin();
+	btQuaternion q = transform.getRotation();
+	ss << "Origin: " << origin.x() << ", " << origin.y() << ", " << origin.z() << "; ";
+	ss << "Q: " << q.x() << ", " << q.y() << ", " << q.z() << ", " << q.w() << std::endl;
+	return ss.str();
+}
+
+static
+std::string printVecString(const std::vector<std::string> &list_of_strings)
+{
+	std::stringstream ss;
+	if (list_of_strings.size() == 0 ) ss << "\n";
+	for (std::vector<std::string>::const_iterator it = list_of_strings.begin(); it != list_of_strings.end(); ++it)
+	{
+		std::string separator = (it != --list_of_strings.end()) ? ", " : ".\n";
+		ss << *it << separator;
+	}
+	return ss.str();
+}
+
+static
+std::string printSetString(const std::set<std::string> &set_of_strings)
+{
+	std::stringstream ss;
+	if (set_of_strings.size() == 0 ) ss << "\n";
+	for (std::set<std::string>::const_iterator it = set_of_strings.begin(); it != set_of_strings.end(); ++it)
+	{
+		std::string separator = (it != --set_of_strings.end()) ? ", " : ".\n";
+		ss << *it << separator;
+	}
+	return ss.str();
+}
+
+
+
+static
+std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &list_of_strings)
+{
+	if (list_of_strings.size() == 0 ) return os << "\n";
+	for (std::vector<std::string>::const_iterator it = list_of_strings.begin(); it != list_of_strings.end(); ++it)
+	{
+		std::string separator = (it != --list_of_strings.end()) ? ", " : ".\n";
+		os << list_of_strings << separator;
+	}
+	return os;
+}
+
+
+static
+std::ostream &operator<<(std::ostream &os, const std::set<std::string> &set_of_strings)
+{
+	if (set_of_strings.size() == 0 ) return os << "\n";
+	for (std::set<std::string>::const_iterator it = set_of_strings.begin(); it != set_of_strings.end(); ++it)
+	{
+		std::string separator = (it != --set_of_strings.end()) ? ", " : ".\n";
+		os << *it << separator;
+	}
+	return os;
 }
 
 #endif

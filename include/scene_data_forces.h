@@ -11,6 +11,7 @@
 #include <pcl/registration/icp.h>
 // #include <pcl/recognition/ransac_based/trimmed_icp.h>
 #include "utility.h"
+#include "physics_world_parameters.h"
 
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudXYZPtr;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
@@ -41,11 +42,12 @@ public:
 	void setModelCloud(const PointCloudXYZPtr mesh_surface_sampled_cloud, const std::string &model_name);
 	void setForcesParameter(const btScalar &forces_magnitude_per_point, const btScalar &max_point_distance_threshold);
 	void resetCachedIcpResult();
+	void removeCachedIcpResult(const std::string &object_id);
 	void updateCachedIcpResultMap(const btRigidBody &object, 
 		const std::string &model_name);
 	void manualSetCachedIcpResultMapFromPose(const btRigidBody &object, 
 		const std::string &model_name);
-
+	double getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose) const;
 	int force_data_model_;
 
 private:
@@ -65,12 +67,14 @@ private:
 	PointCloudXYZPtr doICP(const PointCloudXYZPtr input_cloud) const;
 	std::pair<btVector3, btVector3> generateDataForceWithClosestPointPair(PointCloudXYZPtr input_cloud,
 		const btTransform &object_pose) const;
-	double getIcpConfidenceResult(const PointCloudXYZPtr icp_result) const;
+	double getIcpConfidenceResult(const PointCloudXYZPtr icp_result, const double &voxel_size = 0.003) const;
 	PointCloudXYZPtr generateCorrespondenceCloud(PointCloudXYZPtr input_cloud, 
 		const bool &filter_distance = false, const double &max_distance = 0.0) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
 		const std::string &model_name) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
+		const std::string &model_name, btTransform &object_real_pose) const;
+	PointCloudXYZPtr getTransformedObjectCloud(const btTransform &object_pose, 
 		const std::string &model_name, btTransform &object_real_pose) const;
 
 	bool have_scene_data_;
@@ -78,8 +82,10 @@ private:
 	pcl::KdTreeFLANN<pcl::PointXYZ> scene_data_tree_;
 	std::map<std::string, PointCloudXYZPtr> model_cloud_map_;
 	std::map<std::string, PointCloudXYZPtr> model_cloud_icp_result_map_;
-	std::map<std::string, double> icp_result_confidence_map_;
-	btScalar forces_magnitude_coefficient_;
+	std::map<std::string, btScalar> icp_result_confidence_map_;
+	std::map<std::string, btScalar> gravity_force_per_point_;
+	std::map<std::string, btScalar> model_forces_scale_map_;
+	btScalar percent_gravity_max_correction_;
 	btScalar max_point_distance_threshold_;
 	int max_icp_iteration_;
 	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp_;
