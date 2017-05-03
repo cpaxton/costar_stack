@@ -731,7 +731,7 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
         tf_coordinate_points->points.push_back(p);
     }
     tf_coordinate_tree.setInputCloud(tf_coordinate_points);
-
+    Eigen::Quaternionf base_rotation = this->base_rotation_.template cast<float>  ();
     for (std::vector<GreedyHypothesis>::iterator it = vec_greedy_hypo.begin(); it != vec_greedy_hypo.end(); ++it)
     {
         std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> > &object_hypotheses = it->by_object_hypothesis;
@@ -741,6 +741,7 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
             objrec_hypothesis_msgs::ModelHypothesis object_i;
             object_i.model_hypothesis.reserve( it_2->second.size() );
             object_i.model_name = it->model_id;
+            const objectSymmetry obj_sym = object_dict_.find(it->model_id)->second;
             for (std::vector<AcceptedHypothesisWithConfidence>::iterator it_3 = it_2->second.begin(); 
                 it_3 != it_2->second.end(); ++it_3)
             {
@@ -749,19 +750,22 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
                 tmp.model_name = it_3->model_entry->getUserData()->getLabel();
                 // transform: 12 double
                 double *rigid_transform = it_3->rigid_transform;
-                Eigen::Matrix3d rotation;
+                Eigen::Matrix3f rotation;
                 rotation <<
                     rigid_transform[0], rigid_transform[1], rigid_transform[2],
                     rigid_transform[3], rigid_transform[4], rigid_transform[5], 
                     rigid_transform[6], rigid_transform[7], rigid_transform[8];
-                Eigen::Quaterniond q(rotation);
+                Eigen::Quaternionf q(rotation);
                 tmp.transform.translation.x = rigid_transform[9];
                 tmp.transform.translation.y = rigid_transform[10];
                 tmp.transform.translation.z = rigid_transform[11];
+
+                q = normalizeModelOrientation<float>(q,base_rotation, obj_sym);
                 tmp.transform.rotation.x = q.x();
                 tmp.transform.rotation.y = q.y(); 
                 tmp.transform.rotation.z = q.z(); 
                 tmp.transform.rotation.w = q.w();
+
                 tmp.confidence = it_3->confidence;
                 object_i.model_hypothesis.push_back(tmp);
 
