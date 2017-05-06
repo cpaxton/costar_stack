@@ -25,7 +25,7 @@ class CostarDMP(CostarComponent):
 
         self.start_rec_srv = self.make_service('start_rec',DmpTeach, self.start_rec_cb)
         self.stop_rec_srv = self.make_service('stop_rec', EmptyService, self.stop_rec_cb)
-        self.dmp_move_srv = self.make_service('dmp_move', EmptyService, self.dmp_move_cb)
+        self.dmp_move_srv = self.make_service('dmp_move', DmpExecute, self.dmp_move_cb)
 
         self.listener = tf.TransformListener();
 
@@ -34,8 +34,6 @@ class CostarDMP(CostarComponent):
         self.add_type_service = rospy.ServiceProxy('/librarian/add_type', librarian_msgs.srv.AddType)
         self.save_service = rospy.ServiceProxy('/librarian/save', librarian_msgs.srv.Save)
         self.load_service = rospy.ServiceProxy('/librarian/load', librarian_msgs.srv.Load)
-        # self.list_service = rospy.ServiceProxy('/librarian/list', librarian_msgs.srv.List)
-        # self.delete_service = rospy.ServiceProxy('/librarian/delete', librarian_msgs.srv.Delete)
 
         rospy.wait_for_service('learn_dmp_from_demo')
         self.lfd = rospy.ServiceProxy('learn_dmp_from_demo', LearnDMPFromDemo)
@@ -60,7 +58,7 @@ class CostarDMP(CostarComponent):
     def tick(self):
         if self.collecting == True:
             try:
-                (new_trans,new_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/PSM1_tool_tip_link_virtual',rospy.Time(0))
+                (new_trans,new_rot) = self.listener.lookupTransform('/base_link','/endpoint',rospy.Time(0))
                 if self.old_trans != new_trans and self.old_rot != new_rot:
 	                new_rot_euler = tf.transformations.euler_from_quaternion(new_rot);
 	                self.traj['trans'].append(new_trans);
@@ -120,24 +118,31 @@ class CostarDMP(CostarComponent):
     	if self.dmp_computed == False:
     		resp = yaml.load(self.load_service(id='dmp_default',type=self.folder).text)
     		self.tau = resp.tau
-    		self.sad(resp.dmp_list)
+    		self.sad(resp.dmp_list) # Set Active Dmp
+
+        # check to see if DMP is loaded
+        # if self.loaded_dmp is not req.dmp_name:
+        #   # TODO: load dmp_name
+        #   # TODO: set active dmp to dmp_name
+        #   self.loaded_dmp = req.dmp_name
 
     	#Now, generate a plan
-    	(start_trans,start_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/PSM1_tool_tip_link_virtual',rospy.Time(0))
+    	(start_trans,start_rot) = self.listener.lookupTransform('/base_link','/endpoint',rospy.Time(0))
     	start_rot_euler = tf.transformations.euler_from_quaternion(start_rot)
-    	(end_trans,end_rot) = self.listener.lookupTransform('/PSM1_psm_base_link','/psm_kinetic3',rospy.Time(0))
+    	(end_trans,end_rot) = self.listener.lookupTransform('/base_link',req.goal_frame,rospy.Time(0))
     	end_rot_euler = tf.transformations.euler_from_quaternion(end_rot)
     	
     	start_pose = start_trans + start_rot_euler
-    	start_velocity = [0.0,0.0,0.0,0.0,0.0,0.0]
+    	start_velocity = [0.0] * len(start_pose)
     	end_pose = end_trans + end_rot_euler
-    	end_thresh = [0.2,0.2,0.2,0.2,0.2,0.2]
+    	end_thresh_temp = [1.0] * len(start_pose)
+    	end_thresh = [i * req.end_threshold for i in end_thresh_temp]
     	t_0 = 0
     	                
     	seg_length = -1          #Plan until convergence to goal
-    	tau = 2 * self.tau       #Desired plan should take twice as long as demo
-    	dt = 10
-    	integrate_iter = 5       #dt is rather large, so this is > 1  
+    	tau = req.tau_ratio * self.tau       #Desired plan should take twice as long as demo
+    	dt = req.dt
+    	integrate_iter = req.integrate_iter       #dt is rather large, so this is > 1  
     	plan = self.gdp(start_pose, start_velocity, t_0, end_pose, end_thresh, 
                            	   seg_length, tau, dt, integrate_iter)
     	plan_traj_points = plan.plan.points
