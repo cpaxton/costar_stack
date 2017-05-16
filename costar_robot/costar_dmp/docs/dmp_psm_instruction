@@ -1,0 +1,15 @@
+roslaunch costar_bringup dvrk_psm.launch
+
+roslaunch costar_dmp dmp_server.launch
+
+> Note: now switch instructor to SERVO mode
+
+rosservice call costar/dmp/start_rec '/PSM1_psm_base_link'
+
+> Note: now servo psm around to collect a trajectory
+
+rosservice call costar/dmp/stop_rec
+
+> Note: now still in SERVO mode, let robot tip be start point and input the end point frame as /psm_kinetic4
+
+rosservice call costar/dmp/dmp_move '/psm_kinetic4'
