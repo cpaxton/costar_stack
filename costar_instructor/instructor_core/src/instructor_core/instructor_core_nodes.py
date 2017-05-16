@@ -157,7 +157,7 @@ class NodeDecoratorRepeatGUI(NodeGUI):
         if all([self.name.full(),self.repeat.full()]):
             return beetree.NodeDecoratorRepeat(self.get_name(),self.get_label(),int(self.repeat.get()))
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeDecoratorResetGUI(NodeGUI):
     def __init__(self):
@@ -171,7 +171,7 @@ class NodeDecoratorResetGUI(NodeGUI):
         if all([self.name.full(),self.reset.full()]):
             return beetree.NodeDecoratorReset(self.get_name(),self.get_label(),int(self.reset.get()))
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeDecoratorIgnoreFailGUI(NodeGUI):
     def __init__(self):
@@ -185,7 +185,7 @@ class NodeDecoratorIgnoreFailGUI(NodeGUI):
         if all([self.name.full()]):
             return beetree.NodeDecoratorIgnoreFail(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeDecoratorWaitForSuccessGUI(NodeGUI):
     def __init__(self):
@@ -200,6 +200,6 @@ class NodeDecoratorWaitForSuccessGUI(NodeGUI):
         if all([self.name.full(),self.timeout.full()]):
             return beetree.NodeDecoratorWaitForSuccess(self.get_name(),self.get_label(),int(self.timeout.get()))
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 

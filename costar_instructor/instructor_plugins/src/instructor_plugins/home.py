@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, ColorOptions
 import rospkg
@@ -46,8 +46,8 @@ class NodeHomeGUI(NodeGUI):
         self.layout_.addWidget(self.waypoint_ui)
 
         self.command_waypoint_name = None
-        self.command_vel = .75
-        self.command_acc = .75
+        self.command_vel = .5
+        self.command_acc = .5
         self.listener_ = tf.TransformListener()
 
         self.waypoint_ui.acc_slider.valueChanged.connect(self.acc_changed)
@@ -55,11 +55,11 @@ class NodeHomeGUI(NodeGUI):
 
     def vel_changed(self,t):
         self.waypoint_ui.vel_field.setText(str(float(t)))
-        self.command_vel = float(t)/100*1.5
+        self.command_vel = float(t)/100
 
     def acc_changed(self,t):
         self.waypoint_ui.acc_field.setText(str(float(t)))
-        self.command_acc = float(t)/100*1.5
+        self.command_acc = float(t)/100
 
     def save_data(self,data):
         data['vel'] = {'value':self.command_vel}
@@ -70,90 +70,39 @@ class NodeHomeGUI(NodeGUI):
         if data.has_key('vel'):
             if data['vel']['value']!=None:
                 self.command_vel = data['vel']['value']
-                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100/1.5))
-                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100/1.5))
+                self.waypoint_ui.vel_field.setText(str(float(self.command_vel)*100))
+                self.waypoint_ui.vel_slider.setSliderPosition(int(float(self.command_vel)*100))
         if data.has_key('acc'):
             if data['acc']['value']!=None:
                 self.command_acc = data['acc']['value']
-                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100/1.5))
-                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100/1.5))
+                self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100))
+                self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100))
 
     def generate(self):
         if all([self.name.full()]):
             # rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodeHome(self.get_name(),self.get_label(),self.command_vel,self.command_acc,self.plan)
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
-class NodeHome(Node):
+class NodeHome(ServiceNode):
     def __init__(self,name,label,vel,acc,plan):
         if plan:
             L = 'PLAN TO HOME'
+            service_description = "Plan to home Service"
         else:
-            L = 'MOVE TO HOME'
-        super(NodeHome,self).__init__(name,L,'#26A65B')
+            L = 'MOVE TO HOME\nVel: %d%%, Acc: %d%%'%(int(vel*100),int(acc*100))
+            service_description = "Move to home Service"
+        super(NodeHome,self).__init__(name,L,'#26A65B',"%s Service"%service_description)
         self.command_vel = vel
         self.command_acc = acc
-        # Reset params
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
 
         if plan:
             self.srv_name = 'Plan'
         else:
             self.srv_name = 'Servo'
-
-    def get_node_type(self):
-        return 'SERVICE'
-    def get_node_name(self):
-        return 'Service'
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-        self.set_color('#26A65B')
 
     def make_service_call(self,request,*args):
         # Check to see if service exists
@@ -171,21 +120,21 @@ class NodeHome(Node):
             msg.vel = self.command_vel
             msg.accel = self.command_acc
             # Send Servo Command
-            rospy.logwarn('Single Servo Move Started')
+            rospy.loginfo('Single Servo Move Started')
             result = pose_servo_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
-                rospy.logwarn('Robot driver reported: '+str(result.ack))
+                rospy.loginfo('Single Servo Move Finished')
+                rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the tf lookup or service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup or service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 

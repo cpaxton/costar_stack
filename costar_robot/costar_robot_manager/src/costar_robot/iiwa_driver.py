@@ -27,22 +27,9 @@ mode = {'TEACH':'TeachArm', 'SERVO':'MoveArmJointServo', 'SHUTDOWN':'ShutdownArm
 
 class CostarIIWADriver(CostarArm):
 
-    def __init__(self,world="/world",
-            listener=None,
-            traj_step_t=0.1,
-            max_acc=1,
-            max_vel=1,
-            max_goal_diff=0.02,
-            goal_rotation_weight=0.01,
-            max_q_diff=1e-6,
-            *args,
-            **kwargs):
+    def __init__(self, *args, **kwargs):
 
-        base_link = 'iiwa_link_0'
-        end_link = 'iiwa_link_ee'
-        planning_group = 'manipulator'
-
-        super(CostarIIWADriver, self).__init__(base_link,end_link,planning_group,dof=7,
+        super(CostarIIWADriver, self).__init__(dof=7,
             *args,
             **kwargs)
 
@@ -64,8 +51,8 @@ class CostarIIWADriver(CostarArm):
           print " -- %s"%(str(pt.positions))
           start_t = rospy.Time.now()
 
-          if self.cur_stamp > stamp:
-            return 'FAILURE - preempted'
+          if not self.valid_verify(stamp):
+            return 'FAILURE -- preempted'
 
           rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
           t = pt.time_from_start
@@ -81,9 +68,9 @@ class CostarIIWADriver(CostarArm):
             rate.sleep()
 
         if self.at_goal:
-            return 'SUCCESS - moved to pose'
+            return 'SUCCESS -- moved to pose'
         else:
-            return 'FAILURE - did not reach destination'
+            return 'FAILURE -- did not reach destination'
 
     def handle_tick(self):
         super(CostarIIWADriver,self).handle_tick()

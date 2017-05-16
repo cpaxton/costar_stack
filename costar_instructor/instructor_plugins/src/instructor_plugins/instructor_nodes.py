@@ -33,7 +33,7 @@ class NodeParamConditionGUI(NodeGUI):
         if all([self.name.full(), self.label.full(), self.param.full(), self.value.full()]):
             return NodeParamCondition(self.get_name(), self.get_label(), self.param.get(), self.value.get())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 
 class NodeActionTestGUI(NodeGUI):
@@ -49,7 +49,7 @@ class NodeActionTestGUI(NodeGUI):
         if all([self.name.full(), self.label.full(), self.wait.full(), self.simulate_success.full()]):
             return NodeActionTest(self.get_name(), self.get_label(), int(self.wait.get()),  self.simulate_success.get())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 
 class NodeActionSleepGUI(NodeGUI):
@@ -64,7 +64,7 @@ class NodeActionSleepGUI(NodeGUI):
         if all([self.name.full(),  self.wait.full()]):
             return NodeActionSleep(self.get_name(),  self.get_label(),  float(self.wait.get()))
         else:
-            return 'ERROR: sleep action node not properly defined'
+            return 'ERROR: sleep action check that all menu items are properly selected for this node'
 
 
 # Nodes -------------------------------------------------------------------
@@ -168,7 +168,7 @@ class NodeActionSleep(Node):
             if not self.running: # Thread is not running
                 try:
                     self.sleep_thread.start()
-                    rospy.logwarn('SLEEP ACTION ['+self.name_+']: STARTED')
+                    rospy.loginfo('SLEEP ACTION ['+self.name_+']: STARTED')
                     self.running = True
                     return self.set_status('RUNNING')
                 except Exception,  errtxt:

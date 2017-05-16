@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, ColorOptions
 import rospkg
@@ -63,6 +63,11 @@ class NodeActionQueryGUI(NodeGUI):
         self.update_references()
         self.update_objects()
 
+    def refresh_data(self):
+        self.update_regions()
+        self.update_references()
+        self.update_objects()
+
     def reference_selected_cb(self,item):
         self.selected_reference = str(item.text())
 
@@ -107,9 +112,9 @@ class NodeActionQueryGUI(NodeGUI):
 
     def update_objects(self):
         objects = []
-        rospy.logwarn("detecting objects")
+        rospy.loginfo("detecting objects")
         objects = self.manager.get_detected_object_classes()
-        rospy.logwarn(objects)
+        rospy.loginfo(objects)
         self.waypoint_ui.object_list.clear()
         for m in objects:
             self.waypoint_ui.object_list.addItem(QListWidgetItem(m.strip('/')))
@@ -119,9 +124,9 @@ class NodeActionQueryGUI(NodeGUI):
     def update_smartmoves(self):
         smartmoves = []
         self.manager.load_all()
-        rospy.logwarn(self.selected_object)
+        rospy.loginfo(self.selected_object)
         smartmoves = self.manager.get_moves_for_class(self.selected_object)
-        rospy.logwarn(smartmoves)
+        rospy.loginfo(smartmoves)
         self.waypoint_ui.smartmove_list.clear()
         for m in smartmoves:
             self.waypoint_ui.smartmove_list.addItem(QListWidgetItem(m.strip('/')))
@@ -136,7 +141,6 @@ class NodeActionQueryGUI(NodeGUI):
         return data
 
     def load_data(self,data):
-        rospy.logwarn(data)
         self.manager.load_all()
         if data.has_key('region'):
             if data['region']['value']!=None:
@@ -156,7 +160,7 @@ class NodeActionQueryGUI(NodeGUI):
 
     def generate(self):
         if all([self.name.full(), self.selected_object, self.selected_smartmove]):
-            rospy.logwarn('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
+            # rospy.loginfo('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
             return NodeActionQuery( self.get_name(),
                                         self.get_label(),
                                         self.selected_region,
@@ -167,66 +171,20 @@ class NodeActionQueryGUI(NodeGUI):
 
             #"%s %s %s %s"%(self.selected_smartmove,self.selected_objet,self.selected_region,self.selected_reference),
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 
 # Nodes -------------------------------------------------------------------
-class NodeActionQuery(Node):
+class NodeActionQuery(ServiceNode):
     def __init__(self,name,label,selected_region,selected_object,selected_smartmove,selected_reference,smartmove_manager):
         L = 'QUERY \\n ['+selected_smartmove+'] \\n [' + selected_region + ' ' + selected_reference + ']'
-        super(NodeActionQuery,self).__init__(name,L,colors['purple'].normal)
+        super(NodeActionQuery,self).__init__(name,L,colors['purple'].normal,"Query Service",display_name = selected_smartmove)
         self.selected_region = selected_region
         self.selected_reference = selected_reference
         self.selected_object = selected_object
         self.selected_smartmove = selected_smartmove
         self.manager = smartmove_manager
-        #self.listener_ = smartmove_manager.listener
-        # Thread
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        # Reset params
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('Query Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Query Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Query Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Query Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
 
     def make_service_call(self,request,*args):
 
@@ -244,6 +202,10 @@ class NodeActionQuery(Node):
             query_proxy = rospy.ServiceProxy('/costar/Query',SmartMove)
             msg = SmartMoveRequest()
             msg.pose = self.manager.lookup_waypoint(self.selected_object,self.selected_smartmove)
+            if msg.pose is None:
+                rospy.logerr('Invalid Smartmove Waypoint')
+                self.finished_with_success = False
+                return 
             msg.obj_class = self.selected_object
             msg.name = self.selected_smartmove
             predicate = PredicateStatement()
@@ -251,26 +213,26 @@ class NodeActionQuery(Node):
             predicate.params = ['*',self.selected_reference,'world']
             msg.predicates = [predicate]
             # Send SmartMove Command
-            rospy.logwarn('Query Started')
+            rospy.loginfo('Query Started')
             result = query_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
-                rospy.logwarn('Robot driver reported: '+str(result.ack))
+                rospy.loginfo('Single Servo Move Finished')
+                rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
-            rospy.logwarn('There was a problem with the tf lookup:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
         except rospy.ServiceException, e:
-            rospy.logwarn('Service failed!')
-            rospy.logwarn(e)
+            rospy.logerr('Service failed!')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 
@@ -302,6 +264,9 @@ class CollisionGUI(NodeGUI):
         self.waypoint_ui.object_list.itemClicked.connect(self.object_selected_cb)
         self.update_objects()
 
+    def refresh_data(self):
+        self.update_objects()
+
     def object_selected_cb(self,item):
         rospy.logerr("Selecting obj = "+str(item.text()))
         self.selected_object = str(item.text())
@@ -327,7 +292,7 @@ class CollisionGUI(NodeGUI):
         self.update_objects()
 
     def generate(self):
-        rospy.logwarn("Selecting obj = "+str([self.name.full(), self.selected_object]))
+        rospy.loginfo("Selecting obj = "+str([self.name.full(), self.selected_object]))
         if all([self.name.full(), self.selected_object]):
             return NodeActionCollision( self.get_name(),
                                         self.get_label(),
@@ -337,12 +302,12 @@ class CollisionGUI(NodeGUI):
 
             #"%s %s %s %s"%(self.selected_smartmove,self.selected_objet,self.selected_region,self.selected_reference),
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 
 # Nodes -------------------------------------------------------------------
-class NodeActionCollision(Node):
+class NodeActionCollision(ServiceNode):
     def __init__(self,name,label,selected_object,smartmove_manager,enable):
         if enable:
             info="ENABLE COLLISION"
@@ -351,58 +316,11 @@ class NodeActionCollision(Node):
             info="DISABLE COLLISION"
             self.srv_name = "/costar/DisableCollision"
         L = '%s WITH [%s]'%(info,selected_object)
-        super(NodeActionCollision,self).__init__(name,L,colors['purple'].normal)
+        super(NodeActionCollision,self).__init__(name,L,colors['purple'].normal,"Disable Collision",display_name=selected_object)
         self.selected_object = selected_object
         self.manager = smartmove_manager
-        #self.listener_ = smartmove_manager.listener
-        # Thread
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        # Reset params
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('Query Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Query Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Query Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Query Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
 
     def make_service_call(self,request,*args):
-
         self.manager.load_all()
 
         # Check to see if service exists
@@ -418,26 +336,26 @@ class NodeActionCollision(Node):
             msg = ObjectRequest()
             msg.object = self.selected_object
             # Send SmartMove Command
-            rospy.logwarn('Query Started')
+            rospy.loginfo('Query Started')
             result = query_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
-                rospy.logwarn('Robot driver reported: '+str(result.ack))
+                rospy.loginfo('Single Servo Move Finished')
+                rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
-            rospy.logwarn('There was a problem with the tf lookup:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
         except rospy.ServiceException, e:
-            rospy.logwarn('Service failed!')
-            rospy.logwarn(e)
+            rospy.logerr('Service failed!')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 

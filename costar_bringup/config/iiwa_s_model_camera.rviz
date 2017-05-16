@@ -102,44 +102,8 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        01 Center:
-          Value: false
         All Enabled: false
-        C1 01 Over:
-          Value: false
-        C1 02 Pick:
-          Value: false
-        C1 03 Lift:
-          Value: false
-        C1 04 Place:
-          Value: false
-        C1 05 Escape:
-          Value: false
-        C1 11 Over:
-          Value: false
-        C1 12 Pick:
-          Value: false
-        C1 13 Lift:
-          Value: false
-        C1 14 Place:
-          Value: false
-        C1 21 Over:
-          Value: false
-        C1 22 Pick:
-          Value: false
-        C1 23 Avoid:
-          Value: false
-        C1 24 Over:
-          Value: false
-        C1 25 Place:
-          Value: false
-        C3 01 Over:
-          Value: false
-        C3 02 Pick:
-          Value: false
-        C3 03 Over:
-          Value: false
-        C3 04 Pick:
+        ar_marker_0:
           Value: false
         base:
           Value: false
@@ -171,37 +135,21 @@ Visualization Manager:
           Value: false
         obj_link_uniform_1:
           Value: true
-        obj_link_uniform_2:
-          Value: true
         obj_node_uniform_1:
           Value: true
         obj_node_uniform_2:
           Value: true
-        obj_node_uniform_3:
-          Value: true
-        obj_node_uniform_4:
-          Value: true
         objects/link_uniform/1:
-          Value: false
-        objects/link_uniform/2:
           Value: false
         objects/node_uniform/1:
           Value: false
         objects/node_uniform/2:
-          Value: false
-        objects/node_uniform/3:
-          Value: false
-        objects/node_uniform/4:
           Value: false
         preferred_orientation:
           Value: false
         shoulder_link:
           Value: false
         table_frame:
-          Value: false
-        test:
-          Value: false
-        test_place_link:
           Value: false
         tool0_controller:
           Value: false
@@ -227,57 +175,15 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              obj_link_uniform_1:
+              ar_marker_0:
                 {}
-              obj_link_uniform_2:
+              obj_link_uniform_1:
                 {}
               obj_node_uniform_1:
                 {}
               obj_node_uniform_2:
                 {}
-              obj_node_uniform_3:
-                {}
-              obj_node_uniform_4:
-                {}
           world:
-            01 Center:
-              {}
-            C1 01 Over:
-              {}
-            C1 02 Pick:
-              {}
-            C1 03 Lift:
-              {}
-            C1 04 Place:
-              {}
-            C1 05 Escape:
-              {}
-            C1 11 Over:
-              {}
-            C1 12 Pick:
-              {}
-            C1 13 Lift:
-              {}
-            C1 14 Place:
-              {}
-            C1 21 Over:
-              {}
-            C1 22 Pick:
-              {}
-            C1 23 Avoid:
-              {}
-            C1 24 Over:
-              {}
-            C1 25 Place:
-              {}
-            C3 01 Over:
-              {}
-            C3 02 Pick:
-              {}
-            C3 03 Over:
-              {}
-            C3 04 Pick:
-              {}
             base_link:
               preferred_orientation:
                 {}
@@ -289,10 +195,11 @@ Visualization Manager:
                         wrist_3_link:
                           ee_link:
                             endpoint:
-                              endpoint_marker:
-                                {}
-                              gripper_center:
-                                {}
+                              {}
+                            endpoint_marker:
+                              {}
+                            gripper_center:
+                              {}
                             gripper_link:
                               {}
                             marker_link:
@@ -301,19 +208,9 @@ Visualization Manager:
                 {}
             objects/link_uniform/1:
               {}
-            objects/link_uniform/2:
-              {}
             objects/node_uniform/1:
               {}
             objects/node_uniform/2:
-              {}
-            objects/node_uniform/3:
-              {}
-            objects/node_uniform/4:
-              {}
-            test:
-              {}
-            test_place_link:
               {}
       Update Interval: 0
       Value: true
@@ -681,10 +578,10 @@ Visualization Manager:
         Z: 0.055867
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.754796
+      Pitch: 0.724796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.3483
+      Yaw: 5.5033
     Saved: ~
 Window Geometry:
   Displays:

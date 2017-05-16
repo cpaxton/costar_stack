@@ -28,8 +28,8 @@ class NodeActionDetect8020GUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeActionDetect8020(self.get_name(),self.get_label())
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionDetect8020(Node):
@@ -55,7 +55,7 @@ class NodeActionDetect8020(Node):
             if not self.running: # Thread is not running
                 try:
                     # self.detect_pub.publish(Empty())
-                    rospy.logwarn('DETECTION 8020 ['+self.name_+']: STARTED')
+                    rospy.loginfo('DETECTION 8020 ['+self.name_+']: STARTED')
                     self.sleep_thread.start()
                     self.running = True
                     return self.set_status('RUNNING')

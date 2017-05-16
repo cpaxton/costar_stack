@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node, NodeAction
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, NoteField, ColorOptions
 import rospkg
@@ -35,8 +35,8 @@ class NodeActionSGripperOpenGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'open',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperCloseGUI(NodeGUI):
     def __init__(self):
@@ -52,8 +52,8 @@ class NodeActionSGripperCloseGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'close',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperBasicModeGUI(NodeGUI):
     def __init__(self):
@@ -69,8 +69,8 @@ class NodeActionSGripperBasicModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'basic_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperPinchModeGUI(NodeGUI):
     def __init__(self):
@@ -86,8 +86,8 @@ class NodeActionSGripperPinchModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'pinch_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperWideModeGUI(NodeGUI):
     def __init__(self):
@@ -103,8 +103,8 @@ class NodeActionSGripperWideModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'wide_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionSGripperScissorModeGUI(NodeGUI):
     def __init__(self):
@@ -120,13 +120,12 @@ class NodeActionSGripperScissorModeGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'scissor_mode',int(self.wait_finish.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
-class NodeActionSGripper(Node):
+class NodeActionSGripper(ServiceNode):
     def __init__(self,name,label,gripper_command,wait_finish):
-        super(NodeActionSGripper,self).__init__(name,label)
         self.gripper_command = gripper_command
         if self.gripper_command == 'open':
             self.type = 'OPEN S GRIPPER'
@@ -146,58 +145,8 @@ class NodeActionSGripper(Node):
             self.wait_finish = True
         # L = 'Action\\n'+label+'\\n WAIT ['+str(self.wait_finish)+']'
         L = self.type
-        super(NodeActionSGripper,self).__init__(name,L,'#26A65B')
-        # Reset params
-        self.gripper_service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
+        super(NodeActionSGripper,self).__init__(name,L,'#26A65B',"Gripper %s"%self.type)
 
-    def get_node_type(self):
-        return 'SERVICE'
-    def get_node_name(self):
-        return 'Service'
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Gripper '+self.type+' [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.gripper_service_thread.start()
-                        rospy.loginfo('Gripper '+self.type+' [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Gripper '+self.type+' [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.gripper_service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Gripper '+self.type+' [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Gripper '+self.type+' [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.gripper_service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-        self.set_color('#26A65B')
 
     def make_service_call(self,request,*args):
         # Check to see if service exists
@@ -213,20 +162,12 @@ class NodeActionSGripper(Node):
             gripper_open_proxy = rospy.ServiceProxy(service_name,Empty)
             # Send Open Command
             rospy.logwarn('Gripper '+self.type+' Started')
-            # msg.state = self.open_gripper
-            # msg.wait = self.wait_finish
             result = gripper_open_proxy()
-            #if 'FAILURE' in str(result.ack):
-            #    rospy.logwarn('Gripper '+self.type+' failed with reply: '+ str(result.ack))
-            #    self.finished_with_success = False
-            #    return
-            #else:
-            #    rospy.logwarn('Gripper '+self.type+' Finished')
             self.finished_with_success = True
             return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

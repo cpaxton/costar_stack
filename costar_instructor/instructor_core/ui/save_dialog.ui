@@ -7,13 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>640</width>
-    <height>120</height>
+    <height>80</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>640</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>640</width>
-    <height>120</height>
+    <height>100</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -64,8 +70,8 @@
     <widget class="QWidget" name="widget" native="true">
      <property name="minimumSize">
       <size>
-       <width>419</width>
-       <height>120</height>
+       <width>400</width>
+       <height>80</height>
       </size>
      </property>
      <property name="maximumSize">
@@ -128,11 +134,11 @@
           <property name="text">
            <string>SAVE</string>
           </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
           <property name="wordWrap">
            <bool>true</bool>
+          </property>
+          <property name="margin">
+           <number>2</number>
           </property>
          </widget>
         </item>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from costar_gripper import SimpleSModelServer
+from gripper_robotiq import SimpleSModelServer
 
 rospy.init_node("simple_s_model_server")
 server = SimpleSModelServer("/costar/gripper")

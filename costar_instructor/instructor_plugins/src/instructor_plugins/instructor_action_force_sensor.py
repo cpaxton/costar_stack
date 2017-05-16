@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node, NodeAction
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, NoteField, ColorOptions
 import rospkg
@@ -30,64 +30,14 @@ class NodeActionForceZeroGUI(NodeGUI):
         if all([self.name.full()]):
             return NodeActionForceZero(self.get_name(),self.get_label())
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
-class NodeActionForceZero(Node):
+class NodeActionForceZero(ServiceNode):
     def __init__(self,name,label):
-        super(NodeActionForceZero,self).__init__(name,label)
-        # L = 'Action\\n'+label+'\\n WAIT ['+str(self.wait_finish)+']'
         L = 'ZERO FORCE'
-        super(NodeActionForceZero,self).__init__(name,L,'#26A65B')
-        # Reset params
-        self.force_zero_service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-    def get_node_type(self):
-        return 'SERVICE'
-    def get_node_name(self):
-        return 'Service'
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Force Zero [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.force_zero_service_thread.start()
-                        rospy.loginfo('Zero Sensor [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Zero Sensor [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.force_zero_service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Zero Sensor [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Zero Sensor [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.force_zero_service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
+        super(NodeActionForceZero,self).__init__(name,L,'#26A65B', "Force Zero")
 
     def make_service_call(self,request,*args):
         # Check to see if service exists
@@ -101,7 +51,7 @@ class NodeActionForceZero(Node):
         try:
             force_zero_open_proxy = rospy.ServiceProxy('/robotiq_force_torque_sensor_acc',ft_srv.sensor_accessor)
             # Send Open Command
-            rospy.logwarn('Zero Sensor Started')
+            rospy.loginfo('Zero Sensor Started')
             msg = ft_srv.sensor_accessorRequest()
             msg.command = "SET ZRO"
             result = force_zero_open_proxy(msg)
@@ -115,7 +65,7 @@ class NodeActionForceZero(Node):
                 return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

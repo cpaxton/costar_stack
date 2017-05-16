@@ -36,15 +36,13 @@ class Dialog(QWidget):
         rp = rospkg.RosPack()
         w_path = rp.get_path('instructor_core') + '/ui/save_dialog.ui'
         uic.loadUi(w_path, self)
-        self.save_node_btn = InterfaceButton('SAVE NODE',colors['gray'])
         self.save_subtree_btn = InterfaceButton('SAVE SUBTREE',colors['gray'])
         self.save_cancel_btn = InterfaceButton('CANCEL',colors['red'])
-        self.button_layout.addWidget(self.save_node_btn,0,0)
         self.button_layout.addWidget(self.save_subtree_btn,1,0)
         self.button_layout.addWidget(self.save_cancel_btn,2,0)
 
 class Button(QPushButton):
-    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None):
+    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None, text_color=Color('#ffffff', '#ffffff', '#dddddd')):
         QPushButton.__init__(self, parent)
         self.setMouseTracking(True)
         self.name = name
@@ -52,8 +50,9 @@ class Button(QPushButton):
         self.setText(self.label)
         # COLOR
         self.color = color
-        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
-        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.text_color = text_color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+self.text_color.normal+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+self.text_color.normal+';border:none;'
         self.setStyleSheet(self.default_style)
         self.font = QtGui.QFont("Ubuntu", txtsz, QtGui.QFont.Bold)
         self.setFont(self.font)
@@ -129,7 +128,7 @@ class ItemButton(Button):
 
 class HeadingContainer(QWidget):
     def __init__(self, name, label, color, size='small',parent=None):
-        QWidget.__init__(self,parent)
+        QWidget.__init__(self, parent)
         self.label = label
         self.name = name
         self.color = color
@@ -143,7 +142,7 @@ class HeadingContainer(QWidget):
         self.scrollArea.hide()
 
 class Container(QWidget):
-    def __init__(self, name, label, color, size='small',parent=None):
+    def __init__(self, name, label, color, size='small', parent=None):
         QWidget.__init__(self,parent)
         self.label = label
         self.name = name
@@ -166,7 +165,7 @@ class Container(QWidget):
         self.groups = {}
         self.group_members = {}
 
-    def register_callbacks(self,contract_cb,selected_cb=None):
+    def register_callbacks(self,contract_cb, selected_cb=None):
         self.contract_cb = contract_cb
         self.selected_cb = selected_cb
 
@@ -185,7 +184,7 @@ class Container(QWidget):
         self.button.setStyleSheet(self.button.default_style)
         self.button.current_style = self.button.default_style
 
-    def add_item(self,name):
+    def add_item(self, name):
         pass
 
     def remove_all(self):
@@ -332,6 +331,79 @@ class Drawer(QWidget):
         rp = rospkg.RosPack()
         w_path = rp.get_path('instructor_core') + '/ui/drawer_2.ui'
         uic.loadUi(w_path, self)
+
+    def window_resized(self,event):
+        visible = self.drawer.isVisible()
+        self.resize(360,self.container_widget.geometry().height()-100)
+        self.move(self.container_widget.geometry().left()-360,50)
+        if visible:
+            self.show()
+        else:
+            self.hide()
+
+class NotificationDialog(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
+        # GUI
+        rp = rospkg.RosPack()
+        w_path = rp.get_path('instructor_core') + '/ui/notifications.ui'
+        uic.loadUi(w_path, self)
+        self.show_hide = self.show_hide_slide
+        self.selected_object = None
+        self.selected_move = None
+        self.saved_geom = None
+        self.new_move_name = None
+        
+        self.done_button.clicked.connect(self.done)
+        self.notification_list.itemClicked.connect(self.object_selected)
+        self.notification_list.itemClicked.connect(self.move_selected)        
+        self.hide()
+
+    def notify(self, message, severity='warn'):
+        """Adds a message to the notification dialog, showing it if not visible.
+
+        # Arguments
+
+        message: string message to show in the dialog
+        severity: one of 'info', 'warn', 'error'
+        """
+        self.most_recent_notification = QListWidgetItem(message)
+        self.notification_list.addItem(self.most_recent_notification)
+        self.notification_list.setCurrentItem(self.most_recent_notification)
+        self.notification_list.scrollToItem(self.most_recent_notification)
+        if not self.isVisible():
+             self.show_hide_slide()
+        
+        if severity is 'warn':
+            rospy.logwarn("Instructor: " + message)
+        elif severity is 'error':
+            rospy.logerr("Instructor: " + message)
+        else:
+            rospy.loginfo("Instructor: " + message)
+
+    def show_hide_slide(self):
+        if self.isVisible():
+            self.saved_geom = self.geometry()
+            self.hide()
+        else:
+            if self.saved_geom is not None:
+                self.move(self.saved_geom.x(),self.saved_geom.y())
+            else:
+                self.move(
+                    self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,
+                    self.geometry().y()+self.geometry().height()/2)
+            self.show()
+
+    def done(self):
+        self.notification_list.clear()
+        self.show_hide_slide()
+
+    def object_selected(self,item):
+        self.selected_object = str(item.text())
+
+    def move_selected(self,item):
+        self.selected_move = str(item.text())
+
 
 class Popup(QWidget):
     def __init__(self,parent):

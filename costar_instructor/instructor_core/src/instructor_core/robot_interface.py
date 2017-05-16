@@ -62,44 +62,46 @@ class RobotInterface():
         # self.status_label.setText('ROBOT MODE: ['+self.driver_status.upper()+']')
 
     def teach(self):
-        if self.driver_status == 'IDLE':
+        if self.driver_status == 'IDLE' or self.driver_status == 'SERVO':
             try:
                 rospy.wait_for_service('/costar/SetTeachMode',2)
             except rospy.ROSException as e:
-                print 'Could not find teach service'
+                rospy.logerr('Could not find teach service')
                 return
             try:
                 teach_mode_service = rospy.ServiceProxy('/costar/SetTeachMode',SetTeachMode)
                 result = teach_mode_service(True)
-                # self.sound_pub.publish(String("low_up"))
-                rospy.logwarn(result.ack)
                 self.teach_btn.set_color(colors['gray_light'])
             except rospy.ServiceException, e:
-                print e
+                rospy.logerr(str(e))
         elif self.driver_status == 'TEACH':
-            try:
-                rospy.wait_for_service('/costar/SetTeachMode',2)
-            except rospy.ROSException as e:
-                print 'Could not find teach service'
-                return
-            try:
-                teach_mode_service = rospy.ServiceProxy('/costar/SetTeachMode',SetTeachMode)
-                result = teach_mode_service(False)
-                rospy.logwarn(result.ack)
-                # self.sound_pub.publish(String("low_down"))
-                self.teach_btn.set_color(colors['gray'])
-            except rospy.ServiceException, e:
-                print e
+            self.disable_teach_mode()
         else:
-            rospy.logwarn('FAILED, driver is in ['+self.driver_status+'] mode.')
+            rospy.logerr('FAILED, driver is in ['+self.driver_status+'] mode.')
             self.toast('Driver is in ['+self.driver_status+'] mode!')
 
+    def disable_teach_mode(self):
+        try:
+            rospy.wait_for_service('/costar/SetTeachMode',2)
+        except rospy.ROSException as e:
+            rospy.logerr('Could not find teach service')
+            return
+        try:
+            teach_mode_service = rospy.ServiceProxy('/costar/SetTeachMode',SetTeachMode)
+            result = teach_mode_service(False)
+            rospy.logwarn(result.ack)
+            self.teach_btn.set_color(colors['gray'])
+        except rospy.ServiceException, e:
+            rospy.logerr(str(e))
+
     def servo(self):
-        if self.driver_status == 'IDLE':
+        if self.driver_status == 'TEACH':
+            self.disable_teach_mode()
+        if self.driver_status == 'IDLE' or self.driver_status == 'TEACH':
             try:
                 rospy.wait_for_service('/costar/SetServoMode',2)
             except rospy.ROSException as e:
-                print 'Could not find SetServoMode service'
+                rospy.logerr('Could not find SetServoMode service')
                 return
             try:
                 servo_mode_service = rospy.ServiceProxy('/costar/SetServoMode',SetServoMode)
@@ -107,8 +109,7 @@ class RobotInterface():
                 rospy.logwarn(result.ack)
                 self.servo_btn.set_color(colors['gray_light'])
             except rospy.ServiceException, e:
-                print e
-
+                rospy.logerr(str(e))
         elif self.driver_status == 'SERVO':
             try:
                 rospy.wait_for_service('/costar/SetServoMode',2)

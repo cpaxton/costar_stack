@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, ColorOptions
 import rospkg
@@ -21,7 +21,8 @@ from costar_robot_msgs.srv import *
 from smart_waypoint_manager import SmartWaypointManager
 from predicator_msgs.msg import *
 
-C = ColorOptions()
+colors = ColorOptions().colors
+
 
 global_manager = None
 
@@ -37,8 +38,8 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.grasp = grasp
 
         self.title.setText('SMARTMOVE')
-        self.title.setStyleSheet('background-color:'+C.colors['green'].normal+';color:#ffffff')
-        self.setStyleSheet('background-color:'+C.colors['green'].normal+' ; color:#ffffff')
+        self.title.setStyleSheet('background-color:'+ colors['green'].normal+';color:#ffffff')
+        self.setStyleSheet('background-color:'+ colors['green'].normal+' ; color:#ffffff')
 
         self.waypoint_ui = QWidget()
         uic.loadUi(ui_path, self.waypoint_ui)
@@ -199,7 +200,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
 
     def generate(self):
         if all([self.name.full(), self.selected_object, self.selected_smartmove]):
-            rospy.loginfo('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
+            # rospy.loginfo('Generating SmartMove with reference='+str(self.selected_reference)+' and smartmove='+str(self.selected_smartmove))
             return NodeActionSmartmoveMultiPurpose( self.get_name(),
                                         self.get_label(),
                                         self.selected_region,
@@ -213,8 +214,8 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
                                         self.grasp)
 
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def refresh_data(self):
         self.manager.load_all()
@@ -232,19 +233,23 @@ class NodeActionSmartmoveReleaseGUI(NodeActionSmartmoveMultiPurposeGUI):
         super(NodeActionSmartmoveReleaseGUI, self).__init__(False)
 
 # Nodes -------------------------------------------------------------------
-class NodeActionSmartmoveMultiPurpose(Node):
+class NodeActionSmartmoveMultiPurpose(ServiceNode):
     def __init__(self,name,label,selected_region,selected_object,selected_smartmove,selected_reference,vel,acc,backoff,smartmove_manager,grasp):
         if grasp:
             display_name = "GRASP"
+            service_description = "SmartGrasp Service"
         else:
             display_name = "RELEASE"
+            service_description = "SmartRelease Service"
         L = 'SMART ' + display_name + \
             ' to \\n pose [%s]\\n'%(selected_smartmove) + \
             'for any [%s %s %s]'%(selected_object,selected_region,selected_reference) + '\n' + \
             "with backoff dist: %f cm"%(backoff*100)
         super(NodeActionSmartmoveMultiPurpose,self).__init__(name,
             L,
-            C.colors['green'].normal)
+            colors['green'].normal,
+            service_description,
+            display_name = selected_smartmove)
         self.selected_region = selected_region
         self.selected_reference = selected_reference
         self.selected_object = selected_object
@@ -255,54 +260,8 @@ class NodeActionSmartmoveMultiPurpose(Node):
         self.grasp = grasp
         self.manager = smartmove_manager
         self.listener_ = smartmove_manager.listener
-        # Thread
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        # Reset params
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('SmartMove Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
 
     def make_service_call(self,request,*args):
-
         self.manager.load_all()
 
         if self.grasp:
@@ -322,6 +281,10 @@ class NodeActionSmartmoveMultiPurpose(Node):
             smartmove_proxy = rospy.ServiceProxy(srv_name,SmartMove)
             msg = SmartMoveRequest()
             msg.pose = self.manager.lookup_waypoint(self.selected_object,self.selected_smartmove)
+            if msg.pose is None:
+                rospy.logerr('Invalid Smartmove Waypoint')
+                self.finished_with_success = False
+                return 
             msg.obj_class = self.selected_object
             msg.name = self.selected_smartmove
             predicate = PredicateStatement()
@@ -332,25 +295,25 @@ class NodeActionSmartmoveMultiPurpose(Node):
             msg.accel = self.command_acc
             msg.backoff = self.command_backoff
             # Send SmartMove Command
-            rospy.logwarn('SmartMove Started')
+            rospy.loginfo('SmartMove Started')
             result = smartmove_proxy(msg)
             if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
+                rospy.loginfo('Single Servo Move Finished')
                 rospy.logwarn('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException), e:
-            rospy.logwarn('There was a problem with the tf lookup:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
         except rospy.ServiceException, e:
             rospy.logwarn('Service failed!')
-            rospy.logwarn(e)
+            rospy.logerr(e)
             self.finished_with_success = False
             return

@@ -1,8 +1,6 @@
 # How to Install CoSTAR
 
-Instructions by Baichuan Jiang
-
-Note: CoSTAR installation has only been tested on ROS Indigo on Ubuntu 14.04 machine. For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
+Note: CoSTAR installation has only been tested on ROS Indigo (Ubuntu 14.04 LTS). For instructions on Indigo installation, please see [here](http://wiki.ros.org/indigo/Installation/Ubuntu). There is a prototype install script available [here](install_indigo.sh) that you can try out as well.
 
 ## Prerequisites
 
@@ -40,9 +38,13 @@ git clone https://github.com/jbohren/rqt_dot.git
 git clone https://github.com/sniekum/ar_track_alvar.git  
 git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git
-git clone https://github.com/ThomasTimm/ur_modern_driver.git
+git clone https://github.com/xqms/ur_modern_driver.git --branch thread_safety
 rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
 ```
+
+***IMPORTANT NOTE ON UR MODERN DRIVER:*** UR modern driver is somewhat unstable. We recommend following the advice from this [pull request addressing thread safety](https://github.com/ThomasTimm/ur_modern_driver/pull/101). For our tests, we used the [thread safety branch](https://github.com/xqms/ur_modern_driver/tree/thread_safety) from Max Schwarz. This has not been tested on a wide variety of Universal Robot platforms, and still has its issues.
+
+We observed unpredictable and dangerous behavior using the base branch of UR Modern Driver. For more information check out [the original UR modern driver repo](https://github.com/ThomasTimm/ur_modern_driver).
 
 ## Step 2. Build catkin workspace
 
@@ -91,3 +93,7 @@ The top should say "Robot Mode: Idle." If you installed the sample workspace, op
 CoSTAR is currently set up to launch our two testbed systems: a KUKA LBR iiwa 14 with a 3-finger Robotiq gripper and a Universal Robots UR5 with a 2-finger Robotiq gripper. We plan to add some funcitonality to support additional platforms.
 
 If you are interested in supporting another platform or run into other issues trying to run this code, please contact Chris Paxton (cpaxton@jhu.edu).
+
+##  Other Information
+
+ - [Notes on installing Gazebo](docs/gazebo.md)
