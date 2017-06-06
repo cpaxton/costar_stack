@@ -46,7 +46,14 @@ rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
 
 We observed unpredictable and dangerous behavior using the base branch of UR Modern Driver. For more information check out [the original UR modern driver repo](https://github.com/ThomasTimm/ur_modern_driver).
 
-## Step 2. Build catkin workspace
+## Step 2. Get Perception prerequisites
+
+```
+git clone git@github.com:jhu-lcsr/ObjRecRANSAC.git
+```
+ObjRecRANSAC is used by `sp_segmenter`, the key part of the CoSTAR perception pipeline.
+
+## Step 3. Build catkin workspace
 
 Change directory into catkin workspace folder and run:
 
@@ -71,7 +78,7 @@ CoSTAR is distributed as a single large package. This means that
 `sudo apt-get install ros-indigo-joint-state-controller`
 
 
-## Step 3. Run simulation
+## Step 4 Run simulation
 [Optional] Checkout an example CoSTAR workspace from github into ~/.costar by running:
 
 ```
