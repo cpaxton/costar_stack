@@ -78,7 +78,7 @@ CoSTAR is distributed as a single large package. This means that
 `sudo apt-get install ros-indigo-joint-state-controller`
 
 
-## Step 4 Run simulation
+## Step 4. Run simulation
 [Optional] Checkout an example CoSTAR workspace from github into ~/.costar by running:
 
 ```
