@@ -17,6 +17,7 @@
 #include "sp_segmenter/table_segmenter.h"
 
 enum ObjRecRansacMode {STANDARD_BEST, STANDARD_RECOGNIZE, GREEDY_RECOGNIZE};
+enum RgbToLabelChannel {RED, GREEN, BLUE, ALL};
 
 #ifdef USE_OBJRECRANSAC
 #include "sp_segmenter/greedyObjRansac.h"
@@ -105,6 +106,9 @@ public:
 
     // Update one object pose that has matching transform name and object type, then returns that updated pose with other poses(from previous detection). 
     std::vector<objectTransformInformation> getUpdateOnOneObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type);
+
+    pcl::PointCloud<pcl::PointXYZL>::Ptr convertRgbChannelToLabelCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const int &channel_to_convert);
+    
 #endif
 
 // ---------------------------------------------------------- ADDITIONAL OPERATIONAL FUNCTIONS --------------------------------------------------------------------------------------
@@ -178,6 +182,7 @@ public:
     // Object persistence will post-process ObjRecRANSAC pose to get an object orientation that is closest to the previous detection, 
     // if the detected object position is within 2.5 cm compared to previous object position
     void setUseObjectPersistence(const bool &use_object_persistence);
+    void setUseExternalSegmentation(const bool &use_external_segmentation);
 #endif
 
 #ifdef USE_TRACKING
@@ -240,6 +245,7 @@ protected:
 #ifdef USE_OBJRECRANSAC
     boost::shared_ptr<greedyObjRansac> combined_ObjRecRANSAC_;
     std::vector<boost::shared_ptr<greedyObjRansac> > individual_ObjRecRANSAC_;
+    bool use_external_segmentation_;
 
     // map of symmetries for orientation normalization
     objectRtree segmented_object_tree_;

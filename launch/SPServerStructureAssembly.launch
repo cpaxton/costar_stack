@@ -11,13 +11,14 @@
   <arg name="compute_pose"          default="true" />
   <arg name="visualization"         default="false" />
 
-
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
   <arg name="minConfidence"  default="0.10" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
 
-  <arg name="useMedianFilter" default="true" doc="Apply median filter to point cloud input before processing it" />
+  <arg name="use_external_segmentation" default="false" doc="This will make the sp_segmenter to just perform pose estimation with the assumption that the point cloud input's Red channel is the label of the object class."/>
+
+  <arg name="useMedianFilter" default="false" doc="Apply median filter to point cloud input before processing it" />
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
 
   <arg name="useTableSegmentation" default="true" doc="use marker-based table segmentation at all or just handle raw point clouds. True is strongly recommended."/>
@@ -78,6 +79,7 @@
     <param name="useMultiClassSVM"   type="bool" value="$(arg useMultiClassSVM)" />
     <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />
     <param name="useMedianFilter"   type="bool"  value="$(arg useMedianFilter)" />
+    <param name="use_external_segmentation" type="bool" value="$(arg use_external_segmentation)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
     <param name="useObjectPersistence"   type="bool" value="$(arg useObjectPersistence)" />

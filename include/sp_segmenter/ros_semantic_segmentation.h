@@ -64,7 +64,7 @@ protected:
     void populateTFMap(std::vector<objectTransformInformation> all_poses);
 
     ros::NodeHandle nh;
-    bool classReady, useTFinsteadOfPoses;
+    bool useTFinsteadOfPoses;
 
     // TF related
     bool hasTF;
