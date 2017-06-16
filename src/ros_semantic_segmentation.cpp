@@ -145,16 +145,18 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     this->nh.param("visualization",visualization,true);
     this->setUseVisualization(visualization);
 
+#ifdef USE_OBJRECRANSAC
     // Setting up ObjRecRANSAC
-    bool compute_pose, use_cuda, useObjectPersistence;
+    bool compute_pose, use_cuda, use_object_persistence, use_external_segmentation;
     double  minConfidence;
     std::string objRecRANSACdetector;
     this->nh.param("compute_pose",compute_pose,true);
     this->nh.param("use_cuda", use_cuda,true);
     this->nh.param("objRecRANSACdetector", objRecRANSACdetector, std::string("StandardRecognize"));
     this->nh.param("minConfidence", minConfidence, 0.0);
-    this->nh.param("useObjectPersistence",useObjectPersistence,false);
-#ifdef USE_OBJRECRANSAC
+    this->nh.param("useObjectPersistence",use_object_persistence,false);
+    this->nh.param("use_external_segmentation", use_external_segmentation, false);
+
     this->setUseComputePose(compute_pose);
     this->setUseCuda(use_cuda);
     if      (objRecRANSACdetector == "StandardBest")      this->setModeObjRecRANSAC(STANDARD_BEST);
@@ -162,7 +164,8 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     else if (objRecRANSACdetector == "StandardRecognize") this->setModeObjRecRANSAC(STANDARD_RECOGNIZE);
     else ROS_ERROR("Unsupported objRecRANSACdetector!");
     this->setMinConfidenceObjRecRANSAC(minConfidence);
-    this->setUseObjectPersistence(useObjectPersistence);
+    this->setUseObjectPersistence(use_object_persistence);
+    this->setUseExternalSegmentation(use_external_segmentation);
 
     std::string mesh_path;
     //get parameter for mesh path and cur_name
@@ -252,7 +255,6 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     table_corner_published = 0;
     this->need_preferred_tf_ = setObjectOrientation;
     this->setUsePreferredOrientation(setObjectOrientation);
-
 }
 
 void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
@@ -408,6 +410,7 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
         if (!this->have_table_) getAndSaveTable(inputCloud);
         
         if (this->have_table_) {
+
              // publish the table corner every 15 frame of inputCloud
             if (table_corner_published == 0)
             {
@@ -566,7 +569,19 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
     pcl::PointCloud<PointLT>::Ptr labelled_point_cloud_result;
 #ifdef USE_OBJRECRANSAC
     std::vector<objectTransformInformation> object_transform_result;
-    bool segmentation_success = segmentAndCalculateObjTransform(full_cloud, labelled_point_cloud_result, object_transform_result);
+    bool segmentation_success;
+    if (!this->use_external_segmentation_)
+    {
+        segmentation_success = segmentAndCalculateObjTransform(full_cloud, labelled_point_cloud_result, object_transform_result);
+    }
+    else
+    {
+        // R channel of the point cloud is the label
+        labelled_point_cloud_result = this->convertRgbChannelToLabelCloud(full_cloud, RED);
+        object_transform_result = this->calculateObjTransform(labelled_point_cloud_result);
+        segmentation_success = object_transform_result.size() > 0;
+    }
+
     if (segmentation_success)
     {
         pcl::PointCloud<PointT>::Ptr segmented_cloud;

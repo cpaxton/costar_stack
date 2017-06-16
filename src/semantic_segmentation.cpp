@@ -74,6 +74,10 @@ SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_f
     this->table_distance_threshold_ = 0.02;
     this->table_angular_threshold_ =  2.0;
     this->table_minimal_inliers_ =  5000;
+
+#ifdef USE_OBJRECRANSAC
+    this->use_external_segmentation_ = false;
+#endif
 }
 
 void SemanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_directory)
@@ -287,7 +291,7 @@ void SemanticSegmentation::initializeSemanticSegmentation()
         std::cerr << "Number of loaded model = " << this->number_of_added_models_ << std::endl;
         if (this->number_of_added_models_ == 0)
             std::cerr << "No model has been loaded. Please add at least 1 model.\n";
-        this->class_ready_ = (this->number_of_added_models_ > 0 && this->svm_loaded_ && this->shot_loaded_);
+        this->class_ready_ = this->number_of_added_models_ > 0;
     }
     else
         this->class_ready_ = (this->svm_loaded_ && this->shot_loaded_);
@@ -373,6 +377,7 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
     }
 
     table_corner_points_ = getTableConvexHull(full_cloud, viewer, table_distance_threshold_, table_angular_threshold_,table_minimal_inliers_);
+
     if (table_corner_points_->size() < 3) {
         std::cerr << "Failed segmenting the table. Please check the input point cloud and the table segmentation parameters.\n";
         return false;
@@ -400,7 +405,7 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
 
 bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<pcl::PointXYZL>::Ptr &result)
 {
-    if (!this->class_ready_)
+    if (!this->class_ready_ || !(this->svm_loaded_ && this->shot_loaded_))
     {
         std::cerr << "Please initialize semantic segmentation first before doing point cloud segmentation\n";
         return false;
@@ -570,7 +575,7 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
     if (model_path.back() != '/')
         model_path += "/";
 
-    if (use_combined_objRecRANSAC_ || !use_multi_class_svm_)
+    if (use_combined_objRecRANSAC_ || !(use_multi_class_svm_ || use_external_segmentation_))
     {
         std::cerr << "Using combined ObjRecRANSAC.\n";
         if (combined_ObjRecRANSAC_ == NULL)
@@ -616,6 +621,11 @@ void SemanticSegmentation::setUsePreferredOrientation(const bool &use_preferred_
 void SemanticSegmentation::setUseObjectPersistence(const bool &use_object_persistence)
 {
     this->use_object_persistence_ = use_object_persistence;
+}
+
+void SemanticSegmentation::setUseExternalSegmentation(const bool &use_external_segmentation)
+{
+    this->use_external_segmentation_ = use_external_segmentation;
 }
 
 std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud)
@@ -845,6 +855,36 @@ std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjT
 
     // restore original index if not using object persistance
     if (!use_object_persistence_) tmpTFIndex = object_class_transform_index_no_persistence;
+    return result;
+}
+
+pcl::PointCloud<pcl::PointXYZL>::Ptr SemanticSegmentation::convertRgbChannelToLabelCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
+    const int &channel_to_convert)
+{
+    pcl::PointCloud<pcl::PointXYZL>::Ptr result(new pcl::PointCloud<pcl::PointXYZL>());
+    for (pcl::PointCloud<pcl::PointXYZRGBA>::const_iterator it = input_cloud->begin(); it != input_cloud->end(); ++it)
+    {
+        pcl::PointXYZL point;
+        point.x = it->x;
+        point.y = it->y;
+        point.z = it->z;
+        switch(channel_to_convert)
+        {
+            case RED:
+                point.label = it->r;
+                break;
+            case GREEN:
+                point.label = it->g;
+                break;
+            case BLUE:
+                point.label = it->b;
+                break;
+            case ALL:
+                point.label = it->r + it->g + it->b;
+                break;
+        }
+        result->push_back(point);
+    }
     return result;
 }
 
