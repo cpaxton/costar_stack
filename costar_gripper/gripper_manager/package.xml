@@ -41,7 +41,7 @@
   <!--   <test_depend>gtest</test_depend> -->
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>robotiq_s_model_control</build_depend>
+  <!--<build_depend>robotiq_s_model_control</build_depend>-->
   <run_depend>robotiq_s_model_control</run_depend>
   <build_depend>predicator_robotiq</build_depend>
   <run_depend>predicator_robotiq</run_depend>
