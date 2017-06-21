@@ -399,15 +399,14 @@ class NodeParallelAll(Node):
             L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeParallelAll,self).__init__(name,L,color,alt_label=L_alt)
-        self.num_success = None
+        self.num_success = 0
     def get_node_type(self):
         return 'PARALLEL'
     def get_node_name(self):
         return 'Parallel'
     def execute(self):
         # print 'Executing Parallel: (' + self.name_ + ')'
-        if self.num_success == None:
-            self.num_success = 0
+        self.num_success = 0
 
         for C in self.children_:
             self.child_status_ = C.execute()
@@ -424,10 +423,12 @@ class NodeParallelAll(Node):
 
         # Only return if all children succeed
         if self.num_success == self.num_children_:
-            self.num_success = None
             return self.set_status('SUCCESS')
         else:
             return self.set_status('RUNNING')
+    def reset(self):
+        super(NodeParallelAll, self).reset()
+        self.num_success = 0
 
 class NodeParallelRemove(Node):
     ''' Parallel Remove Node
