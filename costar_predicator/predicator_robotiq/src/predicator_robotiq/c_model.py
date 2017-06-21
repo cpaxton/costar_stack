@@ -45,21 +45,23 @@ class CModelPredicator:
 
     def __init__(self,publish_predicates=True,start_subscriber=True,gripper_name='c_model'):
 
-        #self.valid_predicates = ValidPredicates(assignments=[gripper_name],predicates=['gripper_open','gripper_closed','gripper_moving','contact'])
-        #self.predicate_msg = PredicateList()
-        #self.gripper_name = gripper_name
+        self.valid_predicates = ValidPredicates()
+        self.valid_predicates.assignments = assignments=[gripper_name]
+        self.valid_predicates.predicates = ['gripper_open','gripper_closed','gripper_moving',
+                    'gripper_basic_mode','gripper_pinch_mode','gripper_wide_mode',
+                    'gripper_scissor_mode','gripper_activated',
+                    'finger_a_contact','finger_b_contact','finger_c_contact',
+                    'any_finger_contact']
+        self.valid_predicates.pheader.source = rospy.get_name()
 
-        self.valid_predicates = ValidPredicates(assignments=[gripper_name],predicates=['gripper_open','gripper_closed','gripper_moving',
-            'gripper_basic_mode','gripper_pinch_mode','gripper_wide_mode','gripper_scissor_mode','gripper_activated',
-            'finger_a_contact','finger_b_contact','finger_c_contact','any_finger_contact'])
         self.predicate_msg = PredicateList()
         self.gripper_name = gripper_name
 
-        if publish_predicates:
+        self.publish_predicates = publish_predicates
+        if self.publish_predicates:
             # create predicator things
             self.pub = rospy.Publisher("predicator/input",PredicateList,queue_size=1000)
-            self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
-
+            self.vpub = rospy.Publisher("predicator/valid_input",ValidPredicates,queue_size=1000)
 
         if start_subscriber:
             self.sub = rospy.Subscriber("CModelRobotInput",inputMsg,self.callback)
@@ -139,8 +141,9 @@ class CModelPredicator:
     publish current predicate messages
     '''
     def tick(self):
-        self.pub.publish(self.predicate_msg)
-        self.vpub.publish(self.valid_predicates)
+        if self.publish_predicates:
+            self.pub.publish(self.predicate_msg)
+            self.vpub.publish(self.valid_predicates)
 
     '''
     update and spin

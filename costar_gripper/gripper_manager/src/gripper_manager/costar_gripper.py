@@ -73,5 +73,6 @@ class CostarGripper(CostarComponent):
       if self.verbose:
           rospy.loginfo(self.statusInterpreter(msg))
       self.predicator.handle(msg)
+      self.predicator.tick()
 
 
