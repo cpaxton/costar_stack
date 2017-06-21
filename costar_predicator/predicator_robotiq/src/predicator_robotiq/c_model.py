@@ -119,6 +119,11 @@ class CModelPredicator:
             self.moving = False
             #output += 'Fingers are at requested position\n'
 
+        if self.contact:
+            self.addPredicate('any_finger_contact')
+        if self.moving:
+            self.addPredicate('gripper_moving')
+
         if status.gFLT > 5:
           rospy.logerr("Fault!")
           self.moving = False
