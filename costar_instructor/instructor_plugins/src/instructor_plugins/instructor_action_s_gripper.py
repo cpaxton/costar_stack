@@ -128,9 +128,9 @@ class NodeActionSGripper(ServiceNode):
     def __init__(self,name,label,gripper_command,wait_finish):
         self.gripper_command = gripper_command
         if self.gripper_command == 'open':
-            self.type = 'OPEN S GRIPPER'
+            self.type = 'OPEN GRIPPER'
         elif self.gripper_command == 'close':
-            self.type = 'CLOSE S GRIPPER'
+            self.type = 'CLOSE GRIPPER'
         elif self.gripper_command == 'basic_mode':
             self.type = 'SET BASIC GRASP'
         elif self.gripper_command == 'scissor_mode':
