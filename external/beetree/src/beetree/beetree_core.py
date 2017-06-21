@@ -49,6 +49,9 @@ class Node(object):
         self.subtree_label = subtree_label
         self.size = size
 
+    def set_label(self, label):
+        self.label_ = label
+
     def set_color(self,c):
         self.color_ = c
 
@@ -515,7 +518,7 @@ class NodeDecoratorRepeat(Node):
         if runs == -1:
             L = 'REPEAT\\nFOREVER'
         else:
-            L = 'REPEAT ['+str(runs)+']'
+            L = 'REPEAT [0/'+str(runs)+']'
         if label != '':
             L_alt = label
         else:
@@ -539,11 +542,10 @@ class NodeDecoratorRepeat(Node):
             elif self.child_status_[:7] == 'RUNNING':
                 return self.set_status('RUNNING')
             elif self.child_status_[:7] == 'FAILURE':
-                rospy.logwarn('REPEAT DECORATOR ['+self.name_+']: FAILED, RESET')
-                self.children_[0].reset()
-                return self.set_status('RUNNING')
+                return self.set_status('FAILURE')
         else:
-            ### FIX ME ###
+            # TODO(cpaxton) or TODO(fjonath) figure out why this does not work
+            # right. Counter increments when it should not.
             if self.num_runs_ < self.runs_:
                 self.child_status_ = self.children_[0].execute()
                 if self.child_status_[:7] == 'SUCCESS':
@@ -554,6 +556,13 @@ class NodeDecoratorRepeat(Node):
                     return self.set_status('FAILURE')
             else:
                 return self.set_status('SUCCESS')
+            L = 'REPEAT [%d/%d]'%(self.num_runs_,self.runs_)
+            self.set_label(L)
+
+    def reset(self):
+        super(NodeDecoratorRepeat, self).reset()
+        if not self.runs_ == -1:
+            self.num_runs_ = 0
 
 class NodeDecoratorIgnoreFail(Node):
     ''' Decorator Ignore Fail
