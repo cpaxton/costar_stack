@@ -164,7 +164,6 @@ class CostarArm(CostarComponent):
         # Create reference to pyKDL kinematics
         self.kdl_kin = KDLKinematics(self.robot, base_link, end_link)
 
-
         #self.set_goal(self.q0)
         self.goal = None
         self.ee_pose = None
@@ -192,19 +191,23 @@ class CostarArm(CostarComponent):
         # self.robot_state = RobotState()
         # self.robot_state.joint_state.name = self.joint_names
 
-        self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
-        self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
-        self.get_planning_scene = self.make_service_proxy('get_planning_scene',
+        has_gripper = rospy.get_param(os.path.join(self.namespace, "robot", "has_gripper"))
+        has_planning_scene = rospy.get_param(os.path.join(self.namespace, "robot", "has_planning_scene")) 
+
+        if has_gripper:
+          self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
+          self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
+
+        if has_planning_scene:
+            self.get_planning_scene = self.make_service_proxy('get_planning_scene',
                 GetPlanningScene,
                 use_namespace=False)
+            self.planner = SimplePlanning(self.robot,base_link,end_link,
+                self.planning_group,
+                kdl_kin=self.kdl_kin,
+                joint_names=self.joint_names,
+                closed_form_IK_solver=closed_form_IK_solver)
 
-        rospy.loginfo("Creating simple planning interface...")
-
-        self.planner = SimplePlanning(self.robot,base_link,end_link,
-            self.planning_group,
-            kdl_kin=self.kdl_kin,
-            joint_names=self.joint_names,
-            closed_form_IK_solver=closed_form_IK_solver)
         rospy.loginfo("Simple planning interface created successfully.")
 
     '''

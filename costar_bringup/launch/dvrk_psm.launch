@@ -13,6 +13,8 @@
   <!-- CoSTAR bringup -->
   <include file="$(find costar_bringup)/launch/utilities.launch"/>
   <include file="$(find costar_robot_manager)/launch/simple_psm_driver.launch"/>
+  <include file="$(find costar_bringup)/launch/config/dvrk.launch"/>
+
 
   <!-- Interactive Marker -->
   <node name="instructor_marker" pkg="costar_robot_manager" type="instructor_marker.py"/>

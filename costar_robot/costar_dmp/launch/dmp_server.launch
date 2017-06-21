@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node pkg="costar_dmp" name="simple_dmp_server" type="dmp_server.py" output="screen"/>
+  <node pkg="dmp" name="dmp" type="dmp_server" respawn="false" output="screen"/>
+
+</launch>
