@@ -135,9 +135,10 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
             self.selected_reference = str(self.waypoint_ui.reference_list.currentItem().text())
 
     def update_objects(self):
-        objects = []
         objects = self.manager.get_available_object_classes()
         self.waypoint_ui.object_list.clear()
+        if objects is None:
+            return
         for m in objects:
             self.waypoint_ui.object_list.addItem(QListWidgetItem(m.strip('/')))
         self.waypoint_ui.object_list.sortItems()
