@@ -16,7 +16,8 @@ git clone https://github.com/ros-industrial/robotiq.git
 git clone https://github.com/jbohren/rqt_dot.git  
 git clone https://github.com/sniekum/ar_track_alvar.git --branch $ROS_DISTRO-devel
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git
-git clone https://github.com/xqms/ur_modern_driver.git --branch thread_safety
+g
+it clone https://github.com/xqms/ur_modern_driver.git --branch thread_safety
 #git clone https://github.com/ros-planning/moveit --branch $ROS_DISTRO-devel
 #git clone https://github.com/flexible-collision-library/fcl.git
 rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO

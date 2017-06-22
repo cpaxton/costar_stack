@@ -13,6 +13,7 @@ git clone https://github.com/cpaxton/costar_stack.git
 git clone https://github.com/SalvoVirga/iiwa_stack.git  
 git clone https://github.com/ros-industrial/robotiq.git  
 git clone https://github.com/jbohren/rqt_dot.git  
+git clone https://github.com/cpaxton/dmp.git --branch indigo
 git clone https://github.com/sniekum/ar_track_alvar.git --branch indigo-devel 
 git clone https://github.com/sniekum/ar_track_alvar_msgs.git
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git
