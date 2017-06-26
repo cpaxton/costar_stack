@@ -146,6 +146,8 @@ void FeedbackDataForcesGenerator::setSceneData(PointCloudXYZPtr scene_data)
 	{
 		this->have_scene_data_ = true;
 		this->scene_data_ = scene_data;
+		// make a new scene data tree to ensure safer variable deletion
+		scene_data_tree_ = pcl::KdTreeFLANN<pcl::PointXYZ>();
 		this->scene_data_tree_.setInputCloud(scene_data);
 		// pcl::io::savePCDFile("scene_data.pcd",*scene_data,true);
 	}
@@ -304,6 +306,15 @@ double FeedbackDataForcesGenerator::getIcpConfidenceResult(const PointCloudXYZPt
 	return double(nearest_point_correspondence_cloud->size())/icp_result->size();
 }
 
+PointCloudXYZPtr FeedbackDataForcesGenerator::getTransformedObjectCloud(const std::string &model_name, const btTransform &object_real_pose) const
+{
+	Eigen::Transform <float,3,Eigen::Affine > object_pose_eigen = convertBulletToEigenTransform<float>(object_real_pose);
+	PointCloudXYZPtr transformed_object_mesh_cloud (new PointCloudXYZ);
+	pcl::transformPointCloud(*(getContentOfConstantMap(model_name,model_cloud_map_)),
+		*transformed_object_mesh_cloud, object_pose_eigen);
+	return transformed_object_mesh_cloud;
+}
+
 PointCloudXYZPtr FeedbackDataForcesGenerator::getTransformedObjectCloud(const btRigidBody &object, 
 		const std::string &model_name) const
 {
@@ -322,10 +333,5 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::getTransformedObjectCloud(const bt
 	const std::string &model_name, btTransform &object_real_pose) const
 {
 	object_real_pose = rescaleTransformFromPhysicsEngine(object_pose);
-	Eigen::Transform <float,3,Eigen::Affine > object_pose_eigen = convertBulletToEigenTransform<float>(object_real_pose);
-	PointCloudXYZPtr transformed_object_mesh_cloud (new PointCloudXYZ);
-	pcl::transformPointCloud(*(getContentOfConstantMap(model_name,model_cloud_map_)),
-		*transformed_object_mesh_cloud, object_pose_eigen);
-	return transformed_object_mesh_cloud;
+	return getTransformedObjectCloud(model_name, object_real_pose);
 }
-

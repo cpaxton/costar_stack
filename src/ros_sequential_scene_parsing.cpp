@@ -119,12 +119,15 @@ void RosSceneHypothesisAssessor::addBackground(const sensor_msgs::PointCloud2 &p
 
 void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
 {
+	std::cerr << "Adding scene points.\n";
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 	pcl::fromROSMsg(pc, *cloud);
 	if (!cloud->empty())
 	{
 		this->has_scene_cloud_ = true;
+		this->mtx_.lock();
 		this->ros_scene_.addScenePointCloud(cloud);
+		this->mtx_.unlock();
 	}
 	else
 	{
@@ -206,11 +209,11 @@ void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_
 		// Do nothing if gravity has not been set and the direction cannot be found
 	}
 
+	this->mtx_.lock();
 	this->ros_scene_.addNewObjectTransforms(objects);
 	this->ros_scene_.setObjectSymmetryMap(object_symmetry_map);
 	std::cerr << "Getting corrected object transform...\n";
 	std::map<std::string, ObjectParameter> object_transforms = this->ros_scene_.getCorrectedObjectTransform();
-	this->mtx_.lock();
 	this->updateTfFromObjTransformMap(object_transforms);
 	this->mtx_.unlock();
 	
@@ -299,6 +302,7 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		}
 		object_hypotheses_map[object_tf_name] = std::make_pair(object_model_name,object_pose_hypotheses);
 	}
+	this->mtx_.lock();
 	this->ros_scene_.setObjectHypothesesMap(object_hypotheses_map);
 
 	while (!this->has_scene_cloud_)
@@ -306,9 +310,8 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		std::cerr << "Waiting for input scene point cloud.\n";
 		ros::Duration(0.5).sleep();
 	}
-
+	
 	this->ros_scene_.evaluateAllObjectHypothesisProbability();
-	this->mtx_.lock();
 	this->updateTfFromObjTransformMap(this->ros_scene_.getCorrectedObjectTransformFromSceneGraph());
 	this->mtx_.unlock();
 }

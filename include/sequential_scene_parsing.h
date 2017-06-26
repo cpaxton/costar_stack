@@ -94,7 +94,7 @@ private:
 	// std::vector<SceneSupportGraph> scene_support_graph_;
 	std::map<std::string, vertex_t> vertex_map_;
 
-	ObjRecRANSACTool data_probability_check_;
+	// ObjRecRANSACTool data_probability_check_;
 
 	std::map<std::string, std::string> object_label_class_map;
 	std::string background_label_;

@@ -153,12 +153,15 @@ void SceneHypothesisAssessor::addScenePointCloud(ImagePtr scene_image)
 	{
 		std::cerr << "Error, input scene cloud is empty.\n";
 	}
-	
+	seq_mtx_.lock();
 	pcl::PointCloud<pcl::PointXYZ>::Ptr point_coordinates_only(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::copyPointCloud(*scene_image, *point_coordinates_only);
-	data_probability_check_.setPointCloudData(point_coordinates_only);
+	// data_probability_check_.setPointCloudData(point_coordinates_only);
 	data_forces_generator_.setSceneData(point_coordinates_only);
 	sequential_scene_hypothesis_.setConfidenceCheckTool(data_forces_generator_);
+	sequential_scene_hypothesis_.setSceneData(point_coordinates_only);
+	std::cerr << "Scene point cloud has been updated.\n";
+	seq_mtx_.unlock();
 }
 
 void SceneHypothesisAssessor::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
@@ -223,7 +226,7 @@ bool SceneHypothesisAssessor::loadObjectModels(const std::string &input_model_di
 
 	    for (std::vector<std::string>::const_iterator it = object_names.begin(); it != object_names.end(); ++it)
 	    {
-	    	data_probability_check_.addModelFromPath(model_path + *it, *it);
+	    	// data_probability_check_.addModelFromPath(model_path + *it, *it);
 	    	
 	    	std::stringstream ss;
 	    	ss << model_path << *it << ".pcd";

@@ -63,7 +63,18 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 		background_convex.addPoint(*it, true);
 		plane_center+= *it;
 	}
-	background_convex.setMargin(1); // 1 mm rescaled to 0.01 mm
+
+	btVector3 plane_normal_direction = plane_normal.normalized();
+	// add extra points with extruded position to thicken the table convex hull
+	for (std::vector<btVector3>::const_iterator it = plane_points.begin(); it != plane_points.end(); ++it)
+	{
+		btVector3 tmp = *it - plane_normal_direction * 5; // 5 cm 
+		// add a point to the convex hull then recalculate the AABB
+		background_convex.addPoint(tmp, true);
+	}
+
+
+	background_convex.setMargin(1); // 1 unit is equivalent rescaled to 0.01 meters in real world unit
 
 	plane_center /= plane_points.size();
 	// since everything is in reference to camera coordinate, camera coordinate is 0,0,0
@@ -203,7 +214,6 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 		this->object_best_pose_from_data_[it->getID()] = it->getTransform();
 		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's world.\n";
 		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
-
 		// set the name of the object in the collision object
 		std::string * object_name = new std::string(it->getID());
 		this->rigid_body_[it->getID()]->setUserPointer(object_name);
@@ -280,10 +290,12 @@ void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, c
 {
 	int number_of_world_tick_to_step = delta_time / simulation_step;
 	mtx_.lock();
+
 	this->skip_scene_evaluation_ = true;
 	// this->in_simulation_ = true;
 	this->world_tick_counter_ = 0;
 	mtx_.unlock();
+
 	for (int i = 0; i < number_of_world_tick_to_step; i++)
 	{
 		m_dynamicsWorld->stepSimulation(simulation_step, 1, 1./60);
