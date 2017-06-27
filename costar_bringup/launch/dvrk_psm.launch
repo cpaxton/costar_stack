@@ -19,4 +19,7 @@
   <!-- Interactive Marker -->
   <node name="instructor_marker" pkg="costar_robot_manager" type="instructor_marker.py"/>
 
+  <!-- Gripper -->
+  <node name= "simple_psm_gripper" pkg="gripper_dvrk" type="psm_gripper.py" />
+
 </launch>
