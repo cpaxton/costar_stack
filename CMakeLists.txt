@@ -108,6 +108,10 @@ add_executable(load_and_pub_pcd src/publish_pcd_to_ros.cpp)
 
 ## Tool for creating bullet collision object from obj files
 target_link_libraries(
+ objConvexDecomposition ${BULLET_LIBRARIES} ConvexDecomposition HACD BulletWorldImporter BulletFileLoader
+)
+
+target_link_libraries(
  obj_main_decomposition objConvexDecomposition
 )
 
@@ -115,10 +119,6 @@ target_link_libraries(
 
 target_link_libraries(
  OpenGLSupport ${BULLET_LIBRARIES}  ${GLUT_glut_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY}
-)
-
-target_link_libraries(
- objConvexDecomposition ${BULLET_LIBRARIES} ConvexDecomposition HACD
 )
 
 target_link_libraries(
