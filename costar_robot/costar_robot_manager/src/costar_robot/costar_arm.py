@@ -193,7 +193,8 @@ class CostarArm(CostarComponent):
 
         has_gripper = rospy.get_param(os.path.join(self.namespace, "robot", "has_gripper"))
         has_planning_scene = rospy.get_param(os.path.join(self.namespace, "robot", "has_planning_scene")) 
-
+        #print has_planning_scene, os.path.join(self.namespace, "robot", "has_planning_scene")
+        
         if has_gripper:
           self.gripper_close = self.make_service_proxy('gripper/close',EmptyService)
           self.gripper_open = self.make_service_proxy('gripper/open',EmptyService)
@@ -602,6 +603,7 @@ class CostarArm(CostarComponent):
     '''
     # TODO: Modify this part
     def handle_tick(self):
+        #print "tick"
         br = tf.TransformBroadcaster()
         br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
         if not self.base_link == "base_link":

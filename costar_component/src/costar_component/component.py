@@ -23,9 +23,9 @@ class CostarComponent(object):
       service_name = os.path.join(self.namespace, name)
     else:
       service_name = name
-    rospy.logerr("Connecting to service with name: %s"%service_name)
+    rospy.loginfo("Connecting to service with name: %s"%service_name)
     rospy.wait_for_service(service_name)
-    rospy.logerr("Connected to service successfully.")
+    rospy.loginfo("Connected to service successfully.")
     return rospy.ServiceProxy(service_name,srv_t)
 
   def __init__(self, name, namespace):
