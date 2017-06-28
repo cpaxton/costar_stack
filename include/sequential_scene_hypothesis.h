@@ -168,7 +168,7 @@ private:
 	Eigen::MatrixXd generate2dMatrixFromPixelCoordinate(const Eigen::MatrixXd &pixel_matrix);
 
 	// deciding object removal status as Support Retained/Ephemeral/Removed Object
-	int updateRemovedObjectStatus(const std::string &model_name, const btTransform &object_pose);
+	int updateRemovedObjectStatus(const std::string &object_name, const std::string &model_name, const btTransform &object_pose);
 	bool checkObjectVisible(const std::string &model_name, const btTransform &object_pose);
 	bool checkObjectObstruction(const std::string &model_name, const btTransform &object_pose);
 	bool checkObjectReplaced(const std::string &model_name, const btTransform &object_pose);

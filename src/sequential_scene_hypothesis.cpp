@@ -12,7 +12,7 @@ SceneObservation::SceneObservation(const SceneHypothesis &final_scene_hypothesis
 }
 
 SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1),
-	max_static_object_translation_(0.003), max_static_object_rotation_(2.5)
+	max_static_object_translation_(0.0075), max_static_object_rotation_(5.)
 {
 	// These action implies these objects are not present in previous scene
 	num_of_hypotheses_to_add_each_action_[INVALID_ACTION] = 0;
@@ -78,7 +78,6 @@ void SequentialSceneHypothesis::setSceneData(pcl::PointCloud<pcl::PointXYZ>::Ptr
 	this->scene_point_cloud_ = scene_point_cloud;
 	// backproject point cloud to image
 	Eigen::MatrixXd pixel_matrix = backprojectCloudtoPixelCoordinate(scene_point_cloud);
-	this->scene_image_pixel_ = Eigen::MatrixXd::Zero(640,480);
 	this->scene_image_pixel_ = generate2dMatrixFromPixelCoordinate(pixel_matrix);
 }
 
@@ -92,8 +91,8 @@ Eigen::MatrixXd SequentialSceneHypothesis::generate2dMatrixFromPixelCoordinate(c
 		int y = pixel_matrix(1,idx);
 		const double &z = pixel_matrix(2,idx);
 
-		double &current_pixel_value = this->scene_image_pixel_(x,y);
-		if (current_pixel_value != 0 && current_pixel_value < z) continue;
+		double &current_pixel_value = result(x,y);
+		if (z == 0 || current_pixel_value != 0 && current_pixel_value < z) continue;
 		current_pixel_value = z;
 	}
 	return result;
@@ -127,16 +126,25 @@ Eigen::MatrixXd SequentialSceneHypothesis::backprojectCloudtoPixelCoordinate(pcl
 	return result_pixel_matrix;
 }
 
-int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &model_name, const btTransform &object_pose)
+int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &object_name,
+	const std::string &model_name, const btTransform &object_pose)
 {
 	enum objectRemovedStatus{REMOVED, NOT_REMOVED, EPHEMERAL};
 
 	bool object_visible = checkObjectVisible(model_name,object_pose);
-	if (object_visible) return NOT_REMOVED;
-
+	std::cerr << object_name;
+	if (object_visible)
+	{
+		std::cerr << " is visible, thus it will not be removed.\n";
+		return NOT_REMOVED;
+	}
 	bool object_obstructed = checkObjectObstruction(model_name,object_pose);
 	
-	if (!object_obstructed) return REMOVED;
+	if (!object_obstructed)
+	{
+		std::cerr << object_name << " is not obstructed, but also not visible, thus it will be removed.\n";
+		return REMOVED;
+	}
 
 	bool object_replaced = checkObjectReplaced(model_name,object_pose);
 	if (!object_replaced) return EPHEMERAL;
@@ -151,7 +159,8 @@ bool SequentialSceneHypothesis::checkObjectVisible(const std::string &model_name
 
 bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_name, const btTransform &object_pose)
 {
-	pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud = this->data_probability_check_->getTransformedObjectCloud(model_name,object_pose);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud = this->data_probability_check_->getTransformedObjectCloud(model_name,
+		rescaleTransformFromPhysicsEngine(object_pose));
 	Eigen::MatrixXd backprojected_object_cloud = backprojectCloudtoPixelCoordinate(model_cloud);
 	Eigen::MatrixXd object_image_matrix = generate2dMatrixFromPixelCoordinate(backprojected_object_cloud);
 	
@@ -163,15 +172,15 @@ bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_
 		int y = backprojected_object_cloud(1,idx);
 		const double &z = object_image_matrix(x,y);
 		
-		// TODO: make the backprojection into image instead of this
-
 		// tolerance 1e-4 for obstruction
-		if (this->scene_image_pixel_(x,y) > 0 && this->scene_image_pixel_(x,y) + 1e-4 < z)
+		if (this->scene_image_pixel_(x,y) > 0 && this->scene_image_pixel_(x,y) < z)
 		{
 			++num_point_obstructed;
 		}
 	}
-	return num_point_obstructed > 0.95*model_cloud->size();
+
+	std::cerr << " number of obstructed points: " << num_point_obstructed << "/" << model_cloud->size() << std::endl;
+	return num_point_obstructed > 0.5 * model_cloud->size();
 }
 
 bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &model_name, const btTransform &object_pose)
@@ -337,9 +346,11 @@ SceneChanges SequentialSceneHypothesis::findChanges()
 			vertex_t &prev_vertex = prev_vertex_map[it->first];
 			const btTransform &previous_pose = previous_best_scene_hypothesis.scene_support_graph_[prev_vertex].object_pose_;
 			btScalar orientation_change = cur_pose.getRotation().angleShortestPath(previous_pose.getRotation());
-			btScalar translation_change = cur_pose.getOrigin().distance(previous_pose.getOrigin());
+			btScalar translation_change = cur_pose.getOrigin().distance(previous_pose.getOrigin())/SCALING;
 			if (orientation_change > max_static_object_rotation_ || translation_change > max_static_object_translation_)
 			{
+				std::cerr << it->first << " is perturbed with " << translation_change*100 << "cm and " 
+						  << orientation_change * 180. / boost::math::constants::pi<double>() << " degrees.\n";
 				result.perturbed_objects_.push_back(it->first);
 			}
 			else
@@ -400,7 +411,7 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 			vertex_t &observed_removed_vertex = prev_vertex_map[*it];
 			const btTransform &transform = previous_best_scene_graph[observed_removed_vertex].object_pose_;
 
-			int removed_status = updateRemovedObjectStatus(object_label_class_map[*it],transform);
+			int removed_status = updateRemovedObjectStatus(*it,object_label_class_map[*it],transform);
 			switch(removed_status)
 			{
 				case 0: // object is removed

@@ -22,13 +22,13 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
 	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
 	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant);
 	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
-    
-    // unmovable ground object
-    btRigidBody::btRigidBodyConstructionInfo
-            background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
-    
-    this->background_ = new btRigidBody(background_RigidBodyCI);
-    m_dynamicsWorld->addRigidBody(this->background_);
+	
+	// unmovable ground object
+	btRigidBody::btRigidBodyConstructionInfo
+			background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
+	
+	this->background_ = new btRigidBody(background_RigidBodyCI);
+	m_dynamicsWorld->addRigidBody(this->background_);
 	this->background_->setFriction(1.f);
 	this->background_->setRollingFriction(1.f);
 	this->have_background_ = true;
@@ -40,7 +40,7 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
 	this->background_surface_normal_ = plane_normal;
 	if (this->use_background_normal_as_gravity_)
 		this->setGravityVectorDirection(-background_surface_normal_);
-    m_collisionShapes.push_back(background);
+	m_collisionShapes.push_back(background);
 
 	// set the background name
 	std::string * background_name = new std::string("background");
@@ -57,24 +57,27 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 	btVector3 plane_center(0,0,0);
 
 	btConvexHullShape background_convex;
+	btScalar hull_margin = 0.02 * SCALING;
+	btVector3 plane_normal_direction = plane_normal.normalized();
+
 	for (std::vector<btVector3>::const_iterator it = plane_points.begin(); it != plane_points.end(); ++it)
 	{
 		// add a point to the convex hull then recalculate the AABB
-		background_convex.addPoint(*it, true);
+		btVector3 tmp = *it - plane_normal_direction * hull_margin; // 5 cm 
+		background_convex.addPoint(tmp, true);
 		plane_center+= *it;
 	}
 
-	btVector3 plane_normal_direction = plane_normal.normalized();
+#if 0
 	// add extra points with extruded position to thicken the table convex hull
 	for (std::vector<btVector3>::const_iterator it = plane_points.begin(); it != plane_points.end(); ++it)
 	{
-		btVector3 tmp = *it - plane_normal_direction * 5; // 5 cm 
+		btVector3 tmp = *it - plane_normal_direction * 0.05 * SCALING; // 5 cm 
 		// add a point to the convex hull then recalculate the AABB
 		background_convex.addPoint(tmp, true);
 	}
-
-
-	background_convex.setMargin(1); // 1 unit is equivalent rescaled to 0.01 meters in real world unit
+#endif
+	background_convex.setMargin(hull_margin); // 1 unit is equivalent rescaled to 1/SCALING meters in real world unit
 
 	plane_center /= plane_points.size();
 	// since everything is in reference to camera coordinate, camera coordinate is 0,0,0
@@ -116,7 +119,7 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 	std::string * background_name = new std::string("background");
 	this->background_->setUserPointer(background_name);
 
-    m_collisionShapes.push_back(background);
+	m_collisionShapes.push_back(background);
 
 	mtx_.unlock();
 
@@ -363,10 +366,10 @@ std::map<std::string, btTransform> PhysicsEngine::getAssociatedBestPoseDataFromS
 {
 	std::map<std::string, btTransform> result;
 	for (std::vector<std::string>::const_iterator it = input.begin(); it != input.end(); ++it)
-    {
-        result[*it] = this->object_best_pose_from_data_[*it];
-    }
-    return result;
+	{
+		result[*it] = this->object_best_pose_from_data_[*it];
+	}
+	return result;
 }
 
 bool PhysicsEngine::checkSteadyState()
@@ -613,7 +616,8 @@ void PhysicsEngine::setCameraPositionAndTarget(btVector3 cam_position, btVector3
 	this->m_cameraPosition = cam_position;
 	this->m_cameraTargetPosition = cam_target;
 	m_cameraDistance = m_cameraTargetPosition.distance(m_cameraPosition);
-	
+	m_zoomStepSize = 0.05 * m_cameraDistance;
+
 	// calculate polar coordinate of the camera
 	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalize();
 	this->m_ele = 90 - acos(target_to_cam_direction[1]) * 57.29577951308232;
@@ -628,15 +632,15 @@ void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenalty
 void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 	mtx_.lock();
 	++world_tick_counter_;
-    this->cacheObjectVelocities(timeStep);
-    // std::cerr << world_tick_counter_ << " " << this->number_of_world_tick_ << std::endl;
+	this->cacheObjectVelocities(timeStep);
+	// std::cerr << world_tick_counter_ << " " << this->number_of_world_tick_ << std::endl;
 
 	// calculate the scene analysis here
-    if ( !skip_scene_evaluation_ &&
-    	 (world_tick_counter_ >= this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
-    	)
-    {
-	    scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
+	if ( !skip_scene_evaluation_ &&
+		 (world_tick_counter_ >= this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
+		)
+	{
+		scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
 		// put the stability penalty into the scene graph
 		for (std::map<std::string, vertex_t>::const_iterator it = vertex_map_.begin(); it != this->vertex_map_.end(); ++it)
 		{
@@ -664,7 +668,7 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 				}
 			}
 		}
-    }
+	}
 	mtx_.unlock();
 }
 
@@ -762,8 +766,8 @@ btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id) 
 
 void PhysicsEngine::applyDataForces()
 {
-    // calculate data feedback forces to apply
-    for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+	// calculate data feedback forces to apply
+	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
 		if (it->second->getActivationState() != ISLAND_SLEEPING)

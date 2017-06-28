@@ -59,6 +59,9 @@ private:
 	bool has_background_;
 	bool has_scene_cloud_;
 
+	bool scene_cloud_updated_;
+	bool object_list_updated_;
+
 	// Background mode: 0 = BACKGROUND_PLANE, 1 = BACKGROUND_HULL, 2 = BACKGROUND_MESH
 	int background_mode_;
 	ros::Subscriber detected_object_sub;

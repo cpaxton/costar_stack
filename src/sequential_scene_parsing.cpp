@@ -220,17 +220,17 @@ bool SceneHypothesisAssessor::loadObjectModels(const std::string &input_model_di
 	bool result = boost::filesystem::is_directory(input_model_directory_path);
 	if (result)
 	{
-	    std::string model_path = input_model_directory_path;
-	    if (*model_path.rbegin() != '/')
-	        model_path += "/";
+		std::string model_path = input_model_directory_path;
+		if (*model_path.rbegin() != '/')
+			model_path += "/";
 
-	    for (std::vector<std::string>::const_iterator it = object_names.begin(); it != object_names.end(); ++it)
-	    {
-	    	// data_probability_check_.addModelFromPath(model_path + *it, *it);
-	    	
-	    	std::stringstream ss;
-	    	ss << model_path << *it << ".pcd";
-	    	pcl::PCDReader reader;
+		for (std::vector<std::string>::const_iterator it = object_names.begin(); it != object_names.end(); ++it)
+		{
+			// data_probability_check_.addModelFromPath(model_path + *it, *it);
+			
+			std::stringstream ss;
+			ss << model_path << *it << ".pcd";
+			pcl::PCDReader reader;
 			pcl::PointCloud<pcl::PointXYZ>::Ptr surface_cloud(new pcl::PointCloud<pcl::PointXYZ>());
 			if (reader.read(ss.str(),*surface_cloud) == 0){
 				data_forces_generator_.setModelCloud(surface_cloud, *it);
@@ -238,7 +238,7 @@ bool SceneHypothesisAssessor::loadObjectModels(const std::string &input_model_di
 			}
 			else
 				std::cerr << "Failed to load " << *it << " model point cloud\n"; 
-	    }
+		}
 
 		std::cerr << "Done.\n";
 		return true;

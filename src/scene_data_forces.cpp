@@ -102,7 +102,7 @@ double FeedbackDataForcesGenerator::getIcpConfidenceResult(const std::string &mo
 	}
 	else
 	{
-		std::cerr << "ERROR, model name " << model_name << " does not exist in the database.\n";
+		std::cerr << "ERROR, model name '" << model_name << "' does not exist in the database.\n";
 		return 0;
 	}
 }
