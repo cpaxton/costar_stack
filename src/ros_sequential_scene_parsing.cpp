@@ -307,7 +307,7 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		const objrec_hypothesis_msgs::ModelHypothesis &model_hypo = detected_object_hypotheses.all_hypothesis[i];
 		const std::string &object_tf_name = model_hypo.tf_name;
 		const std::string &object_model_name = model_hypo.model_name;
-		std::cerr << "Object " << object_tf_name << " hypotheses size:"
+		std::cerr << "Object '" << object_model_name << "' with id: " << object_tf_name << " hypotheses size:"
 			<< model_hypo.model_hypothesis.size() << ".\n";
 		std::vector<btTransform> object_pose_hypotheses;
 		object_pose_hypotheses.reserve(model_hypo.model_hypothesis.size());

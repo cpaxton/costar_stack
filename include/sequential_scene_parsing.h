@@ -25,7 +25,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <Eigen/Geometry>
 
-#include "ObjRecRANSACTool/ObjRecRANSACTool.h"
+// #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
 #include "symmetric_orientation_realignment.h"
 #include "utility.h"
 #include "typedef.h"

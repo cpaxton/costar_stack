@@ -170,7 +170,7 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
 	SceneSupportGraph scene_support_graph;
     vertex_map.clear();
 
-    double dTime_times_gravity = time_step * GRAVITY_MAGNITUDE * SCALING;
+    double dTime_times_gravity = time_step * SCALED_GRAVITY_MAGNITUDE;
     for (std::size_t i = 0; i < world->getNumCollisionObjects(); i++)
     {
         scene_support_vertex_properties new_vertex_property;

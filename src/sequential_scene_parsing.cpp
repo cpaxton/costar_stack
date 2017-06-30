@@ -169,7 +169,9 @@ void SceneHypothesisAssessor::addNewObjectTransforms(const std::vector<ObjectWit
 	// TODO:: Only permanently remove rigid bodies that are removed by sequential_scene_hypothesis
 	this->physics_engine_->resetObjects(false);
 	// object_label_.reserve(objects.size());
-	object_label_class_map.clear();
+	
+	// do not delete the label class map
+	// object_label_class_map.clear();
 	for (std::vector<ObjectWithID>::const_iterator it = objects.begin(); it != objects.end(); ++it)
 	{
 		object_label_class_map[it->getID()] = it->getObjectClass();

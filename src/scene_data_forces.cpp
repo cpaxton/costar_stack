@@ -164,7 +164,7 @@ void FeedbackDataForcesGenerator::setModelCloud(const PointCloudXYZPtr mesh_surf
 	if (mesh_surface_sampled_cloud->size() > 0)
 	{
 		this->model_cloud_map_[model_name] =  mesh_surface_sampled_cloud;
-		this->gravity_force_per_point_[model_name] = GRAVITY_MAGNITUDE * SCALING / mesh_surface_sampled_cloud->size();
+		this->gravity_force_per_point_[model_name] = SCALED_GRAVITY_MAGNITUDE / mesh_surface_sampled_cloud->size();
 	}
 	else
 	{
@@ -310,8 +310,15 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::getTransformedObjectCloud(const st
 {
 	Eigen::Transform <float,3,Eigen::Affine > object_pose_eigen = convertBulletToEigenTransform<float>(object_real_pose);
 	PointCloudXYZPtr transformed_object_mesh_cloud (new PointCloudXYZ);
-	pcl::transformPointCloud(*(getContentOfConstantMap(model_name,model_cloud_map_)),
-		*transformed_object_mesh_cloud, object_pose_eigen);
+	if (keyExistInConstantMap(model_name,model_cloud_map_))
+	{
+		pcl::transformPointCloud(*(getContentOfConstantMap(model_name,model_cloud_map_)),
+			*transformed_object_mesh_cloud, object_pose_eigen);
+	}
+	else
+	{
+		std::cerr << "ERROR, model name '" << model_name << "' does not exist in the database. Fail to transform the object cloud.\n";
+	}
 	return transformed_object_mesh_cloud;
 }
 

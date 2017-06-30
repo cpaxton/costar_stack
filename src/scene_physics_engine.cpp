@@ -187,7 +187,7 @@ void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transf
 void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 {
 	if (this->debug_messages_) std::cerr << "Setting physics engine gravity vector.\n";
-	this->gravity_vector_ = gravity / gravity.norm() * GRAVITY_MAGNITUDE * SCALING;
+	this->gravity_vector_ = gravity / gravity.norm() * SCALED_GRAVITY_MAGNITUDE;
 	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_vector_[0] << ", "
 		<< gravity_vector_[1] << ", " 
 		<< gravity_vector_[2] << std::endl;

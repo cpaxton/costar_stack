@@ -20,7 +20,7 @@ SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probabilit
 	num_of_hypotheses_to_add_each_action_[REMOVE_OBJECT] = 0;
 
 	num_of_hypotheses_to_add_each_action_[PERTURB_OBJECT] = 10;
-	num_of_hypotheses_to_add_each_action_[STATIC_OBJECT] = 5;
+	num_of_hypotheses_to_add_each_action_[STATIC_OBJECT] = 3;
 	num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT] = 10;
 	max_static_object_rotation_ *= boost::math::constants::pi<double>()/180.;
 
@@ -138,6 +138,11 @@ int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &obje
 		std::cerr << " is visible, thus it will not be removed.\n";
 		return NOT_REMOVED;
 	}
+	else
+	{
+		std::cerr << " is not visible,";
+	}
+
 	bool object_obstructed = checkObjectObstruction(model_name,object_pose);
 	
 	if (!object_obstructed)
@@ -161,6 +166,11 @@ bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud = this->data_probability_check_->getTransformedObjectCloud(model_name,
 		rescaleTransformFromPhysicsEngine(object_pose));
+	if (model_cloud->size() == 0)
+	{
+		std::cerr << " has invalid object model name input:'" << model_name << "'\n. Fail to check occlusion.\n";
+		return false;
+	}
 	Eigen::MatrixXd backprojected_object_cloud = backprojectCloudtoPixelCoordinate(model_cloud);
 	Eigen::MatrixXd object_image_matrix = generate2dMatrixFromPixelCoordinate(backprojected_object_cloud);
 	

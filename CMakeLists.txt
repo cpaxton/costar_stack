@@ -30,7 +30,14 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   costar_objrec_msgs
   objrec_hypothesis_msgs
+  std_msgs message_generation
 )
+
+add_service_files(
+  FILES hypothesis_request.srv
+)
+
+generate_messages( DEPENDENCIES std_msgs )
 
 catkin_package(
 #  INCLUDE_DIRS include
