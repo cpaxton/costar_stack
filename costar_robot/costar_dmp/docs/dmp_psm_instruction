@@ -4,7 +4,7 @@ roslaunch costar_dmp dmp_server.launch
 
 > Note: now switch instructor to SERVO mode
 
-rosservice call costar/dmp/start_rec '/PSM1_psm_base_link'
+rosservice call costar/dmp/start_rec '/PSM2_psm_base_link'
 
 > Note: now servo psm around to collect a trajectory
 

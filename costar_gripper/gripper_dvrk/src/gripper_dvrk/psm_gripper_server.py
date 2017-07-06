@@ -42,7 +42,7 @@ class SimplePSMGripperServer(CostarGripper):
 
 	def __init__(self,ns="/costar/gripper",verbose=False):
 
-		self.dvrk_arm = dvrk.psm('PSM1')
+		self.dvrk_arm = dvrk.psm('PSM2')
 		self.psm_initialized = False
 
 		super(SimplePSMGripperServer, self).__init__(

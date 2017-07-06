@@ -3,7 +3,7 @@
   <!-- dvrk bringup -->
   <arg name="arm" default="PSM2"/>
   <arg name="cisst_root" default="$(env HOME)/catkin_ws/src/cisst-saw"/>
-  <arg name="psm_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/console-PSM2_KIN_SIMULATED.json"/>
+  <arg name="psm_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/console-PSM2.json"/>
 
   <include file="$(find dvrk_robot)/launch/dvrk_arm_rviz.launch">
     <arg name="arm" value="$(arg arm)"/>

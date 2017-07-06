@@ -39,11 +39,11 @@ class CostarPSMDriver(CostarArm):
             max_q_diff = 1e-6):
 
         # TODO: correct these
-        base_link = 'PSM1_psm_base_link'
-        end_link = 'PSM1_tool_wrist_sca_ee_link_0'
+        base_link = 'PSM2_psm_base_link'
+        end_link = 'PSM2_tool_wrist_sca_ee_link_0'
         planning_group = 'manipulator'
 
-        self.dvrk_arm = dvrk.psm('PSM1')
+        self.dvrk_arm = dvrk.psm('PSM2')
         self.psm_initialized = False
 
         rospy.Subscriber("/instructor_marker/feedback", InteractiveMarkerFeedback, self.marker_cbback)
@@ -77,7 +77,7 @@ class CostarPSMDriver(CostarArm):
         br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "/base_link",
                          self.base_link)
         br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(-1.5708, 1.5708, 0), rospy.Time.now(),
-                         "/PSM1_tool_tip_link_virtual", 'PSM1_tool_wrist_sca_ee_link_0')
+                         "/PSM2_tool_tip_link_virtual", 'PSM2_tool_wrist_sca_ee_link_0')
         # The above: add tip link with the orientation offset to represent the frame of our concern
         if self.driver_status == 'SHUTDOWN':
             pass
