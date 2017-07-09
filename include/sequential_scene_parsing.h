@@ -76,7 +76,7 @@ private:
 		const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 		const btTransform &object_pose_hypothesis, const int &object_action,const bool &reset_position);
 	double evaluateSceneProbabilityFromGraph(const std::map<std::string, int> &object_action_map);
-	void getSceneSupportGraphFromBestData(
+	void getSceneSupportGraphFromCurrentObjects(
 		std::map<std::string, bool> &object_background_support_status,
 		std::vector< std::map<std::string, btTransform> > &object_test_pose_map_by_dist,
 		std::map<std::string, map_string_transform> &object_childs_map);

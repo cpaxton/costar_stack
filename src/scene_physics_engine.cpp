@@ -242,7 +242,11 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 			this->rigid_body_[it->getID()]->setWorldTransform(it->getTransform());
 		}
 		
-		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
+		// skips object that are not in the world
+		if (!this->rigid_body_[it->getID()]->isInWorld())
+		{
+			m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
+		}
 		
 		// add the best pose from hypothesis to cached icp result
 		data_forces_generator_->manualSetCachedIcpResultMapFromPose(
@@ -360,9 +364,9 @@ void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, 
 		else
 		{
 			if (this->debug_messages_) std::cerr << "Add object "<<  it->first <<" back to world.\n";
-			m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
 			this->rigid_body_[it->first]->setWorldTransform(it->second);
-			this->object_best_test_pose_map_[it->first] = it->second;	
+			this->object_best_test_pose_map_[it->first] = it->second;
+			if (!this->rigid_body_[it->first]->isInWorld()) m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
 		}
 	}
 	mtx_.unlock();
@@ -387,12 +391,13 @@ void PhysicsEngine::removeExistingRigidBodyWithMap(const std::map<std::string, b
 }
 
 std::map<std::string, btTransform> PhysicsEngine::getAssociatedBestPoseDataFromStringVector(
-	const std::vector<std::string> &input)
+	const std::vector<std::string> &input, bool use_best_test_data)
 {
 	std::map<std::string, btTransform> result;
 	for (std::vector<std::string>::const_iterator it = input.begin(); it != input.end(); ++it)
 	{
-		result[*it] = this->object_best_pose_from_data_[*it];
+		result[*it] = use_best_test_data ? 
+			this->object_best_test_pose_map_[*it] : this->object_best_pose_from_data_[*it];
 	}
 	return result;
 }
@@ -403,6 +408,12 @@ bool PhysicsEngine::checkSteadyState()
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		// Check if any object is still moving
 		if (it->second->getActivationState() == 1)
 		{
@@ -413,17 +424,30 @@ bool PhysicsEngine::checkSteadyState()
 	return steady_state;
 }
 
-std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
+std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPoses()
 {
 	if (this->debug_messages_) std::cerr << "Getting updated scene objects poses.\n";
 	// Run simulation to get an update on object poses
 	this->simulate();
 
+	return this->getCurrentObjectPoses();
+}
+
+std::map<std::string, btTransform> PhysicsEngine::getCurrentObjectPoses()
+{
+	if (this->debug_messages_) std::cerr << "Get current object poses.\n";
 	std::map<std::string, btTransform> result_pose;
 	mtx_.lock();
+
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		it->second->getMotionState()->getWorldTransform(result_pose[it->first]);
 
 		if (this->debug_messages_)
@@ -435,7 +459,6 @@ std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
 			std::cerr << "Translation: " << t[0]  << ", " << t[1]  << ", " << t[2] << std::endl;
 		}
 	}
-	if (this->debug_messages_) std::cerr << "Done scene objects poses.\n";
 	mtx_.unlock();
 
 	return result_pose;
@@ -471,6 +494,12 @@ void PhysicsEngine::cacheObjectVelocities(const btScalar &timeStep)
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		btVector3 current_lin_vel = it->second->getLinearVelocity(),
 			current_ang_vel = it->second->getAngularVelocity();
 
@@ -707,6 +736,12 @@ void PhysicsEngine::stopAllObjectMotion()
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		// reset the forces and velocity of the objects
 		// it->second->clearForces();
 		it->second->setLinearVelocity(zero_vector);
@@ -795,10 +830,17 @@ btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id) 
 
 void PhysicsEngine::applyDataForces()
 {
+	
 	// calculate data feedback forces to apply
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		if (it->second->getActivationState() != ISLAND_SLEEPING)
 		{
 			this->data_forces_generator_->applyFeedbackForces(*(it->second),object_label_class_map_[it->first]);

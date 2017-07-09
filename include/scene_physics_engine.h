@@ -49,7 +49,8 @@ public:
 	void setGravityVectorDirection(const btVector3 &gravity);
 	void setGravityFromBackgroundNormal(const bool &input);
 	void addObjects(const std::vector<ObjectWithID> &objects);
-	std::map<std::string, btTransform>  getUpdatedObjectPose();
+	std::map<std::string, btTransform>  getUpdatedObjectPoses();
+	std::map<std::string, btTransform>  getCurrentObjectPoses();
 	void resetObjects(const bool &permanent_removal);
 
 	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
@@ -77,7 +78,7 @@ public:
     void setFeedbackDataForcesGenerator(FeedbackDataForcesGenerator *data_forces_generator);
 
     std::map<std::string, btTransform>  getAssociatedBestPoseDataFromStringVector(
-    	const std::vector<std::string> &input);
+    	const std::vector<std::string> &input, bool use_best_test_data = false);
     void removeAllRigidBodyFromWorld();
     void addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies);
     void removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies);

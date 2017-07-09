@@ -32,6 +32,11 @@ void FeedbackDataForcesGenerator::applyFeedbackForces(btRigidBody &object, const
 	{
 		std::cerr << "Cannot generate data force, since input scene cloud is not available yet.\n";
 	}
+	
+	if (percent_gravity_max_correction_ == 0.0)
+	{
+		return;
+	}
 
 	if (keyExistInConstantMap(model_name, model_cloud_map_))
 	{
@@ -247,7 +252,7 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::calculateDataForceF
 		std::cerr << "Input cloud or target cloud size is 0\n";
 		return std::pair<btVector3, btVector3>();
 	}
-
+	
 	for (int i = 0; i < max_cloud_size; i++)
 	{
 		const pcl::PointXYZ &point = input_cloud->points[i];
