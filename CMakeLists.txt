@@ -129,7 +129,11 @@ target_link_libraries(
 )
 
 target_link_libraries(
- objectDataProperty ${BULLET_LIBRARIES}  BulletWorldImporter BulletFileLoader
+ objConvexDecomposition ${BULLET_LIBRARIES} ConvexDecomposition HACD BulletWorldImporter BulletFileLoader
+)
+
+target_link_libraries(
+ objectDataProperty ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader
 )
 
 target_link_libraries(
