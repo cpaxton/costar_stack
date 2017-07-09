@@ -25,7 +25,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <Eigen/Geometry>
 
-#include "ObjRecRANSACTool/ObjRecRANSACTool.h"
+// #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
 #include "symmetric_orientation_realignment.h"
 #include "utility.h"
 #include "typedef.h"
@@ -76,7 +76,7 @@ private:
 		const std::string &object_label, const std::string &object_model_name, bool &background_support_status,
 		const btTransform &object_pose_hypothesis, const int &object_action,const bool &reset_position);
 	double evaluateSceneProbabilityFromGraph(const std::map<std::string, int> &object_action_map);
-	void getSceneSupportGraphFromBestData(
+	void getSceneSupportGraphFromCurrentObjects(
 		std::map<std::string, bool> &object_background_support_status,
 		std::vector< std::map<std::string, btTransform> > &object_test_pose_map_by_dist,
 		std::map<std::string, map_string_transform> &object_childs_map);
@@ -94,7 +94,7 @@ private:
 	// std::vector<SceneSupportGraph> scene_support_graph_;
 	std::map<std::string, vertex_t> vertex_map_;
 
-	ObjRecRANSACTool data_probability_check_;
+	// ObjRecRANSACTool data_probability_check_;
 
 	std::map<std::string, std::string> object_label_class_map;
 	std::string background_label_;

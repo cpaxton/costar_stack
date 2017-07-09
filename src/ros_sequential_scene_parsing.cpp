@@ -7,6 +7,8 @@ RosSceneHypothesisAssessor::RosSceneHypothesisAssessor()
 	this->class_ready_ = false;
 	this->physics_gravity_direction_set_ = false;
 	this->has_tf_ = false;
+	this->scene_cloud_updated_ = false;
+	this->object_list_updated_ = false;
 }
 
 RosSceneHypothesisAssessor::RosSceneHypothesisAssessor(const ros::NodeHandle &nh)
@@ -119,12 +121,16 @@ void RosSceneHypothesisAssessor::addBackground(const sensor_msgs::PointCloud2 &p
 
 void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
 {
+	std::cerr << "Adding scene points.\n";
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 	pcl::fromROSMsg(pc, *cloud);
 	if (!cloud->empty())
 	{
 		this->has_scene_cloud_ = true;
+		this->mtx_.lock();
 		this->ros_scene_.addScenePointCloud(cloud);
+		this->mtx_.unlock();
+		this->scene_cloud_updated_ = true;
 	}
 	else
 	{
@@ -134,6 +140,14 @@ void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &p
 
 void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
 {
+	while (!this->scene_cloud_updated_)
+	{
+		// wait for the scene cloud to be updated
+		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+		std::cerr << "Waiting for scene cloud update.\n";
+	}
+	this->scene_cloud_updated_ = false;
+
 	std::cerr << "Updating scene based on detected object message.\n";
 	std::vector<ObjectWithID> objects;
 	// allocate memory for all objects
@@ -206,16 +220,18 @@ void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_
 		// Do nothing if gravity has not been set and the direction cannot be found
 	}
 
+	this->mtx_.lock();
 	this->ros_scene_.addNewObjectTransforms(objects);
 	this->ros_scene_.setObjectSymmetryMap(object_symmetry_map);
 	std::cerr << "Getting corrected object transform...\n";
 	std::map<std::string, ObjectParameter> object_transforms = this->ros_scene_.getCorrectedObjectTransform();
-	this->mtx_.lock();
 	this->updateTfFromObjTransformMap(object_transforms);
 	this->mtx_.unlock();
 	
 	this->has_tf_ = true;
 	this->publishTf();
+
+	this->object_list_updated_ = true;
 
 	std::cerr << "Published tf with parent frame: "<< this->parent_frame_ << "\n";
 	std::cerr << "Done. Waiting for new detected object message...\n";
@@ -277,6 +293,13 @@ bool RosSceneHypothesisAssessor::fillObjectPropertyDatabase()
 
 void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses)
 {
+	while (!this->object_list_updated_)
+	{
+		// wait for the scene cloud to be updated
+		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+		std::cerr << "Waiting for object list update.\n";
+	}
+	this->object_list_updated_ = false;
 	std::cerr << "Received input hypotheses list.\n";
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map;
 	for (unsigned int i = 0; i < detected_object_hypotheses.all_hypothesis.size(); i++)
@@ -284,7 +307,7 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		const objrec_hypothesis_msgs::ModelHypothesis &model_hypo = detected_object_hypotheses.all_hypothesis[i];
 		const std::string &object_tf_name = model_hypo.tf_name;
 		const std::string &object_model_name = model_hypo.model_name;
-		std::cerr << "Object " << object_tf_name << " hypotheses size:"
+		std::cerr << "Object '" << object_model_name << "' with id: " << object_tf_name << " hypotheses size:"
 			<< model_hypo.model_hypothesis.size() << ".\n";
 		std::vector<btTransform> object_pose_hypotheses;
 		object_pose_hypotheses.reserve(model_hypo.model_hypothesis.size());
@@ -299,6 +322,7 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		}
 		object_hypotheses_map[object_tf_name] = std::make_pair(object_model_name,object_pose_hypotheses);
 	}
+	this->mtx_.lock();
 	this->ros_scene_.setObjectHypothesesMap(object_hypotheses_map);
 
 	while (!this->has_scene_cloud_)
@@ -306,9 +330,8 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		std::cerr << "Waiting for input scene point cloud.\n";
 		ros::Duration(0.5).sleep();
 	}
-
+	
 	this->ros_scene_.evaluateAllObjectHypothesisProbability();
-	this->mtx_.lock();
 	this->updateTfFromObjTransformMap(this->ros_scene_.getCorrectedObjectTransformFromSceneGraph());
 	this->mtx_.unlock();
 }

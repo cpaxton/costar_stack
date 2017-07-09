@@ -12,7 +12,7 @@ SceneObservation::SceneObservation(const SceneHypothesis &final_scene_hypothesis
 }
 
 SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1),
-	max_static_object_translation_(0.003), max_static_object_rotation_(2.5)
+	max_static_object_translation_(0.0075), max_static_object_rotation_(5.)
 {
 	// These action implies these objects are not present in previous scene
 	num_of_hypotheses_to_add_each_action_[INVALID_ACTION] = 0;
@@ -20,9 +20,12 @@ SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probabilit
 	num_of_hypotheses_to_add_each_action_[REMOVE_OBJECT] = 0;
 
 	num_of_hypotheses_to_add_each_action_[PERTURB_OBJECT] = 10;
-	num_of_hypotheses_to_add_each_action_[STATIC_OBJECT] = 5;
+	num_of_hypotheses_to_add_each_action_[STATIC_OBJECT] = 3;
 	num_of_hypotheses_to_add_each_action_[SUPPORT_RETAINED_OBJECT] = 10;
 	max_static_object_rotation_ *= boost::math::constants::pi<double>()/180.;
+
+	// default kinect intrinsic parameter
+	this->setCameraMatrix(554.254691191187,554.254691191187,320.5,240.5);
 }
 
 void SequentialSceneHypothesis::setCurrentDataSceneStructure(
@@ -52,6 +55,151 @@ void SequentialSceneHypothesis::setStaticObjectThreshold(const double &translati
 	max_static_object_translation_ = translation_meter;
 	max_static_object_rotation_ = rotation_degree * boost::math::constants::pi<double>()/180.;
 }
+
+void SequentialSceneHypothesis::setCameraMatrix(const double &fx, const double &fy, const double &cx, const double &cy)
+{
+	Eigen::Matrix3d camera_intrinsic;
+	camera_intrinsic(0,0) = fx;
+	camera_intrinsic(1,1) = fy;
+	camera_intrinsic(0,2) = cx;
+	camera_intrinsic(1,2) = cy;
+	camera_intrinsic(2,2) = 1;
+	Eigen::Matrix<double,3,4> camera_extrinsic;
+	camera_extrinsic << 
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0; 
+	backprojection_matrix_ = camera_intrinsic * camera_extrinsic;
+}
+
+
+void SequentialSceneHypothesis::setSceneData(pcl::PointCloud<pcl::PointXYZ>::Ptr scene_point_cloud)
+{
+	this->scene_point_cloud_ = scene_point_cloud;
+	// backproject point cloud to image
+	Eigen::MatrixXd pixel_matrix = backprojectCloudtoPixelCoordinate(scene_point_cloud);
+	this->scene_image_pixel_ = generate2dMatrixFromPixelCoordinate(pixel_matrix);
+}
+
+Eigen::MatrixXd SequentialSceneHypothesis::generate2dMatrixFromPixelCoordinate(const Eigen::MatrixXd &pixel_matrix)
+{
+	Eigen::MatrixXd result = Eigen::MatrixXd::Zero(640,480);
+	for (std::size_t idx = 0; idx < pixel_matrix.cols(); ++idx)
+	{
+		// fill the scene image with the depth information
+		int x = pixel_matrix(0,idx);
+		int y = pixel_matrix(1,idx);
+		const double &z = pixel_matrix(2,idx);
+
+		double &current_pixel_value = result(x,y);
+		if (z == 0 || current_pixel_value != 0 && current_pixel_value < z) continue;
+		current_pixel_value = z;
+	}
+	return result;
+}
+
+Eigen::MatrixXd SequentialSceneHypothesis::backprojectCloudtoPixelCoordinate(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud)
+{
+	Eigen::MatrixXd point_cloud_in_matrix(4,input_cloud->size());
+	std::size_t idx = 0;
+	for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = input_cloud->begin();
+		it != input_cloud->end(); ++it, ++idx)
+	{
+		point_cloud_in_matrix(0,idx) = it->x;
+		point_cloud_in_matrix(1,idx) = it->y;
+		point_cloud_in_matrix(2,idx) = it->z;
+		point_cloud_in_matrix(3,idx) = 1;
+	}
+
+	Eigen::MatrixXd result_pixel_matrix = backprojection_matrix_ * point_cloud_in_matrix;
+	
+	for (std::size_t idx = 0; idx < input_cloud->size(); ++idx)
+	{
+		if (result_pixel_matrix(2,idx) == 0) continue;
+
+		result_pixel_matrix(0,idx) /= result_pixel_matrix(2,idx);
+		result_pixel_matrix(1,idx) /= result_pixel_matrix(2,idx);
+		// std::cerr << result_pixel_matrix(0,idx) << " " << result_pixel_matrix(1,idx)
+		// << " " << result_pixel_matrix(2,idx) << std::endl; 	
+	}
+
+	return result_pixel_matrix;
+}
+
+int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &object_name,
+	const std::string &model_name, const btTransform &object_pose)
+{
+	enum objectRemovedStatus{REMOVED, NOT_REMOVED, EPHEMERAL};
+
+	bool object_visible = checkObjectVisible(model_name,object_pose);
+	std::cerr << object_name;
+	if (object_visible)
+	{
+		std::cerr << " is visible, thus it will not be removed.\n";
+		return NOT_REMOVED;
+	}
+	else
+	{
+		std::cerr << " is not visible,";
+	}
+
+	bool object_obstructed = checkObjectObstruction(model_name,object_pose);
+	
+	if (!object_obstructed)
+	{
+		std::cerr << object_name << " is not obstructed, but also not visible, thus it will be removed.\n";
+		return REMOVED;
+	}
+
+	bool object_replaced = checkObjectReplaced(model_name,object_pose);
+	if (!object_replaced) return EPHEMERAL;
+	else return REMOVED;
+}
+
+bool SequentialSceneHypothesis::checkObjectVisible(const std::string &model_name, const btTransform &object_pose)
+{
+	// visible if minimum 5% of the surface is visible
+	return (this->data_probability_check_->getIcpConfidenceResult(model_name, object_pose) > 0.05);
+}
+
+bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_name, const btTransform &object_pose)
+{
+	pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud = this->data_probability_check_->getTransformedObjectCloud(model_name,
+		rescaleTransformFromPhysicsEngine(object_pose));
+	if (model_cloud->size() == 0)
+	{
+		std::cerr << " has invalid object model name input:'" << model_name << "'\n. Fail to check occlusion.\n";
+		return false;
+	}
+	Eigen::MatrixXd backprojected_object_cloud = backprojectCloudtoPixelCoordinate(model_cloud);
+	Eigen::MatrixXd object_image_matrix = generate2dMatrixFromPixelCoordinate(backprojected_object_cloud);
+	
+	std::size_t num_point_obstructed = 0;
+
+	for (std::size_t idx = 0; idx < backprojected_object_cloud.cols(); ++idx)
+	{
+		int x = backprojected_object_cloud(0,idx);
+		int y = backprojected_object_cloud(1,idx);
+		const double &z = object_image_matrix(x,y);
+		
+		// tolerance 1e-4 for obstruction
+		if (this->scene_image_pixel_(x,y) > 0 && this->scene_image_pixel_(x,y) < z)
+		{
+			++num_point_obstructed;
+		}
+	}
+
+	std::cerr << " number of obstructed points: " << num_point_obstructed << "/" << model_cloud->size() << std::endl;
+	return num_point_obstructed > 0.5 * model_cloud->size();
+}
+
+bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &model_name, const btTransform &object_pose)
+{
+	// use AABB to check if the original object volume has been occupied by something else
+	// TODO: IMPLEMENT THIS!!
+	return false;
+}
+
 
 std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateObjectHypothesesWithPreviousKnowledge( 
 	std::vector<map_string_transform> &object_pose_by_dist,
@@ -208,9 +356,11 @@ SceneChanges SequentialSceneHypothesis::findChanges()
 			vertex_t &prev_vertex = prev_vertex_map[it->first];
 			const btTransform &previous_pose = previous_best_scene_hypothesis.scene_support_graph_[prev_vertex].object_pose_;
 			btScalar orientation_change = cur_pose.getRotation().angleShortestPath(previous_pose.getRotation());
-			btScalar translation_change = cur_pose.getOrigin().distance(previous_pose.getOrigin());
+			btScalar translation_change = cur_pose.getOrigin().distance(previous_pose.getOrigin())/SCALING;
 			if (orientation_change > max_static_object_rotation_ || translation_change > max_static_object_translation_)
 			{
+				std::cerr << it->first << " is perturbed with " << translation_change*100 << "cm and " 
+						  << orientation_change * 180. / boost::math::constants::pi<double>() << " degrees.\n";
 				result.perturbed_objects_.push_back(it->first);
 			}
 			else
@@ -261,12 +411,39 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 		std::map<std::string, vertex_t> &cur_vertex_map = this->current_best_data_scene_structure_.vertex_map_;
 		SceneSupportGraph &cur_best_graph = this->current_best_data_scene_structure_.scene_support_graph_;
 
+		std::map<std::string, std::string> &object_label_class_map = this->previous_scene_observation_.object_label_class_map_;
+
 		// check if the object need to be retained because of its supported object
 		for (std::set<std::string>::iterator it = removed_objects.begin(); it != removed_objects.end();)
 		{
 			// check if there is any object supported by this object in previous scene
 			// that still exists in current scene
 			vertex_t &observed_removed_vertex = prev_vertex_map[*it];
+			const btTransform &transform = previous_best_scene_graph[observed_removed_vertex].object_pose_;
+
+			int removed_status = updateRemovedObjectStatus(*it,object_label_class_map[*it],transform);
+			switch(removed_status)
+			{
+				case 0: // object is removed
+					++it;
+					continue;
+					break;
+				case 1: // object is not removed
+					compare_scene_result.support_retained_object_.push_back(*it);
+					// removed_objects.erase(it++);
+					// continue;
+					break;
+				default: // object is ephemeral
+					// just assume that object should be added
+					compare_scene_result.support_retained_object_.push_back(*it);
+					// removed_objects.erase(it++);
+					// continue;
+					break;
+			}
+
+// TODO: Fix implementation for ephemeral object...
+
+			// Fix distance map for previously supported object
 			std::vector<vertex_t> supported_objects = getAllChildVertices(previous_best_scene_graph, observed_removed_vertex);
 			std::cerr << *it << " previously support: " << supported_objects.size() << std::endl;
 			if (supported_objects.size() > 0)
@@ -292,10 +469,12 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 
 				if (exclude_removed_object)
 				{
-					compare_scene_result.support_retained_object_.push_back(*it);
+					// compare_scene_result.support_retained_object_.push_back(*it);
 					flying_object_support_retained_[*it] = flying_object_had_support;
-					removed_objects.erase(it++);
+					// removed_objects.erase(it++);
 				}
+// TODO: Fix this later
+#if 0
 				else
 				{
 					++it;
@@ -305,6 +484,11 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 			{
 				++it;
 			}
+#else
+			}
+			removed_objects.erase(it++);
+#endif
+
 		}
 	}
 	return compare_scene_result;

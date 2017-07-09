@@ -3,6 +3,22 @@
 // Bullet stuffs
 #include "obj_convex_decomposition.h"
 
+ObjConvexDecomposition::ObjConvexDecomposition():
+	n_clusters_(1),
+	concavity_(100),
+	invert_(false),
+	add_extra_distance_points_(false),
+	add_neighbours_distance_points_(false),
+	add_faces_points_(false),
+	max_hull_vertices_(100)
+{
+	this->filename_ = "output";
+	this->vrml_flag_ = false;
+	this->convex_hull_enable_polyhedral_contact_clipping_ = true;
+	this->reduce_hull_vertices_using_BtShapeHull_ = true;
+	this->convex_hull_collision_margin_ = 0.005f; // 5 mm
+}
+
 ObjConvexDecomposition::ObjConvexDecomposition(size_t n_clusters, btScalar concavity, bool invert, bool add_extra_distance_points, 
 		bool add_neighbours_distance_points, bool add_faces_points, size_t max_hull_vertices):
 	n_clusters_(n_clusters),
@@ -15,9 +31,9 @@ ObjConvexDecomposition::ObjConvexDecomposition(size_t n_clusters, btScalar conca
 {
 	this->filename_ = "output";
 	this->vrml_flag_ = false;
-	this->convex_hull_enable_polyhedral_contact_clipping_ = false;
-	this->reduce_hull_vertices_using_BtShapeHull_ = false;
-	this->convex_hull_collision_margin_ = 0.0001f; // 0.1 mm
+	this->convex_hull_enable_polyhedral_contact_clipping_ = true;
+	this->reduce_hull_vertices_using_BtShapeHull_ = true;
+	this->convex_hull_collision_margin_ = 0.005f; // 5 mm
 }
 
 void ObjConvexDecomposition::setOutputFilename(std::string filename)
@@ -45,10 +61,45 @@ bool ObjConvexDecomposition::computeDecomposition()
 {
 	ConvexDecomposition::WavefrontObj wo;
 	unsigned int number_of_triangles = wo.loadObj(this->input_file_location_.c_str());
+	std::cout << "Number of triangles = " << number_of_triangles << std::endl
+			<< "Number of vertices: " << wo.mTriCount << std::endl;
 
-	if (number_of_triangles == 0){
-		std::cout << "Something wrong with the obj file. Number of triangles = " << number_of_triangles << std::endl;
+	if (number_of_triangles == 0 || wo.mVertexCount == 0){
+		std::cout << "Something is wrong with the obj file.\n"
+				  << "Note: Convex Decomposition library does not support loading obj with vertex normals.\n"
+				  << "Please convert the obj files to only contains plain vertices properties.\n";
 		return false;
+	}
+	else if (wo.mVertexCount < 50)
+	{
+		std::cout << "Number of vertices are too small to use HACD.\nBasic convex hull simplification has been used instead.\n";
+		btAlignedObjectArray < btVector3 > verts;
+		verts.resize(wo.mVertexCount);
+		for (size_t i=0; i< wo.mVertexCount; i++)	{
+			int index = i * 3;
+			verts[i]=btVector3(wo.mVertices[index], wo.mVertices[index+1],wo.mVertices[index+2]);
+			// std::cerr << wo.mVertices[index] << " " << wo.mVertices[index+1] << " " << wo.mVertices[index+2] << std::endl;
+		}
+		btConvexHullShape* hull_shape = new btConvexHullShape(&verts[0].x(),verts.size());
+		hull_shape->setMargin(this->convex_hull_collision_margin_);
+		btShapeHull* hull = new btShapeHull(hull_shape);
+		if (hull)	{
+			hull->buildHull(this->convex_hull_collision_margin_);
+			if (hull->numVertices() < verts.size())	{
+				// std::cerr << "Original number of vertex: " << verts.size() << std::endl;
+				// std::cerr << "New number of vertex: " << hull->numVertices() << std::endl;
+				delete hull_shape;
+				hull_shape = NULL;
+				hull_shape = new btConvexHullShape((btScalar*)hull->getVertexPointer(),hull->numVertices());
+				hull_shape->setMargin(this->convex_hull_collision_margin_);
+			}
+			delete hull;
+			hull = NULL;
+		}
+		std::cerr << "Initial number of vertices: " << wo.mVertexCount << std::endl 
+				  << "Resulting vertices of convex hull: " << hull_shape->getNumPoints() << std::endl;
+		this->result.addChildShape(btTransform(btQuaternion::getIdentity(),btVector3(0, 0, 0)),hull_shape);
+		return true;
 	}
 
 	//-----------------------------------------------
@@ -106,14 +157,14 @@ bool ObjConvexDecomposition::computeDecomposition()
 		std::vector < HACD::Vec3<HACD::Real> > points(nPoints);
 		std::vector < HACD::Vec3<long> > triangles(nTriangles);	// unused, but they could be used to display the convex hull...
 		if (myHACD.GetCH(CH, &points[0], &triangles[0]))	{
-				btConvexHullShape* convexHullShape = NULL;
+			btConvexHullShape* convexHullShape = NULL;
 
-				#pragma region Calculate centroid
-				// We use the simple aabb center, not the center of the homogeneous mass in the volume.
-				// This makes sense, since HACD decomposed shapes are not suitable for being released to 'destroy' an object.
-				// That's because they can overlap in various ways (that's not always bad for collision detection, because they
-				// can avoid small objects to get stuck between clusters better).	
-				btVector3 centroid(0,0,0);
+			#pragma region Calculate centroid
+			// We use the simple aabb center, not the center of the homogeneous mass in the volume.
+			// This makes sense, since HACD decomposed shapes are not suitable for being released to 'destroy' an object.
+			// That's because they can overlap in various ways (that's not always bad for collision detection, because they
+			// can avoid small objects to get stuck between clusters better).	
+			btVector3 centroid(0,0,0);
 			btVector3 minValue,maxValue,tempVert;
 			if (nPoints>0)	{
 				minValue=maxValue=btVector3(points[0].X(),points[0].Y(),points[0].Z());
@@ -138,7 +189,7 @@ bool ObjConvexDecomposition::computeDecomposition()
 			convexHullShape->setMargin(this->convex_hull_collision_margin_);
 			if (reduce_hull_vertices_using_BtShapeHull_)	{
 				//create a hull approximation
-					btShapeHull* hull = new btShapeHull(convexHullShape);
+				btShapeHull* hull = new btShapeHull(convexHullShape);
 				if (hull)	{
 					hull->buildHull(this->convex_hull_collision_margin_);
 					if (hull->numVertices() < verts.size())	{
@@ -146,42 +197,53 @@ bool ObjConvexDecomposition::computeDecomposition()
 						convexHullShape = new btConvexHullShape((btScalar*)hull->getVertexPointer(),hull->numVertices());
 						convexHullShape->setMargin(this->convex_hull_collision_margin_);
 					}
-						delete hull;hull = NULL;
-					}	
+					delete hull;
+					hull = NULL;
+				}
 			}
 			if (this->convex_hull_enable_polyhedral_contact_clipping_) convexHullShape->initializePolyhedralFeatures();	
 			#pragma endregion
 		
-				this->result.addChildShape(btTransform(btQuaternion::getIdentity(),centroid),convexHullShape);	
-				// if (params.keepSubmeshesSeparated) m_submeshIndexOfChildShapes.push_back(subPart);
+			this->result.addChildShape(btTransform(btQuaternion::getIdentity(),centroid),convexHullShape);
+			// if (params.keepSubmeshesSeparated) m_submeshIndexOfChildShapes.push_back(subPart);
 		}
 	}
+
 	if (this->result.getNumChildShapes() == 0)
 	{
 		std::cout << "Convex decomposition failed.\n Number of btCompoundShape child is zero.\n";
 		return false;
 	}
-	else
+}
+
+btCompoundShape* ObjConvexDecomposition::getResult()
+{
+	return &this->result;
+}
+
+bool ObjConvexDecomposition::saveCompoundShape()
+{
+	// this->result.setMargin(this->convex_hull_collision_margin_);
+	this->result.createAabbTreeFromChildren();
+ 	btDefaultSerializer serializer;
+	serializer.startSerialization();
+	this->result.serializeSingleShape(&serializer);
+	serializer.finishSerialization();
+
+	// add extension
+	this->filename_ = this->filename_ + ".bcs";
+
+	FILE* file = fopen(this->filename_.c_str(),"wb");
+	if (file)
 	{
-	 	btDefaultSerializer serializer;
-		serializer.startSerialization();
-		this->result.serializeSingleShape(&serializer);
-		serializer.finishSerialization();
-
-		// add extension
-		this->filename_ = this->filename_ + ".bcs";
-
-		FILE* file = fopen(this->filename_.c_str(),"wb");
-		if (file)
-		{
-			fwrite(serializer.getBufferPointer(),serializer.getCurrentBufferSize(),1, file);
-			fclose(file);
-			printf("btCompoundShape saved to: \"%s\"\n",this->filename_.c_str());
-			return true;
-		}
-		else {	
-			 printf("ERROR: I can't save the btCompoundShape to: \"%s\"\n",this->filename_.c_str());
-			 return false;
-		}
+		fwrite(serializer.getBufferPointer(),serializer.getCurrentBufferSize(),1, file);
+		fclose(file);
+		printf("btCompoundShape saved to: \"%s\"\n",this->filename_.c_str());
+		return true;
+	}
+	else 
+	{	
+		 printf("ERROR: I can't save the btCompoundShape to: \"%s\"\n",this->filename_.c_str());
+		 return false;
 	}
 }

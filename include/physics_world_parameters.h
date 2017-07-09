@@ -5,8 +5,10 @@
 // applied to collision shapes, gravity, and transforms in physics engine world. 
 // When returning real world results, it will be rescaled back appropriately.
 
-#define SCALING 100
+#define SCALING 1000
 #define GRAVITY_MAGNITUDE 9.807
+#define GRAVITY_SCALE_COMPENSATION 2
+#define SCALED_GRAVITY_MAGNITUDE SCALING * GRAVITY_MAGNITUDE / GRAVITY_SCALE_COMPENSATION
 
 enum SimulationMode {
 	//  RUN THE SIMULATION UNTIL THE NUMBER OF SIMULATION STEP IS REACHED OR ALL OBJECT IS IN DEACTIVATED STATE

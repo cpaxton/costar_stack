@@ -5,6 +5,7 @@
 // Bullet stuffs
 #include <HACD/hacdHACD.h>
 
+#include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionShapes/btCompoundShape.h>
 #include <BulletCollision/CollisionShapes/btConvexHullShape.h>
 #include <BulletCollision/CollisionShapes/btStridingMeshInterface.h>
@@ -28,6 +29,7 @@ class ObjConvexDecomposition
 {
 public:
 	// constructor
+	ObjConvexDecomposition();
 	ObjConvexDecomposition(size_t n_clusters, btScalar concavity, bool invert, bool add_extra_distance_points, 
 		bool add_neighbours_distance_points, bool add_faces_points, size_t max_hull_vertices = 100);
 	void setOutputFilename(std::string filename);
@@ -39,6 +41,8 @@ public:
 
 	// this will compute HACD decomposition and saved the output file. If HACD failed, return false
 	bool computeDecomposition();
+	bool saveCompoundShape();
+	btCompoundShape* getResult();
 
 private:
 	// .obj file location

@@ -64,7 +64,7 @@ btScalar getObjectMaximumGravityTorqueLength(const btCollisionShape &object_shap
 btScalar getObjectMaximumAngularAcceleration(const btCollisionShape &object_shape, const btScalar &mass, const btVector3 &inertia)
 {
 	btScalar max_gravity_torque_length = getObjectMaximumGravityTorqueLength(object_shape);
-	btScalar scaled_gravity_magnitude = GRAVITY_MAGNITUDE * SCALING;
+	btScalar scaled_gravity_magnitude = SCALED_GRAVITY_MAGNITUDE;
 	// Torque = I * alpha = (mg) * length => alpha = mgl / I
 	// maximum gravity angular acceleration happened when object is supported on the point with highest distance from cog
 	// and object orientation makes this distance vector perpendicular to the gravity direction

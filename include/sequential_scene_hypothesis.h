@@ -11,6 +11,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <Eigen/Geometry>
+#include <Eigen/Dense>
 
 #include "scene_physics_support.h"
 #include "scene_data_forces.h"
@@ -100,7 +101,8 @@ enum SceneChangeMode
 	REMOVE_OBJECT,
 	PERTURB_OBJECT,
 	STATIC_OBJECT,
-	SUPPORT_RETAINED_OBJECT
+	SUPPORT_RETAINED_OBJECT,
+	EPHEMERAL_OBJECT
 };
 
 struct AdditionalHypotheses
@@ -145,6 +147,10 @@ public:
 
 	void setStaticObjectThreshold(const double &translation_meter, const double &rotation_degree);
 
+	void setCameraMatrix(const double &fx, const double &fy, const double &cx, const double &cy);
+
+	void setSceneData(pcl::PointCloud<pcl::PointXYZ>::Ptr scene_point_cloud);
+
 private:
 	SceneChanges findChanges();
 	SceneChanges analyzeChanges();
@@ -157,6 +163,15 @@ private:
 		const int &max_good_hypotheses_to_add);
 
 	bool judgeHypothesis(const std::string &model_name, const btTransform &transform);
+
+	Eigen::MatrixXd backprojectCloudtoPixelCoordinate(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
+	Eigen::MatrixXd generate2dMatrixFromPixelCoordinate(const Eigen::MatrixXd &pixel_matrix);
+
+	// deciding object removal status as Support Retained/Ephemeral/Removed Object
+	int updateRemovedObjectStatus(const std::string &object_name, const std::string &model_name, const btTransform &object_pose);
+	bool checkObjectVisible(const std::string &model_name, const btTransform &object_pose);
+	bool checkObjectObstruction(const std::string &model_name, const btTransform &object_pose);
+	bool checkObjectReplaced(const std::string &model_name, const btTransform &object_pose);
 
 	// minimum objRecRANSAC confidence for the old hypothesis
 	double minimum_data_probability_threshold_;
@@ -172,6 +187,11 @@ private:
 	SceneObservation previous_scene_observation_;
 	std::map<int, int> num_of_hypotheses_to_add_each_action_;
 	std::map<std::string, std::vector<std::string> > flying_object_support_retained_;
+
+	// for backprojecting point cloud to image
+	Eigen::Matrix<double,3,4> backprojection_matrix_;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr scene_point_cloud_;
+	Eigen::MatrixXd scene_image_pixel_;
 };
 
 #endif

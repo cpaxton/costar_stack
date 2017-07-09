@@ -21,14 +21,15 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
 	mtx_.lock();
 	if (this->debug_messages_) std::cerr << "Adding background(plane) to the physics engine's world.\n";
 	btCollisionShape*  background = new btStaticPlaneShape(plane_normal, plane_constant);
-	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
-    
-    // unmovable ground object
-    btRigidBody::btRigidBodyConstructionInfo
-            background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
-    
-    this->background_ = new btRigidBody(background_RigidBodyCI);
-    m_dynamicsWorld->addRigidBody(this->background_);
+	btDefaultMotionState* background_motion_state = new btDefaultMotionState(
+		btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
+	
+	// unmovable ground object
+	btRigidBody::btRigidBodyConstructionInfo
+			background_RigidBodyCI(0, background_motion_state, background, btVector3(0, 0, 0));
+	
+	this->background_ = new btRigidBody(background_RigidBodyCI);
+	m_dynamicsWorld->addRigidBody(this->background_);
 	this->background_->setFriction(1.f);
 	this->background_->setRollingFriction(1.f);
 	this->have_background_ = true;
@@ -40,7 +41,7 @@ void PhysicsEngine::addBackgroundPlane(btVector3 plane_normal, btScalar plane_co
 	this->background_surface_normal_ = plane_normal;
 	if (this->use_background_normal_as_gravity_)
 		this->setGravityVectorDirection(-background_surface_normal_);
-    m_collisionShapes.push_back(background);
+	m_collisionShapes.push_back(background);
 
 	// set the background name
 	std::string * background_name = new std::string("background");
@@ -57,13 +58,27 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 	btVector3 plane_center(0,0,0);
 
 	btConvexHullShape background_convex;
+	btScalar hull_margin = 0.02 * SCALING;
+	btVector3 plane_normal_direction = plane_normal.normalized();
+
 	for (std::vector<btVector3>::const_iterator it = plane_points.begin(); it != plane_points.end(); ++it)
 	{
 		// add a point to the convex hull then recalculate the AABB
-		background_convex.addPoint(*it, true);
+		btVector3 tmp = *it - plane_normal_direction * hull_margin; // 5 cm 
+		background_convex.addPoint(tmp, true);
 		plane_center+= *it;
 	}
-	background_convex.setMargin(1); // 1 mm rescaled to 0.01 mm
+
+#if 0
+	// add extra points with extruded position to thicken the table convex hull
+	for (std::vector<btVector3>::const_iterator it = plane_points.begin(); it != plane_points.end(); ++it)
+	{
+		btVector3 tmp = *it - plane_normal_direction * 0.05 * SCALING; // 5 cm 
+		// add a point to the convex hull then recalculate the AABB
+		background_convex.addPoint(tmp, true);
+	}
+#endif
+	background_convex.setMargin(hull_margin); // 1 unit is equivalent rescaled to 1/SCALING meters in real world unit
 
 	plane_center /= plane_points.size();
 	// since everything is in reference to camera coordinate, camera coordinate is 0,0,0
@@ -73,7 +88,8 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 	this->setCameraClippingPlaneNearFar(0.005f);
 
 	btCollisionShape*  background = new btConvexHullShape(background_convex);
-	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
+	btDefaultMotionState* background_motion_state = new btDefaultMotionState(
+		btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
 	
 	// unmovable ground object
 	btRigidBody::btRigidBodyConstructionInfo
@@ -105,7 +121,7 @@ void PhysicsEngine::addBackgroundConvexHull(const std::vector<btVector3> &plane_
 	std::string * background_name = new std::string("background");
 	this->background_->setUserPointer(background_name);
 
-    m_collisionShapes.push_back(background);
+	m_collisionShapes.push_back(background);
 
 	mtx_.unlock();
 
@@ -126,7 +142,8 @@ void PhysicsEngine::addBackgroundMesh(btTriangleMesh* trimesh, btVector3 plane_n
 	bool useQuantizedBvhTree = true;
 
 	btCollisionShape* background  = new btBvhTriangleMeshShape(trimesh,useQuantizedBvhTree);
-	btDefaultMotionState* background_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
+	btDefaultMotionState* background_motion_state = new btDefaultMotionState(
+		btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
 	
 	// unmovable ground object
 	btRigidBody::btRigidBodyConstructionInfo
@@ -173,7 +190,7 @@ void PhysicsEngine::setGravityVectorDirectionFromTfYUp(const btTransform &transf
 void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 {
 	if (this->debug_messages_) std::cerr << "Setting physics engine gravity vector.\n";
-	this->gravity_vector_ = gravity / gravity.norm() * GRAVITY_MAGNITUDE * SCALING;
+	this->gravity_vector_ = gravity / gravity.norm() * SCALED_GRAVITY_MAGNITUDE;
 	if (this->debug_messages_) std::cerr << "Gravity vector::" << gravity_vector_[0] << ", "
 		<< gravity_vector_[1] << ", " 
 		<< gravity_vector_[2] << std::endl;
@@ -198,18 +215,38 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 	for (std::vector<ObjectWithID>::const_iterator it = objects.begin(); 
 		it != objects.end(); ++it)
 	{
-		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's database.\n";
-		this->rigid_body_[it->getID()] = it->generateRigidBodyForWorld();
+		if (this->debug_messages_) std::cerr << "Adding rigid body " 
+			<< it->getID() << " to the physics engine's database.\n";
+		
 		this->object_best_pose_from_data_[it->getID()] = it->getTransform();
-		if (this->debug_messages_) std::cerr << "Adding rigid body " << it->getID() << " to the physics engine's world.\n";
-		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
 
-		// set the name of the object in the collision object
-		std::string * object_name = new std::string(it->getID());
-		this->rigid_body_[it->getID()]->setUserPointer(object_name);
+		// Only generates new rigid body if it does not exist. Otherwise, update existing rigid body.
+		if (!keyExistInConstantMap(it->getID(),this->rigid_body_))
+		{
+			this->rigid_body_[it->getID()] = it->generateRigidBodyForWorld();
+			if (this->debug_messages_) std::cerr << "Adding rigid body " 
+				<< it->getID() << " to the physics engine's world.\n";
 
-		object_penalty_parameter_database_by_id_[it->getID()] = (*object_penalty_parameter_database_)[it->getObjectClass()];
-		object_label_class_map_[it->getID()] = it->getObjectClass();
+			// set the name of the object in the collision object
+			std::string * object_name = new std::string(it->getID());
+			this->rigid_body_[it->getID()]->setUserPointer(object_name);
+
+			object_penalty_parameter_database_by_id_[it->getID()] = 
+				(*object_penalty_parameter_database_)[it->getObjectClass()];
+			object_label_class_map_[it->getID()] = it->getObjectClass();
+		}
+		else
+		{
+			if (this->debug_messages_) std::cerr << "Updated existing rigid body " 
+				<< it->getID() << " in the physics engine's world.\n";
+			this->rigid_body_[it->getID()]->setWorldTransform(it->getTransform());
+		}
+		
+		// skips object that are not in the world
+		if (!this->rigid_body_[it->getID()]->isInWorld())
+		{
+			m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
+		}
 		
 		// add the best pose from hypothesis to cached icp result
 		data_forces_generator_->manualSetCachedIcpResultMapFromPose(
@@ -280,10 +317,12 @@ void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, c
 {
 	int number_of_world_tick_to_step = delta_time / simulation_step;
 	mtx_.lock();
+
 	this->skip_scene_evaluation_ = true;
 	// this->in_simulation_ = true;
 	this->world_tick_counter_ = 0;
 	mtx_.unlock();
+
 	for (int i = 0; i < number_of_world_tick_to_step; i++)
 	{
 		m_dynamicsWorld->stepSimulation(simulation_step, 1, 1./60);
@@ -313,18 +352,22 @@ void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, 
 	for (std::map<std::string, btTransform>::const_iterator it = rigid_bodies.begin(); 
 		it != rigid_bodies.end(); ++it)
 	{
-		if (it->first == "background") continue;
-		else if (!keyExistInConstantMap(it->first, this->rigid_body_))
+		if (!keyExistInConstantMap(it->first, this->rigid_body_))
 		{
 			// need to generate new rigid body
 			std::cerr << "ERROR: UNIMPLEMENTED AUTO ADD OBJECT BACK.\n";
-			continue;
 		}
-		
-		m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
-		this->rigid_body_[it->first]->setWorldTransform(it->second);
-		this->object_best_test_pose_map_[it->first] = it->second;
-		if (this->debug_messages_) std::cerr << "Add object "<<  it->first <<" back to world.\n";
+		else if (it->first == "background")
+		{
+			std::cerr << "WARNING: Ignored adding background back to the world.\n";
+		}
+		else
+		{
+			if (this->debug_messages_) std::cerr << "Add object "<<  it->first <<" back to world.\n";
+			this->rigid_body_[it->first]->setWorldTransform(it->second);
+			this->object_best_test_pose_map_[it->first] = it->second;
+			if (!this->rigid_body_[it->first]->isInWorld()) m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
+		}
 	}
 	mtx_.unlock();
 }
@@ -347,14 +390,16 @@ void PhysicsEngine::removeExistingRigidBodyWithMap(const std::map<std::string, b
 	mtx_.unlock();
 }
 
-std::map<std::string, btTransform> PhysicsEngine::getAssociatedBestPoseDataFromStringVector(const std::vector<std::string> &input)
+std::map<std::string, btTransform> PhysicsEngine::getAssociatedBestPoseDataFromStringVector(
+	const std::vector<std::string> &input, bool use_best_test_data)
 {
 	std::map<std::string, btTransform> result;
 	for (std::vector<std::string>::const_iterator it = input.begin(); it != input.end(); ++it)
-    {
-        result[*it] = this->object_best_pose_from_data_[*it];
-    }
-    return result;
+	{
+		result[*it] = use_best_test_data ? 
+			this->object_best_test_pose_map_[*it] : this->object_best_pose_from_data_[*it];
+	}
+	return result;
 }
 
 bool PhysicsEngine::checkSteadyState()
@@ -363,6 +408,12 @@ bool PhysicsEngine::checkSteadyState()
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		// Check if any object is still moving
 		if (it->second->getActivationState() == 1)
 		{
@@ -373,17 +424,30 @@ bool PhysicsEngine::checkSteadyState()
 	return steady_state;
 }
 
-std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
+std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPoses()
 {
 	if (this->debug_messages_) std::cerr << "Getting updated scene objects poses.\n";
 	// Run simulation to get an update on object poses
 	this->simulate();
 
+	return this->getCurrentObjectPoses();
+}
+
+std::map<std::string, btTransform> PhysicsEngine::getCurrentObjectPoses()
+{
+	if (this->debug_messages_) std::cerr << "Get current object poses.\n";
 	std::map<std::string, btTransform> result_pose;
 	mtx_.lock();
+
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		it->second->getMotionState()->getWorldTransform(result_pose[it->first]);
 
 		if (this->debug_messages_)
@@ -395,7 +459,6 @@ std::map<std::string, btTransform> PhysicsEngine::getUpdatedObjectPose()
 			std::cerr << "Translation: " << t[0]  << ", " << t[1]  << ", " << t[2] << std::endl;
 		}
 	}
-	if (this->debug_messages_) std::cerr << "Done scene objects poses.\n";
 	mtx_.unlock();
 
 	return result_pose;
@@ -431,6 +494,12 @@ void PhysicsEngine::cacheObjectVelocities(const btScalar &timeStep)
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		btVector3 current_lin_vel = it->second->getLinearVelocity(),
 			current_ang_vel = it->second->getAngularVelocity();
 
@@ -601,7 +670,8 @@ void PhysicsEngine::setCameraPositionAndTarget(btVector3 cam_position, btVector3
 	this->m_cameraPosition = cam_position;
 	this->m_cameraTargetPosition = cam_target;
 	m_cameraDistance = m_cameraTargetPosition.distance(m_cameraPosition);
-	
+	m_zoomStepSize = 0.05 * m_cameraDistance;
+
 	// calculate polar coordinate of the camera
 	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalize();
 	this->m_ele = 90 - acos(target_to_cam_direction[1]) * 57.29577951308232;
@@ -616,21 +686,24 @@ void PhysicsEngine::setObjectPenaltyDatabase(std::map<std::string, ObjectPenalty
 void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 	mtx_.lock();
 	++world_tick_counter_;
-    this->cacheObjectVelocities(timeStep);
-    // std::cerr << world_tick_counter_ << " " << this->number_of_world_tick_ << std::endl;
+	this->cacheObjectVelocities(timeStep);
+	// std::cerr << world_tick_counter_ << " " << this->number_of_world_tick_ << std::endl;
 
 	// calculate the scene analysis here
-    if ( !skip_scene_evaluation_ &&
-    	 (world_tick_counter_ >= this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
-    	)
-    {
-	    scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
+	if ( !skip_scene_evaluation_ &&
+		 (world_tick_counter_ >= this->number_of_world_tick_ || stop_simulation_after_have_support_graph_)
+		)
+	{
+		scene_graph_ = generateObjectSupportGraph(m_dynamicsWorld, 
+			this->vertex_map_, timeStep, gravity_vector_, this->debug_messages_);
 		// put the stability penalty into the scene graph
-		for (std::map<std::string, vertex_t>::const_iterator it = vertex_map_.begin(); it != this->vertex_map_.end(); ++it)
+		for (std::map<std::string, vertex_t>::const_iterator it = vertex_map_.begin(); 
+			it != this->vertex_map_.end(); ++it)
 		{
 			if (keyExistInConstantMap(it->first,this->object_acceleration_))
 			{
-				scene_graph_[it->second].stability_penalty_ = calculateStabilityPenalty(this->object_acceleration_[it->first], 
+				scene_graph_[it->second].stability_penalty_ = calculateStabilityPenalty(
+					this->object_acceleration_[it->first], 
 					object_penalty_parameter_database_by_id_[it->first], gravity_magnitude_);
 
 				// if the object is really not stable, assume that it is not a ground supported vertices
@@ -643,7 +716,8 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 				double supp_contrib = getObjectSupportContribution(scene_graph_[it->second]);
 				if (debug_messages_)
 				{
-					std::cerr << it->first << ": " << " stability probability= " << scene_graph_[it->second].stability_penalty_
+					std::cerr << it->first << ": " << " stability probability= " 
+					<< scene_graph_[it->second].stability_penalty_
 						<< ", support contribution probability= " << supp_contrib << std::endl;	
 				}
 				if (this->stop_simulation_after_have_support_graph_)
@@ -652,7 +726,7 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 				}
 			}
 		}
-    }
+	}
 	mtx_.unlock();
 }
 
@@ -662,6 +736,12 @@ void PhysicsEngine::stopAllObjectMotion()
 	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		// reset the forces and velocity of the objects
 		// it->second->clearForces();
 		it->second->setLinearVelocity(zero_vector);
@@ -750,10 +830,17 @@ btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id) 
 
 void PhysicsEngine::applyDataForces()
 {
-    // calculate data feedback forces to apply
-    for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+	
+	// calculate data feedback forces to apply
+	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
 		it != this->rigid_body_.end(); ++it)
 	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
 		if (it->second->getActivationState() != ISLAND_SLEEPING)
 		{
 			this->data_forces_generator_->applyFeedbackForces(*(it->second),object_label_class_map_[it->first]);

@@ -30,7 +30,14 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   costar_objrec_msgs
   objrec_hypothesis_msgs
+  std_msgs message_generation
 )
+
+add_service_files(
+  FILES hypothesis_request.srv
+)
+
+generate_messages( DEPENDENCIES std_msgs )
 
 catkin_package(
 #  INCLUDE_DIRS include
@@ -107,6 +114,10 @@ add_executable(load_and_pub_pcd src/publish_pcd_to_ros.cpp)
 ## same as for the library above
 
 ## Tool for creating bullet collision object from obj files
+target_link_libraries(
+ objConvexDecomposition ${BULLET_LIBRARIES} ConvexDecomposition HACD BulletWorldImporter BulletFileLoader
+)
+
 target_link_libraries(
  obj_main_decomposition objConvexDecomposition
 )

@@ -48,6 +48,9 @@ public:
 	void manualSetCachedIcpResultMapFromPose(const btRigidBody &object, 
 		const std::string &model_name);
 	double getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose) const;
+	
+	PointCloudXYZPtr getTransformedObjectCloud(const std::string &model_name, const btTransform &object_real_pose) const;
+	
 	int force_data_model_;
 
 private:
