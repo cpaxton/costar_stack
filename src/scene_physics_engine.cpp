@@ -823,9 +823,11 @@ void PhysicsEngine::changeBestTestPoseMap(const std::map<std::string, btTransfor
 	mtx_.unlock();
 }
 
-btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id) const
+btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id, bool use_best_test_data) const
 {
-	return getContentOfConstantMap(object_id, this->object_best_pose_from_data_);
+	return use_best_test_data ? 
+		getContentOfConstantMap(object_id, this->object_best_test_pose_map_) : 
+		getContentOfConstantMap(object_id, this->object_best_pose_from_data_);
 }
 
 void PhysicsEngine::applyDataForces()

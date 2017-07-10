@@ -742,10 +742,12 @@ std::map<std::string, map_string_transform> SceneHypothesisAssessor::getAllChild
 		for (std::vector<vertex_t>::iterator c_it = childs.begin(); c_it != childs.end(); ++c_it)
 		{
 			std::size_t child_vertex_distance = getContentOfConstantMap(*c_it,vertex_distance_map);
-			if (child_vertex_distance > parent_vertex_distance)
+			// only use the direct child
+			if (child_vertex_distance == parent_vertex_distance + 1)
 			{
 				const std::string &child_name = this->scene_support_graph_[*c_it].object_id_;
-				object_child_transforms[child_name] = this->physics_engine_->getTransformOfBestData(child_name);
+				// use best test data in order to reflect the latest change of the scene graph
+				object_child_transforms[child_name] = this->physics_engine_->getTransformOfBestData(child_name, true);
 			}
 		}
 		result[it->first] = object_child_transforms;
