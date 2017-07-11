@@ -39,9 +39,9 @@ class WaypointManagerDialog(QWidget):
         self.page_button_layout.addWidget(self.relative_page_btn)
 
         # INFO #
-        self.info_textbox = TextEdit(self,'INFO_TEXTBOX','',color=colors['gray_light'])
+        self.info_textbox = TextEdit(self,'','',color=colors['gray_light'])
         self.info_textbox.setReadOnly(True)
-        self.info_textbox.hide()
+        #self.info_textbox.hide()
         self.info_textbox.setMaximumSize(QtCore.QSize(16777215, 200))
         self.button_layout.addWidget(self.info_textbox)
 
@@ -84,15 +84,16 @@ class WaypointManagerDialog(QWidget):
         self.found_rel_waypoints = []
         # Initialize
         self.update_waypoints()
+        self.show_waypoint_page()
 
     def show_waypoint_page(self):
-        self.info_textbox.hide()
+        #self.info_textbox.hide()
         self.stack.setCurrentIndex(0)
         self.mode = 'FIXED'
         self.update_waypoints()
 
     def show_relative_page(self):
-        self.info_textbox.hide()
+        #self.info_textbox.hide()
         self.stack.setCurrentIndex(1)
         self.mode = 'RELATIVE'
         self.update_waypoints()
@@ -104,13 +105,15 @@ class WaypointManagerDialog(QWidget):
             self.new_relative_name = str(t)
 
     def relative_waypoint_selected(self,item):
-        self.info_textbox.hide()
+        #self.info_textbox.hide()
+        pass
 
     def fixed_waypoint_selected(self,item):
-        self.info_textbox.hide()
+        #self.info_textbox.hide()
+        pass
 
     def landmark_selected(self,item):
-        self.info_textbox.hide()
+        #self.info_textbox.hide()
         if item == None:
             self.relative_page_widget.landmark_field.setText('NONE')
             self.relative_page_widget.landmark_field.setStyleSheet('background-color:'+colors['gray'].normal+';color:#ffffff')
@@ -145,7 +148,7 @@ class WaypointManagerDialog(QWidget):
                     msg = AddWaypointRequest()
                     msg.name = '/' + self.new_fixed_name
                     msg.world_pose = tf_c.toMsg(F_waypoint)
-                    self.info_textbox.notify(add_waypoint_proxy(msg))
+                    self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                     self.update_waypoints()
                     self.waypoint_page_widget.name_field.setText('')
                 except rospy.ServiceException, e:
@@ -156,7 +159,7 @@ class WaypointManagerDialog(QWidget):
             self.info_textbox.notify('Adding Relative Waypoint with landmark ['+str(self.selected_landmark)+'] and waypoint ['+str(self.new_relative_name)+']')
             if self.selected_landmark != None:
                 landmark_frame = self.landmarks[str(self.selected_landmark)].strip('/')
-                self.info_textbox.notify(landmark_frame)
+                self.info_textbox.notify('Selected landmark [%s]'%str(landmark_frame))
                 try:
                     F_landmark = tf_c.fromTf(self.listener_.lookupTransform('/world',landmark_frame,rospy.Time(0)))
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
@@ -193,7 +196,7 @@ class WaypointManagerDialog(QWidget):
                 msg.name = '/' + self.new_relative_name
                 msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
                 msg.relative_frame_name = '/'+landmark_frame
-                self.info_textbox.notify(add_waypoint_proxy(msg))
+                self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                 self.update_waypoints()
                 # Reset
                 self.relative_page_widget.name_field.setText('')
@@ -228,7 +231,7 @@ class WaypointManagerDialog(QWidget):
                 # Look for existing sequence and get index if present
                 wp = [w.split('--')[0].replace('/','') for w in self.found_waypoints]
                 index = 0
-                self.info_textbox.notify('wp: '+str(wp) + '\nname: '+self.new_fixed_name)
+                self.info_textbox.notify('Waypoint: '+str(wp) + '\nname: '+self.new_fixed_name)
                 if self.new_fixed_name in wp:
                     self.info_textbox.notify('name found... ' + self.new_fixed_name)
                     index = -1
@@ -243,7 +246,7 @@ class WaypointManagerDialog(QWidget):
                     msg = AddWaypointRequest()
                     msg.name = '/' + self.new_fixed_name + '--' + str(index)
                     msg.world_pose = tf_c.toMsg(F_waypoint)
-                    self.info_textbox.notify(add_waypoint_proxy(msg))
+                    self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                     self.update_waypoints()
                     # self.waypoint_page_widget.name_field.setText('')
                 except rospy.ServiceException, e:
@@ -302,7 +305,7 @@ class WaypointManagerDialog(QWidget):
                 msg.name = '/' + self.new_relative_name + '--' + str(index)
                 msg.relative_pose = tf_c.toMsg(F_landmark_endpoint)
                 msg.relative_frame_name = '/'+landmark_frame
-                self.info_textbox.notify(add_waypoint_proxy(msg))
+                self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                 self.update_waypoints()
                 # Reset
                 # self.relative_page_widget.name_field.setText('')
@@ -328,7 +331,7 @@ class WaypointManagerDialog(QWidget):
                 remove_waypoint_proxy = rospy.ServiceProxy('/instructor_core/RemoveWaypoint',RemoveWaypoint)
                 msg = RemoveWaypointRequest()
                 msg.name = str('/' + current_selected_name)
-                self.info_textbox.notify(remove_waypoint_proxy(msg))
+                self.info_textbox.notify(remove_waypoint_proxy(msg).ack)
                 self.update_waypoints()
             except rospy.ServiceException, e:
                 self.info_textbox.notify(e,'error')
@@ -400,16 +403,16 @@ class WaypointManagerDialog(QWidget):
 
                 msg = costar_robot_msgs.srv.ServoToPoseRequest()
                 msg.target = tf_c.toMsg(F_command)
-                msg.vel = .25
-                msg.accel = .25
+                msg.vel = .75
+                msg.accel = .5
                 # Send Servo Command
-                self.info_textbox.notify('Single Servo Move Started')
+                self.info_textbox.notify('Single Servo move started...')
                 result = pose_servo_proxy(msg)
                 if 'FAILURE' in str(result.ack):
-                    self.info_textbox.notify('Servo failed with reply: '+ str(result.ack))
+                    self.info_textbox.notify('Servo move failed with reply: '+ str(result.ack))
                     return
                 else:
-                    self.info_textbox.notify('Single Servo Move Finished' + 'Robot driver reported: '+str(result.ack))
+                    self.info_textbox.notify('Single Servo move finished\n' + 'Robot driver reported: '+str(result.ack))
                     return
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:

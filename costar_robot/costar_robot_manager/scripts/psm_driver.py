@@ -16,15 +16,11 @@ traj2 = JointTrajectory()
 traj1.points.append(JointTrajectoryPoint(positions=pos1))
 traj2.points.append(JointTrajectoryPoint(positions=pos2))
 
+driver.send_trajectory(traj1)
+
 rate = rospy.Rate(60)
 
 while not rospy.is_shutdown():
-
-  # debug command here
-  driver.send_trajectory(traj1)
-  rospy.sleep(0.5)
-  driver.send_trajectory(traj2)
-  rospy.sleep(0.5)
 
   driver.tick()
   rate.sleep()

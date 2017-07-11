@@ -359,7 +359,7 @@ class NotificationDialog(QWidget):
         self.notification_list.itemClicked.connect(self.move_selected)        
         self.hide()
 
-    def notify(self, message, severity='info'):
+    def notify(self, message, severity='warn'):
         """Adds a message to the notification dialog, showing it if not visible.
 
         # Arguments
@@ -375,11 +375,11 @@ class NotificationDialog(QWidget):
              self.show_hide_slide()
         
         if severity is 'warn':
-            rospy.logwarn(message)
+            rospy.logwarn("Instructor: " + message)
         elif severity is 'error':
-            rospy.logerr(message)
+            rospy.logerr("Instructor: " + message)
         else:
-            rospy.loginfo(message)
+            rospy.loginfo("Instructor: " + message)
 
     def show_hide_slide(self):
         if self.isVisible():
@@ -389,7 +389,9 @@ class NotificationDialog(QWidget):
             if self.saved_geom is not None:
                 self.move(self.saved_geom.x(),self.saved_geom.y())
             else:
-                self.move(self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,self.geometry().y()+self.geometry().height()/2)
+                self.move(
+                    self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,
+                    self.geometry().y()+self.geometry().height()/2)
             self.show()
 
     def done(self):

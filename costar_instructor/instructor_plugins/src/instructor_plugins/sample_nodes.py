@@ -26,7 +26,7 @@ class NodeActionSampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return beetree.NodeAction(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeServiceSampleGUI(NodeGUI):
     def __init__(self):
@@ -36,7 +36,7 @@ class NodeServiceSampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeServiceSample(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeQuerySampleGUI(NodeGUI):
     def __init__(self):
@@ -46,7 +46,7 @@ class NodeQuerySampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeQuerySample(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeVariableSampleGUI(NodeGUI):
     def __init__(self):
@@ -56,7 +56,7 @@ class NodeVariableSampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeVariableSample(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Sample Nodes -------------------------------------------------------------------
 class NodeQuerySample(NodeQuery):

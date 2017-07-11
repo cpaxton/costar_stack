@@ -83,8 +83,8 @@ class NodeHomeGUI(NodeGUI):
             # rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodeHome(self.get_name(),self.get_label(),self.command_vel,self.command_acc,self.plan)
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeHome(ServiceNode):

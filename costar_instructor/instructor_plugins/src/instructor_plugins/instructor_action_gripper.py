@@ -35,8 +35,8 @@ class NodeActionGripperOpenGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionGripper(self.get_name(),self.get_label(),True,int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeActionGripperCloseGUI(NodeGUI):
     def __init__(self):
@@ -52,8 +52,8 @@ class NodeActionGripperCloseGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionGripper(self.get_name(),self.get_label(),False,int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionGripper(ServiceNode):
