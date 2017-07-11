@@ -1,0 +1,8 @@
+string goal_frame
+string dmp_name = dmp_default
+float64 tau_ratio = 2.
+float64 end_threshold = 0.2
+int32 dt = 10
+int32 integrate_iter = 5
+---
+

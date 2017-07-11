@@ -111,8 +111,8 @@ class NodePlanRelativeWaypointGUI(NodeGUI):
             # rospy.loginfo('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodePlanRelativeWaypoint(self.get_name(),self.get_label(),self.command_waypoint_name,self.command_vel,self.command_acc,self.listener_)
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def refresh_data(self):
         self.waypoint_ui.waypoint_list.itemClicked.connect(self.waypoint_selected_from_list)
@@ -154,7 +154,7 @@ class NodePlanRelativeWaypoint(ServiceNode):
             # Send Servo Command
             rospy.logwarn('Single Planned Move Started')
             result = pose_servo_proxy(msg)
-            if 'FAILED' in str(result.ack):
+            if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return

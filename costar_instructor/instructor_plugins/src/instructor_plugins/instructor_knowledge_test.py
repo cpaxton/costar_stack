@@ -151,7 +151,7 @@ class NodeKnowledgeTestGUI(NodeGUI):
         if all([self.name.full(), self.selected_target != None, self.selected_value != None, self.selected_pred != None]):
             return NodeKnowledgeTest(self.get_name(), self.get_label(), self.selected_target, self.selected_value, self.selected_pred)
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def save_data(self,data):
         data['target'] = {'value':self.selected_target}
@@ -173,7 +173,11 @@ class NodeKnowledgeTestGUI(NodeGUI):
 # NODE
 class NodeKnowledgeTest(Node):
     def __init__(self, name, label, target, value, predicate):
-        L = 'IF '+target.upper()+'['+predicate+'] = '+str(value).upper()
+        #L = 'IF '+target.upper()+'['+predicate+'] = '+str(value).upper()
+        if value:
+            L = "ASSERT %s(%s)"%(predicate.upper(), target)
+        else:
+            L = "ASSERT NOT %s(%s)"%(predicate.upper(), target)
         color = colors['purple'].normal
         super(NodeKnowledgeTest, self).__init__(name, L, color)
         self.target = target

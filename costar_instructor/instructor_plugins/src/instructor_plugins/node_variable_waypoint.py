@@ -88,6 +88,6 @@ class NodeVariableWaypointGUI(NodeGUI):
         if all([self.name.full(),self.label.full(), self.command_waypoint_name]):
             return NodeVariableWaypoint(self.get_name(),self.command_waypoint_name)
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 

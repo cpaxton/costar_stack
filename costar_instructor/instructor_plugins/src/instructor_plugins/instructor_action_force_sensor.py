@@ -30,8 +30,8 @@ class NodeActionForceZeroGUI(NodeGUI):
         if all([self.name.full()]):
             return NodeActionForceZero(self.get_name(),self.get_label())
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionForceZero(ServiceNode):

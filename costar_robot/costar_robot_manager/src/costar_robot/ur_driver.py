@@ -78,6 +78,7 @@ class CostarUR5Driver(CostarArm):
         traj.points[0].positions = self.q0
 
         if not self.valid_verify(stamp):
+            #rospy.logerr('verify failed:'+ str(stamp) + ", " + str(self.cur_stamp))
             return 'FAILURE - preempted'
 
         if self.simulation:
@@ -118,13 +119,24 @@ class CostarUR5Driver(CostarArm):
         goal = FollowJointTrajectoryGoal(trajectory=traj)
 
         if self.valid_verify(stamp):
-            self.client.send_goal_and_wait(goal, preempt_timeout=rospy.Duration.from_sec(10.0))
+            self.client.send_goal(goal)
             # max time before returning = 30 s
-            self.client.wait_for_result(rospy.Duration.from_sec(30.0))
+            done = False
+            #while self.valid_verify(stamp) and not done:
+            self.client.wait_for_result()#rospy.Duration.from_sec(1.0))
+
+        # Check to make sure we weren't preempted.
+        if not self.valid_verify(stamp):
+            #rospy.logerr('verify failed:'+ str(stamp) + ", " + str(self.cur_stamp))
+            res = None
+        else:
+            #rospy.logerr('verify succeeded:'+ str(stamp) + ", " + str(self.cur_stamp))
             res = self.client.get_result()
 
         if res is not None and res.error_code >= 0:
             return "SUCCESS"
+        elif res is None:
+            return "FAILURE - UR actionlib call aborted"
         else:
             return "FAILURE - %s"%res.error_code
 

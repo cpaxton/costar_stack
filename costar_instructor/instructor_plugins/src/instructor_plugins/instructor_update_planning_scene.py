@@ -36,8 +36,8 @@ class NodeActionUpdatePlanningSceneGUI(NodeGUI):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionUpdatePlanningScene(self.get_name(),self.get_label(),int(self.wait_finish.get()))
         else:
-            rospy.logerr('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionUpdatePlanningScene(ServiceNode):
