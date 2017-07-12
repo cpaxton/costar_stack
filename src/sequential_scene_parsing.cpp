@@ -400,18 +400,6 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			object_childs_map,
 			this->object_hypotheses_map_);
 
-	std::cerr << "Object list + additional hypothesis: ";
-	for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
-	{
-		for (map_string_transform::iterator it = object_test_pose_map_by_dist[dist_idx].begin(); 
-		it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
-		{
-			// std::cerr << "[" << dist_idx << "]" << it->first <<", ";
-			std::cerr << "[" << dist_idx << "]" << it->first << std::endl 
-				<< printTransform(it->second);
-		}
-	}
-	std::cerr << std::endl;
 	this->physics_engine_->removeAllRigidBodyFromWorld();
 	
 	// resimulate objects with retained object
@@ -435,6 +423,10 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 		{
 			std::cerr << "[" << dist_idx << "]" << it->first << std::endl 
 				<< printTransform(it->second);
+
+			const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[it->first];
+			bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT || obj_hypotheses.object_action_ == PERTURB_OBJECT);
+			this->physics_engine_->setIgnoreDataForces(it->first,ignore_data_forces);
 		}
 	}
 	std::cerr << std::endl;

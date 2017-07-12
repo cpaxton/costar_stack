@@ -83,6 +83,8 @@ public:
     void addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies);
     void removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies);
 
+    void setIgnoreDataForces(const std::string &object_id, bool value);
+
 // Additional functions used for rendering:
     void initPhysics();
     void exitPhysics();
@@ -121,7 +123,8 @@ private:
 	std::map<std::string, btTransform> object_best_pose_from_data_;
 	// std::map<std::string, btTransform> object_test_pose_map_;
 	std::map<std::string, btTransform> object_best_test_pose_map_;
-	
+	std::map<std::string, bool> ignored_data_forces_;
+
 	btRigidBody* background_;
 	btVector3 background_surface_normal_;
 
