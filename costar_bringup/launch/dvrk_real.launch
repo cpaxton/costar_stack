@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <launch>
   <!-- dvrk bringup -->
-  <arg name="arm" default="PSM2"/>
+  <arg name="arm" default="PSM1"/>
   <arg name="cisst_root" default="$(env HOME)/catkin_ws/src/cisst-saw"/>
-  <arg name="psm_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/jhu-dVRK/console-PSM2.json"/>
+  <arg name="psm_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/jhu-dVRK/console-PSM1.json"/>
 
   <include file="$(find dvrk_robot)/launch/dvrk_arm_rviz.launch">
     <arg name="arm" value="$(arg arm)"/>

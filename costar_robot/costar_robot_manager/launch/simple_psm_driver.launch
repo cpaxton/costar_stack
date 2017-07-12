@@ -4,8 +4,8 @@
   <arg name="model" default="dvrk_psm"/>
 
   <node pkg="costar_robot_manager" name="simple_psm_driver_node" type="psm_driver.py" output="screen">
-  	<remap from="robot_description" to="/dvrk/PSM2/robot_description"/>
-	<remap from="joint_states" to="/dvrk/PSM2/joint_states" />
+  	<remap from="robot_description" to="/dvrk/PSM1/robot_description"/>
+	<remap from="joint_states" to="/dvrk/PSM1/joint_states" />
   </node>
 
 </launch>
