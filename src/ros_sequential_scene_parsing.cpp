@@ -89,6 +89,8 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	this->background_pcl_sub = this->nh_.subscribe(background_pcl2_topic,1,&RosSceneHypothesisAssessor::addBackground,this);
 	this->scene_pcl_sub = this->nh_.subscribe(scene_pcl2_topic,1,&RosSceneHypothesisAssessor::addSceneCloud,this);
 
+	this->done_message_pub = this->nh_.advertise<std_msgs::Empty>("done_hypothesis_msg",1);
+
 	// setup objrecransac tool
 	boost::split(object_names,objransac_model_list,boost::is_any_of(","));
 	this->ros_scene_.loadObjectModels(objransac_model_location, object_names);
@@ -333,6 +335,12 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 	
 	this->ros_scene_.evaluateAllObjectHypothesisProbability();
 	this->updateTfFromObjTransformMap(this->ros_scene_.getCorrectedObjectTransformFromSceneGraph());
+
+	this->publishTf();
+	
+	std_msgs::Empty done_msg;
+	this->done_message_pub.publish(done_msg);
+
 	this->mtx_.unlock();
 }
 

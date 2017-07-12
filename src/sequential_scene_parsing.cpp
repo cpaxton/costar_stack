@@ -514,7 +514,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 
 				// limit observation to 5 best previous hypothesis for static object
 				if (obj_hypotheses.object_action_ == STATIC_OBJECT && counter > 5) break;
-				else if (counter > 5) break;
+				else if (counter > 15) break;
 
 				// std::cerr << "-------------------------------------------------------------\n";
 				double scene_hypothesis_probability;

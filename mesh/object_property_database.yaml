@@ -15,3 +15,22 @@ object_property:
 
   cube:
     mass: 1.0
+
+  drill:
+    mass: 1.0
+  drill_flat:
+    mass: 1.0
+  drill_point:
+    mass: 1.0
+  mallet_ball_pein:
+    mass: 1.0
+  mallet_black_white:
+    mass: 1.0
+  mallet_drilling:
+    mass: 1.0
+  mallet_fiber:
+    mass: 1.0
+  old_hammer:
+    mass: 1.0
+  sander:
+    mass: 1.0

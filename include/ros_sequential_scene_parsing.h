@@ -13,6 +13,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/io/pcd_io.h>
 
+#include <std_msgs/Empty.h>
+
 // use detected object list instead of tf name convention
 #include <costar_objrec_msgs/ObjectSymmetry.h>
 #include <costar_objrec_msgs/DetectedObject.h>
@@ -68,6 +70,7 @@ private:
 	ros::Subscriber object_hypotheses_sub;
 	ros::Subscriber background_pcl_sub;
 	ros::Subscriber scene_pcl_sub;
+	ros::Publisher done_message_pub;
 	
 	ros::NodeHandle nh_;
 	tf::TransformListener listener_;
