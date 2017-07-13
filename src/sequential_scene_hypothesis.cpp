@@ -91,6 +91,8 @@ Eigen::MatrixXd SequentialSceneHypothesis::generate2dMatrixFromPixelCoordinate(c
 		int y = pixel_matrix(1,idx);
 		const double &z = pixel_matrix(2,idx);
 
+		if (x >= 640 || y >= 480) continue;
+
 		double &current_pixel_value = result(x,y);
 		if (z == 0 || current_pixel_value != 0 && current_pixel_value < z) continue;
 		current_pixel_value = z;
@@ -181,6 +183,8 @@ bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_
 		int x = backprojected_object_cloud(0,idx);
 		int y = backprojected_object_cloud(1,idx);
 		const double &z = object_image_matrix(x,y);
+		
+		if (x >= 640 || y >= 480) continue;
 		
 		// tolerance 1e-4 for obstruction
 		if (this->scene_image_pixel_(x,y) > 0 && this->scene_image_pixel_(x,y) < z)
@@ -522,6 +526,10 @@ AdditionalHypotheses SequentialSceneHypothesis::generateAdditionalObjectHypothes
 		it != this->previous_scene_observation_.scene_hypotheses_list_.end(); ++it)
 	{
 		std::map<std::string, vertex_t> &vertex_map = it->vertex_map_;
+
+		// object has not been added yet in this scene.
+		if (!keyExistInConstantMap(object_id,vertex_map)) continue;
+
 		SceneSupportGraph &scene_support_graph = it->scene_support_graph_;
 		double &scene_probability = it->scene_probability_;
 		std::map<std::string, int> &scene_object_hypothesis_id = it->scene_object_hypothesis_id_;

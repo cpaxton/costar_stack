@@ -109,9 +109,7 @@ class GroundtruthHypothesisGenerator(object):
 				det_object = DetectedObject()
 				object_type = obj_name.translate(None, digits)
 				obj_index = 0
-				if object_type == obj_name:
-					obj_index = 1
-				else:
+				if object_type != obj_name:
 					obj_index = obj_name[len(object_type):]
 
 				det_object.id = "objects/%s/%s"%(object_type,obj_index)
