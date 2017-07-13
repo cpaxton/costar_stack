@@ -6,9 +6,12 @@ from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectoryPoint
 from std_srvs.srv import Empty as EmptyService
 from sensor_msgs.msg import JointState
+from sensor_msgs.msg import Joy
+from geometry_msgs.msg import Pose
 from visualization_msgs.msg import *
 import tf_conversions.posemath as pm
 import numpy as np
+from datetime import datetime 
 
 import dvrk
 import PyKDL
@@ -24,7 +27,10 @@ from costar_robot import CostarArm
 from moveit_msgs.msg import *
 from moveit_msgs.srv import *
 
+from instructor_core.srv import AddWaypoint
+
 from predicator_landmark import GetWaypointsService
+
 
 class CostarPSMDriver(CostarArm):
 
@@ -45,11 +51,19 @@ class CostarPSMDriver(CostarArm):
 
         self.dvrk_arm = dvrk.psm('PSM1')
         self.psm_initialized = False
+        self.record_waypoint = 1
 
         rospy.Subscriber("/instructor_marker/feedback", InteractiveMarkerFeedback, self.marker_cbback)
         self.last_marker_frame = PyKDL.Frame(PyKDL.Rotation.RPY(0,0,0),PyKDL.Vector(0,0,0))
         self.last_marker_trans = (0,0,0)
         self.last_marker_rot = (0,0,0,1)
+
+        rospy.Subscriber("/dvrk/footpedals/clutch",Joy,self.clutch_cb)
+        rospy.wait_for_service("/instructor_core/AddWaypoint",5)
+        self.add_waypoint_service = rospy.ServiceProxy('/instructor_core/AddWaypoint', AddWaypoint)
+
+        self.tf_listener = tf.TransformListener()
+        self.cur_pose = Pose()
 
         super(CostarPSMDriver, self).__init__(base_link,end_link,planning_group, dof=6)
 
@@ -71,6 +85,16 @@ class CostarPSMDriver(CostarArm):
 
     def marker_cbback(self,data):
         (self.last_marker_trans,self.last_marker_rot) = pm.toTf(pm.fromMsg(data.pose))
+
+    def clutch_cb(self,data):
+        if self.record_waypoint == data.buttons[0] and self.driver_status == 'TEACH':
+            # ((self.cur_pose.position.x,self.cur_pose.position.y,self.cur_pose.position.z), 
+            #     (self.cur_pose.orientation.x,self.cur_pose.orientation.y,self.cur_pose.orientation.z,self.cur_pose.orientation.w)) \
+            # = self.tf_listener.lookupTransform('/PSM1_tool_wrist_sca_ee_link_0','/world',rospy.Time(0))
+            (pos,rot) = self.tf_listener.lookupTransform('/world','/PSM1_tool_wrist_sca_ee_link_0',rospy.Time(0))
+            self.cur_pose = pm.toMsg(pm.fromTf((pos,rot)))
+            self.add_waypoint_service(name = str(datetime.now()), world_pose = self.cur_pose, relative_pose = self.cur_pose, relative_frame_name = '')
+            print "Clutch pressed, add 1 waypoint"
 
     def handle_tick(self):
         br = tf.TransformBroadcaster()

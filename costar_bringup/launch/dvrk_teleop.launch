@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- dvrk bringup -->
+  <arg name="master" default="MTMR"/>
+  <arg name="slave" default="PSM1"/>
+  <arg name="cisst_root" default="$(env HOME)/catkin_ws/src/cisst-saw"/>
+  <arg name="arms_config" default="$(arg cisst_root)/sawIntuitiveResearchKit/share/jhu-dVRK/console-MTMR-PSM1-Teleop.json"/>
+
+  <include file="$(find dvrk_robot)/launch/dvrk_master_slave_rviz.launch">
+    <arg name="master" value="$(arg master)"/>
+    <arg name="slave" value="$(arg slave)"/>
+    <arg name="config" value="$(arg arms_config)"/>
+  </include>
+
+  <!-- CoSTAR bringup -->
+  <include file="$(find costar_bringup)/launch/utilities.launch"/>
+  <include file="$(find costar_robot_manager)/launch/simple_psm_driver.launch"/>
+  <include file="$(find costar_bringup)/launch/config/dvrk.launch"/>
+
+
+  <!-- Interactive Marker -->
+  <node name="instructor_marker" pkg="costar_robot_manager" type="instructor_marker.py"/>
+
+  <!-- Gripper -->
+  <node name= "simple_psm_gripper" pkg="gripper_dvrk" type="psm_gripper.py" />
+
+</launch>
