@@ -132,22 +132,22 @@ class Instructor(QWidget):
         self.app_ = app
         self.types__ = ['LOGIC',
                 'ACTION',
-                'CONDITION',
                 'TASK',
+                'CONDITION',
                 'PROCESS',
                 'SERVICE',
                 'VARIABLE']
         self.colors__ = ['blue',
                 'green',
-                'purple',
                 'orange',
+                'purple',
                 'pink',
                 'gray',
                 'gray']
         self.labels__ = ['BUILDING BLOCKS',
-                'ROBOT ACTIONS',
+                'BASIC ACTIONS',
+                'ADVANCED ACTIONS',
                 'SYSTEM KNOWLEDGE',
-                'TASK MODEL',
                 'PROCESSES',
                 'SERVICE',
                 'VARIABLES']
