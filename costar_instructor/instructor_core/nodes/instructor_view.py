@@ -139,7 +139,7 @@ class Instructor(QWidget):
                 'VARIABLE']
         self.colors__ = ['blue',
                 'green',
-                'orange',
+                'sea_green',
                 'purple',
                 'pink',
                 'gray',
@@ -516,7 +516,7 @@ class Instructor(QWidget):
             self.component_widgets[t] = w
             self.component_layout.addWidget(w)
 
-        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['green_light'],'large')
+        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['orange'],'large')
         # self.node_container = ListContainer('NODES','NODES',colors['pink'],'large')
         self.subtree_container.show()
         self.subtree_container.register_callbacks(self.collapse_unused,self.subtree_selected_callback)

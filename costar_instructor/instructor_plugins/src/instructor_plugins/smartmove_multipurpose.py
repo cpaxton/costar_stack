@@ -30,7 +30,7 @@ global_manager = None
 # Node Wrappers -----------------------------------------------------------
 class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
     def __init__(self, grasp=True):
-        super(NodeActionSmartmoveMultiPurposeGUI,self).__init__('green')
+        super(NodeActionSmartmoveMultiPurposeGUI,self).__init__('sea_green')
 
         rospack = rospkg.RosPack()
         ui_path = rospack.get_path('instructor_plugins') + '/ui/action_smart_grasp.ui'
@@ -38,8 +38,8 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.grasp = grasp
 
         self.title.setText('SMARTMOVE')
-        self.title.setStyleSheet('background-color:'+ colors['green'].normal+';color:#ffffff')
-        self.setStyleSheet('background-color:'+ colors['green'].normal+' ; color:#ffffff')
+        self.title.setStyleSheet('background-color:'+ colors['sea_green'].normal+';color:#ffffff')
+        self.setStyleSheet('background-color:'+ colors['sea_green'].normal+' ; color:#ffffff')
 
         self.waypoint_ui = QWidget()
         uic.loadUi(ui_path, self.waypoint_ui)
@@ -247,7 +247,7 @@ class NodeActionSmartmoveMultiPurpose(ServiceNode):
             "with backoff dist: %f cm"%(backoff*100)
         super(NodeActionSmartmoveMultiPurpose,self).__init__(name,
             L,
-            colors['green'].normal,
+            colors['sea_green'].normal,
             service_description,
             display_name = selected_smartmove)
         self.selected_region = selected_region

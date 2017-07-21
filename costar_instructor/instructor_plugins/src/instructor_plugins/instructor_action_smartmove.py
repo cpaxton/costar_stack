@@ -28,14 +28,14 @@ GLOBAL_MANAGER = None
 # Node Wrappers -----------------------------------------------------------
 class NodeActionSmartmoveGUI(NodeGUI):
     def __init__(self):
-        super(NodeActionSmartmoveGUI,self).__init__('green')
+        super(NodeActionSmartmoveGUI,self).__init__('sea_green')
 
         rospack = rospkg.RosPack()
         ui_path = rospack.get_path('instructor_plugins') + '/ui/action_smartmove.ui'
 
         self.title.setText('SMARTMOVE')
-        self.title.setStyleSheet('background-color:'+ colors['green'].normal+';color:#ffffff')
-        self.setStyleSheet('background-color:'+ colors['green'].normal+' ; color:#ffffff')
+        self.title.setStyleSheet('background-color:'+ colors['sea_green'].normal+';color:#ffffff')
+        self.setStyleSheet('background-color:'+ colors['sea_green'].normal+' ; color:#ffffff')
 
         self.waypoint_ui = QWidget()
         uic.loadUi(ui_path, self.waypoint_ui)
