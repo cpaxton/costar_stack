@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 import rospy
-from predicator_robotiq import SModelPredicator
+from predicator_dvrk import dvrkPredicator
 
-rospy.init_node('predicator_s_model')
+rospy.init_node('predicator_dvrk')
 
-smp = SModelPredicator()
+dvrkp = dvrkPredicator()
 
 rospy.spin()

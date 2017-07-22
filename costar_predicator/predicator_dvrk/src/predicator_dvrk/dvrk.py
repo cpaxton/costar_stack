@@ -1,12 +1,12 @@
 import rospy
 from predicator_msgs.msg import *
 
-class SModelPredicator:
+class dvrkPredicator:
 
-    def __init__(self,publish_predicates=True,start_subscriber=True,gripper_name='s_model'):
+    def __init__(self,publish_predicates=True,start_subscriber=True,gripper_name='psm_gripper'):
 
         self.valid_predicates = ValidPredicates(
-		assignments=["clutch"], # list all pedals here
+		assignments=["clutch","coag","camera_plus","camera_minus","camera"], 
 		predicates=['pressed'])
         self.predicate_msg = PredicateList()
 
@@ -16,7 +16,7 @@ class SModelPredicator:
             self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
 
         if start_subscriber:
-            self.sub = rospy.Subscriber("LISTEN ON PEDAL TOPIC",inputMsg,self.callback)
+            self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",inputMsg,self.callback)
 
         self.name = rospy.get_name()
 
@@ -26,7 +26,12 @@ class SModelPredicator:
     def handle(self,status):
         self.predicate_msg = PredicateList()
         self.predicate_msg.pheader.source = self.name
-	# add all pressed pedals to the list by calling add predicate ("pressed", pedal name)
+        self.addPredicate("pressed","clutch")
+        self.addPredicate("pressed","coag")
+        self.addPredicate("pressed","camera")
+        self.addPredicate("pressed","camera_minus")
+        self.addPredicate("pressed","camera_plus")
+	
     '''
     add a single message
     '''
