@@ -5,6 +5,6 @@ from predicator_dvrk import dvrkPredicator
 
 rospy.init_node('predicator_dvrk')
 
-dvrkp = dvrkPredicator()
+dvrkpre = dvrkPredicator()
 
 rospy.spin()

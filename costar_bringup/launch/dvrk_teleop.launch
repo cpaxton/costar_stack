@@ -22,6 +22,7 @@
   </include>
   <include file="$(find costar_robot_manager)/launch/simple_psm_driver.launch"/>
   <include file="$(find costar_bringup)/launch/config/dvrk.launch"/>
+  <node name="predicator_dvrk" pkg="predicator_dvrk" type="simple_predicator_dvrk.py"/>
 
 
   <!-- Interactive Marker -->

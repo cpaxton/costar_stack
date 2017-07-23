@@ -1,5 +1,6 @@
 import rospy
 from predicator_msgs.msg import *
+from sensor_msgs.msg import Joy
 
 class dvrkPredicator:
 
@@ -16,7 +17,11 @@ class dvrkPredicator:
             self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
 
         if start_subscriber:
-            self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",inputMsg,self.callback)
+            self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",Joy,self.callback)
+            self.sub2 = rospy.Subscriber("/dvrk/footpedals/coag",Joy,self.callback)
+            self.sub3 = rospy.Subscriber("/dvrk/footpedals/camera_plus",Joy,self.callback)
+            self.sub4 = rospy.Subscriber("/dvrk/footpedals/camera_minus",Joy,self.callback)
+            self.sub5 = rospy.Subscriber("/dvrk/footpedals/camera",Joy,self.callback)
 
         self.name = rospy.get_name()
 
