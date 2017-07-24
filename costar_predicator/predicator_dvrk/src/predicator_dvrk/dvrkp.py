@@ -20,17 +20,23 @@ class dvrkPredicator:
             self.vpub = rospy.Publisher("predicator/valid_input",ValidPredicates,queue_size=1000)
 
         if start_subscriber:
-            self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",Joy,self.callback)
-            self.sub2 = rospy.Subscriber("/dvrk/footpedals/coag",Joy,self.callback)
-            self.sub3 = rospy.Subscriber("/dvrk/footpedals/camera_plus",Joy,self.callback)
-            self.sub4 = rospy.Subscriber("/dvrk/footpedals/camera_minus",Joy,self.callback)
-            self.sub5 = rospy.Subscriber("/dvrk/footpedals/camera",Joy,self.callback)
+            self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",Joy,self.callbackClutch)
+            #self.sub2 = rospy.Subscriber("/dvrk/footpedals/coag",Joy,self.callback)
+            #self.sub3 = rospy.Subscriber("/dvrk/footpedals/camera_plus",Joy,self.callback)
+            #self.sub4 = rospy.Subscriber("/dvrk/footpedals/camera_minus",Joy,self.callback)
+            #self.sub5 = rospy.Subscriber("/dvrk/footpedals/camera",Joy,self.callback)
 
         self.name = rospy.get_name()
 
-    def callback(self, msg):
+    def callbackClutch(self, msg):
         # if this is for the clutch -- set clutch pressed
-        pass
+        if len(msg.buttons) > 0:
+            if msg.buttons[0] == 1:
+                # clutch pressed
+                self.clutch_pressed = True
+            elif msg.buttons[0] == 0:
+                self.clutch_pressed = False
+        print "clutch pedal status:", self.clutch_pressed
 	
     '''
     add a single message

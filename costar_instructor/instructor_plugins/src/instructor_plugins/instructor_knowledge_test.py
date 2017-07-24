@@ -173,7 +173,7 @@ class NodeKnowledgeTestGUI(NodeGUI):
 # NODE
 class NodeKnowledgeTest(Node):
     def __init__(self, name, label, target, value, predicate):
-        L = 'IF '+target.upper()+'['+predicate+'] = '+str(value).upper()
+        L = 'IF '+predicate+'('+target+') = '+str(value).upper()
         color = colors['purple'].normal
         super(NodeKnowledgeTest, self).__init__(name, L, color)
         self.target = target
