@@ -17,7 +17,7 @@ class dvrkPredicator:
         if publish_predicates:
             # create predicator things
             self.pub = rospy.Publisher("predicator/input",PredicateList,queue_size=1000)
-            self.vpub = rospy.Publisher("predicator/valid_predicates",ValidPredicates,queue_size=1000)
+            self.vpub = rospy.Publisher("predicator/valid_input",ValidPredicates,queue_size=1000)
 
         if start_subscriber:
             self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",Joy,self.callback)
