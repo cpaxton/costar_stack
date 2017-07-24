@@ -9,12 +9,15 @@ class dvrkPredicator:
         self.valid_predicates = ValidPredicates(
 		assignments=["clutch","coag","camera_plus","camera_minus","camera"], 
 		predicates=['pressed'])
+        self.valid_predicates.pheader.source = rospy.get_name()
         self.predicate_msg = PredicateList()
+
+        self.clutch_pressed = False
 
         if publish_predicates:
             # create predicator things
             self.pub = rospy.Publisher("predicator/input",PredicateList,queue_size=1000)
-            self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
+            self.vpub = rospy.Publisher("predicator/valid_predicates",ValidPredicates,queue_size=1000)
 
         if start_subscriber:
             self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",Joy,self.callback)
@@ -26,16 +29,8 @@ class dvrkPredicator:
         self.name = rospy.get_name()
 
     def callback(self, msg):
-        self.handle(msg)
-
-    def handle(self,status):
-        self.predicate_msg = PredicateList()
-        self.predicate_msg.pheader.source = self.name
-        self.addPredicate("pressed","clutch")
-        self.addPredicate("pressed","coag")
-        self.addPredicate("pressed","camera")
-        self.addPredicate("pressed","camera_minus")
-        self.addPredicate("pressed","camera_plus")
+        # if this is for the clutch -- set clutch pressed
+        pass
 	
     '''
     add a single message
@@ -48,6 +43,10 @@ class dvrkPredicator:
     publish current predicate messages
     '''
     def tick(self):
+        self.predicate_msg = PredicateList()
+        self.predicate_msg.pheader.source = self.name
+        if self.clutch_pressed:
+            self.addPredicate("pressed","clutch")
         self.pub.publish(self.predicate_msg)
         self.vpub.publish(self.valid_predicates)
 
