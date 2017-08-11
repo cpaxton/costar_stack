@@ -1,6 +1,6 @@
 # Color Nearest Neighboor Segmenter
 
-This rosnode will perform a simple color based segmentation using nearest neigboor of each pixel to the pretrained colors. These trained colors are generated using k-means clustering of the input images or color point clouds.
+This rosnode will perform a color based segmentation for objects with flat color. The color training is performed using k-means clustering of each object color category from their color point clouds. Then the model is used for perfoming nearest neighboor search on input color point cloud.
 
 # Requirements
 This package requires these dependencies:

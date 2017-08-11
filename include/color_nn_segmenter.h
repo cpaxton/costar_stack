@@ -10,6 +10,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/filters/filter.h>
 // #include <pcl/ml/kmeans.h>
 
 #include <opencv2/highgui/highgui.hpp>
@@ -31,7 +32,7 @@ typedef pcl::PointCloud<pcl::PointXYZL> PointCloudXYZL;
 class ColorNnSegmenter
 {
 public:
-	ColorNnSegmenter() : ready(false) {};
+	ColorNnSegmenter() : ready(false), unlabelled_model_cloud(new PointCloudXYZ()) {};
 	
 	bool trainModel(const std::string &training_data_directory, const  int kmeans_point_per_model = 5);
 	bool saveModel(const std::string &target_directory, const std::string &model_name);

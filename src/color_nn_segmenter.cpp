@@ -27,29 +27,41 @@ void ColorNnSegmenter::rgbToLabCloud(PointCloudXYZ::Ptr input_cloud)
 PointCloudXYZ::Ptr ColorNnSegmenter::openCvKMeans(const PointCloudXYZ &input_cloud, const int &cluster_size)
 {
 	// convert input cloud to opencv Mat
-	cv::Mat points(1, input_cloud.size(), CV_32FC3);
+	cv::Mat points(input_cloud.size(),1, CV_32FC3);
 	std::size_t idx = 0;
+
+	std::cout << "Input model points:\n";
 	for(PointCloudXYZ::const_iterator it = input_cloud.begin(); it != input_cloud.end(); ++it, ++idx)
 	{
-		points.at<cv::Vec3f>(1,idx) = cv::Vec3f(it->x,it->y,it->z);
+		points.at<cv::Vec3f>(idx,0) = cv::Vec3f(it->x,it->y,it->z);
+		// std::cerr << points.at<cv::Vec3f>(0,idx) << std::endl;
 	}
 
-	cv::Mat labels;
-	int attempts = 5;
-	cv::Mat centers;
+	// reshape to 
 
+	cv::Mat labels;
+	int attempts = 10;
+	cv::Mat centers;
+	// bool success = false;
+
+	int max_cluster_size = input_cloud.size() > cluster_size ? cluster_size : input_cloud.size(); 
+	
 	// use opencv kmeans to extract the cluster center, since pcl 1.7.2 does not have kmeans
-	cv::kmeans(points, cluster_size, labels, 
+	cv::kmeans(points, max_cluster_size, labels, 
 		cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10e4, 1e-4),
-		attempts, cv::KMEANS_PP_CENTERS, centers);
+		attempts, cv::KMEANS_RANDOM_CENTERS, centers);
+
+	// std::cerr << "Kmeans size: " << centers.size() << std::endl;
+	// success = centers.rows > 0;
 
 	PointCloudXYZ::Ptr kmeans_result(new PointCloudXYZ());
+	std::cout << "Kmeans of the model:\n";
 	for (unsigned int i = 0; i < centers.rows; ++i )
 	{
-		for (unsigned int j = 0; j < centers.cols; ++j)
+		// for (unsigned int j = 0; j < centers.cols; ++j)
 		{
-			cv::Vec3f cv_center = centers.at<cv::Vec3f>(i,j);
-			std::cout << i << ", " << j << ": " << cv_center << std::endl;
+			cv::Vec3f cv_center = centers.at<cv::Vec3f>(i);
+			std::cout << i << ": " << cv_center << std::endl;
 			pcl::PointXYZ center_point(cv_center[0],cv_center[1],cv_center[2]);
 			kmeans_result->push_back(center_point);
 		}
@@ -97,8 +109,7 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 			std::string model_name = model_iter->path().filename().string();
 			std::cout << "Found model directory: '" << model_name << std::endl;
 			filepath_in_model[model_name] = std::vector<std::string>();
-
-			for (fs::directory_iterator file_iter(model_iter); file_iter != end_iter; ++file_iter)
+			for (fs::directory_iterator file_iter(model_iter->path()); file_iter != end_iter; ++file_iter)
 			{
 				std::string extension = boost::filesystem::extension(file_iter->path());
 				if (extension == ".pcd")
@@ -114,7 +125,7 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 		}
 	}
 
-	PointCloudXYZL::Ptr result_model_cloud(new PointCloudXYZL);
+	PointCloudXYZL::Ptr result_model_cloud(new PointCloudXYZL());
 
 	unsigned int label_counter = 0;
 	// process the files
@@ -123,7 +134,7 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 		PointCloudXYZ combined_lab_color_cloud;
 		for (std::vector<std::string>::const_iterator file_it = it->second.begin(); file_it != it->second.end(); ++file_it )
 		{
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
 
 			if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (*file_it, *cloud) == -1) 
 			{
@@ -136,6 +147,14 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 				continue;
 			}
 
+			std::vector<int> indices;
+			pcl::removeNaNFromPointCloud(*cloud,*cloud, indices);
+			
+			// remove NaN points from all saved training clouds
+			if (pcl::io::savePCDFile(*file_it,*cloud,true) == -1)
+			{
+
+			}
 			PointCloudXYZ::Ptr color_only_cloud = this->stripCloudCoordinate(*cloud);
 			this->rgbToLabCloud(color_only_cloud);
 			if (file_it == it->second.begin())
@@ -178,6 +197,7 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 	if (result_model_cloud->size() > 0)
 	{
 		model_cloud = result_model_cloud;
+
 		pcl::copyPointCloud(*model_cloud, *unlabelled_model_cloud);
 		kdtree.setInputCloud(unlabelled_model_cloud);
 		this->ready = true;
@@ -236,8 +256,11 @@ bool ColorNnSegmenter::loadModel(const std::string &model_dat_file_path)
 {
 	namespace fs = boost::filesystem;
 	fs::path p(model_dat_file_path);
-	if (!fs::exists(p)) return false;
-
+	if (!fs::exists(p))
+	{
+		std::cerr << "Model file: " << p.string() << " does not exist.\n";
+		return false;
+	}
 	fs::path cloud_path = p.parent_path();
 
 	std::ifstream in_map_file(model_dat_file_path.c_str());
@@ -249,7 +272,7 @@ bool ColorNnSegmenter::loadModel(const std::string &model_dat_file_path)
 	cloud_path /= cloud_filename;
 	
 	std::string str_cloud_path = cloud_path.string();
-	PointCloudXYZL::Ptr cloud_data(new PointCloudXYZL);
+	PointCloudXYZL::Ptr cloud_data(new PointCloudXYZL());
 
 	if (pcl::io::loadPCDFile(str_cloud_path.c_str(), *cloud_data) == -1) 
 	{

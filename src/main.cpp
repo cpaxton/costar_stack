@@ -44,26 +44,33 @@ pcl::PointCloud<pcl::PointXYZRGBA> convertPointCloudLabelToRGBA(const PointCloud
     return result;
 }
 
-void cacheCloudInput(const sensor_msgs::PointCloud2 &inputCloud)
+void cacheCloudInput(const sensor_msgs::PointCloud2 &input_cloud)
 {
-	cached_cloud = inputCloud;
+	// std::cerr << "Updated cached cloud.\n";
+	cached_cloud = input_cloud;
 }
 
 bool colorSegmenter(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
+	ROS_INFO("Performing color based segmentation.");
 	PointCloudXYZRGB::Ptr input_cloud(new PointCloudXYZRGB());
 	fromROSMsg(cached_cloud,*input_cloud);
-
+	std::cerr << "Input cloud size: " << input_cloud->size() << std::endl;
 	PointCloudXYZL::Ptr seg_cloud = color_based_segmenter.segment(*input_cloud);
 
 	sensor_msgs::PointCloud2 output_msg;
+	output_msg.header.frame_id = cached_cloud.header.frame_id;
 	toROSMsg(*seg_cloud,output_msg);
 	pc_pub.publish(output_msg);
 	
 	pcl::PointCloud<pcl::PointXYZRGBA> seg_cloud_vis = convertPointCloudLabelToRGBA(*seg_cloud);
-	toROSMsg(seg_cloud_vis,output_msg);
-	pc_vis_pub.publish(output_msg);
+	sensor_msgs::PointCloud2 output_msg2;
+	toROSMsg(seg_cloud_vis,output_msg2);
+	output_msg2.header.frame_id = cached_cloud.header.frame_id;
 
+	pc_vis_pub.publish(output_msg2);
+
+	ROS_INFO("Done.");
 	return true;
 }
 
@@ -75,12 +82,17 @@ int main(int argc, char* argv[])
 
 	bool load_existing_model;
 	nh.param("load_existing_model",load_existing_model,false);
+	std::string model_name;
+	nh.param("model_name",model_name,std::string("model"));
 
 	if (load_existing_model)
 	{
-		std::string model_dat_file_path;
-		nh.param("model_path",model_dat_file_path,std::string(""));
-		if (!color_based_segmenter.loadModel(model_dat_file_path))
+		std::string model_directory;
+		nh.param("model_directory",model_directory,std::string(""));
+		boost::filesystem::path p(model_directory);
+		p /= model_name + ".dat";
+
+		if (!color_based_segmenter.loadModel(p.string()))
 		{
 			ROS_ERROR("Fail to load the color model.");
 			return -1;
@@ -111,11 +123,10 @@ int main(int argc, char* argv[])
 		nh.param("save_new_model",save_new_model,true);
 		if (save_new_model)
 		{
-			std::string save_directory, saved_model_name;
+			std::string save_directory;
 			nh.param("save_directory",save_directory,std::string(""));
-			nh.param("saved_model_name",saved_model_name,std::string(""));
 			
-			if (color_based_segmenter.saveModel(save_directory,saved_model_name))
+			if (color_based_segmenter.saveModel(save_directory,model_name))
 			{
 				ROS_INFO("New color model saved");	
 			}
