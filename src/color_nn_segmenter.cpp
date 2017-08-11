@@ -146,15 +146,15 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 				std::cerr << "Cloud in file " << *file_it << " is empty.\n";
 				continue;
 			}
-
-			std::vector<int> indices;
-			pcl::removeNaNFromPointCloud(*cloud,*cloud, indices);
 			
 			// remove NaN points from all saved training clouds
+			std::vector<int> indices;
+			pcl::removeNaNFromPointCloud(*cloud,*cloud, indices);
 			if (pcl::io::savePCDFile(*file_it,*cloud,true) == -1)
 			{
-
+				std::cerr << "Fail to update saved cloud after removing NaN points.\n";
 			}
+			
 			PointCloudXYZ::Ptr color_only_cloud = this->stripCloudCoordinate(*cloud);
 			this->rgbToLabCloud(color_only_cloud);
 			if (file_it == it->second.begin())
