@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   std_msgs
   sensor_msgs
+  object_on_table_segmenter
 )
 
 catkin_package(

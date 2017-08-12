@@ -14,6 +14,14 @@
   <arg name="cloud_input_topic"        default="/camera/depth_registered/points" />
   <arg name="segmented_cloud_topic"    default="seg_label_cloud" />
   <arg name="visualized_cloud_topic"   default="visualized_cloud_topic" />
+
+  <!-- Table segmentation settings -->
+  <arg name="use_plane_segmentation"   default="true" />
+  <arg name="load_table_path"          default="$(find object_on_table_segmenter)/data/table.pcd" doc="Where the table.pcd located"/>
+  <arg name="table_tf"                 default="ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
+  <arg name="update_table"             default="true" doc="Update the table data located in the data folder"/>
+  <arg name="above_table_min"          default="0.01" doc="Min distance from the table"/>
+  <arg name="above_table_max"          default="0.5" doc="Max distance from the table"/>
  
   <node pkg="color_nn_segmenter" type="pcl_color_segmenter" name="pcl_color_segmenter" output="screen"
     >  
@@ -29,6 +37,16 @@
     <param name="segmented_cloud_topic"     type="str"   value="$(arg segmented_cloud_topic)" />
     <param name="visualized_cloud_topic"    type="str"   value="$(arg visualized_cloud_topic)" />
 
+    <param name="use_plane_segmentation"    type="bool"   value="$(arg use_plane_segmentation)" />
+    <param name="table_tf"                  type="str"    value="$(arg table_tf)"/>
+    <param name="update_table"              type="bool"   value="$(arg update_table)" />
+    <param name="load_table_path"           type="str"    value="$(arg load_table_path)" />
+    <param name="table_distance_threshold"  type="double" value="0.02"/>
+    <param name="table_angular_threshold"   type="double" value="2"/>
+    <param name="table_minimal_inliers"     type="double" value="7500"/>
+
+    <param name="above_table_min"           type="double" value="$(arg above_table_min)" />
+    <param name="above_table_max"           type="double" value="$(arg above_table_max)" />
   </node>
 
 </launch>

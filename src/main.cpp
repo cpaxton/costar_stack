@@ -4,12 +4,23 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <std_srvs/Empty.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+
+#include <object_on_table_segmenter/ros_plane_segmenter.h>
 
 #include "color_nn_segmenter.h"
 
 sensor_msgs::PointCloud2 cached_cloud;
 ros::Publisher pc_pub, pc_vis_pub;
 ColorNnSegmenter color_based_segmenter;
+
+RosPlaneSegmenter plane_segmenter;
+bool use_table, have_table, update_table;
+std::string table_tf_name, load_table_path;
+pcl::PCDWriter writer;
+tf::TransformListener * listener;
+bool use_tf_surface;
 
 uchar color_label[11][3] =
 {
@@ -48,14 +59,32 @@ void cacheCloudInput(const sensor_msgs::PointCloud2 &input_cloud)
 {
 	// std::cerr << "Updated cached cloud.\n";
 	cached_cloud = input_cloud;
+
+	if (use_table)
+	{
+		plane_segmenter.segmentPlaneIfNotExist(input_cloud);
+	}
 }
 
 bool colorSegmenter(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-	ROS_INFO("Performing color based segmentation.");
 	PointCloudXYZRGB::Ptr input_cloud(new PointCloudXYZRGB());
-	fromROSMsg(cached_cloud,*input_cloud);
-	std::cerr << "Input cloud size: " << input_cloud->size() << std::endl;
+
+	if (use_table)
+	{
+		ROS_INFO("Removing background with plane segmentation.");
+		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZRGBA>());
+		fromROSMsg(cached_cloud,*filtered_cloud);
+		filtered_cloud = plane_segmenter.segmentAbovePlane(*filtered_cloud);
+		pcl::copyPointCloud(*filtered_cloud,*input_cloud);
+	}
+	else
+	{
+		fromROSMsg(cached_cloud,*input_cloud);
+	}
+	ROS_INFO("Performing color based segmentation.");
+
+	// std::cerr << "Input cloud size: " << input_cloud->size() << std::endl;
 	PointCloudXYZL::Ptr seg_cloud = color_based_segmenter.segment(*input_cloud);
 
 	sensor_msgs::PointCloud2 output_msg;
@@ -145,6 +174,12 @@ int main(int argc, char* argv[])
 	nh.param("cloud_input_topic",cloud_in,std::string("/camera/depth_registered/points"));
 	nh.param("segmented_cloud_topic",cloud_out,std::string("segmented_cloud"));
 	nh.param("visualized_cloud_topic",cloud_out_vis,std::string("visualized_cloud"));
+
+	nh.param("use_plane_segmentation",use_table,false);
+	if (use_table)
+	{
+		plane_segmenter.initialize(nh);
+	}
 
 	ros::Subscriber cloud_subscriber = nh.subscribe(cloud_in,1,cacheCloudInput);
 	pc_pub = nh.advertise<sensor_msgs::PointCloud2>(cloud_out,1000);

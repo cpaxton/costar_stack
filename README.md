@@ -7,6 +7,7 @@ This package requires these dependencies:
 	- PCL 1.7.2+
 	- OpenCV 2.4.x
 	- ROS Indigo
+	- [object_on_table_segmenter](https://github.com/jhu-lcsr/object_on_table_segmenter)
 
 This package has been tested on 14.04 using PCL 1.7.2, OpenCV 2.4.8, and ROS Indigo.
 
