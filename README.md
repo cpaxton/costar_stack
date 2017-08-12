@@ -21,15 +21,16 @@ It is possible to pass some arguments to set the directory data, point cloud inp
 Args list:
 object		:	the object folder name without extension. Default: ```cloud_cluster_```
 pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
-viewer	    	:	See first distance filtered pcl and save it. Default: ```false```
-save_directory	:	Location of save directory. Default: ```$(find object_on_table_segmenter)/result```
+viewer	    	:	See first distance filtered and table segmented pcl. Default: ```false```
+save_directory	:	Location of save directory for the data collection. Default: ```$(find object_on_table_segmenter)/result```
 
 save_index = 0
 
-laod_directory
+load_directory
 
-tableTF    : marker we are going to use
+table_tf    : marker we are going to use
 
+See launch/object_on_table_segmenter.launch for more arguments that can be passed into the code.
 
 ## Examples
 
@@ -39,7 +40,7 @@ Before starting make sure your sensor has a full and accurate view of the target
 
 
 ```
-roslaunch object_on_table_segmenter object_on_table_segmenter.launch tableTF:=ar_marker_2 useTFsurface:=true aboveTableMin:=0.01 object:=blue_bin load_table:=true num_to_capture:=200
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch tableTF:=ar_marker_2 use_tf_surface:=true above_table_min:=0.01 object:=blue_bin load_table:=true num_to_capture:=200
 ```
 
 1. Here on the first run you put the marker on the table/turntable. 
@@ -54,8 +55,8 @@ roslaunch object_on_table_segmenter object_on_table_segmenter.launch tableTF:=ar
 4. press 's' again to begin collecting data
 
 ```
-roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_vert tableTF:=ar_marker_2 load_table:=false num_to_capture:=200
-roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_horizontal tableTF:=ar_marker_2 load_table:=false num_to_capture:=200
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_vert table_tf:=ar_marker_2 load_table:=false num_to_capture:=200
+roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=link_horizontal table_tf:=ar_marker_2 load_table:=false num_to_capture:=200
 ```
 
 Results will be placed in the local directory with the following structure
