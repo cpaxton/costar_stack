@@ -215,7 +215,18 @@ bool ColorNnSegmenter::saveModel(const std::string &target_directory, const std:
 {
 	namespace fs = boost::filesystem;
 	fs::path p(target_directory);
-	if (!checkDirectoryValid(p)) return false;
+	if (!checkDirectoryValid(p))
+	{
+		if (fs::create_directories(p))
+		{
+			std::cout << "Created model directory" << p.string().c_str() << std::endl;
+		}
+		else
+		{
+			std::cerr << "Fail to create model directory" << p.string().c_str() << std::endl;
+			return false;
+		}
+	}
 
 	if (model_cloud->size() > 0)
 	{

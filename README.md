@@ -1,5 +1,7 @@
 # Color Nearest Neighboor Segmenter
 
+Author: Felix Jonathan (fjonath1@jhu.edu)
+
 This rosnode will perform a color based segmentation for objects with flat color. The color training is performed using k-means clustering of each object color category from their color point clouds. Then the model is used for perfoming nearest neighboor search on input color point cloud.
 
 # Requirements
