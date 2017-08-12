@@ -33,17 +33,26 @@ public:
 		min_above_plane_(0.01), max_above_plane_(0.5),
 		visualize_(false) {};
 
+	// Returns all points inside a box with dimension `box_size` located at `box_pose`
 	CloudXYZRGBA::Ptr cropBox(const CloudXYZRGBA &input_cloud, const Eigen::Affine3f &box_pose, const Eigen::Vector3f &box_size) const;
+	// Generate plane convex hull from biggest planar area in the input cloud
 	CloudXYZRGBA::Ptr generatePlaneConvexHull(const CloudXYZRGBA &input_cloud) const;
+	// Generate 4 corner points based on XY plane of the `pose` with dimension `size` x `size`
 	CloudXYZRGBA::Ptr generatePlaneConvexHullFromPoseXYplane(const Eigen::Affine3f &pose, const double &size = 0.5) const;
 
+	// Perform eucledian clusterization from input cloud
 	std::vector<CloudXYZRGBA::Ptr> clusterPointCloud(const CloudXYZRGBA &input_cloud, const unsigned int &minimal_cluster_size = 500);
 
+	// Returns all points above the input plane convex hull
 	CloudXYZRGBA::Ptr segmentAbovePlane(const CloudXYZRGBA &input_cloud, const CloudXYZRGBA &plane_convex_hull,
 		const double &min_above_plane, const double &max_above_plane) const;
+	// Returns all points above the input plane convex hull with parameters from setPlaneSegmentationHeight
+	CloudXYZRGBA::Ptr segmentAbovePlane(const CloudXYZRGBA &input_cloud, const CloudXYZRGBA &plane_convex_hull) const;
+
+	// Returns all points above the saved plane convex hull from setPlaneConvexHull function
 	CloudXYZRGBA::Ptr segmentAbovePlane(const CloudXYZRGBA &input_cloud, 
 		const double &min_above_plane, const double &max_above_plane) const;
-	CloudXYZRGBA::Ptr segmentAbovePlane(const CloudXYZRGBA &input_cloud, const CloudXYZRGBA &plane_convex_hull) const;
+	// Returns all points above the saved plane convex hull from setPlaneConvexHull function with parameters from setPlaneSegmentationHeight
 	CloudXYZRGBA::Ptr segmentAbovePlane(const CloudXYZRGBA &input_cloud) const;
 
 	void setPlaneSegmentationParameters(const double &distance_threshold, const double &angular_threshold, const unsigned int &minimal_inliers);
@@ -52,7 +61,7 @@ public:
 	void setVisualizationFlag(const bool visualize = true);
 
 	CloudXYZRGBA getPlaneConvexHull() const { return *plane_convex_hull_; };
-
+	// Flag that shows whether the plane_convex_hull has been set or not
 	bool ready;
 	;
 private:
