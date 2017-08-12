@@ -22,9 +22,10 @@ public:
 	RosPlaneSegmenter() : initialized_(false) {};
 	~RosPlaneSegmenter();
 
+	// Load all rosparam for the plane segmentation
 	void initialize(const ros::NodeHandle &nh);
 
-	// this will update the plane if the plane data does not exist yet
+	// Update the plane if the plane data does not exist yet
 	void segmentPlaneIfNotExist(const sensor_msgs::PointCloud2 &input_cloud);
 
 private:
