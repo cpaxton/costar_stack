@@ -1,27 +1,38 @@
 <launch>
 
   <!-- Load model settings -->
-  <arg name="load_existing_model"      default="false" />
-  <arg name="model_directory"          default="$(find color_nn_segmenter)/models" />
-  <arg name="model_name"               default="model" />
+  <arg name="load_existing_model"      default="false" doc="Loads the color model saved specified in the model path. If set to false, model training will be done before color segmentation is performed."/>
+  <arg name="model_directory"          default="$(find color_nn_segmenter)/models" doc="Directory that contains the model data."/>
+  <arg name="model_name"               default="model" doc="The name of the model to be loaded/saved."/>
 
   <!-- Training settings -->
-  <arg name="training_data_directory"  default="$(find color_nn_segmenter)/training_data" />
-  <arg name="kmeans_point_per_model"   default="1" />
+  <arg name="training_data_directory"  default="$(find color_nn_segmenter)/training_data" doc="Location of the training data that contains color category folders to be trained"/>
+  <arg name="kmeans_point_per_model"   default="1" doc="The number of kmeans points per color category"/>
   <arg name="save_new_model"           default="true" />
-  <arg name="save_directory"           default="$(find color_nn_segmenter)/models" />
+  <arg name="save_directory"           default="$(find color_nn_segmenter)/models" doc="Target directory for saving the new model"/>
+
   <!-- Ros topic settings -->
-  <arg name="cloud_input_topic"        default="/camera/depth_registered/points" />
-  <arg name="segmented_cloud_topic"    default="seg_label_cloud" />
-  <arg name="visualized_cloud_topic"   default="visualized_cloud_topic" />
+  <arg name="cloud_input_topic"        default="/camera/depth_registered/points" doc="Name of the point cloud topic to be segmented"/>
+  <arg name="segmented_cloud_topic"    default="seg_label_cloud" doc="Name of the topic to publish segmented cloud that contains PointXYZL"/>
+  <arg name="visualized_cloud_topic"   default="visualized_cloud_topic" doc="Name of the topic to publish segmented cloud in rviz-compatible point cloud"/>
 
   <!-- Table segmentation settings -->
   <arg name="use_plane_segmentation"   default="true" />
-  <arg name="load_table_path"          default="$(find object_on_table_segmenter)/data/table.pcd" doc="Where the table.pcd located"/>
-  <arg name="table_tf"                 default="ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
-  <arg name="update_table"             default="true" doc="Update the table data located in the data folder"/>
-  <arg name="above_table_min"          default="0.01" doc="Min distance from the table"/>
-  <arg name="above_table_max"          default="0.5" doc="Max distance from the table"/>
+  <include file="$(find object_on_table_segmenter)/launch/table_seg_params.launch">
+    <arg name="namespace"                default="pcl_color_segmenter" />
+    <arg name="load_table"               default="false"/>
+    <arg name="update_table"             default="true" />
+    <arg name="load_table_path"          default="$(find object_on_table_segmenter)/data/table.pcd" />
+    <arg name="table_tf"                 default="ar_marker_0" />
+    <arg name="use_tf_surface"           default="false" />
+    <arg name="table_distance_threshold" default="0.02" />
+    <arg name="table_angular_threshold"  default="2" />
+    <arg name="table_minimal_inliers"    default="7500" />
+    <arg name="use_rosbag"               default="false" />
+    <arg name="above_table_min"          default="0.02" />
+    <arg name="above_table_max"          default="0.5" />
+    <arg name="plane_seg_viewer"         default="false" />
+  </include>
  
   <node pkg="color_nn_segmenter" type="pcl_color_segmenter" name="pcl_color_segmenter" output="screen"
     >  
@@ -38,15 +49,6 @@
     <param name="visualized_cloud_topic"    type="str"   value="$(arg visualized_cloud_topic)" />
 
     <param name="use_plane_segmentation"    type="bool"   value="$(arg use_plane_segmentation)" />
-    <param name="table_tf"                  type="str"    value="$(arg table_tf)"/>
-    <param name="update_table"              type="bool"   value="$(arg update_table)" />
-    <param name="load_table_path"           type="str"    value="$(arg load_table_path)" />
-    <param name="table_distance_threshold"  type="double" value="0.02"/>
-    <param name="table_angular_threshold"   type="double" value="2"/>
-    <param name="table_minimal_inliers"     type="double" value="7500"/>
-
-    <param name="above_table_min"           type="double" value="$(arg above_table_min)" />
-    <param name="above_table_max"           type="double" value="$(arg above_table_max)" />
   </node>
 
 </launch>
