@@ -48,9 +48,9 @@ public:
 	void addScenePointCloud(ImagePtr scene_image);
 
 	void addNewObjectTransforms(const std::vector<ObjectWithID> &objects);
-	std::map<std::string, ObjectParameter> getCorrectedObjectTransform();
+	std::map<std::string, ObjectParameter> getCorrectedObjectTransform(const bool &include_prev_observation = false);
 	std::map<std::string, ObjectParameter> getCorrectedObjectTransformFromSceneGraph();
-	void setDebugMode(bool debug);
+	void setDebug(bool debug);
 	
 	void setObjectHypothesesMap(std::map<std::string, ObjectHypothesesData > &object_hypotheses_map);
 	void evaluateAllObjectHypothesisProbability();
@@ -82,10 +82,12 @@ private:
 		std::map<std::string, map_string_transform> &object_childs_map);
 	std::map<std::string, map_string_transform> getAllChildTransformsOfVertices(
 		const std::map<vertex_t, std::size_t> &vertex_distance_map);
+	
 	// void processHypothesis();
 
 	bool debug_messages_;
 	bool physics_engine_ready_;
+	bool include_prev_observation_;
 
 	PhysicsEngine * physics_engine_;
 	SceneSupportGraph scene_support_graph_;
@@ -104,6 +106,7 @@ private:
 	std::map<std::string, ObjectSymmetry> object_symmetry_map_;
 
 	SequentialSceneHypothesis sequential_scene_hypothesis_;
+	SceneObservation current_scene_;
 
 	boost::mutex seq_mtx_;
 	// std::map<std::string, std::vector<std::string> > support_pairs_; 

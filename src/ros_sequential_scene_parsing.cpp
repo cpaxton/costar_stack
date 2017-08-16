@@ -3,7 +3,7 @@
 
 RosSceneHypothesisAssessor::RosSceneHypothesisAssessor()
 {
-	this->ros_scene_.setPhysicsEngine(&this->physics_engine_);
+	this->setPhysicsEngine(&this->physics_engine_);
 	this->class_ready_ = false;
 	this->physics_gravity_direction_set_ = false;
 	this->has_tf_ = false;
@@ -13,7 +13,7 @@ RosSceneHypothesisAssessor::RosSceneHypothesisAssessor()
 
 RosSceneHypothesisAssessor::RosSceneHypothesisAssessor(const ros::NodeHandle &nh)
 {
-	this->ros_scene_.setPhysicsEngine(&this->physics_engine_);
+	this->setPhysicsEngine(&this->physics_engine_);
 	this->physics_gravity_direction_set_ = false;
 	this->setNodeHandle(nh);
 }
@@ -63,13 +63,15 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("data_forces_magnitude",data_forces_magnitude_per_point,0.5);
 	nh.param("data_forces_max_distance",data_forces_max_distance,0.01);
 
+	nh.param("best_hypothesis_only",best_hypothesis_only_,false);
+
 	if (load_table){
 		nh.param("table_location",background_location,std::string(""));
 		pcl::PCDReader reader;
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr background_cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 		if (reader.read(background_location,*background_cloud) == 0){
 			this->nh_.param("background_mode",background_mode_,0);
-			this->ros_scene_.addBackground(background_cloud, background_mode_);
+			this->addBackground(background_cloud, background_mode_);
 			std::cerr << "Background point loaded successfully\n";
 		}
 		else
@@ -78,7 +80,6 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 
 	std::cerr << "Debug mode: " << debug_mode << std::endl;
 	this->setDebugMode(debug_mode);
-	this->ros_scene_.setDebugMode(debug_mode);
 
 	this->obj_database_.setObjectFolderLocation(object_folder_location);
 	if (this->fillObjectPropertyDatabase()) this->obj_database_.loadDatabase(this->physical_properties_database_);
@@ -86,19 +87,19 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	
 	this->detected_object_sub = this->nh_.subscribe(detected_object_topic,1,
 		&RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs,this);
-	this->background_pcl_sub = this->nh_.subscribe(background_pcl2_topic,1,&RosSceneHypothesisAssessor::addBackground,this);
+	this->background_pcl_sub = this->nh_.subscribe(background_pcl2_topic,1,&RosSceneHypothesisAssessor::addBackgroundCallback,this);
 	this->scene_pcl_sub = this->nh_.subscribe(scene_pcl2_topic,1,&RosSceneHypothesisAssessor::addSceneCloud,this);
 
 	this->done_message_pub = this->nh_.advertise<std_msgs::Empty>("done_hypothesis_msg",1);
 
 	// setup objrecransac tool
 	boost::split(object_names,objransac_model_list,boost::is_any_of(","));
-	this->ros_scene_.loadObjectModels(objransac_model_location, object_names);
+	this->loadObjectModels(objransac_model_location, object_names);
 	this->object_hypotheses_sub = this->nh_.subscribe(object_hypotheses_topic,1,
 		&RosSceneHypothesisAssessor::fillObjectHypotheses,this);
 	
 	// setup feedback force parameters
-	this->ros_scene_.setDataFeedbackForcesParameters(data_forces_magnitude_per_point, data_forces_max_distance);
+	this->setDataFeedbackForcesParameters(data_forces_magnitude_per_point, data_forces_max_distance);
 
 	// sleep for caching the initial TF frames.
 	sleep(1.0);
@@ -106,7 +107,7 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	this->class_ready_ = true;
 }
 
-void RosSceneHypothesisAssessor::addBackground(const sensor_msgs::PointCloud2 &pc)
+void RosSceneHypothesisAssessor::addBackgroundCallback(const sensor_msgs::PointCloud2 &pc)
 {
 	if (!this->has_background_)
 	{
@@ -116,7 +117,7 @@ void RosSceneHypothesisAssessor::addBackground(const sensor_msgs::PointCloud2 &p
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 		pcl::fromROSMsg(pc, *cloud);
 
-		this->ros_scene_.addBackground(cloud,background_mode_);
+		this->addBackground(cloud,background_mode_);
 		this->has_background_ = true;
 	}
 }
@@ -130,7 +131,7 @@ void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &p
 	{
 		this->has_scene_cloud_ = true;
 		this->mtx_.lock();
-		this->ros_scene_.addScenePointCloud(cloud);
+		this->addScenePointCloud(cloud);
 		this->mtx_.unlock();
 		this->scene_cloud_updated_ = true;
 	}
@@ -147,6 +148,7 @@ void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_
 		// wait for the scene cloud to be updated
 		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 		std::cerr << "Waiting for scene cloud update.\n";
+		return;
 	}
 	this->scene_cloud_updated_ = false;
 
@@ -223,10 +225,10 @@ void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_
 	}
 
 	this->mtx_.lock();
-	this->ros_scene_.addNewObjectTransforms(objects);
-	this->ros_scene_.setObjectSymmetryMap(object_symmetry_map);
+	this->addNewObjectTransforms(objects);
+	this->setObjectSymmetryMap(object_symmetry_map);
 	std::cerr << "Getting corrected object transform...\n";
-	std::map<std::string, ObjectParameter> object_transforms = this->ros_scene_.getCorrectedObjectTransform();
+	std::map<std::string, ObjectParameter> object_transforms = this->getCorrectedObjectTransform(best_hypothesis_only_);
 	this->updateTfFromObjTransformMap(object_transforms);
 	this->mtx_.unlock();
 	
@@ -268,8 +270,7 @@ void RosSceneHypothesisAssessor::publishTf()
 
 void RosSceneHypothesisAssessor::setDebugMode(bool debug)
 {
-	this->debug_messages_ = debug;
-	this->ros_scene_.setDebugMode(debug);
+	this->setDebug(debug);
 	this->physics_engine_.setDebugMode(debug);
 	this->obj_database_.setDebugMode(debug);
 }
@@ -300,6 +301,7 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		// wait for the scene cloud to be updated
 		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 		std::cerr << "Waiting for object list update.\n";
+		return;
 	}
 	this->object_list_updated_ = false;
 	std::cerr << "Received input hypotheses list.\n";
@@ -325,16 +327,17 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 		object_hypotheses_map[object_tf_name] = std::make_pair(object_model_name,object_pose_hypotheses);
 	}
 	this->mtx_.lock();
-	this->ros_scene_.setObjectHypothesesMap(object_hypotheses_map);
+	this->setObjectHypothesesMap(object_hypotheses_map);
 
 	while (!this->has_scene_cloud_)
 	{
 		std::cerr << "Waiting for input scene point cloud.\n";
 		ros::Duration(0.5).sleep();
+		return;
 	}
 	
-	this->ros_scene_.evaluateAllObjectHypothesisProbability();
-	this->updateTfFromObjTransformMap(this->ros_scene_.getCorrectedObjectTransformFromSceneGraph());
+	this->evaluateAllObjectHypothesisProbability();
+	this->updateTfFromObjTransformMap(this->getCorrectedObjectTransformFromSceneGraph());
 
 	this->publishTf();
 	

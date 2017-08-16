@@ -166,51 +166,151 @@ void SceneHypothesisAssessor::addScenePointCloud(ImagePtr scene_image)
 
 void SceneHypothesisAssessor::addNewObjectTransforms(const std::vector<ObjectWithID> &objects)
 {
+	this->sequential_scene_hypothesis_.setPreviousSceneObservation(current_scene_);
+
 	// TODO:: Only permanently remove rigid bodies that are removed by sequential_scene_hypothesis
 	this->physics_engine_->resetObjects(false);
 	// object_label_.reserve(objects.size());
 	
 	// do not delete the label class map
 	// object_label_class_map.clear();
+	std::map<std::string, ObjectHypothesesData > best_data_confidence_hypothesis;
 	for (std::vector<ObjectWithID>::const_iterator it = objects.begin(); it != objects.end(); ++it)
 	{
 		object_label_class_map[it->getID()] = it->getObjectClass();
+
+		std::vector<btTransform> object_best_data_confidence(1,it->getTransform());
+		best_data_confidence_hypothesis[it->getID()] = std::make_pair(it->getObjectClass(),object_best_data_confidence);
 		// object_label_.push_back();
 	}
+	this->setObjectHypothesesMap(best_data_confidence_hypothesis);
 
 	if (this->debug_messages_) std::cerr <<"Adding new objects into the scene graph.\n";
 	this->physics_engine_->addObjects(objects);
 }
 
-std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObjectTransform()
+std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObjectTransform(const bool &include_prev_observation)
 {
-	if (this->debug_messages_) std::cerr <<"Getting corrected object transform from the scene graph.\n";
+	include_prev_observation_ = include_prev_observation;
+
+	if (include_prev_observation) std::cerr << "Getting corrected object transform from the current frame's best "
+		<< "pose data confidence and the previous best scene hypothesis.\n";
+	else std::cerr << "Getting corrected object transform from the current frame's best pose data confidence.\n";
+
 	seq_mtx_.lock();
 	this->data_forces_generator_.resetCachedIcpResult();
 
-	FeedbackDataForcesGenerator tmp_data_forces_generator = this->data_forces_generator_;
-	// Setup the feedback data forces to be very high when running thru the best data
-	// this->data_forces_generator_.setForcesParameter(10,0.05);
+	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
+		GRAVITY_SCALE_COMPENSATION*30);
+	
+	this->physics_engine_->stepSimulationWithoutEvaluation(0.5 * GRAVITY_SCALE_COMPENSATION, 
+		GRAVITY_SCALE_COMPENSATION/120.);
+	this->getUpdatedSceneSupportGraph();
 
-	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,1./120,30);
-	// this->physics_engine_->setSimulationMode(BULLET_DEFAULT,1./200,30);
+	std::map<std::string, bool> object_background_support_status;
 
-	std::map<std::string, ObjectParameter> result = this->physics_engine_->getUpdatedObjectPoses();
-	this->getCurrentSceneSupportGraph();
+	// optimize the scene probability by the distance to the ground vertex
+	std::vector<map_string_transform> object_test_pose_map_by_dist;
+	std::map<std::string, map_string_transform> object_childs_map;
 
-	write_graphviz(std::cout, this->scene_support_graph_, label_writer(this->scene_support_graph_));
-	std::map<std::string, int> object_action_map;
-	for (std::map<std::string, ObjectParameter>::iterator it = result.begin(); it != result.end(); ++it)
+	this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
+		object_childs_map);
+
+	SceneHypothesis current_best_scene(vertex_map_,scene_support_graph_);
+	this->sequential_scene_hypothesis_.setCurrentDataSceneStructure(current_best_scene);
+
+	if (this->debug_messages_) 
 	{
-		object_action_map[it->first] = ADD_OBJECT;
+		std::cerr << "Object distance from best data confidence: ";
+		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
+		{
+			for (map_string_transform::iterator it = object_test_pose_map_by_dist[dist_idx].begin(); 
+			it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
+			{
+				std::cerr << "[" << dist_idx << "]" << it->first <<", ";
+			}
+		}
+		std::cerr << std::endl;
 	}
+
+	std::map<std::string, AdditionalHypotheses> hypotheses_to_test;
+	if (include_prev_observation_)
+	{
+		hypotheses_to_test = 
+			sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(object_test_pose_map_by_dist,
+			object_childs_map,
+			this->object_hypotheses_map_);
+
+		this->physics_engine_->removeAllRigidBodyFromWorld();
+		
+		// resimulate objects with retained object
+		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
+		{
+			this->physics_engine_->addExistingRigidBodyBackFromMap(object_test_pose_map_by_dist[dist_idx]);
+		}
+
+		this->physics_engine_->stepSimulationWithoutEvaluation(1.0 * GRAVITY_SCALE_COMPENSATION, 
+			GRAVITY_SCALE_COMPENSATION/120.);
+		this->getUpdatedSceneSupportGraph();
+		this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
+		this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
+			object_childs_map);
+
+		if (this->debug_messages_)
+		{
+			std::cerr << "Object list + additional hypothesis after simulation:\n";
+			for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
+			{
+				for (map_string_transform::iterator it = object_test_pose_map_by_dist[dist_idx].begin(); 
+				it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
+				{
+					std::cerr << "[" << dist_idx << "]" << it->first << std::endl 
+						<< printTransform(it->second);
+				}
+			}
+			std::cerr << std::endl;
+		}
+	}
+
+	std::map<std::string, int> object_action_map;
+	std::map<std::string, int> scene_object_hypothesis_id;
+	for (std::map<std::string, vertex_t>::iterator it = vertex_map_.begin(); it != vertex_map_.end(); ++it)
+	{
+		if (include_prev_observation_)
+		{
+			const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[it->first];
+			object_action_map[it->first] = obj_hypotheses.object_action_;
+
+			bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT ||
+				obj_hypotheses.object_action_ == PERTURB_OBJECT);
+			this->physics_engine_->setIgnoreDataForces(it->first,ignore_data_forces);
+		}
+		else
+		{
+			object_action_map[it->first] = ADD_OBJECT;
+		}
+		scene_object_hypothesis_id[it->first] = 0;
+	}
+
 	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph(object_action_map);
+
 	std::cerr << "Final Scene probability = " << scene_hypothesis << std::endl;
 
-	// set test pose to the converged best data pose
-	// this->physics_engine_->changeBestTestPoseMap(result);
+	std::cerr << "Scene hypotheses structure:\n";
+	this->getCurrentSceneSupportGraph();
 
-	// this->data_forces_generator_ = tmp_data_forces_generator;
+	std::map<std::string, ObjectParameter> result = this->physics_engine_->getCurrentObjectPoses();
+
+	write_graphviz(std::cout, this->scene_support_graph_, label_writer(this->scene_support_graph_));
+
+	// set test pose to the converged best data pose
+	this->physics_engine_->changeBestTestPoseMap(result);
+
+	// set the current scene observation data
+	SceneHypothesis final_scene(vertex_map_,scene_support_graph_,
+		scene_hypothesis, scene_object_hypothesis_id);
+	this->current_scene_ = SceneObservation(final_scene, this->object_label_class_map);
+	
 	seq_mtx_.unlock();
 	return result;
 }
@@ -257,7 +357,7 @@ void SceneHypothesisAssessor::setObjectSymmetryMap(const std::map<std::string, O
 	this->object_symmetry_map_ = object_symmetry_map;
 }
 
-void SceneHypothesisAssessor::setDebugMode(bool debug)
+void SceneHypothesisAssessor::setDebug(bool debug)
 {
 	this->debug_messages_ = debug;
 }
@@ -382,58 +482,59 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
 		object_childs_map);
 
-	std::cerr << "Object list best data: ";
-	for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
-	{
-		for (map_string_transform::iterator it = object_test_pose_map_by_dist[dist_idx].begin(); 
-		it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
-		{
-			std::cerr << "[" << dist_idx << "]" << it->first <<", ";
-		}
-	}
-	std::cerr << std::endl;
-
-	SceneHypothesis current_best_scene(vertex_map_,scene_support_graph_);
-	this->sequential_scene_hypothesis_.setCurrentDataSceneStructure(current_best_scene);
 	std::map<std::string, AdditionalHypotheses> hypotheses_to_test = 
 		sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(object_test_pose_map_by_dist,
 			object_childs_map,
 			this->object_hypotheses_map_);
 
-	this->physics_engine_->removeAllRigidBodyFromWorld();
-	
-	// resimulate objects with retained object
-	for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
+	if (!include_prev_observation_)
 	{
-		this->physics_engine_->addExistingRigidBodyBackFromMap(object_test_pose_map_by_dist[dist_idx]);
-	}
-
-	this->physics_engine_->stepSimulationWithoutEvaluation(1.5 * GRAVITY_SCALE_COMPENSATION, 
-		GRAVITY_SCALE_COMPENSATION/120.);
-	this->getUpdatedSceneSupportGraph();
-	this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
-	this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
-		object_childs_map);
-
-	std::cerr << "Object list + additional hypothesis after simulation:\n";
-	for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
-	{
-		for (map_string_transform::iterator it = object_test_pose_map_by_dist[dist_idx].begin(); 
-		it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
+		std::cerr << "Object list best data: ";
+		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
 		{
-			std::cerr << "[" << dist_idx << "]" << it->first << std::endl 
-				<< printTransform(it->second);
-
-			const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[it->first];
-			bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT || obj_hypotheses.object_action_ == PERTURB_OBJECT);
-			this->physics_engine_->setIgnoreDataForces(it->first,ignore_data_forces);
+			for (map_string_transform::iterator it = object_test_pose_map_by_dist[dist_idx].begin(); 
+			it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
+			{
+				std::cerr << "[" << dist_idx << "]" << it->first <<", ";
+			}
 		}
-	}
-	std::cerr << std::endl;
-	std::cerr << "Scene hypotheses structure:\n";
-	write_graphviz(std::cerr, this->scene_support_graph_, label_writer(this->scene_support_graph_));
-	this->physics_engine_->removeAllRigidBodyFromWorld();
+		std::cerr << std::endl;
+		
+		this->physics_engine_->removeAllRigidBodyFromWorld();
+		
+		// resimulate objects with retained object
+		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
+		{
+			this->physics_engine_->addExistingRigidBodyBackFromMap(object_test_pose_map_by_dist[dist_idx]);
+		}
 
+		this->physics_engine_->stepSimulationWithoutEvaluation(1.0 * GRAVITY_SCALE_COMPENSATION, 
+			GRAVITY_SCALE_COMPENSATION/120.);
+		this->getUpdatedSceneSupportGraph();
+		this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
+		this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
+			object_childs_map);
+
+		std::cerr << "Object list + additional hypothesis after simulation:\n";
+		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
+		{
+			for (map_string_transform::iterator it = object_test_pose_map_by_dist[dist_idx].begin(); 
+			it != object_test_pose_map_by_dist[dist_idx].end(); ++it)
+			{
+				std::cerr << "[" << dist_idx << "]" << it->first << std::endl 
+					<< printTransform(it->second);
+
+				const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[it->first];
+				bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT || obj_hypotheses.object_action_ == PERTURB_OBJECT);
+				this->physics_engine_->setIgnoreDataForces(it->first,ignore_data_forces);
+			}
+		}
+		std::cerr << std::endl;
+		std::cerr << "Scene hypotheses structure:\n";
+		write_graphviz(std::cerr, this->scene_support_graph_, label_writer(this->scene_support_graph_));
+	}
+	
+	this->physics_engine_->removeAllRigidBodyFromWorld();
 
 	std::map<std::string, map_string_transform> child_of_vertices;
 	
@@ -478,18 +579,18 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			ObjectParameter best_object_pose = object_pose_hypotheses[0];
 			std::map<std::string, ObjectParameter> best_object_pose_from_graph;
 
-			std::size_t counter = 0;
+			std::size_t hypothesis_idx = 0, num_tested_hypotheses = 0;
 			std::size_t number_of_object_hypotheses = object_pose_hypotheses.size();
 			double best_ransac_confidence;
 			int best_hypothesis_id = 0;
 
 			for (std::vector<ObjectParameter>::const_iterator it2 = object_pose_hypotheses.begin();
-				it2 != object_pose_hypotheses.end(); ++it2)
+				it2 != object_pose_hypotheses.end(); ++it2, ++hypothesis_idx)
 			{
 				std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
-					<< ++counter << "/" << number_of_object_hypotheses << std::endl;
+					<< hypothesis_idx + 1 << "/" << number_of_object_hypotheses << std::endl;
 				// std::cerr << "Transform: " << printTransform(*it2);
-				scene_object_hypothesis_id[object_pose_label] = counter - 1;
+				scene_object_hypothesis_id[object_pose_label] = hypothesis_idx;
 				ObjectParameter object_pose = *it2;
 				double ransac_confidence = this->data_forces_generator_.getIcpConfidenceResult(object_model_name, object_pose);
 				if (it2 == object_pose_hypotheses.begin())
@@ -505,15 +606,16 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 				}
 
 				// limit observation to 5 best previous hypothesis for static object
-				if (obj_hypotheses.object_action_ == STATIC_OBJECT && counter > 5) break;
-				else if (counter > 15) break;
+				if (obj_hypotheses.object_action_ == STATIC_OBJECT && num_tested_hypotheses > 5) break;
+				else if (num_tested_hypotheses > 15) break;
+				num_tested_hypotheses++;
 
 				// std::cerr << "-------------------------------------------------------------\n";
 				double scene_hypothesis_probability;
 				std::map<std::string, ObjectParameter> tmp_object_pose_config;
 				for (int i = 0; i < 2; i++)
 				{
-					this->physics_engine_->stepSimulationWithoutEvaluation(.75 * GRAVITY_SCALE_COMPENSATION, 
+					this->physics_engine_->stepSimulationWithoutEvaluation(.5 * GRAVITY_SCALE_COMPENSATION, 
 						GRAVITY_SCALE_COMPENSATION/120.);
 
 					seq_mtx_.lock();
@@ -534,7 +636,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 				{
 					// check object probability after the object stable and the childs get added back together
 					this->physics_engine_->addExistingRigidBodyBackFromMap(object_childs_map[object_pose_label]);
-					this->physics_engine_->stepSimulationWithoutEvaluation(.75/GRAVITY_SCALE_COMPENSATION, 
+					this->physics_engine_->stepSimulationWithoutEvaluation(.5/GRAVITY_SCALE_COMPENSATION, 
 						GRAVITY_SCALE_COMPENSATION/120.);
 
 					seq_mtx_.lock();
@@ -566,7 +668,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 					best_object_probability_effect = scene_hypothesis_probability;
 					best_object_pose_from_graph = tmp_object_pose_config;
 					// update_from_this_object = true;
-					best_hypothesis_id = counter - 1;
+					best_hypothesis_id = hypothesis_idx;
 					// force_update_by_increased_distance = false;
 				}
 				std::cerr << "Best scene probability: " << best_object_probability_effect << std::endl;
@@ -607,8 +709,8 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	std::cerr << "Final scene structure:\n";
 	write_graphviz(std::cerr, this->scene_support_graph_, label_writer(this->scene_support_graph_));
 
-	this->sequential_scene_hypothesis_.setPreviousSceneObservation(SceneObservation(
-		final_scene, scene_hypotheses_list, this->object_label_class_map));
+	this->current_scene_ = SceneObservation(final_scene, scene_hypotheses_list, this->object_label_class_map);
+	
 	// return scene_hypothesis;
 }
 
@@ -679,7 +781,7 @@ void SceneHypothesisAssessor::getSceneSupportGraphFromCurrentObjects(
 	std::vector< std::map<std::string, btTransform> > &object_test_pose_map_by_dist,
 	std::map<std::string, map_string_transform> &object_childs_map)
 {
-	seq_mtx_.lock();
+	// seq_mtx_.lock();
 	this->getCurrentSceneSupportGraph();
 
 	vertex_t &ground_vertex = this->vertex_map_["background"];
@@ -718,7 +820,7 @@ void SceneHypothesisAssessor::getSceneSupportGraphFromCurrentObjects(
 	{
 		object_test_pose_map_by_dist.push_back(disconnected_vertices_poses);
 	}
-	seq_mtx_.unlock();
+	// seq_mtx_.unlock();
 }
 
 std::map<std::string, map_string_transform> SceneHypothesisAssessor::getAllChildTransformsOfVertices(

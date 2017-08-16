@@ -11,6 +11,14 @@ SceneObservation::SceneObservation(const SceneHypothesis &final_scene_hypothesis
 	// this->best_scene_hypothesis_ = this->scene_hypotheses_list_[0];
 }
 
+SceneObservation::SceneObservation(const SceneHypothesis &final_scene_hypothesis,
+	const std::map<std::string, std::string> &object_label_class_map) : 
+	best_scene_hypothesis_(final_scene_hypothesis),
+	object_label_class_map_(object_label_class_map), is_empty(false)
+{
+	scene_hypotheses_list_.push_back(final_scene_hypothesis);
+}
+
 SequentialSceneHypothesis::SequentialSceneHypothesis() : minimum_data_probability_threshold_(0.1),
 	max_static_object_translation_(0.0075), max_static_object_rotation_(5.)
 {
@@ -36,7 +44,7 @@ void SequentialSceneHypothesis::setCurrentDataSceneStructure(
 
 void SequentialSceneHypothesis::setPreviousSceneObservation(const SceneObservation &previous_scene)
 {
-	this->previous_scene_observation_ = previous_scene;	
+	this->previous_scene_observation_ = previous_scene;
 }
 
 // void SequentialSceneHypothesis::setObjRansacTool(ObjRecRANSACTool &data_probability_check)
@@ -94,7 +102,7 @@ Eigen::MatrixXd SequentialSceneHypothesis::generate2dMatrixFromPixelCoordinate(c
 		if (x >= 640 || y >= 480) continue;
 
 		double &current_pixel_value = result(x,y);
-		if (z == 0 || current_pixel_value != 0 && current_pixel_value < z) continue;
+		if (z == 0 || (current_pixel_value != 0 && current_pixel_value < z) ) continue;
 		current_pixel_value = z;
 	}
 	return result;
@@ -235,6 +243,9 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 	// last element of object_pose_by_dist
 	std::size_t disconnected_object_dist = object_pose_by_dist.size() - 1;
 	std::map<std::string, vertex_t> cur_vertex_map = this->current_best_data_scene_structure_.vertex_map_;
+	
+	std::map<std::string, std::string> &object_label_class_map = this->previous_scene_observation_.object_label_class_map_;
+
 	for (std::vector<std::string>::const_iterator it = change_in_scene.support_retained_object_.begin();
 		it != change_in_scene.support_retained_object_.end(); ++it)
 	{
@@ -244,11 +255,27 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 		
 		// the object_pose_by_dist starts at 0 (already excludes background)
 		const std::size_t dist = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].distance_to_ground_ - 1;
-		const btTransform &transform = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].object_pose_;
-		object_pose_by_dist[dist][object_id] = transform;
+		const btTransform &prev_transform = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].object_pose_;
+
+		const std::string &model_name = object_label_class_map[object_id];
+
+		const vertex_t &cur_obj_vertex = cur_vertex_map[object_id];
+		const btTransform &cur_transform = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].object_pose_;
+
+		double current_data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, cur_transform);
+
+		// use previous best pose if the confidence difference between current pose and previous pose is small
+		if (current_data_confidence < 0.05 || this->judgeHypothesis(model_name,prev_transform,0.7*current_data_confidence))
+		{
+			object_pose_by_dist[dist][object_id] = prev_transform;	
+		}
+		else
+		{
+			object_pose_by_dist[dist][object_id] = cur_transform;	
+		}
+
 		// add the child information of this object and move the optimization order of the child to its proper distance
 		// if properly supported
-		// if (keyExistInConstantMap())
 		const std::vector<std::string> &list_object_supported = flying_object_support_retained_[*it];
 		map_string_transform obj_child_tf_supported;
 		for (std::vector<std::string>::const_iterator obj_it = list_object_supported.begin();
@@ -315,11 +342,18 @@ void SequentialSceneHypothesis::setMinimalDataConfidence(const double &min_confi
 
 bool SequentialSceneHypothesis::judgeHypothesis(const std::string &model_name, const btTransform &transform)
 {
+	return this->judgeHypothesis(model_name, transform, this->minimum_data_probability_threshold_);
+}
+
+
+bool SequentialSceneHypothesis::judgeHypothesis(
+	const std::string &model_name, const btTransform &transform, const double &min_confidence)
+{
 	if (data_probability_check_ == NULL) return false;
 
 	// double data_confidence = data_probability_check_->getConfidence(model_name, transform);
 	double data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, transform);
-	return (data_confidence < minimum_data_probability_threshold_);
+	return (data_confidence < min_confidence);
 }
 
 SceneChanges SequentialSceneHypothesis::findChanges()
@@ -336,6 +370,7 @@ SceneChanges SequentialSceneHypothesis::findChanges()
 	
 	if (this->previous_scene_observation_.is_empty)
 	{
+		std::cerr << "Previous scene is empty.\n";
 		// all objects are added object
 		result.added_objects_.reserve(cur_vertex_map.size());
 		for (std::map<std::string, vertex_t>::const_iterator it = cur_vertex_map.begin(); 
@@ -526,14 +561,15 @@ AdditionalHypotheses SequentialSceneHypothesis::generateAdditionalObjectHypothes
 		it != this->previous_scene_observation_.scene_hypotheses_list_.end(); ++it)
 	{
 		std::map<std::string, vertex_t> &vertex_map = it->vertex_map_;
+		std::map<std::string, int> &scene_object_hypothesis_id = it->scene_object_hypothesis_id_;
 
-		// object has not been added yet in this scene.
-		if (!keyExistInConstantMap(object_id,vertex_map)) continue;
+
+		// object has not been added yet in this scene or not in the scene graph.
+		if (!(keyExistInConstantMap(object_id,scene_object_hypothesis_id) && 
+			keyExistInConstantMap(object_id,vertex_map) )) continue;
 
 		SceneSupportGraph &scene_support_graph = it->scene_support_graph_;
 		double &scene_probability = it->scene_probability_;
-		std::map<std::string, int> &scene_object_hypothesis_id = it->scene_object_hypothesis_id_;
-
 		if (added_unique_hypotheses < max_good_hypotheses_to_add)
 		{
 			int &hypothesis_id = scene_object_hypothesis_id[object_id];
