@@ -64,6 +64,8 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("data_forces_max_distance",data_forces_max_distance,0.01);
 
 	nh.param("best_hypothesis_only",best_hypothesis_only_,false);
+	nh.param("small_obj_g_comp",GRAVITY_SCALE_COMPENSATION,3);
+	SCALED_GRAVITY_MAGNITUDE = SCALING * GRAVITY_MAGNITUDE / GRAVITY_SCALE_COMPENSATION;
 
 	if (load_table){
 		nh.param("table_location",background_location,std::string(""));

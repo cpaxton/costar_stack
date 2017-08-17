@@ -13,19 +13,22 @@
   <arg name="debug"                          default="false"/>
   <arg name="load_table"                     default="true"/>
   <arg name="table_location"                 default="$(find sequential_scene_parsing)/mesh/table.pcd"/>
-  <arg name="render_scene"                   default="true" />
+  <arg name="render_scene"                   default="true"/>
   <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
-  <arg name="objransac_model_names"          default="block,cube" />
+  <arg name="objransac_model_names"          default="block,cube"/>
 
   <arg name="data_forces_magnitude"          default="0.25"/>
   <arg name="data_forces_max_distance"       default="0.015"/>
 
   <arg name="best_hypothesis_only"           default="false"/>
+  <arg name="small_obj_g_comp"               default="3"/>
 
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_ros"
   output="screen" 
   >  
     <!-- sequential_scene_ros common Node arg pass -->
+    <param name="small_obj_g_comp"        type="int"     value="$(arg small_obj_g_comp)"/>
+
     <param name="background_pcl2_topic"   type="str"     value="$(arg background_pcl2_topic)" />
     <param name="scene_pcl2_topic"        type="str"     value="$(arg scene_pcl2_topic)" />
 
@@ -49,7 +52,6 @@
 
     <param name="objransac_model_directory"    type="str"     value="$(arg objransac_model_directory)"/>
     <param name="objransac_model_names"        type="str"     value="$(arg objransac_model_names)"/>
-
 
     <!-- objectDatabase -->
     <rosparam command="load" file="$(find sequential_scene_parsing)/mesh/object_property_database.yaml" />

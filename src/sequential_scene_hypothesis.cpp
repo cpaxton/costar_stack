@@ -209,6 +209,7 @@ bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &model_nam
 {
 	// use AABB to check if the original object volume has been occupied by something else
 	// TODO: IMPLEMENT THIS!!
+	// use bullet contactTest;
 	return false;
 }
 
@@ -246,32 +247,67 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 	
 	std::map<std::string, std::string> &object_label_class_map = this->previous_scene_observation_.object_label_class_map_;
 
+	for (std::vector<std::string>::const_iterator it = change_in_scene.perturbed_objects_.begin();
+		it != change_in_scene.perturbed_objects_.end(); ++it)
+	{
+		const std::string &object_id = *it;
+		const vertex_t &prev_obj_vertex = prev_vertex_map[object_id];
+		const btTransform &prev_transform = previous_best_scene_hypothesis.scene_support_graph_[prev_obj_vertex].object_pose_;
+
+		const vertex_t &cur_obj_vertex = cur_vertex_map[object_id];
+		const std::size_t dist = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].distance_to_ground_;
+		const btTransform &cur_transform = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].object_pose_;
+		
+		const std::string &model_name = object_label_class_map[object_id];
+		
+		std::cerr << object_id << std::endl;
+
+		double current_data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, cur_transform);
+		// use previous best pose if the confidence difference between current pose and previous pose is small
+		if (current_data_confidence < 0.05 || this->judgeHypothesis(model_name,prev_transform,0.7*current_data_confidence))
+		{
+			std::cerr << "Retained previous pose\n";
+			object_pose_by_dist[dist][object_id] = prev_transform;
+		}
+		else
+		{
+			std::cerr << "Use current pose\n";	
+			object_pose_by_dist[dist][object_id] = cur_transform;
+		}
+	}
+
 	for (std::vector<std::string>::const_iterator it = change_in_scene.support_retained_object_.begin();
 		it != change_in_scene.support_retained_object_.end(); ++it)
 	{
 		// add the object pose by distance information for support retained objects
 		const std::string &object_id = *it;
 		const vertex_t &obj_vertex = prev_vertex_map[object_id];
-		
+
 		// the object_pose_by_dist starts at 0 (already excludes background)
-		const std::size_t dist = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].distance_to_ground_ - 1;
+		const std::size_t prev_dist = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].distance_to_ground_;
+		const std::size_t dist = prev_dist > 1 && prev_dist <= object_pose_by_dist.size() 
+			? prev_dist - 1 : disconnected_object_dist;
+
 		const btTransform &prev_transform = previous_best_scene_hypothesis.scene_support_graph_[obj_vertex].object_pose_;
 
 		const std::string &model_name = object_label_class_map[object_id];
 
 		const vertex_t &cur_obj_vertex = cur_vertex_map[object_id];
 		const btTransform &cur_transform = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].object_pose_;
+		
+		std::cerr << object_id << std::endl;
 
 		double current_data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, cur_transform);
-
 		// use previous best pose if the confidence difference between current pose and previous pose is small
 		if (current_data_confidence < 0.05 || this->judgeHypothesis(model_name,prev_transform,0.7*current_data_confidence))
 		{
-			object_pose_by_dist[dist][object_id] = prev_transform;	
+			std::cerr << "Retained previous pose\n";
+			object_pose_by_dist[dist][object_id] = prev_transform;
 		}
 		else
 		{
-			object_pose_by_dist[dist][object_id] = cur_transform;	
+			std::cerr << "Use current pose\n";	
+			object_pose_by_dist[dist][object_id] = cur_transform;
 		}
 
 		// add the child information of this object and move the optimization order of the child to its proper distance
@@ -310,10 +346,12 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 			else
 			{
 				std::cerr << "Warning, found inconsistency of object " << *obj_it << " in current scene graph\n";
+				continue;
 			}
 		}
 		object_childs_map[object_id] = obj_child_tf_supported;
 	}
+
 	if (additional_perturbed.size() > 0) result.insert(additional_perturbed.begin(),additional_perturbed.end());
 	if (additional_static.size() > 0) result.insert(additional_static.begin(),additional_static.end());
 	if (additional_support_retained.size() > 0) result.insert(additional_support_retained.begin(),additional_support_retained.end());
@@ -332,6 +370,7 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 			result[it->first] = AdditionalHypotheses(it->second.first, object_pose_hypotheses, ADD_OBJECT);
 		}
 	}
+
 	return result;
 }
 

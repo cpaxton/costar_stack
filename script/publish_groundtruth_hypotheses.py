@@ -85,6 +85,8 @@ class GroundtruthHypothesisGenerator(object):
 			y_symmetries = 1, y_rotation = 360*deg_to_rad,
 			z_symmetries = 1, z_rotation = 360*deg_to_rad)
 		
+		self.object_id_by_frame_ = dict()
+		objects_in_one_frame = []
 		for row in groundtruth_tf_list:
 			# print len(row)
 			if len(row) == 10:
@@ -99,6 +101,7 @@ class GroundtruthHypothesisGenerator(object):
 					## NEED TO ADD THE TIME STAMP WHEN PUBLISHING
 
 					self.detected_object_in_frame.append((current_frame_list_of_objects,current_frame_tf_accumulator))
+					self.object_id_by_frame_[current_frame] = objects_in_one_frame
 					current_frame_tf_accumulator = []
 					current_frame_list_of_objects = DetectedObjectList()
 					current_frame = int(frame_num)
@@ -114,6 +117,9 @@ class GroundtruthHypothesisGenerator(object):
 
 				det_object.id = "objects/%s/%s"%(object_type,obj_index)
 				det_object.object_class = object_type
+
+				objects_in_one_frame.append(det_object.id)
+
 				if object_type in obj_symmetry_dict:
 					det_object.symmetry = obj_symmetry_dict[object_type]
 				else:
@@ -136,10 +142,10 @@ class GroundtruthHypothesisGenerator(object):
 			current_frame_list_of_objects.header.frame_id = ref_frame
 
 			self.detected_object_in_frame.append((current_frame_list_of_objects,current_frame_tf_accumulator))
+			self.object_id_by_frame_[current_frame] = objects_in_one_frame
 			current_frame_tf_accumulator = []
 			current_frame_list_of_objects = DetectedObjectList()
 			current_frame = int(frame_num)
-
 
 		self.saved_cloud = list()
 		cloud_dir = os.path.join(test_dir_path,'seg_cloud')
@@ -245,15 +251,17 @@ class GroundtruthHypothesisGenerator(object):
 			# print "Obj list published"
 			rospy.sleep(0.3)
 
-			self.hypo_obj_pub.publish(self.hypothesis_generator(current_frame_tf_accumulator))
+			# self.hypo_obj_pub.publish(self.hypothesis_generator(current_frame_tf_accumulator))
 			# print "all data published"
 			self.seq += 1
 		return []
 
 	def evaluate_scene_result(self,data):
 		obj_list_to_publish, current_frame_tf_accumulator = self.detected_object_in_frame[self.frame_to_publish]
-		for detected_object in obj_list_to_publish.objects:
-			object_id = detected_object.id
+		available_objects = self.object_id_by_frame_[self.frame_to_publish]
+		for detected_object in available_objects: # obj_list_to_publish.objects:
+			# object_id = detected_object.id
+			object_id = detected_object
 			result_id = 'scene/'+object_id
 			transform = [-1]*7
 			self.listener.waitForTransform(object_id,result_id,rospy.Time(), rospy.Duration(1.0))

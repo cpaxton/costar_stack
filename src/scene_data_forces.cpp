@@ -21,6 +21,51 @@ FeedbackDataForcesGenerator::FeedbackDataForcesGenerator() :
 	icp_.setMaximumIterations(max_icp_iteration_);
 }
 
+bool FeedbackDataForcesGenerator::setModelDirectory(const std::string &model_directory)
+{
+	namespace fs = boost::filesystem;
+	fs::path directory_path(model_directory);
+	if (fs::is_directory(directory_path))
+	{
+		model_directory_ = model_directory;
+		return true;
+	}
+	else
+	{
+		std::cerr << "Error, object model directory: " << model_directory << " does not exist.\n";
+		return false;
+	}
+}
+
+bool FeedbackDataForcesGenerator::setModelCloud(const std::string &model_name)
+{
+	namespace fs = boost::filesystem;
+	fs::path directory_path(model_directory_);
+	fs::path model_path = directory_path / model_name;
+	model_path.replace_extension(".pcd");
+
+	if (fs::exists(model_path))
+	{
+		pcl::PCDReader reader;
+		pcl::PointCloud<pcl::PointXYZ>::Ptr surface_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+		if (reader.read(model_path.string(),*surface_cloud) == 0)
+		{
+			this->setModelCloud(surface_cloud, model_name);
+			std::cerr << "Model point cloud loaded successfully\n";
+			return true;
+		}
+		else
+		{
+			std::cerr << "Failed to load " << model_name << " model point cloud\n";
+		}
+	}
+	else
+	{
+		std::cerr << "Error: '" << model_path << "' does not exist.\n";	 
+	}
+	return false;
+}
+
 void FeedbackDataForcesGenerator::setFeedbackForceMode(int mode)
 {
 	force_data_model_ = mode;
@@ -97,19 +142,22 @@ void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const PointCloudXYZPt
 	icp_result_confidence_map_[object_id] = getIcpConfidenceResult(icp_result);
 }
 
-double FeedbackDataForcesGenerator::getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose) const
+double FeedbackDataForcesGenerator::getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose)
 {
 	btTransform dummy_transform;
-	if (keyExistInConstantMap(model_name,model_cloud_map_))
-	{
-		PointCloudXYZPtr dummy =  getTransformedObjectCloud(object_pose, model_name, dummy_transform);
-		return getIcpConfidenceResult(dummy);	
-	}
-	else
+	if (!keyExistInConstantMap(model_name,model_cloud_map_))
 	{
 		std::cerr << "ERROR, model name '" << model_name << "' does not exist in the database.\n";
-		return 0;
+		std::cerr << "Attempting to load Unrecognized model\n";
+		bool load_success = this->setModelCloud(model_name);
+		if (!load_success)
+		{
+			return 0;
+		}
 	}
+
+	PointCloudXYZPtr dummy =  getTransformedObjectCloud(object_pose, model_name, dummy_transform);
+	return getIcpConfidenceResult(dummy);
 }
 
 void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const btRigidBody &object, 

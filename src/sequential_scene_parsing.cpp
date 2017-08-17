@@ -65,8 +65,10 @@ void SceneHypothesisAssessor::addBackground(ImagePtr background_image, int mode)
 				return;
 			}
 
-			if (this->debug_messages_) std::cerr << "Background(plane) normal: "<< normal.transpose() <<", coeff: " << coeff << std::endl;
-			this->physics_engine_->addBackgroundPlane(normal_bt * SCALING, -btScalar(coeff * SCALING),bt_cloud_centroid * SCALING);
+			if (this->debug_messages_) std::cerr << "Background(plane) normal: " << normal.transpose()
+				<< ", coeff: " << coeff << std::endl;
+			this->physics_engine_->addBackgroundPlane(normal_bt * SCALING, 
+				-btScalar(coeff * SCALING),bt_cloud_centroid * SCALING);
 			break;
 		}
 		case BACKGROUND_HULL:
@@ -75,7 +77,8 @@ void SceneHypothesisAssessor::addBackground(ImagePtr background_image, int mode)
 			convex_plane_points.reserve(background_image->size());
 			for (std::size_t i = 0; i < background_image->size(); i++)
 			{
-				btVector3 convex_hull_point(background_image->points[i].x,background_image->points[i].y,background_image->points[i].z);
+				btVector3 convex_hull_point(background_image->points[i].x,
+					background_image->points[i].y,background_image->points[i].z);
 				convex_plane_points.push_back(convex_hull_point * SCALING);
 			}
 			this->physics_engine_->addBackgroundConvexHull(convex_plane_points, normal_bt * SCALING);
@@ -130,7 +133,8 @@ void SceneHypothesisAssessor::addBackground(ImagePtr background_image, int mode)
 			pcl::fromPCLPointCloud2 (triangles.cloud,*mesh_cloud);
 			btTriangleMesh* trimesh = new btTriangleMesh();
 			
-			for (std::vector<pcl::Vertices>::const_iterator it = triangles.polygons.begin(); it != triangles.polygons.end(); ++it )
+			for (std::vector<pcl::Vertices>::const_iterator it = triangles.polygons.begin(); 
+				it != triangles.polygons.end(); ++it )
 			{
 				trimesh->addTriangle( 
 						pclPointToBulletVector(mesh_cloud->points[ it->vertices[0] ]) * SCALING,
@@ -189,7 +193,8 @@ void SceneHypothesisAssessor::addNewObjectTransforms(const std::vector<ObjectWit
 	this->physics_engine_->addObjects(objects);
 }
 
-std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObjectTransform(const bool &include_prev_observation)
+std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObjectTransform(
+	const bool &include_prev_observation)
 {
 	include_prev_observation_ = include_prev_observation;
 
@@ -201,11 +206,14 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	this->data_forces_generator_.resetCachedIcpResult();
 
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
-		GRAVITY_SCALE_COMPENSATION*30);
+		GRAVITY_SCALE_COMPENSATION*10);
 	
-	this->physics_engine_->stepSimulationWithoutEvaluation(0.5 * GRAVITY_SCALE_COMPENSATION, 
+	this->physics_engine_->stepSimulationWithoutEvaluation(0.10 * GRAVITY_SCALE_COMPENSATION, 
 		GRAVITY_SCALE_COMPENSATION/120.);
 	this->getUpdatedSceneSupportGraph();
+
+	// this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
+	// 	GRAVITY_SCALE_COMPENSATION*5);
 
 	std::map<std::string, bool> object_background_support_status;
 
@@ -215,6 +223,28 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 
 	this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
 		object_childs_map);
+
+	// revert object pose to pose estimator result if it has very low stability
+	for (std::map<std::string, vertex_t>::iterator it = vertex_map_.begin(); it != vertex_map_.end(); ++it)
+	{
+		if (it->first == "background") continue;
+
+		scene_support_vertex_properties &object_physics_status = this->scene_support_graph_[it->second];
+		const double &stability_probability = object_physics_status.stability_penalty_;
+		if (debug_messages_)
+		{
+			std::cerr << "Object " << it->first << " stability: " << stability_probability << std::endl;	
+		}
+
+		if (stability_probability < 0.01)
+		{
+			if (debug_messages_)
+			{
+				std::cerr << "Object " << it->first << " is really unstable. Reverting pose to the best data pose.\n";
+			}
+			object_physics_status.object_pose_ = this->physics_engine_->getTransformOfBestData(it->first);
+		}
+	}
 
 	SceneHypothesis current_best_scene(vertex_map_,scene_support_graph_);
 	this->sequential_scene_hypothesis_.setCurrentDataSceneStructure(current_best_scene);
@@ -236,6 +266,8 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	std::map<std::string, AdditionalHypotheses> hypotheses_to_test;
 	if (include_prev_observation_)
 	{
+		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
+			GRAVITY_SCALE_COMPENSATION*30);
 		hypotheses_to_test = 
 			sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(object_test_pose_map_by_dist,
 			object_childs_map,
@@ -292,25 +324,25 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 		scene_object_hypothesis_id[it->first] = 0;
 	}
 
-	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph(object_action_map);
+	double scene_probability = this->evaluateSceneProbabilityFromGraph(object_action_map);
 
-	std::cerr << "Final Scene probability = " << scene_hypothesis << std::endl;
+	std::cerr << "Final Scene probability = " << scene_probability << std::endl;
 
-	std::cerr << "Scene hypotheses structure:\n";
 	this->getCurrentSceneSupportGraph();
 
-	std::map<std::string, ObjectParameter> result = this->physics_engine_->getCurrentObjectPoses();
-
+	std::cerr << "Scene hypotheses structure:\n";
 	write_graphviz(std::cout, this->scene_support_graph_, label_writer(this->scene_support_graph_));
 
 	// set test pose to the converged best data pose
+	std::map<std::string, ObjectParameter> result = this->physics_engine_->getCurrentObjectPoses();
 	this->physics_engine_->changeBestTestPoseMap(result);
 
 	// set the current scene observation data
 	SceneHypothesis final_scene(vertex_map_,scene_support_graph_,
-		scene_hypothesis, scene_object_hypothesis_id);
+		scene_probability, scene_object_hypothesis_id);
 	this->current_scene_ = SceneObservation(final_scene, this->object_label_class_map);
 	
+	std::cerr << std::endl << std::endl;
 	seq_mtx_.unlock();
 	return result;
 }
@@ -318,38 +350,17 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 bool SceneHypothesisAssessor::loadObjectModels(const std::string &input_model_directory_path, 
 	const std::vector<std::string> &object_names)
 {
-	std::cerr << "Adding objrecransac model.\n";
-	bool result = boost::filesystem::is_directory(input_model_directory_path);
-	if (result)
-	{
-		std::string model_path = input_model_directory_path;
-		if (*model_path.rbegin() != '/')
-			model_path += "/";
+	std::cerr << "Adding pose data confidence check model.\n";
+	bool all_load_success = this->data_forces_generator_.setModelDirectory(input_model_directory_path);
+	
+	if (!all_load_success) return false;
 
-		for (std::vector<std::string>::const_iterator it = object_names.begin(); it != object_names.end(); ++it)
-		{
-			// data_probability_check_.addModelFromPath(model_path + *it, *it);
-			
-			std::stringstream ss;
-			ss << model_path << *it << ".pcd";
-			pcl::PCDReader reader;
-			pcl::PointCloud<pcl::PointXYZ>::Ptr surface_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-			if (reader.read(ss.str(),*surface_cloud) == 0){
-				data_forces_generator_.setModelCloud(surface_cloud, *it);
-				std::cerr << "Model point cloud loaded successfully\n";
-			}
-			else
-				std::cerr << "Failed to load " << *it << " model point cloud\n"; 
-		}
-
-		std::cerr << "Done.\n";
-		return true;
-	}
-	else
+	for (std::vector<std::string>::const_iterator it = object_names.begin(); it != object_names.end(); ++it)
 	{
-		std::cerr << "Error, object model directory: " << input_model_directory_path << " does not exist.\n";
-		return false;
+		// data_probability_check_.addModelFromPath(model_path + *it, *it);
+		all_load_success = all_load_success && this->data_forces_generator_.setModelCloud(*it);
 	}
+	return all_load_success;
 }
 
 void SceneHypothesisAssessor::setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map)
@@ -406,7 +417,8 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 	double object_data_compliance = object_action != SUPPORT_RETAINED_OBJECT ? 
 		dataProbabilityScale(ransac_confidence) : 1.0;
 	
-	double object_total_probability = object_data_compliance * support_probability * stability_probability * collision_probability;
+	double object_total_probability = object_data_compliance 
+		* support_probability * stability_probability * collision_probability;
 
 	if (verbose)
 	{
@@ -441,7 +453,8 @@ double SceneHypothesisAssessor::evaluateSceneOnObjectHypothesis(std::map<std::st
 		// only check probability for object that are exist in the dictionary
 		if (object_label_class_map.find(it->first) == object_label_class_map.end()) continue;
 
-		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first], object_action, verbose);
+		double obj_probability = this->evaluateObjectProbability(it->first, object_label_class_map[it->first],
+			object_action, verbose);
 
 		vertex_t &object_in_graph = this->vertex_map_[it->first];
 		object_pose_from_graph[it->first] = this->scene_support_graph_[object_in_graph].object_pose_;
@@ -525,7 +538,8 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 					<< printTransform(it->second);
 
 				const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[it->first];
-				bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT || obj_hypotheses.object_action_ == PERTURB_OBJECT);
+				bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT 
+					|| obj_hypotheses.object_action_ == PERTURB_OBJECT);
 				this->physics_engine_->setIgnoreDataForces(it->first,ignore_data_forces);
 			}
 		}
@@ -720,6 +734,8 @@ double SceneHypothesisAssessor::evaluateSceneProbabilityFromGraph(const std::map
 	for (std::map<std::string, vertex_t>::iterator it = this->vertex_map_.begin();
 		it != this->vertex_map_.end(); ++it)
 	{
+		if (it->first == "background") continue;
+
 		bool current_background_support_status = this->scene_support_graph_[it->second].ground_supported_;
 		bool best_background_support_status = this->scene_support_graph_[it->second].ground_supported_;
 		// only check probability for object that are exist in the dictionary
@@ -753,6 +769,8 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	for (std::map<std::string, vertex_t>::iterator it = this->vertex_map_.begin();
 		it != this->vertex_map_.end(); ++it)
 	{
+		if (it->first == "background") continue;
+
 		const std::string &object_id = this->scene_support_graph_[it->second].object_id_; 
 		const btTransform &pose = this->scene_support_graph_[it->second].object_pose_;
 		std::string &model_name = object_label_class_map[object_id];
@@ -830,6 +848,8 @@ std::map<std::string, map_string_transform> SceneHypothesisAssessor::getAllChild
 	for (std::map<std::string, vertex_t>::const_iterator it = this->vertex_map_.begin();
 		it != this->vertex_map_.end(); ++it)
 	{
+		if (it->first == "background") continue;
+
 		map_string_transform object_child_transforms;
 		std::size_t parent_vertex_distance = getContentOfConstantMap(it->second,vertex_distance_map);
 		std::vector<vertex_t> childs = getAllChildVertices(this->scene_support_graph_,it->second);
