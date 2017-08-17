@@ -1,12 +1,13 @@
 <launch>
   <!-- Scene topic arguments-->
-  <arg name="pcd_path"               default="$(find sequential_scene_parsing)/mesh/raw_sample_point_cloud.pcd" />
+  <arg name="folder_location"		     default="$(find sequential_scene_parsing)/mesh/pcd/real_data" />
+  <arg name="pcd_path"               default="1.pcd" />
   <arg name="pcl_topic_name"         default="/camera/depth_registered/points" />
   <arg name="pcl_header_frame"       default="/camera_link" />
 
   <node pkg="sequential_scene_parsing" type="load_and_pub_pcd" name="load_and_pub_pcd" >  
     <!-- sequential_scene_ros common Node arg pass -->
-    <param name="pcd_path"           type="str"     value="$(arg pcd_path)" />
+    <param name="pcd_path"           type="str"     value="$(arg folder_location)/$(arg pcd_path)" />
     <param name="pcl_topic_name"     type="str"     value="$(arg pcl_topic_name)"/>
     <param name="pcl_header_frame"   type="str"     value="$(arg pcl_header_frame)"/>
   </node>

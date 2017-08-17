@@ -2,6 +2,8 @@
 #define SCENE_PHYSICS_DATA_FORCES
 
 #include <iostream>
+
+#include <boost/filesystem.hpp>
 #include <btBulletDynamicsCommon.h>
 
 #include <pcl/point_types.h>
@@ -40,6 +42,9 @@ public:
 
 	// Input sampled point cloud from the mesh
 	void setModelCloud(const PointCloudXYZPtr mesh_surface_sampled_cloud, const std::string &model_name);
+	bool setModelDirectory(const std::string &model_directory);
+	bool setModelCloud(const std::string &model_name);
+
 	void setForcesParameter(const btScalar &forces_magnitude_per_point, const btScalar &max_point_distance_threshold);
 	void resetCachedIcpResult();
 	void removeCachedIcpResult(const std::string &object_id);
@@ -47,7 +52,7 @@ public:
 		const std::string &model_name);
 	void manualSetCachedIcpResultMapFromPose(const btRigidBody &object, 
 		const std::string &model_name);
-	double getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose) const;
+	double getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose);
 	
 	PointCloudXYZPtr getTransformedObjectCloud(const std::string &model_name, const btTransform &object_real_pose) const;
 	
@@ -79,6 +84,8 @@ private:
 		const std::string &model_name, btTransform &object_real_pose) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btTransform &object_pose, 
 		const std::string &model_name, btTransform &object_real_pose) const;
+
+	std::string model_directory_;
 
 	bool have_scene_data_;
 	PointCloudXYZPtr scene_data_;

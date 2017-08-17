@@ -823,9 +823,21 @@ void PhysicsEngine::changeBestTestPoseMap(const std::map<std::string, btTransfor
 	mtx_.unlock();
 }
 
-btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id) const
+btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id, bool use_best_test_data) const
 {
-	return getContentOfConstantMap(object_id, this->object_best_pose_from_data_);
+	if (use_best_test_data && keyExistInConstantMap(object_id, this->object_best_test_pose_map_))
+	{
+		return getContentOfConstantMap(object_id, this->object_best_test_pose_map_);
+	}
+	else
+	{
+		return getContentOfConstantMap(object_id, this->object_best_pose_from_data_);
+	}
+}
+
+void PhysicsEngine::setIgnoreDataForces(const std::string &object_id, bool value)
+{
+	this->ignored_data_forces_[object_id] = value;
 }
 
 void PhysicsEngine::applyDataForces()
@@ -837,6 +849,11 @@ void PhysicsEngine::applyDataForces()
 	{
 		// skips object that are not in the world
 		if (!it->second->isInWorld())
+		{
+			continue;
+		}
+
+		if (keyExistInConstantMap(it->first,ignored_data_forces_) && getContentOfConstantMap(it->first,ignored_data_forces_))
 		{
 			continue;
 		}

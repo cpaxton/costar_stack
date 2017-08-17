@@ -13,6 +13,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/io/pcd_io.h>
 
+#include <std_msgs/Empty.h>
+
 // use detected object list instead of tf name convention
 #include <costar_objrec_msgs/ObjectSymmetry.h>
 #include <costar_objrec_msgs/DetectedObject.h>
@@ -43,7 +45,7 @@ public:
 	
 private:
 	bool fillObjectPropertyDatabase();
-	void addBackground(const sensor_msgs::PointCloud2 &pc);
+	void addBackgroundCallback(const sensor_msgs::PointCloud2 &pc);
 	void addSceneCloud(const sensor_msgs::PointCloud2 &pc);
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
 	void fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses);
@@ -51,7 +53,7 @@ private:
 	void updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map);
 
 	// void initialize();
-	bool debug_messages_;
+	// bool debug_messages_;
 	bool class_ready_;
 	bool physics_gravity_direction_set_;
 	bool background_normal_as_gravity_;
@@ -61,6 +63,7 @@ private:
 
 	bool scene_cloud_updated_;
 	bool object_list_updated_;
+	bool best_hypothesis_only_;
 
 	// Background mode: 0 = BACKGROUND_PLANE, 1 = BACKGROUND_HULL, 2 = BACKGROUND_MESH
 	int background_mode_;
@@ -68,11 +71,12 @@ private:
 	ros::Subscriber object_hypotheses_sub;
 	ros::Subscriber background_pcl_sub;
 	ros::Subscriber scene_pcl_sub;
+	ros::Publisher done_message_pub;
 	
 	ros::NodeHandle nh_;
 	tf::TransformListener listener_;
 	tf::TransformBroadcaster tf_broadcaster_;
-	SceneHypothesisAssessor ros_scene_;
+	// SceneHypothesisAssessor ros_scene_;
 	
 	// PhysicsEngine physics_engine_;
 	std::map<std::string, tf::Transform> object_transforms_tf_;

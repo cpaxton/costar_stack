@@ -69,6 +69,8 @@ struct SceneObservation
 	SceneObservation(const SceneHypothesis &final_scene_hypothesis,
 		const OneFrameSceneHypotheses &input, 
 		const std::map<std::string, std::string> &object_label_class_map);
+	SceneObservation(const SceneHypothesis &final_scene_hypothesis,
+		const std::map<std::string, std::string> &object_label_class_map);
 	SceneObservation() : is_empty(true) { };
 };
 
@@ -163,6 +165,7 @@ private:
 		const int &max_good_hypotheses_to_add);
 
 	bool judgeHypothesis(const std::string &model_name, const btTransform &transform);
+	bool judgeHypothesis(const std::string &model_name, const btTransform &transform, const double &min_confidence);
 
 	Eigen::MatrixXd backprojectCloudtoPixelCoordinate(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
 	Eigen::MatrixXd generate2dMatrixFromPixelCoordinate(const Eigen::MatrixXd &pixel_matrix);
