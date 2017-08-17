@@ -259,12 +259,12 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 		const btTransform &cur_transform = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].object_pose_;
 		
 		const std::string &model_name = object_label_class_map[object_id];
-		
+
 		std::cerr << object_id << std::endl;
 
 		double current_data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, cur_transform);
 		// use previous best pose if the confidence difference between current pose and previous pose is small
-		if (current_data_confidence < 0.05 || this->judgeHypothesis(model_name,prev_transform,0.7*current_data_confidence))
+		if (current_data_confidence < 0.05 || this->judgeHypothesis(model_name,prev_transform,0.5*current_data_confidence))
 		{
 			std::cerr << "Retained previous pose\n";
 			object_pose_by_dist[dist][object_id] = prev_transform;
@@ -392,7 +392,7 @@ bool SequentialSceneHypothesis::judgeHypothesis(
 
 	// double data_confidence = data_probability_check_->getConfidence(model_name, transform);
 	double data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, transform);
-	return (data_confidence < min_confidence);
+	return (data_confidence > min_confidence);
 }
 
 SceneChanges SequentialSceneHypothesis::findChanges()
