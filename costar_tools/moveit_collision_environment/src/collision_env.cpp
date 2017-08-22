@@ -85,6 +85,36 @@ void collision_environment::setNodeHandle(const ros::NodeHandle &nh)
     getAllObjectTF();
 }
 
+moveit_msgs::CollisionObject collision_environment::generateCollisionObjectFromObjectTF(const objectTF &object_info)
+{
+    moveit_msgs::CollisionObject co;
+    // name of collision object = TF name
+    co.id = object_info.frame_id;
+    co.header.frame_id = parentFrame;
+    std::stringstream file_location, ss;
+    // read the location of the mesh file
+
+    file_location << mesh_source << "/" << object_info.name << "." << file_extension;
+    if (!boost::filesystem::exists( file_location.str() ))
+    {
+        std::cerr << "Warning: Mesh file not found at: " << file_location.str() << std::endl;
+        co.id = "INVALID";
+        return co;
+    }
+    ss << "file://" << file_location.str();
+    
+    // Generate moveit mesh from mesh file
+    shapes::Mesh * tmpMesh = shapes::createMeshFromResource(ss.str());
+    shape_msgs::Mesh co_mesh;
+    shapes::ShapeMsg co_mesh_msg;
+    shapes::constructMsgFromShape(tmpMesh,co_mesh_msg);
+    co_mesh = boost::get<shape_msgs::Mesh>(co_mesh_msg);
+    co.meshes.push_back(co_mesh);
+    co.mesh_poses.push_back(object_info.pose);
+    co.operation = co.ADD;
+    return co;
+}
+
 void collision_environment::updateCollisionObjects(const bool &updateFrame)
 {
     // This function will update the collision object list based on the list of object TF
@@ -105,6 +135,10 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
         // update table and add it to list of collision objects
         if (getTable())
             segmentedObjects->push_back(this->tableObject);
+
+        // clear retained collision objects
+        retained_obstacle_objects.clear();
+
     }
     else {
         // use previous table data if available. If it is not available, get new table
@@ -112,6 +146,12 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
 
         if (hasTableTF)
             segmentedObjects->push_back(this->tableObject);
+         
+        for (std::vector<moveit_msgs::CollisionObject>::iterator it = retained_obstacle_objects.begin(); 
+            it != retained_obstacle_objects.end(); ++it)
+        {
+            segmentedObjects->push_back(*it);
+        }
     }
         
     
@@ -131,30 +171,8 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
     
     // Add the collision objects based on available object TF
     for (int i = 0; i < detectedObjectsTF.size(); i++) {
-        moveit_msgs::CollisionObject co;
-        // name of collision object = TF name
-        co.id = detectedObjectsTF.at(i).frame_id;
-        co.header.frame_id = parentFrame;
-        std::stringstream file_location, ss;
-        // read the location of the mesh file
-
-        file_location << mesh_source << "/" << detectedObjectsTF.at(i).name << "." << file_extension;
-        if (!boost::filesystem::exists( file_location.str() ))
-        {
-            std::cerr << "Warning: Mesh file not found at: " << file_location.str() << std::endl;
-            continue;
-        }
-        ss << "file://" << file_location.str();
-        
-        // Generate moveit mesh from mesh file
-        shapes::Mesh * tmpMesh = shapes::createMeshFromResource(ss.str());
-        shape_msgs::Mesh co_mesh;
-        shapes::ShapeMsg co_mesh_msg;
-        shapes::constructMsgFromShape(tmpMesh,co_mesh_msg);
-        co_mesh = boost::get<shape_msgs::Mesh>(co_mesh_msg);
-        co.meshes.push_back(co_mesh);
-        co.mesh_poses.push_back(detectedObjectsTF.at(i).pose);
-        co.operation = co.ADD;
+        moveit_msgs::CollisionObject co = generateCollisionObjectFromObjectTF(detectedObjectsTF[i]);
+        if (co.id == "INVALID") continue;
         segmentedObjects->push_back(co);
     }
     
@@ -163,7 +181,28 @@ void collision_environment::updateCollisionObjects(const bool &updateFrame)
         std::cerr << segmentedObjects->size() <<std::endl;
         std::cerr << "Collision Object Published\n";
     }
-};
+}
+
+bool collision_environment::addObjectAsRetainedObstacle(const std::string &frame_id)
+{
+    for (int i = 0; i < detectedObjectsTF.size(); i++) {
+        if (detectedObjectsTF[i].frame_id == frame_id)
+        {
+            moveit_msgs::CollisionObject co = generateCollisionObjectFromObjectTF(detectedObjectsTF[i]);
+            if (co.id == "INVALID") return false;
+
+            co.id =  "retained_" + co.id;
+            retained_obstacle_objects.push_back(co);
+            return true;
+        }
+    }
+    return false;
+}
+
+void collision_environment::removeAllRetainedObstacles()
+{
+    retained_obstacle_objects.clear();
+}
 
 void collision_environment::getAllObjectTFfromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detectedObjectList)
 {

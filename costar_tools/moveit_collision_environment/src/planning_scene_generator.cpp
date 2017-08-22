@@ -49,6 +49,18 @@ bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Reque
     return anyUpdate;
 }
 
+bool moveitPlanningSceneGenerator::addRetainedCollisionObject (moveit_collision_environment::RetainedCollision::Request& request, 
+        moveit_collision_environment::RetainedCollision::Response& response)
+{
+    return collisionObjectGenerator.addObjectAsRetainedObstacle(request.frame_id);
+}
+
+bool moveitPlanningSceneGenerator::removeAllRetainedObject(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    collisionObjectGenerator.removeAllRetainedObstacles();
+    return true;
+}
+
 void moveitPlanningSceneGenerator::autoUpdateScene(const costar_objrec_msgs::DetectedObjectList &detectedObject)
 {
     // this function will automatically update scene when it got detectedObject msgs
