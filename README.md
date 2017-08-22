@@ -21,6 +21,7 @@ roslaunch color_nn_segmenter segmenter.launch
 
 ## Roslaunch Parameters
 The default ros parameter use this following layout for training and saving data
+```
 $(catkin source directory)/color_nn_segmenter
 ├── include
 ├── launch
@@ -39,7 +40,7 @@ $(catkin source directory)/color_nn_segmenter
     │   ├── file2.pcd
     │   └── ...
     └── ...
-
+```
 
 These are the required parameters for loading the model:
  - load_existing_model: Loads the color model saved specified in the model path. If set to false, model training will be done before color segmentation is performed;
