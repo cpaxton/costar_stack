@@ -29,17 +29,18 @@ void RosPlaneSegmenter::initialize(const ros::NodeHandle &nh)
 		{
 			if (fs::create_directories(plane_data_directory))
 			{
-				ROS_ERROR("Fail to generate plane data save directory %s.",plane_data_directory.string().c_str());
+				ROS_INFO("Created plane data save directory %s.",plane_data_directory.string().c_str());
 			}
 			else
 			{
-				ROS_INFO("Created plane data save directory %s.",plane_data_directory.string().c_str());
+				ROS_ERROR("Fail to generate plane data save directory %s.",plane_data_directory.string().c_str());
 			}
 		}
 	}
 	else
 	{
 		ROS_INFO("Found plane data in %s.",load_table_path_.c_str());
+		this->ready = true;
 	}
 	
 	if (load_table)
