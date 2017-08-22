@@ -47,8 +47,6 @@ dist: trusty
 sudo: required
 language:
   - generic
-cache:
-  - apt
 
 # Configuration variables. All variables are global now, but this can be used to
 # trigger a build matrix for different ROS distributions if desired.
@@ -69,7 +67,7 @@ before_install:
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   # Do not build/test costar-perception: it requires OpenCV-nonfree, which is not automatically installed.
   - sudo apt-get update -qq
-  - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
+  - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-moveit ros-$ROS_DISTRO-moveit-full-pr2
   - sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
   - sudo apt-get update 
   - sudo apt-get install libopencv-nonfree-dev

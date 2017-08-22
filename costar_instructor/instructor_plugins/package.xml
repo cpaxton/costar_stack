@@ -54,7 +54,7 @@
       cases="planning"
       name="Plan to Home"/>
     <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
-      type="ACTION" group="ROBOT"
+      type="HIGH LEVEL" group="ROBOT"
       description="Instructor Plan to Relative Waypoint"
       cases=""
       name="Plan Relative"/>
