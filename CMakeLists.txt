@@ -8,7 +8,7 @@ OPTION(BUILD_USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
 OPTION(BUILD_PYTHON_BINDING "Build Python Binding" ON)
 OPTION(BUILD_ENABLE_TRACKING "Build Enable Tracking Keypoints (EXPERIMENTAL)" OFF)
 
-OPTION(BUILD_SCENE_PARSING_SUPPORT "Build with Scene Parsing Hypothesis Message (EXPERIMENTAL)" ON)
+OPTION(BUILD_SCENE_PARSING_SUPPORT "Build with Scene Parsing Hypothesis Message (EXPERIMENTAL)" OFF)
 
 # Enable C++11
 include(CheckCXXCompilerFlag)
@@ -51,7 +51,7 @@ IF(OPENMP_FOUND)
 ENDIF(OPENMP_FOUND)
 
 # COSTAR specific application. Leave this off all time if you are not working at costar
-OPTION(TURN_THIS_OFF "TURN_THIS_OFF" ON)
+OPTION(TURN_THIS_OFF "TURN_THIS_OFF" OFF)
 if (TURN_THIS_OFF)
   message(STATUS "Warning, only turn this on when you are a part of CoSTAR team. You will need to have costar_objrec_msgs from costar_stack package in github to compile this successfully")
   ADD_DEFINITIONS( -DCOSTAR)
