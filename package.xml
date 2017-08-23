@@ -42,7 +42,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>costar_objrec_msgs</build_depend>
-  <build_depend>ObjRecRANSAC</build_depend>
+  <build_depend>objrecransac</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
