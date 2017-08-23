@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <set>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -22,6 +23,7 @@
 #include <boost/serialization/map.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "utility.h"
 
@@ -38,6 +40,8 @@ public:
 	bool saveModel(const std::string &target_directory, const std::string &model_name);
 	bool loadModel(const std::string &model_dat_file_path);
 
+	void setBackgroundColorLabel(const std::string &ignored_labels);
+	
 	PointCloudXYZL::Ptr segment(const PointCloudXYZRGB &input_cloud);
 
 private:
@@ -51,6 +55,7 @@ private:
 	PointCloudXYZ::Ptr unlabelled_model_cloud;
 	PointCloudXYZL::Ptr model_cloud;
 	std::map<unsigned int, std::string> label_index_map;
+	std::set<unsigned int> background_label_index_map;
 };
 
 #endif
