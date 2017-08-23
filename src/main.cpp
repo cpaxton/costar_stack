@@ -176,6 +176,11 @@ int main(int argc, char* argv[])
 	nh.param("visualized_cloud_topic",cloud_out_vis,std::string("visualized_cloud"));
 
 	nh.param("use_plane_segmentation",use_table,false);
+
+	std::string background_labels;
+	nh.param("background_labels",background_labels,std::string(""));
+	color_based_segmenter.setBackgroundColorLabel(background_labels);
+
 	if (use_table)
 	{
 		plane_segmenter.initialize(nh);

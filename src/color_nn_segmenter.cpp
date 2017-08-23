@@ -313,6 +313,29 @@ bool ColorNnSegmenter::loadModel(const std::string &model_dat_file_path)
 	return true;
 }
 
+
+void ColorNnSegmenter::setBackgroundColorLabel(const std::string &ignored_labels)
+{
+	background_label_index_map.clear();
+	std::vector<std::string> ignored_label_list;
+	boost::split(ignored_label_list,ignored_labels,boost::is_any_of(","));
+
+	std::map<std::string,unsigned int> inverted_label_map;
+	for (std::map<unsigned int, std::string>::const_iterator it = label_index_map.begin(); it != label_index_map.end(); ++it)
+	{
+		inverted_label_map[it->second] = it->first;
+	}
+
+	for (std::vector<std::string>::const_iterator it = ignored_label_list.begin(); it != ignored_label_list.end(); ++it)
+	{
+		if (inverted_label_map.find(*it)!=inverted_label_map.end())
+		{
+			std::cerr << "Ignored color label: " << *it <<  " with index: " << inverted_label_map[*it] << std::endl;
+			background_label_index_map.insert(inverted_label_map[*it]);	
+		}
+	}
+}
+
 PointCloudXYZL::Ptr ColorNnSegmenter::segment(const PointCloudXYZRGB &input_cloud)
 {
 	if (!this->ready)
@@ -332,6 +355,11 @@ PointCloudXYZL::Ptr ColorNnSegmenter::segment(const PointCloudXYZRGB &input_clou
 	pcl::copyPointCloud(input_cloud,*segmentation_result);
 
 	std::size_t idx = 0;
+
+	const float bad_distance = std::numeric_limits<float>::quiet_NaN();
+	pcl::PointXYZL ignored_point;
+	ignored_point.x = bad_distance; ignored_point.y = bad_distance; ignored_point.z = bad_distance;
+
 	for(PointCloudXYZ::const_iterator pt_it = color_only_cloud->begin(); pt_it != color_only_cloud->end(); ++pt_it, ++idx) 
 	{
 		if ( kdtree.nearestKSearch (*pt_it, k, point_idx_knn, point_knn_distance) > 0 )
@@ -339,7 +367,14 @@ PointCloudXYZL::Ptr ColorNnSegmenter::segment(const PointCloudXYZRGB &input_clou
 			// use the nearest neighboor to find the color label
 			const int &nearest_neighboor_pt_idx = point_idx_knn[0];
 			const unsigned int &label = model_cloud->points[nearest_neighboor_pt_idx].label;
-			segmentation_result->points[idx].label = label;
+			if (background_label_index_map.find(label) == background_label_index_map.end())
+			{
+				segmentation_result->points[idx].label = label;
+			}
+			else
+			{
+				segmentation_result->points[idx] = ignored_point;
+			}
 		}
 	}
 	return segmentation_result;
