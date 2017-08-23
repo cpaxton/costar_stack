@@ -19,17 +19,18 @@ roslaunch object_on_table_segmenter object_on_table_segmenter.launch
 
 It is possible to pass some arguments to set the directory data, point cloud input, etc.
 Args list:
- - object:	the object folder name without extension. Default: ```cloud_cluster_```
- - pcl_in:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
- - plane_seg_viewer:	See first distance filtered and table segmented pcl. Default: ```false```
- - save_directory:	Location of save directory for the data collection. Default: ```$(find object_on_table_segmenter)/result```
- - save_index: Index of the first segmented cloud.
- - load_table: Load existing `table.pcd` data generated from previous table segmentation result
- - load_table_path: Location of `table.pcd` file to load
- - table_tf: The name of tf frame we are going to use
- - auto_capture: Automatically capture new data after the table has been initialized
+object		:	the object folder name without extension. Default: ```cloud_cluster_```
+pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
+viewer	    	:	See first distance filtered and table segmented pcl. Default: ```false```
+save_directory	:	Location of save directory for the data collection. Default: ```$(find object_on_table_segmenter)/result```
 
-`launch/table_seg_params.launch` contains table segmentation parameters that can be set and `launch/object_on_table_segmenter.launch` contains more arguments that can be passed into the code for modifying data capture operation.
+save_index = 0
+
+load_directory
+
+table_tf    : marker we are going to use
+
+See launch/object_on_table_segmenter.launch for more arguments that can be passed into the code.
 
 ## Examples
 
