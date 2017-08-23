@@ -115,16 +115,12 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rotMatrix, const 
     }
 
     if (std::floor(std::abs(angle+0.5236)/objectLimit) < 1) {
-        //min angle = within 30 degree to the objectLimit to be aligned
-        std::cerr << "Angle: " << angle * 180 / pi << " is too small, no need to fix the rotation\n";
+        // min angle = within 30 degree to the objectLimit to be aligned
+        // std::cerr << "Angle: " << angle * 180 / pi << " is too small, no need to fix the rotation\n";
         return;
     }
-    std::cerr << "Quaternion corrected matrix\n" << rotMatrix << std::endl;
-
     // rotate target axis to align as close as possible with its original axis by rotating the best axis to align the target axis. Use -angle because we want to undo the rotation
     rotMatrix = rotMatrix * Eigen::AngleAxisf(std::round(angle/objectLimit) * objectLimit,bestAxis[axisToRotate]);
-    std::cerr << "Axis corrected matrix\n" << rotMatrix << std::endl;
-    std::cerr << "Rotated axis" << axisToRotate << " : " << angle * 180 / pi << " -> " << std::round(angle/objectLimit) * objectLimit * 180 / pi <<std::endl;
 }
 
 template <typename numericStandard>
@@ -176,9 +172,7 @@ Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion
                     * Eigen::AngleAxisf(j * object.pitch, Eigen::Vector3f::UnitY())
                     * Eigen::AngleAxisf(k * object.roll, Eigen::Vector3f::UnitX());
                 Eigen::Quaternion<numericType> rotatedInputQuaternion = q_from_pose * Eigen::Quaternion<numericType>(symmetricOffset);
-                //std::cerr << " - "
-                //    << minAngle << " " << rotatedInputQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity()) 
-                //    << "\n";
+
                 if (minAngle > rotatedInputQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity())) 
                 {
                     minAngle = rotatedInputQuaternion.angularDistance(Eigen::Quaternion<numericType>::Identity ());
@@ -213,18 +207,13 @@ void printQuaternion(const Eigen::Quaternion<numericType> &input)
 template <typename numericType>
 Eigen::Quaternion<numericType> normalizeModelOrientation(const Eigen::Quaternion<numericType> &q_new, const Eigen::Quaternion<numericType>  &q_previous, const objectSymmetry &object)
 {
-  std::cerr << "Input Qnew: "; printQuaternion(q_new);
-  std::cerr << "Input Qold: "; printQuaternion(q_previous);
-  std::cerr << "Previous Rot Matrix:\n" << q_previous.matrix() << std::endl;
-  std::cerr << "Initial Rot Matrix:\n" << q_new.matrix() << std::endl;
-
   Eigen::Quaternion<numericType> rotationChange = q_previous.inverse() * q_new;
+
   // Since the rotationChange should be close to identity, realign the rotationChange as close as identity based on symmetric property of the object
   rotationChange = normalizeModelOrientation(rotationChange, object);
   
   Eigen::Quaternion<numericType> result = q_previous * rotationChange;
-  std::cerr << "Output Q: "; printQuaternion(result);
-  std::cerr << "Corrected Rot Matrix:\n" << result.matrix() << std::endl;
+
   // fix the orientation of new pose
   return (result);
 }
@@ -241,10 +230,7 @@ void normalizeAllModelOrientation (std::vector<poseT> &all_poses, const Eigen::Q
 {
   for (unsigned int i = 0; i < all_poses.size(); i++)
   {
-    // std::cerr << "Rot"<< i <<" before normalization: \n" << all_poses[i].rotation.toRotationMatrix() << std::endl;
-    std::cerr << "Object name: " << all_poses[i].model_name << std::endl;
     all_poses[i].rotation = normalizeModelOrientation(all_poses[i].rotation, normalOrientation, objectDict.find(all_poses[i].model_name)->second);
-    // std::cerr << "Rot"<< i <<" after normalization: \n" << all_poses[i].rotation.toRotationMatrix() << std::endl;
   }
 }
 

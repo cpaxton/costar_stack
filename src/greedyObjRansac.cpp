@@ -45,6 +45,8 @@ poseT greedyObjRansac::getBestModel(list< boost::shared_ptr<PointSetShape> >& de
                    mat4x4[2][0], mat4x4[2][1], mat4x4[2][2];
 
             new_pose.shift = Eigen::Vector3f (mat4x4[0][3], mat4x4[1][3], mat4x4[2][3]);
+            mat_dealloc(mat4x4, 4);
+
             new_pose.rotation = rot;
             new_pose.confidence = max_confidence;
         }
@@ -151,6 +153,7 @@ void greedyObjRansac::StandardBest(const pcl::PointCloud<myPointXYZ>::Ptr scene_
                mat4x4[2][0], mat4x4[2][1], mat4x4[2][2];
 
         new_pose.shift = Eigen::Vector3f (mat4x4[0][3], mat4x4[1][3], mat4x4[2][3]);
+        mat_dealloc(mat4x4, 4);
         new_pose.rotation = rot;
         new_pose.confidence = best_shape -> getConfidence();
         poses.push_back(new_pose);
@@ -197,6 +200,7 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
                  mat4x4[3][0], mat4x4[3][1], mat4x4[3][2], mat4x4[3][3];
         new_pose.model_name = std::string (shape->getUserData()->getLabel());
         */
+        mat_dealloc(mat4x4, 4);
         poses.push_back(new_pose);
     }   
     
@@ -429,6 +433,7 @@ void greedyObjRansac::mergeHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr sce
                      mat4x4[3][0], mat4x4[3][1], mat4x4[3][2], mat4x4[3][3];
             new_pose.model_name = instance_name;
             */
+            mat_dealloc(mat4x4, 4);
             poses.push_back(new_pose);
         }
     }   
@@ -509,7 +514,7 @@ void greedyObjRansac::getPairFeas(const pcl::PointCloud<myPointXYZ>::Ptr cloud, 
 #if SCENE_PARSING
 GreedyHypothesis greedyObjRansac::getLatestAcceptedHypothesis(const bool &combined_ransac)
 {
-    std::vector<std::vector<AcceptedHypothesis> > acc_hypothesis = objrec.getShapeHypothesis();
+    std::vector<std::vector<AcceptedHypothesisWithConfidence> > acc_hypothesis = objrec.getShapeHypothesis();
     GreedyHypothesis result;
     if (acc_hypothesis.size() > 0)
     {
