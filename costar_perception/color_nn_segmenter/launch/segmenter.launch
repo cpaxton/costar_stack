@@ -1,4 +1,5 @@
 <launch>
+  <arg name="node_namespace"           default="pcl_color_segmenter" />
 
   <!-- Load model settings -->
   <arg name="load_existing_model"      default="false" doc="Loads the color model saved specified in the model path. If set to false, model training will be done before color segmentation is performed."/>
@@ -20,7 +21,7 @@
   <!-- Table segmentation settings -->
   <arg name="use_plane_segmentation"   default="true" />
   <include file="$(find object_on_table_segmenter)/launch/table_seg_params.launch">
-    <arg name="namespace"                default="pcl_color_segmenter" />
+    <arg name="namespace"                default="$(arg node_namespace)" />
     <arg name="load_table"               default="true"/>
     <arg name="update_table"             default="true" />
     <arg name="load_table_path"          default="$(find object_on_table_segmenter)/data/table.pcd" />
@@ -35,7 +36,7 @@
     <arg name="plane_seg_viewer"         default="false" />
   </include>
  
-  <node pkg="color_nn_segmenter" type="pcl_color_segmenter" name="pcl_color_segmenter" output="screen"
+  <node pkg="color_nn_segmenter" type="pcl_color_segmenter" name="$(arg node_namespace)" output="screen"
     >  
     <!-- arg pass -->
     <param name="load_existing_model"       type="bool"  value="$(arg load_existing_model)" />

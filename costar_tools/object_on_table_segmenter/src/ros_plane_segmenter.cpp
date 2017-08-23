@@ -40,7 +40,6 @@ void RosPlaneSegmenter::initialize(const ros::NodeHandle &nh)
 	else
 	{
 		ROS_INFO("Found plane data in %s.",load_table_path_.c_str());
-		this->ready = true;
 	}
 	
 	if (load_table)
@@ -53,6 +52,7 @@ void RosPlaneSegmenter::initialize(const ros::NodeHandle &nh)
 		else
 		{
 			ROS_INFO("Plane data loaded.");
+			this->ready = true;
 		}
 		this->setPlaneConvexHull(*table_hull);
 	}
