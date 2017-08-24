@@ -99,7 +99,7 @@ Eigen::MatrixXd SequentialSceneHypothesis::generate2dMatrixFromPixelCoordinate(c
 		int y = pixel_matrix(1,idx);
 		const double &z = pixel_matrix(2,idx);
 
-		if (x >= 640 || y >= 480) continue;
+		if (x >= 640 || y >= 480 || x < 0 || y < 0) continue;
 
 		double &current_pixel_value = result(x,y);
 		if (z == 0 || (current_pixel_value != 0 && current_pixel_value < z) ) continue;
@@ -260,18 +260,18 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 		
 		const std::string &model_name = object_label_class_map[object_id];
 
-		std::cerr << object_id << std::endl;
+		std::cerr << object_id << ": ";
 
 		double current_data_confidence = this->data_probability_check_->getIcpConfidenceResult(model_name, cur_transform);
 		// use previous best pose if the confidence difference between current pose and previous pose is small
-		if (current_data_confidence < 0.05 || this->judgeHypothesis(model_name,prev_transform,0.5*current_data_confidence))
+		if (current_data_confidence < 0.05 || this->judgeHypothesis(model_name,prev_transform,0.75*current_data_confidence))
 		{
-			std::cerr << "Retained previous pose\n";
+			std::cerr << "retained previous pose\n";
 			object_pose_by_dist[dist][object_id] = prev_transform;
 		}
 		else
 		{
-			std::cerr << "Use current pose\n";	
+			std::cerr << "use current pose\n";	
 			object_pose_by_dist[dist][object_id] = cur_transform;
 		}
 	}

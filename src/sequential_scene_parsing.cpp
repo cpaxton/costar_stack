@@ -264,6 +264,7 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	}
 
 	std::map<std::string, AdditionalHypotheses> hypotheses_to_test;
+	map_string_transform original_pose_to_test;
 	if (include_prev_observation_)
 	{
 		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
@@ -279,11 +280,33 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
 		{
 			this->physics_engine_->addExistingRigidBodyBackFromMap(object_test_pose_map_by_dist[dist_idx]);
+			for (map_string_transform::const_iterator it = object_test_pose_map_by_dist[dist_idx].begin(); it != object_test_pose_map_by_dist[dist_idx].end();
+				++it)
+			{
+				original_pose_to_test[it->first] = it->second;
+			}
 		}
 
-		this->physics_engine_->stepSimulationWithoutEvaluation(1.0 * GRAVITY_SCALE_COMPENSATION, 
+		this->physics_engine_->stepSimulationWithoutEvaluation(0.25 * GRAVITY_SCALE_COMPENSATION, 
 			GRAVITY_SCALE_COMPENSATION/120.);
 		this->getUpdatedSceneSupportGraph();
+
+		// resimulate based on the object structure distance to get the final hypothesis
+		this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
+			object_childs_map);
+		this->physics_engine_->removeAllRigidBodyFromWorld();
+		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
+		{
+			for (map_string_transform::const_iterator it = object_test_pose_map_by_dist[dist_idx].begin(); it != object_test_pose_map_by_dist[dist_idx].end();
+				++it)
+			{
+				this->physics_engine_->addExistingRigidBodyBackFromMap(it->first,original_pose_to_test[it->first]);
+			}
+			this->physics_engine_->stepSimulationWithoutEvaluation(0.5 * GRAVITY_SCALE_COMPENSATION, 
+			GRAVITY_SCALE_COMPENSATION/120.);
+			this->getUpdatedSceneSupportGraph();
+		}
+
 		this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
 		this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
 			object_childs_map);
@@ -313,8 +336,9 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 			const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[it->first];
 			object_action_map[it->first] = obj_hypotheses.object_action_;
 
+			double ransac_confidence = this->data_forces_generator_.getIcpConfidenceResult(object_label_class_map[it->first], original_pose_to_test[it->first]);
 			bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT ||
-				obj_hypotheses.object_action_ == PERTURB_OBJECT);
+				obj_hypotheses.object_action_ == PERTURB_OBJECT) && (ransac_confidence < 0.125);
 			this->physics_engine_->setIgnoreDataForces(it->first,ignore_data_forces);
 		}
 		else
@@ -538,8 +562,10 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 					<< printTransform(it->second);
 
 				const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[it->first];
-				bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT 
-					|| obj_hypotheses.object_action_ == PERTURB_OBJECT);
+				
+				double ransac_confidence = this->data_forces_generator_.getIcpConfidenceResult(object_label_class_map[it->first], it->second);
+				bool ignore_data_forces = !(obj_hypotheses.object_action_ == ADD_OBJECT ||
+					obj_hypotheses.object_action_ == PERTURB_OBJECT) && (ransac_confidence < 0.125);
 				this->physics_engine_->setIgnoreDataForces(it->first,ignore_data_forces);
 			}
 		}

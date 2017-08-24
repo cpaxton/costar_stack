@@ -40,6 +40,7 @@ public:
 
 	void setDebugMode(bool debug);
 	void callGlutMain(int argc, char* argv[]);
+	void exitGlutMain();
 
 	PhysicsEngine physics_engine_;
 	

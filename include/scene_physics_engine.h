@@ -59,7 +59,7 @@ public:
 		const unsigned int &number_of_world_tick = 100);
 
 	void setDebugMode(bool debug);
-	void renderingLaunched();
+	void renderingLaunched(const bool &flag = true);
 
 	// Scene analysis
 	void resetObjectMotionState(const bool &reset_object_pose, const std::map<std::string, btTransform> &target_pose_map);
@@ -80,6 +80,7 @@ public:
     std::map<std::string, btTransform>  getAssociatedBestPoseDataFromStringVector(
     	const std::vector<std::string> &input, bool use_best_test_data = false);
     void removeAllRigidBodyFromWorld();
+    void addExistingRigidBodyBackFromMap(const std::string &object_id, const btTransform &object_pose);
     void addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies);
     void removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies);
 

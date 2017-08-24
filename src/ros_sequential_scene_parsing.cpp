@@ -24,6 +24,17 @@ void RosSceneHypothesisAssessor::callGlutMain(int argc, char* argv[])
 	glutmain(argc, argv,1024,600,"Scene Parsing Demo",&this->physics_engine_);
 }
 
+void RosSceneHypothesisAssessor::exitGlutMain()
+{
+	this->physics_engine_.renderingLaunched(false);
+#ifdef BT_USE_FREEGLUT
+	//return from glutMainLoop(), detect memory leaks etc.
+	glutLeaveMainLoop();
+#else
+	exit(0);
+#endif
+}
+
 void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 {
 	this->nh_ = nh;
@@ -141,6 +152,7 @@ void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &p
 	{
 		std::cerr << "Point Cloud input is empty.\n";
 	}
+	std::cerr << "Done\n";
 }
 
 void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
@@ -307,6 +319,12 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 	}
 	this->object_list_updated_ = false;
 	std::cerr << "Received input hypotheses list.\n";
+	if (best_hypothesis_only_)
+	{
+		std::cerr << "Hypotheses is not processed since ros param best_hypothesis_only has been set to True.\n";
+		return;
+	}
+
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map;
 	for (unsigned int i = 0; i < detected_object_hypotheses.all_hypothesis.size(); i++)
 	{

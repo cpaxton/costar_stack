@@ -345,31 +345,36 @@ void PhysicsEngine::removeAllRigidBodyFromWorld()
 	mtx_.unlock();
 }
 
-void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies)
+void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::string &object_id, const btTransform &object_pose)
 {
 	mtx_.lock();
+	if (!keyExistInConstantMap(object_id, this->rigid_body_))
+	{
+		// need to generate new rigid body
+		std::cerr << "ERROR: UNIMPLEMENTED AUTO ADD OBJECT BACK.\n";
+	}
+	else if (object_id == "background")
+	{
+		std::cerr << "WARNING: Ignored adding background back to the world.\n";
+	}
+	else
+	{
+		if (this->debug_messages_) std::cerr << "Add object "<<  object_id <<" back to world.\n";
+		this->rigid_body_[object_id]->setWorldTransform(object_pose);
+		this->object_best_test_pose_map_[object_id] = object_pose;
+		if (!this->rigid_body_[object_id]->isInWorld()) m_dynamicsWorld->addRigidBody(this->rigid_body_[object_id]);
+	}
+	mtx_.unlock();
+}
+
+void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies)
+{
 	// data_forces_generator_->resetCachedIcpResult();
 	for (std::map<std::string, btTransform>::const_iterator it = rigid_bodies.begin(); 
 		it != rigid_bodies.end(); ++it)
 	{
-		if (!keyExistInConstantMap(it->first, this->rigid_body_))
-		{
-			// need to generate new rigid body
-			std::cerr << "ERROR: UNIMPLEMENTED AUTO ADD OBJECT BACK.\n";
-		}
-		else if (it->first == "background")
-		{
-			std::cerr << "WARNING: Ignored adding background back to the world.\n";
-		}
-		else
-		{
-			if (this->debug_messages_) std::cerr << "Add object "<<  it->first <<" back to world.\n";
-			this->rigid_body_[it->first]->setWorldTransform(it->second);
-			this->object_best_test_pose_map_[it->first] = it->second;
-			if (!this->rigid_body_[it->first]->isInWorld()) m_dynamicsWorld->addRigidBody(this->rigid_body_[it->first]);
-		}
+		this->addExistingRigidBodyBackFromMap(it->first,it->second);
 	}
-	mtx_.unlock();
 }
 
 void PhysicsEngine::removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies)
@@ -566,9 +571,9 @@ void PhysicsEngine::setDebugMode(bool debug)
 }
 
 
-void PhysicsEngine::renderingLaunched()
+void PhysicsEngine::renderingLaunched(const bool &flag)
 {
-	this->rendering_launched_ = true;
+	this->rendering_launched_ = flag;
 }
 
 void PhysicsEngine::setFeedbackDataForcesGenerator(FeedbackDataForcesGenerator *data_forces_generator)
@@ -671,6 +676,7 @@ void PhysicsEngine::setCameraPositionAndTarget(btVector3 cam_position, btVector3
 	this->m_cameraTargetPosition = cam_target;
 	m_cameraDistance = m_cameraTargetPosition.distance(m_cameraPosition);
 	m_zoomStepSize = 0.05 * m_cameraDistance;
+	this->m_cameraPosition -= 0.5*(m_cameraPosition - m_cameraTargetPosition);
 
 	// calculate polar coordinate of the camera
 	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalize();
