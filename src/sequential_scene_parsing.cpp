@@ -612,13 +612,15 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			const AdditionalHypotheses &obj_hypotheses = hypotheses_to_test[object_pose_label];
 			const std::string &object_model_name = obj_hypotheses.model_name_;
 			const std::vector<ObjectParameter> &object_pose_hypotheses = obj_hypotheses.poses_;
+
 			object_action_map[object_pose_label] = obj_hypotheses.object_action_;
 
 			bool &current_background_support_status = object_background_support_status[it->first];
 			bool updated_background_support_status = current_background_support_status;
-			
+
 			// bool update_from_this_object = false;
 			ObjectParameter best_object_pose = object_pose_hypotheses[0];
+
 			std::map<std::string, ObjectParameter> best_object_pose_from_graph;
 
 			std::size_t hypothesis_idx = 0, num_tested_hypotheses = 0;
@@ -629,9 +631,6 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			for (std::vector<ObjectParameter>::const_iterator it2 = object_pose_hypotheses.begin();
 				it2 != object_pose_hypotheses.end(); ++it2, ++hypothesis_idx)
 			{
-				std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
-					<< hypothesis_idx + 1 << "/" << number_of_object_hypotheses << std::endl;
-				// std::cerr << "Transform: " << printTransform(*it2);
 				scene_object_hypothesis_id[object_pose_label] = hypothesis_idx;
 				ObjectParameter object_pose = *it2;
 				double ransac_confidence = this->data_forces_generator_.getIcpConfidenceResult(object_model_name, object_pose);
@@ -641,15 +640,17 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 					std::cerr << "Best hypothesis confidence: " << best_ransac_confidence << std::endl;
 				}
 
+				// limit observation to 5 best previous hypothesis for static object
+				if (obj_hypotheses.object_action_ == STATIC_OBJECT && num_tested_hypotheses > 5) break;
+				else if (num_tested_hypotheses > 15) break;
+
+				std::cerr << "Evaluating object: " << object_pose_label << " hypothesis #" 
+					<< hypothesis_idx + 1 << "/" << number_of_object_hypotheses << std::endl;
 				if (ransac_confidence < 0.5 * best_ransac_confidence)
 				{
 					std::cerr << "Skipped hypothesis with confidence: " << ransac_confidence << std::endl;
 					continue;
 				}
-
-				// limit observation to 5 best previous hypothesis for static object
-				if (obj_hypotheses.object_action_ == STATIC_OBJECT && num_tested_hypotheses > 5) break;
-				else if (num_tested_hypotheses > 15) break;
 				num_tested_hypotheses++;
 
 				// std::cerr << "-------------------------------------------------------------\n";
