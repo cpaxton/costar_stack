@@ -5,29 +5,32 @@
   <arg name="ground_truth_directory"  default="$(arg save_directory)/ground_truth" />
   <arg name="original_directory"      default="$(arg save_directory)/original" />
   <arg name="pcl_in"                  default="/camera/depth_registered/points" />
-  <arg name="save_index"	            default="0" doc="Starting index for point cloud"/>
-  <arg name="environment_only"	      default="false" doc="Will just save everything in the point cloud without doing any object point cloud segmentation"/>
+  <arg name="save_index"              default="0" doc="Starting index for point cloud"/>
+  <arg name="environment_only"        default="false" doc="Will just save everything in the point cloud without doing any object point cloud segmentation"/>
   <arg name="time_step"               default="0.5"/>
   <arg name="num_to_capture"          default="200"/>
+  <arg name="do_cluster"              default="true"  doc="Do clusterization of point cloud after segmenting the objects above table. Set this to false if the number of object above the table is just 1." />
+  <arg name="auto_capture"             default="true" />
 
   <!-- Plane segmentation arguments-->
-  <arg name="load_table"              default="false" doc="Load the table.pcd located in the data folder for convex hull"/>
-  <arg name="update_table"            default="true" doc="Update the table data located in the data folder"/>
-  <arg name="load_table_path"         default="$(find object_on_table_segmenter)/data/table.pcd" doc="Where the table.pcd located"/>
-  <arg name="table_tf"                default="ar_marker_0" doc="Any TF frame located in the table can be used for table segmentation" />
-  <arg name="use_tf_surface"          default="false" doc="Use TF surface to define the plane. If false, algorithm will try to find the biggest plane around the surface to get the table convex hull."/>
-  <arg name="table_distance_threshold" default="0.02" doc="PCL Plane segmentation distance threshold"/>
-  <arg name="table_angular_threshold"  default="2" doc="PCL Plane segmentation angular threshold"/>
-  <arg name="table_minimal_inliers"    default="7500" doc="PCL Plane segmentation minimal inliers"/>
-  <arg name="use_rosbag"              default="false" doc="Data collection is done on rosbag. Setting this to true should fix the TF frame failed to be found when using rosbag."/>
-  <arg name="do_cluster"		          default="true"  doc="Do clusterization of point cloud after segmenting the objects above table. Set this to false if the number of object above the table is just 1." />
-  <arg name="above_table_min"         default="0.02" doc="Min distance from the table"/>
-  <arg name="above_table_max"         default="0.5" doc="Max distance from the table"/>
-  <arg name="auto_capture"            default="true" doc="Automatically capture data on every time_step" />
-  <arg name="viewer"                  default="false" doc="Enable visualization of the box filtered cloud and the plane segmentation result"/>
+  <include file="$(find object_on_table_segmenter)/launch/table_seg_params.launch">
+    <arg name="namespace"                value="object_on_table_segmenter" />
+    <arg name="load_table"               value="false"/>
+    <arg name="update_table"             value="true" />
+    <arg name="load_table_path"          value="$(find object_on_table_segmenter)/data/table.pcd" />
+    <arg name="table_tf"                 value="ar_marker_0" />
+    <arg name="use_tf_surface"           value="false" />
+    <arg name="table_distance_threshold" value="0.02" />
+    <arg name="table_angular_threshold"  value="2" />
+    <arg name="table_minimal_inliers"    value="7500" />
+    <arg name="use_rosbag"               value="false" />
+    <arg name="above_table_min"          value="0.02" />
+    <arg name="above_table_max"          value="0.5" />
+    <arg name="plane_seg_viewer"         value="false" />
+  </include>
 
-  <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter_Node" output="screen">  
-  <!-- object_on_table_segmenter_Node arg pass -->
+  <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter" output="screen">  
+  <!-- object_on_table_segmenter arg pass -->
     <param name="save_directory"             type="str"    value="$(arg save_directory)/" />
     <param name="original_directory"         type="str"    value="$(arg original_directory)/" />
     <param name="ground_truth_directory"     type="str"    value="$(arg ground_truth_directory)/" />
@@ -35,30 +38,13 @@
     <param name="POINTS_IN"                  type="str"    value="$(arg pcl_in)" />
     <param name="save_index"                 type="int"    value="$(arg save_index)" />
 
-    <param name="plane_segmenter_viewer"     type="bool"   value="$(arg viewer)" />
     <param name="environment_only"           type="bool"   value="$(arg environment_only)" />
 
     <param name="run_auto"                   type="bool"   value="$(arg auto_capture)" />
     <param name="time_step"                  type="double" value="$(arg time_step)" />
     <param name="num_to_capture"             type="int"    value="$(arg num_to_capture)"/>
-
-  <!-- Plane segmentation parameters -->
-    <param name="load_table"                 type="bool"   value="$(arg load_table)" />
-    <param name="update_table"               type="bool"   value="$(arg update_table)" />
-    <param name="load_table_path"            type="str"    value="$(arg load_table_path)" />
-    <param name="table_tf"                   type="str"    value="$(arg table_tf)"/>
-
-    <param name="table_distance_threshold"   type="double" value="$(arg table_distance_threshold)"/>
-    <param name="table_angular_threshold"    type="double" value="$(arg table_angular_threshold)"/>
-    <param name="table_minimal_inliers"      type="double" value="$(arg table_minimal_inliers)"/>
-
-    <param name="use_rosbag"                 type="bool"   value="$(arg use_rosbag)" />
-    <param name="use_tf_surface"             type="bool"   value="$(arg use_tf_surface)" />
     <param name="do_cluster"                 type="bool"   value="$(arg do_cluster)" />
 
-    <param name="above_table_min"            type="double" value="$(arg above_table_min)" />
-    <param name="above_table_max"            type="double" value="$(arg above_table_max)" />
-    
   </node>
 
 </launch>

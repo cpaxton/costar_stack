@@ -173,6 +173,7 @@ CloudXYZRGBA::Ptr PlaneSegmenter::segmentAbovePlane(const CloudXYZRGBA &input_cl
 	prism.setInputPlanarHull(plane_convex_hull.makeShared());
 
 	// from 1 cm above plane to 50 cm above plane
+	std::cerr << "Segmentation range: " << min_above_plane << " to " << max_above_plane << std::endl;
 	prism.setHeightLimits(min_above_plane, max_above_plane);
 	pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices());
 
