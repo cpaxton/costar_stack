@@ -43,18 +43,18 @@
       name="Move Relative"/>
     <instructor plugin="instructor.NodePlanWaypointGUI"
       type="TASK"
-      group="Motion Planning"
+      group="MOTION PLANNING"
       description="Instructor Plan to Waypoint Action"
       cases="planning"
       name="Plan to Waypoint"/>
     <instructor plugin="instructor.PlanToHomeGUI"
       type="TASK"
-      group="Motion Planning"
+      group="MOTION PLANNING"
       description="Instructor Plan to Home Action"
       cases="planning"
       name="Plan to Home"/>
     <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
-      type="HIGH LEVEL" group="ROBOT"
+      type="TASK" group="MOTION PLANNING"
       description="Instructor Plan to Relative Waypoint"
       cases=""
       name="Plan Relative"/>
