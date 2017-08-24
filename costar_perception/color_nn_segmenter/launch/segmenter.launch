@@ -5,6 +5,7 @@
   <arg name="load_existing_model"      default="false" doc="Loads the color model saved specified in the model path. If set to false, model training will be done before color segmentation is performed."/>
   <arg name="model_directory"          default="$(find color_nn_segmenter)/models" doc="Directory that contains the model data."/>
   <arg name="model_name"               default="model" doc="The name of the model to be loaded/saved."/>
+  <arg name="background_labels"        default="" doc="Names of excluded labels, separated with comma. Points with these color label will be removed from the labelled cloud."/>
 
   <!-- Training settings -->
   <arg name="training_data_directory"  default="$(find color_nn_segmenter)/training_data" doc="Location of the training data that contains color category folders to be trained"/>
@@ -13,27 +14,28 @@
   <arg name="save_directory"           default="$(find color_nn_segmenter)/models" doc="Target directory for saving the new model"/>
 
   <!-- Ros topic settings -->
+  <arg name="send_label_as_rgb"        default="true" doc="Send the color label index as the red channel in the rgb point cloud"/>
   <arg name="cloud_input_topic"        default="/camera/depth_registered/points" doc="Name of the point cloud topic to be segmented"/>
   <arg name="segmented_cloud_topic"    default="seg_label_cloud" doc="Name of the topic to publish segmented cloud that contains PointXYZL"/>
   <arg name="visualized_cloud_topic"   default="visualized_cloud_topic" doc="Name of the topic to publish segmented cloud in rviz-compatible point cloud"/>
-  <arg name="background_labels"        default="" doc="Names of excluded labels, separated with comma. Points with these color label will be removed from the labelled cloud."/>
+  <arg name="segmentation_done_topic"  default="segment_done" doc="The name of a topic that sends an Empty message everytime color segmentation has been done." />
 
   <!-- Table segmentation settings -->
   <arg name="use_plane_segmentation"   default="true" />
   <include file="$(find object_on_table_segmenter)/launch/table_seg_params.launch">
-    <arg name="namespace"                default="$(arg node_namespace)" />
-    <arg name="load_table"               default="true"/>
-    <arg name="update_table"             default="true" />
-    <arg name="load_table_path"          default="$(find object_on_table_segmenter)/data/table.pcd" />
-    <arg name="table_tf"                 default="ar_marker_0" />
-    <arg name="use_tf_surface"           default="false" />
-    <arg name="table_distance_threshold" default="0.02" />
-    <arg name="table_angular_threshold"  default="2" />
-    <arg name="table_minimal_inliers"    default="7500" />
-    <arg name="use_rosbag"               default="false" />
-    <arg name="above_table_min"          default="0.02" />
-    <arg name="above_table_max"          default="0.5" />
-    <arg name="plane_seg_viewer"         default="false" />
+    <arg name="namespace"                value="$(arg node_namespace)" />
+    <arg name="load_table"               value="true"/>
+    <arg name="update_table"             value="true" />
+    <arg name="load_table_path"          value="$(find object_on_table_segmenter)/data/table.pcd" />
+    <arg name="table_tf"                 value="ar_marker_0" />
+    <arg name="use_tf_surface"           value="false" />
+    <arg name="table_distance_threshold" value="0.02" />
+    <arg name="table_angular_threshold"  value="2" />
+    <arg name="table_minimal_inliers"    value="7500" />
+    <arg name="use_rosbag"               value="false" />
+    <arg name="above_table_min"          value="0.01" />
+    <arg name="above_table_max"          value="0.5" />
+    <arg name="plane_seg_viewer"         value="false" />
   </include>
  
   <node pkg="color_nn_segmenter" type="pcl_color_segmenter" name="$(arg node_namespace)" output="screen"
@@ -49,10 +51,12 @@
     <param name="cloud_input_topic"         type="str"   value="$(arg cloud_input_topic)" />
     <param name="segmented_cloud_topic"     type="str"   value="$(arg segmented_cloud_topic)" />
     <param name="visualized_cloud_topic"    type="str"   value="$(arg visualized_cloud_topic)" />
+    <param name="segmentation_done_topic"   type="str"   value="$(arg segmentation_done_topic)" />
 
     <param name="use_plane_segmentation"    type="bool"  value="$(arg use_plane_segmentation)" />
 
     <param name="background_labels"         type="str"   value="$(arg background_labels)" />
+    <param name="send_label_as_rgb"         type="bool"  value="$(arg send_label_as_rgb)" />
   </node>
 
 </launch>
