@@ -2,6 +2,7 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf/transform_listener.h>
@@ -12,7 +13,7 @@
 #include "color_nn_segmenter.h"
 
 sensor_msgs::PointCloud2 cached_cloud;
-ros::Publisher pc_pub, pc_vis_pub;
+ros::Publisher pc_pub, pc_vis_pub, seg_done;
 ColorNnSegmenter color_based_segmenter;
 
 RosPlaneSegmenter plane_segmenter;
@@ -21,6 +22,7 @@ std::string table_tf_name, load_table_path;
 pcl::PCDWriter writer;
 tf::TransformListener * listener;
 bool use_tf_surface;
+bool label_as_rgb;
 
 uchar color_label[11][3] =
 {
@@ -51,6 +53,38 @@ pcl::PointCloud<pcl::PointXYZRGBA> convertPointCloudLabelToRGBA(const PointCloud
         point.g = color_label[it->label][2];
         point.a = 255;
         result.push_back(point);
+    }
+    return result;
+}
+
+pcl::PointCloud<pcl::PointXYZRGBA> convertPointCloudLabelToRChannel(const PointCloudXYZL &input)
+{
+	std::map<std::size_t,std::size_t> label_counter;
+    pcl::PointCloud<pcl::PointXYZRGBA> result;
+    for (pcl::PointCloud<pcl::PointXYZL>::const_iterator it = input.begin(); it != input.end(); ++it)
+    {
+        pcl::PointXYZRGBA point;
+        point.x = it->x;
+        point.y = it->y;
+        point.z = it->z;
+        point.r = it->label;
+        point.b = 0;
+        point.g = 0;
+        point.a = 255;
+        result.push_back(point);
+        if (label_counter.find(it->label)==label_counter.end())
+        {
+        	label_counter[it->label] = 1;
+        }
+        else
+        {
+        	label_counter[it->label]++;
+        }
+    }
+
+    for (std::map<std::size_t, std::size_t>::const_iterator it = label_counter.begin(); it!= label_counter.end(); ++it)
+    {
+    	std::cerr << "Number of points in label: " << it->first << " = " << it->second << std::endl; 
     }
     return result;
 }
@@ -88,8 +122,17 @@ bool colorSegmenter(std_srvs::Empty::Request& request, std_srvs::Empty::Response
 	PointCloudXYZL::Ptr seg_cloud = color_based_segmenter.segment(*input_cloud);
 
 	sensor_msgs::PointCloud2 output_msg;
+	if (label_as_rgb)
+	{
+		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr r_as_label_cloud(new pcl::PointCloud<pcl::PointXYZRGBA>());
+		*r_as_label_cloud = convertPointCloudLabelToRChannel(*seg_cloud);
+		toROSMsg(*r_as_label_cloud,output_msg);
+	}
+	else
+	{
+		toROSMsg(*seg_cloud,output_msg);
+	}
 	output_msg.header.frame_id = cached_cloud.header.frame_id;
-	toROSMsg(*seg_cloud,output_msg);
 	pc_pub.publish(output_msg);
 	
 	pcl::PointCloud<pcl::PointXYZRGBA> seg_cloud_vis = convertPointCloudLabelToRGBA(*seg_cloud);
@@ -98,7 +141,7 @@ bool colorSegmenter(std_srvs::Empty::Request& request, std_srvs::Empty::Response
 	output_msg2.header.frame_id = cached_cloud.header.frame_id;
 
 	pc_vis_pub.publish(output_msg2);
-
+	seg_done.publish(std_msgs::Empty());
 	ROS_INFO("Done.");
 	return true;
 }
@@ -170,12 +213,14 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	std::string cloud_in, cloud_out,cloud_out_vis;
+	std::string cloud_in, cloud_out, cloud_out_vis, segment_done;
 	nh.param("cloud_input_topic",cloud_in,std::string("/camera/depth_registered/points"));
 	nh.param("segmented_cloud_topic",cloud_out,std::string("segmented_cloud"));
 	nh.param("visualized_cloud_topic",cloud_out_vis,std::string("visualized_cloud"));
+	nh.param("segmentation_done_topic",segment_done,std::string("segment_done"));
 
 	nh.param("use_plane_segmentation",use_table,false);
+	nh.param("send_label_as_rgb",label_as_rgb,true);
 
 	std::string background_labels;
 	nh.param("background_labels",background_labels,std::string(""));
@@ -189,7 +234,8 @@ int main(int argc, char* argv[])
 	ros::Subscriber cloud_subscriber = nh.subscribe(cloud_in,1,cacheCloudInput);
 	pc_pub = nh.advertise<sensor_msgs::PointCloud2>(cloud_out,1000);
 	pc_vis_pub = nh.advertise<sensor_msgs::PointCloud2>(cloud_out_vis,1000);
-	ros::ServiceServer segmenter_service = nh.advertiseService("Segmenter",colorSegmenter);
+	seg_done = nh.advertise<std_msgs::Empty>(segment_done,1);
+	ros::ServiceServer segmenter_service = nh.advertiseService("segmenter",colorSegmenter);
 
 	ros::spin();
 	

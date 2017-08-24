@@ -127,7 +127,8 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 
 	PointCloudXYZL::Ptr result_model_cloud(new PointCloudXYZL());
 
-	unsigned int label_counter = 0;
+	// label 0 is reserved for background objects
+	unsigned int label_counter = 1;
 	// process the files
 	for (std::map<std::string,std::vector<std::string> >::const_iterator it = filepath_in_model.begin(); it != filepath_in_model.end(); ++it, ++label_counter)
 	{
@@ -362,6 +363,13 @@ PointCloudXYZL::Ptr ColorNnSegmenter::segment(const PointCloudXYZRGB &input_clou
 
 	for(PointCloudXYZ::const_iterator pt_it = color_only_cloud->begin(); pt_it != color_only_cloud->end(); ++pt_it, ++idx) 
 	{
+		pcl::PointXYZL &target_point = segmentation_result->points[idx];
+		if (!pcl_isfinite(target_point.x) || !pcl_isfinite(target_point.y) || !pcl_isfinite(target_point.z))
+		{
+			target_point.label = 0;
+			continue;
+		}
+
 		if ( kdtree.nearestKSearch (*pt_it, k, point_idx_knn, point_knn_distance) > 0 )
 		{
 			// use the nearest neighboor to find the color label
@@ -369,11 +377,12 @@ PointCloudXYZL::Ptr ColorNnSegmenter::segment(const PointCloudXYZRGB &input_clou
 			const unsigned int &label = model_cloud->points[nearest_neighboor_pt_idx].label;
 			if (background_label_index_map.find(label) == background_label_index_map.end())
 			{
-				segmentation_result->points[idx].label = label;
+				target_point.label = label;
 			}
 			else
 			{
-				segmentation_result->points[idx] = ignored_point;
+				target_point.label = 0;
+				// segmentation_result->points[idx] = ignored_point;
 			}
 		}
 	}
