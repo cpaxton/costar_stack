@@ -11,11 +11,12 @@
   <arg name="compute_pose"          default="true" />
   <arg name="visualization"         default="false" />
 
-
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
   <arg name="minConfidence"  default="0.20" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
+
+  <arg name="use_external_segmentation" default="false" doc="This will make the sp_segmenter to just perform pose estimation with the assumption that the point cloud input's Red channel is the label of the object class."/>
 
   <arg name="useMedianFilter" default="false" doc="Apply median filter to point cloud input before processing it" />
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
@@ -36,8 +37,9 @@
   <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
   <arg name="gripperTF"      default="gripper_center" doc="The gripper tf where target object would be attached" />
   <arg name="useObjectPersistence" default="false" doc="use Rtree to check for existing objects to preserve orientation and TF names" />
+  <arg name="max_distance_persistence" default="0.025" doc="Maximum allowed distance for a pose to be considered as the previous pose" />
 
-  <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
+  <arg name="NodeName"       default="costar_segmenter" doc="The name of the ros topic" />
 
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
@@ -78,9 +80,11 @@
     <param name="useMultiClassSVM"   type="bool" value="$(arg useMultiClassSVM)" />
     <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />
     <param name="useMedianFilter"   type="bool"  value="$(arg useMedianFilter)" />
+    <param name="use_external_segmentation" type="bool" value="$(arg use_external_segmentation)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
     <param name="useObjectPersistence"   type="bool" value="$(arg useObjectPersistence)" />
+    <param name="max_distance_persistence"  type="double" value="$(arg max_distance_persistence)"/>
 
     <param name="setObjectOrientation"   type="bool" value="$(arg setObjectOrientation)" />
     <param name="preferredOrientation" type="str" value="$(arg preferredOrientation)" />

@@ -17,6 +17,7 @@
 #include "sp_segmenter/table_segmenter.h"
 
 enum ObjRecRansacMode {STANDARD_BEST, STANDARD_RECOGNIZE, GREEDY_RECOGNIZE};
+enum RgbToLabelChannel {RED, GREEN, BLUE, ALL};
 
 #ifdef USE_OBJRECRANSAC
 #include "sp_segmenter/greedyObjRansac.h"
@@ -48,7 +49,7 @@ struct ModelObjRecRANSACParameter
 };
 
 #define OBJECT_MAX 100
-struct objectTransformInformation
+struct ObjectTransformInformation
 {
     // extended from poseT. All transform is with reference to the camera frame
     std::string transform_name_;
@@ -58,8 +59,8 @@ struct objectTransformInformation
     Eigen::Quaternion<float> rotation_;
     double confidence_;
 
-    objectTransformInformation() {};
-    objectTransformInformation(const std::string &transform_name, const poseT &ObjRecRANSAC_result, unsigned const int &model_index) : transform_name_(transform_name), 
+    ObjectTransformInformation() {};
+    ObjectTransformInformation(const std::string &transform_name, const poseT &ObjRecRANSAC_result, unsigned const int &model_index) : transform_name_(transform_name), 
         model_name_(ObjRecRANSAC_result.model_name), model_index_(model_index),
         origin_(ObjRecRANSAC_result.shift), rotation_(ObjRecRANSAC_result.rotation), confidence_(ObjRecRANSAC_result.confidence)
     {};
@@ -74,9 +75,9 @@ struct objectTransformInformation
         return result;
     }
 
-    friend ostream& operator<<(ostream& os, const objectTransformInformation &tf_info);
+    friend ostream& operator<<(ostream& os, const ObjectTransformInformation &tf_info);
     
-    bool operator==(const objectTransformInformation& other) const;
+    bool operator==(const ObjectTransformInformation& other) const;
 
     void print() const
     {
@@ -98,14 +99,17 @@ public:
     bool segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<pcl::PointXYZL>::Ptr &result);
 #ifdef USE_OBJRECRANSAC
     // calculate all object poses based on the input labelled point cloud generated from segmentPointCloud function.
-    std::vector<objectTransformInformation> calculateObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud);
+    std::vector<ObjectTransformInformation> calculateObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud);
 
     // segment and calculate all object poses based on input cloud. It returns true if the segmentation successful and the detected object poses > 0
     bool segmentAndCalculateObjTransform(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
-        pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud_result, std::vector<objectTransformInformation> &object_transform_result);
+        pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud_result, std::vector<ObjectTransformInformation> &object_transform_result);
 
     // Update one object pose that has matching transform name and object type, then returns that updated pose with other poses(from previous detection). 
-    std::vector<objectTransformInformation> getUpdateOnOneObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type);
+    std::vector<ObjectTransformInformation> getUpdateOnOneObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type);
+
+    pcl::PointCloud<pcl::PointXYZL>::Ptr convertRgbChannelToLabelCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, const int &channel_to_convert);
+    
 #endif
 
 // ---------------------------------------------------------- ADDITIONAL OPERATIONAL FUNCTIONS --------------------------------------------------------------------------------------
@@ -128,6 +132,8 @@ public:
         void setPointCloudDownsampleValue(const NumericType &down_ss);
     template <typename NumericType>
         void setHierFeaRatio(const NumericType &ratio);
+    template <typename NumericType>
+        void setPoseConsistencyMaximumDistance(const NumericType &distance);
 
 // --------------------------------- MAIN PARAMETERS for ObjRecRANSAC that needs to be set before initializeSemanticSegmentation if compute pose is used-------------------------------
 
@@ -176,15 +182,16 @@ public:
 #ifdef USE_OBJRECRANSAC
     template <typename NumericType>
         void addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis);
-    void addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict);
+    void addModelSymmetricProperty(const std::map<std::string, ObjectSymmetry> &object_dict);
     void setUsePreferredOrientation(const bool &use_preferred_orientation);
-    // void setUsePreferredOrientation(const bool &use_preferred_orientation, const Eigen::Quaterniond &input_preferred_orientation);
+    
     template <typename NumericType>
         void setPreferredOrientation(const Eigen::Quaternion<NumericType> &base_rotation);
 
     // Object persistence will post-process ObjRecRANSAC pose to get an object orientation that is closest to the previous detection, 
     // if the detected object position is within 2.5 cm compared to previous object position
     void setUseObjectPersistence(const bool &use_object_persistence);
+    void setUseExternalSegmentation(const bool &use_external_segmentation);
 #endif
 
 #ifdef USE_TRACKING
@@ -199,7 +206,7 @@ protected:
         const Eigen::Affine3f &camera_transform_in_target, 
         const Eigen::Vector3f &box_size) const;
 #ifdef USE_OBJRECRANSAC
-    std::vector<objectTransformInformation> getTransformInformationFromTree() const;
+    std::vector<ObjectTransformInformation> getTransformInformationFromTree(const double &current_time) const;
 #endif
     bool checkFolderExist(const std::string &directory_path) const;
     bool class_ready_;
@@ -216,7 +223,7 @@ protected:
     std::vector<model*> binary_models_, multi_models_;
     std::vector<ModelT> mesh_set_;
     std::map<std::string, std::size_t> model_name_map_;
-    std::size_t number_of_added_models_;
+    std::size_t number_of_cloud_models_;
 
     // Table Parameters
     bool have_table_, use_table_segmentation_;
@@ -241,15 +248,19 @@ protected:
     Eigen::Quaternion<double> base_rotation_;
     bool use_object_persistence_;
 
-    std::map<std::string, objectSymmetry> object_dict_;
+    std::map<std::string, ObjectSymmetry> object_dict_;
     // keep information about TF index
     std::map<std::string, unsigned int> object_class_transform_index_;
-#ifdef USE_OBJRECRANSAC
-    boost::shared_ptr<greedyObjRansac> combined_ObjRecRANSAC_;
-    std::vector<boost::shared_ptr<greedyObjRansac> > individual_ObjRecRANSAC_;
 
     // map of symmetries for orientation normalization
-    objectRtree segmented_object_tree_;
+    SpatialPose segmented_object_tree_;
+    
+#ifdef USE_OBJRECRANSAC
+    boost::shared_ptr<greedyObjRansac> combined_ObjRecRANSAC_;
+    std::map<std::size_t, std::string> cloud_idx_map; 
+    std::map<std::string, boost::shared_ptr<greedyObjRansac> > individual_ObjRecRANSAC_;
+    bool use_external_segmentation_;
+
 
 #ifdef SCENE_PARSING
     std::vector<GreedyHypothesis> hypothesis_list_;

@@ -9,7 +9,7 @@ segmentedObjectTF::segmentedObjectTF()
     this->TFname = "dummyTF";
 }
 
-segmentedObjectTF::segmentedObjectTF(const objectTransformInformation &input)
+segmentedObjectTF::segmentedObjectTF(const ObjectTransformInformation &input)
 {
   this->transform.setOrigin(tf::Vector3( input.origin_.x(), input.origin_.y(), input.origin_.z() ));
   this->transform.setRotation(tf::Quaternion(
@@ -24,9 +24,9 @@ tf::StampedTransform segmentedObjectTF::generateStampedTransform(const std::stri
 
 
 // Load in parameters for objects from ROS namespace
-std::map<std::string, objectSymmetry> fillObjectPropertyDictionary(const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
+std::map<std::string, ObjectSymmetry> fillObjectPropertyDictionary(const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
 {
-    std::map<std::string, objectSymmetry> objectDict;
+    std::map<std::string, ObjectSymmetry> objectDict;
     std::cerr << "LOADING IN OBJECTS\n";
     for (unsigned int i = 0; i < cur_name.size(); i++) {
         std::cerr << "Name of obj: " << cur_name[i] << "\n";
@@ -39,15 +39,15 @@ std::map<std::string, objectSymmetry> fillObjectPropertyDictionary(const ros::No
         nh.param(cur_name.at(i)+"/preferred_step", step, 360.0);
         nh.param(cur_name.at(i)+"/preferred_axis", preferred_axis, std::string("z"));
 
-        objectDict[cur_name.at(i)] = objectSymmetry(r, p, y, preferred_axis, step);
+        objectDict[cur_name.at(i)] = ObjectSymmetry(r, p, y, preferred_axis, step);
     }
     return objectDict;
 }
 
 // Load in parameters for objects from ROS namespace
-std::map<std::string, objectSymmetry> fillObjectPropertyDictionary(std::map<std::string, ModelObjRecRANSACParameter> &modelObjRecRansacParamDict,const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
+std::map<std::string, ObjectSymmetry> fillObjectPropertyDictionary(std::map<std::string, ModelObjRecRANSACParameter> &modelObjRecRansacParamDict,const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
 {
-    std::map<std::string, objectSymmetry> objectDict;
+    std::map<std::string, ObjectSymmetry> objectDict;
     std::cerr << "LOADING IN OBJECTS\n";
 
     double default_pair_width, default_voxel_size, default_scene_visibility, default_object_visibility;
@@ -66,7 +66,7 @@ std::map<std::string, objectSymmetry> fillObjectPropertyDictionary(std::map<std:
         nh.param(cur_name.at(i)+"/z", y, 360.0);
         nh.param(cur_name.at(i)+"/preferred_step", step, 360.0);
         nh.param(cur_name.at(i)+"/preferred_axis", preferred_axis, std::string("z"));
-        objectDict[cur_name.at(i)] = objectSymmetry(r, p, y, preferred_axis, step);
+        objectDict[cur_name.at(i)] = ObjectSymmetry(r, p, y, preferred_axis, step);
 
         double pair_width, voxel_size, scene_visibility, object_visibility;
         nh.param(cur_name.at(i)+"/pair_width", pair_width, default_pair_width);
@@ -145,16 +145,19 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     this->nh.param("visualization",visualization,true);
     this->setUseVisualization(visualization);
 
+#ifdef USE_OBJRECRANSAC
     // Setting up ObjRecRANSAC
-    bool compute_pose, use_cuda, useObjectPersistence;
-    double  minConfidence;
+    bool compute_pose, use_cuda, use_object_persistence, use_external_segmentation;
+    double  minConfidence, max_distance_persistence;
     std::string objRecRANSACdetector;
     this->nh.param("compute_pose",compute_pose,true);
     this->nh.param("use_cuda", use_cuda,true);
     this->nh.param("objRecRANSACdetector", objRecRANSACdetector, std::string("StandardRecognize"));
     this->nh.param("minConfidence", minConfidence, 0.0);
-    this->nh.param("useObjectPersistence",useObjectPersistence,false);
-#ifdef USE_OBJRECRANSAC
+    this->nh.param("useObjectPersistence",use_object_persistence,false);
+    this->nh.param("max_distance_persistence",max_distance_persistence,0.025);
+    this->nh.param("use_external_segmentation", use_external_segmentation, false);
+
     this->setUseComputePose(compute_pose);
     this->setUseCuda(use_cuda);
     if      (objRecRANSACdetector == "StandardBest")      this->setModeObjRecRANSAC(STANDARD_BEST);
@@ -162,7 +165,15 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     else if (objRecRANSACdetector == "StandardRecognize") this->setModeObjRecRANSAC(STANDARD_RECOGNIZE);
     else ROS_ERROR("Unsupported objRecRANSACdetector!");
     this->setMinConfidenceObjRecRANSAC(minConfidence);
-    this->setUseObjectPersistence(useObjectPersistence);
+    this->setUseObjectPersistence(use_object_persistence);
+    this->setPoseConsistencyMaximumDistance(max_distance_persistence);
+    this->setUseExternalSegmentation(use_external_segmentation);
+    if (use_external_segmentation)
+    {
+        std::string external_segmentation_done_topic;
+        this->nh.param("external_segment_done_topic",external_segmentation_done_topic,std::string("/costar_perception/segment_done"));
+        external_segmentation_sub = nh.subscribe(external_segmentation_done_topic,1,&RosSemanticSegmentation::processExternalSegmentationResult,this);
+    }
 
     std::string mesh_path;
     //get parameter for mesh path and cur_name
@@ -170,7 +181,7 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     std::vector<std::string> cur_name = stringVectorArgsReader(nh, "cur_name", std::string("drill"));
     //get object parameters
     std::map<std::string, ModelObjRecRANSACParameter> model_obj_ransac_parameter;
-    std::map<std::string, objectSymmetry> objectDict = fillObjectPropertyDictionary(model_obj_ransac_parameter, nh, cur_name);
+    std::map<std::string, ObjectSymmetry> objectDict = fillObjectPropertyDictionary(model_obj_ransac_parameter, nh, cur_name);
     // Add model to the semantic segmentation
     for (std::vector<std::string>::const_iterator it = cur_name.begin(); it != cur_name.end(); ++it)
     {
@@ -252,7 +263,6 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     table_corner_published = 0;
     this->need_preferred_tf_ = setObjectOrientation;
     this->setUsePreferredOrientation(setObjectOrientation);
-
 }
 
 void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inputCloud)
@@ -262,19 +272,28 @@ void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inpu
 
     this->setCropBoxSize(crop_box_size);
     this->setCropBoxPose(crop_box_pose_table_);
-    if (need_preferred_tf_ && listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+    if (need_preferred_tf_)
     {
-        listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
-        Eigen::Affine3d preferred_transform_eigen;
-        tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
-        Eigen::Quaterniond q(preferred_transform_eigen.rotation());
-        this->setPreferredOrientation(q);
-        this->need_preferred_tf_ = false;
+        if (listener->frameExists(targetNormalObjectTF) &&
+            listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+        {
+            listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
+            Eigen::Affine3d preferred_transform_eigen;
+            tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
+            Eigen::Quaterniond q(preferred_transform_eigen.rotation());
+            this->setPreferredOrientation(q);
+            this->need_preferred_tf_ = false;
+        }
+        else
+        {
+            ROS_WARN("Cannot find preferred orientation frame");
+            return;
+        }
     }
 
     pcl::PointCloud<PointLT>::Ptr labelled_point_cloud_result;
 #ifdef USE_OBJRECRANSAC
-    std::vector<objectTransformInformation> object_transform_result;
+    std::vector<ObjectTransformInformation> object_transform_result;
     // returns true if the segmentation is successful
     if (this->segmentAndCalculateObjTransform(full_cloud,labelled_point_cloud_result,object_transform_result))
     {
@@ -289,9 +308,9 @@ void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inpu
 
         geometry_msgs::PoseArray msg;
         msg.header.frame_id = inputCloud.header.frame_id;
-        for (std::vector<objectTransformInformation>::const_iterator it = object_transform_result.begin(); it != object_transform_result.end(); ++it)
+        for (std::vector<ObjectTransformInformation>::const_iterator it = object_transform_result.begin(); it != object_transform_result.end(); ++it)
         {
-            const objectTransformInformation &p = *it;
+            const ObjectTransformInformation &p = *it;
             geometry_msgs::Pose pmsg;
             pmsg.position.x = p.origin_.x();
             pmsg.position.y = p.origin_.y();
@@ -318,7 +337,13 @@ void RosSemanticSegmentation::callbackPoses(const sensor_msgs::PointCloud2 &inpu
         pc_pub.publish(output_msg);
     }
 #endif
+}
 
+void RosSemanticSegmentation::processExternalSegmentationResult(const std_msgs::Empty &input_msgs)
+{
+    std_srvs::Empty::Request dummy_req;
+    std_srvs::Empty::Response dummy_res;
+    this->serviceCallback(dummy_req,dummy_res);
 }
 
 bool RosSemanticSegmentation::getAndSaveTable (const sensor_msgs::PointCloud2 &pc)
@@ -354,14 +379,23 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
     // The callback from main only update the cloud data
     inputCloud = pc;
 
-    if (need_preferred_tf_ && listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+    if (need_preferred_tf_)
     {
-        listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
-        Eigen::Affine3d preferred_transform_eigen;
-        tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
-        Eigen::Quaterniond q(preferred_transform_eigen.rotation());
-        this->setPreferredOrientation(q);
-        this->need_preferred_tf_ = false;
+        if (listener->frameExists(targetNormalObjectTF) &&
+            listener->waitForTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time::now(),ros::Duration(5.0)))
+        {
+            listener->lookupTransform(inputCloud.header.frame_id,targetNormalObjectTF,ros::Time(0),preferred_transform);
+            Eigen::Affine3d preferred_transform_eigen;
+            tf::transformTFToEigen(preferred_transform, preferred_transform_eigen);
+            Eigen::Quaterniond q(preferred_transform_eigen.rotation());
+            this->setPreferredOrientation(q);
+            this->need_preferred_tf_ = false;
+        }
+        else
+        {
+            ROS_WARN("Cannot find preferred orientation frame");
+            return;
+        }
     }
 
     if (!has_crop_box_pose_table_ && use_crop_box_)
@@ -371,7 +405,8 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
         
         tableTFparent = pc.header.frame_id;
         std::cerr << "Getting Table TF with name: '" << tableTFname << " and parent frame: " << tableTFparent << std::endl;
-        if (listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
+        if (listener->frameExists(tableTFname) &&
+            listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
         {
             std::cerr << "Table TF found\n";
             listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),table_transform);
@@ -392,6 +427,7 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
         if (!this->have_table_) getAndSaveTable(inputCloud);
         
         if (this->have_table_) {
+
              // publish the table corner every 15 frame of inputCloud
             if (table_corner_published == 0)
             {
@@ -425,7 +461,7 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
     }
 }
 
-void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformation> all_poses)
+void RosSemanticSegmentation::populateTFMap(std::vector<ObjectTransformInformation> all_poses)
 {
     ros::param::del("/instructor_landmark/objects");
 
@@ -440,7 +476,7 @@ void RosSemanticSegmentation::populateTFMap(std::vector<objectTransformInformati
 
     segmentedObjectTFV.clear();
     
-    for (std::vector<objectTransformInformation>::const_iterator it = all_poses.begin(); it != all_poses.end(); ++it)
+    for (std::vector<ObjectTransformInformation>::const_iterator it = all_poses.begin(); it != all_poses.end(); ++it)
     {
         const segmentedObjectTF &segmented_object = *it;
         segmentedObjectTFV.push_back(segmented_object);
@@ -522,6 +558,11 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
       ROS_ERROR("Class is not ready!");
       return false;
     }
+    else if (this->need_preferred_tf_)
+    {
+        ROS_ERROR("Does not have preferred frame yet. Cannot do semantic segmentation.");
+        return false;
+    }
     // Service call will run SPSegmenter
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     
@@ -544,8 +585,20 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
     
     pcl::PointCloud<PointLT>::Ptr labelled_point_cloud_result;
 #ifdef USE_OBJRECRANSAC
-    std::vector<objectTransformInformation> object_transform_result;
-    bool segmentation_success = segmentAndCalculateObjTransform(full_cloud, labelled_point_cloud_result, object_transform_result);
+    std::vector<ObjectTransformInformation> object_transform_result;
+    bool segmentation_success;
+    if (!this->use_external_segmentation_)
+    {
+        segmentation_success = segmentAndCalculateObjTransform(full_cloud, labelled_point_cloud_result, object_transform_result);
+    }
+    else
+    {
+        // R channel of the point cloud is the label
+        labelled_point_cloud_result = this->convertRgbChannelToLabelCloud(full_cloud, RED);
+        object_transform_result = this->calculateObjTransform(labelled_point_cloud_result);
+        segmentation_success = object_transform_result.size() > 0;
+    }
+
     if (segmentation_success)
     {
         pcl::PointCloud<PointT>::Ptr segmented_cloud;
@@ -563,7 +616,7 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
         if(use_tracking_)
         {
             std::vector<poseT> all_poses;
-            for (std::vector<objectTransformInformation>::const_iterator it = object_transform_result.begin(); it!=object_transform_result.end(); ++it)
+            for (std::vector<ObjectTransformInformation>::const_iterator it = object_transform_result.begin(); it!=object_transform_result.end(); ++it)
             {
                 all_poses.push_back(it->asPoseT());
             }
@@ -608,6 +661,15 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
 #if COSTAR
 bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response)
 {
+    if (!this->class_ready_) {
+      ROS_ERROR("Class is not ready!");
+      return false;
+    }
+    else if (this->need_preferred_tf_)
+    {
+        ROS_ERROR("Does not have preferred frame yet. Cannot do semantic segmentation.");
+        return false;
+    }
     ROS_INFO("Segmenting object on gripper...");
     int objRecRANSAC_mode_original = this->objRecRANSAC_mode_;
     // Use the detector for objects in the gripper
@@ -622,7 +684,8 @@ bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGri
 
     std::string segmentFail("Object in gripper segmentation fails.");
 
-    if (listener->waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
+    if (listener->frameExists(gripperTF) &&
+        listener->waitForTransform(inputCloud.header.frame_id,gripperTF,ros::Time::now(),ros::Duration(1.5)))
     {
         tf::StampedTransform transform;
         listener->lookupTransform(inputCloud.header.frame_id,gripperTF,ros::Time(0),transform);
@@ -649,7 +712,7 @@ bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGri
             pc_pub.publish(output_msg);
 
 #ifdef USE_OBJRECRANSAC
-            std::vector<objectTransformInformation> object_transform_result = getUpdateOnOneObjTransform(labelled_point_cloud, target_tf_to_update, object_class);
+            std::vector<ObjectTransformInformation> object_transform_result = getUpdateOnOneObjTransform(labelled_point_cloud, target_tf_to_update, object_class);
             this->populateTFMap(object_transform_result);
             hasTF = true;
 #endif
@@ -691,19 +754,28 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
     objrec_hypothesis_msgs::AllModelHypothesis result;
     result.all_hypothesis.reserve(vec_greedy_hypo.size());
 
+    pcl::KdTreeFLANN<pcl::PointXYZ> tf_coordinate_tree;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr tf_coordinate_points(new pcl::PointCloud<pcl::PointXYZ>());
+
+    for (std::size_t i = 0; i < segmentedObjectTFV.size(); i++){
+        const tf::Transform &t = segmentedObjectTFV[i].transform;
+        pcl::PointXYZ p(t.getOrigin().x(), 
+            t.getOrigin().y(), t.getOrigin().z());
+        tf_coordinate_points->points.push_back(p);
+    }
+    tf_coordinate_tree.setInputCloud(tf_coordinate_points);
+    Eigen::Quaternionf base_rotation = this->base_rotation_.template cast<float>  ();
     for (std::vector<GreedyHypothesis>::iterator it = vec_greedy_hypo.begin(); it != vec_greedy_hypo.end(); ++it)
     {
-        std::map< std::size_t, std::vector<AcceptedHypothesis> > &object_hypotheses = it->by_object_hypothesis;
-        for (std::map< std::size_t, std::vector<AcceptedHypothesis> >::iterator it_2 = object_hypotheses.begin();
+        std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> > &object_hypotheses = it->by_object_hypothesis;
+        for (std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> >::iterator it_2 = object_hypotheses.begin();
             it_2 != object_hypotheses.end(); ++it_2)
         {
             objrec_hypothesis_msgs::ModelHypothesis object_i;
-            std::stringstream ss;
-            ss << "obj_" << it->model_id << "_" << it_2->first;
-            object_i.tf_name = ss.str();
             object_i.model_hypothesis.reserve( it_2->second.size() );
             object_i.model_name = it->model_id;
-            for (std::vector<AcceptedHypothesis>::iterator it_3 = it_2->second.begin(); 
+            const ObjectSymmetry obj_sym = object_dict_.find(it->model_id)->second;
+            for (std::vector<AcceptedHypothesisWithConfidence>::iterator it_3 = it_2->second.begin(); 
                 it_3 != it_2->second.end(); ++it_3)
             {
                 objrec_hypothesis_msgs::Hypothesis tmp;
@@ -711,20 +783,34 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
                 tmp.model_name = it_3->model_entry->getUserData()->getLabel();
                 // transform: 12 double
                 double *rigid_transform = it_3->rigid_transform;
-                Eigen::Matrix3d rotation;
+                Eigen::Matrix3f rotation;
                 rotation <<
                     rigid_transform[0], rigid_transform[1], rigid_transform[2],
                     rigid_transform[3], rigid_transform[4], rigid_transform[5], 
                     rigid_transform[6], rigid_transform[7], rigid_transform[8];
-                Eigen::Quaterniond q(rotation);
+                Eigen::Quaternionf q(rotation);
                 tmp.transform.translation.x = rigid_transform[9];
                 tmp.transform.translation.y = rigid_transform[10];
                 tmp.transform.translation.z = rigid_transform[11];
+
+                q = normalizeModelOrientation<float>(q,base_rotation, obj_sym);
                 tmp.transform.rotation.x = q.x();
                 tmp.transform.rotation.y = q.y(); 
                 tmp.transform.rotation.z = q.z(); 
                 tmp.transform.rotation.w = q.w();
+
+                tmp.confidence = it_3->confidence;
                 object_i.model_hypothesis.push_back(tmp);
+
+                if (it_3 == it_2->second.begin())
+                {
+                    pcl::PointXYZ p(rigid_transform[9], rigid_transform[10], rigid_transform[11]);
+                    std::vector< int > k_indices(1);
+                    std::vector< float > distances(1);
+                    tf_coordinate_tree.nearestKSearch(p, 1, k_indices, distances);
+                    std::size_t vector_index = k_indices[0];
+                    object_i.tf_name = segmentedObjectTFV[vector_index].TFname;
+                }
             }
             result.all_hypothesis.push_back(object_i);
         }
