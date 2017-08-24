@@ -1,0 +1,4 @@
+# Object physical properties
+object_property:
+  wood_cube:
+    mass: 1.0

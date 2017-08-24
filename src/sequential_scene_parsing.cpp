@@ -303,9 +303,11 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 				this->physics_engine_->addExistingRigidBodyBackFromMap(it->first,original_pose_to_test[it->first]);
 			}
 			this->physics_engine_->stepSimulationWithoutEvaluation(0.5 * GRAVITY_SCALE_COMPENSATION, 
-			GRAVITY_SCALE_COMPENSATION/120.);
-			this->getUpdatedSceneSupportGraph();
+				GRAVITY_SCALE_COMPENSATION/120.);
 		}
+		this->physics_engine_->stepSimulationWithoutEvaluation(1.0 * GRAVITY_SCALE_COMPENSATION, 
+			GRAVITY_SCALE_COMPENSATION/120.);
+		this->getUpdatedSceneSupportGraph();
 
 		this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
 		this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,

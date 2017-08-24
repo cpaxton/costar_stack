@@ -16,6 +16,9 @@ object_property:
   cube:
     mass: 1.0
 
+  wood_cube:
+    mass: 1.0
+
   drill:
     mass: 1.0
   drill_flat:
