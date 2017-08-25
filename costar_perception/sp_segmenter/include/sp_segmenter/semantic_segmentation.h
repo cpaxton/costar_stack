@@ -6,6 +6,7 @@
 #include <Eigen/Geometry>
 #include <pcl/filters/crop_box.h>
 #include <boost/filesystem.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "sp_segmenter/features.h"
 #include "sp_segmenter/JHUDataParser.h"
@@ -259,6 +260,7 @@ protected:
     boost::shared_ptr<greedyObjRansac> combined_ObjRecRANSAC_;
     std::map<std::size_t, std::string> cloud_idx_map; 
     std::map<std::string, boost::shared_ptr<greedyObjRansac> > individual_ObjRecRANSAC_;
+    std::map<std::string, boost::shared_ptr<boost::mutex> > objrecransac_lock_;
     bool use_external_segmentation_;
 
 

@@ -76,6 +76,8 @@ private:
     
     double visibility;              //0.1   
     double relativeObjSize;         //0.1
+
+    double min_confidence;
 };
     
 

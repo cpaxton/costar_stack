@@ -606,6 +606,8 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
             new_obj_ransac->setUseCUDA(use_cuda_);
             new_obj_ransac->AddModel(model_path + model_name, model_name);
             individual_ObjRecRANSAC_[model_name] = new_obj_ransac;
+            boost::shared_ptr<boost::mutex> new_lock(new boost::mutex());
+            objrecransac_lock_[model_name] = new_lock;
         }
     }
     ModelT mesh_buf = LoadMesh(model_path + model_name, model_name);  
@@ -691,6 +693,7 @@ std::vector<ObjectTransformInformation> SemanticSegmentation::calculateObjTransf
             {
                 std::cerr << object_name << " cloud set " << j << " size: " << cloud_set[j]->size() << std::endl;
                 std::vector<poseT> tmp_poses;
+                objrecransac_lock_[object_name]->lock();
                 switch (objRecRANSAC_mode_)
                 {
                     case STANDARD_BEST:
@@ -705,7 +708,6 @@ std::vector<ObjectTransformInformation> SemanticSegmentation::calculateObjTransf
                     default:
                         std::cerr << "Unsupported objRecRANSACdetector!\n";
                 }
-
                 if (viewer)
                 {
                     individual_ObjRecRANSAC_[object_name]->visualize(viewer, tmp_poses, color_label[j]);
@@ -719,6 +721,7 @@ std::vector<ObjectTransformInformation> SemanticSegmentation::calculateObjTransf
 #ifdef SCENE_PARSING
                 hypothesis_list_.push_back(individual_ObjRecRANSAC_[object_name]->getLatestAcceptedHypothesis());
 #endif
+                objrecransac_lock_[object_name]->unlock();
             }
         }
 
@@ -836,6 +839,7 @@ std::vector<ObjectTransformInformation> SemanticSegmentation::getUpdateOnOneObjT
         if( cloud_set[objrec_index + 1]->empty() == false )
         {
             std::vector<poseT> tmp_poses;
+            objrecransac_lock_[object_type]->lock();
             switch (objRecRANSAC_mode_)
             {
                 case STANDARD_BEST:
@@ -851,6 +855,7 @@ std::vector<ObjectTransformInformation> SemanticSegmentation::getUpdateOnOneObjT
                     std::cerr << "Unsupported objRecRANSACdetector!\n";
             }
             all_poses.insert(all_poses.end(), tmp_poses.begin(), tmp_poses.end());
+            objrecransac_lock_[object_type]->unlock();
         }
     }
     else 

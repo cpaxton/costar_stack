@@ -1,7 +1,8 @@
 #include "sp_segmenter/greedyObjRansac.h"
 
 //greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_) : objrec(pairWidth_, voxelSize_, 1.0)
-greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_, double relNumOfPairsInHashTable_) : objrec(pairWidth_, voxelSize_, relNumOfPairsInHashTable_)
+greedyObjRansac::greedyObjRansac(double pairWidth_, double voxelSize_, double relNumOfPairsInHashTable_) : objrec(pairWidth_, voxelSize_, relNumOfPairsInHashTable_),
+    min_confidence(0.0)
 {
 //    successProbability = 0.9999999;
     successProbability = 0.99;
@@ -97,6 +98,8 @@ void greedyObjRansac::GreedyRecognize(const pcl::PointCloud<myPointXYZ>::Ptr sce
     pcl::PointCloud<myPointXYZ>::Ptr cur_scene = scene_xyz;
 
     int iter = 0;
+    min_confidence = 0.;
+
     while(true)
     {
         std::cerr<< "Recognizing Attempt --- " << iter << std::endl;
@@ -130,6 +133,9 @@ void greedyObjRansac::StandardBest(const pcl::PointCloud<myPointXYZ>::Ptr scene_
     
     float max = -1000;
     boost::shared_ptr<PointSetShape> best_shape;
+    
+    min_confidence = 0.;
+
     for ( list< boost::shared_ptr<PointSetShape> >::iterator it = detectedObjects.begin() ; it != detectedObjects.end() ; ++it )
     {
 //        if ( (*it)->getUserData() )
@@ -169,7 +175,8 @@ void greedyObjRansac::StandardRecognize(const pcl::PointCloud<myPointXYZ>::Ptr s
     //list<PointSetShape*> detectedObjects;
     list< boost::shared_ptr<PointSetShape> > detectedObjects;
     objrec.doRecognition(scene, successProbability, detectedObjects);
-    
+    min_confidence = minConfidence;
+
     for ( list< boost::shared_ptr<PointSetShape> >::iterator it = detectedObjects.begin() ; it != detectedObjects.end() ; ++it )
     {
         boost::shared_ptr<PointSetShape> shape = (*it);
@@ -519,12 +526,24 @@ GreedyHypothesis greedyObjRansac::getLatestAcceptedHypothesis(const bool &combin
     if (acc_hypothesis.size() > 0)
     {
         // result.hypothesis = acc_hypothesis;
-        if (!combined_ransac) result.model_id = acc_hypothesis[0][0].model_entry->getUserData()->getLabel();
-        if (combined_ransac) result.model_id = "combined_ransac(UNSUPPORTED)";
+        for (std::size_t i = 0; i < acc_hypothesis.size(); ++i)
+        {
+            if (acc_hypothesis[i].size() > 0)
+            {
+                if (!combined_ransac) result.model_id = acc_hypothesis[0][0].model_entry->getUserData()->getLabel();
+                if (combined_ransac) result.model_id = "combined_ransac(UNSUPPORTED)"; 
+                break;
+            }
+        }
         
         // separate the object hypothesis by its best position
         for (std::size_t i = 0; i < acc_hypothesis.size(); ++i)
         {
+            if (acc_hypothesis[i].size() == 0) continue;
+             
+            // skip object that has been skipped by the pose estimation
+            if (acc_hypothesis[i][0].confidence < min_confidence) continue;
+
             // object index starts from 1, not zero.
             std::size_t object_tf_index = i + 1;
             result.by_object_hypothesis[object_tf_index] = acc_hypothesis[i];
