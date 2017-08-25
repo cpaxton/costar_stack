@@ -11,10 +11,10 @@ segmentedObjectTF::segmentedObjectTF()
 
 segmentedObjectTF::segmentedObjectTF(const ObjectTransformInformation &input)
 {
-  this->transform.setOrigin(tf::Vector3( input.origin_.x(), input.origin_.y(), input.origin_.z() ));
-  this->transform.setRotation(tf::Quaternion(
+    this->transform.setOrigin(tf::Vector3( input.origin_.x(), input.origin_.y(), input.origin_.z() ));
+    this->transform.setRotation(tf::Quaternion(
                                              input.rotation_.x(),input.rotation_.y(),input.rotation_.z(),input.rotation_.w()));
-  this->TFname = input.transform_name_;
+    this->TFname = input.transform_name_;
 }
 
 tf::StampedTransform segmentedObjectTF::generateStampedTransform(const std::string &parent) const
@@ -27,9 +27,9 @@ tf::StampedTransform segmentedObjectTF::generateStampedTransform(const std::stri
 std::map<std::string, ObjectSymmetry> fillObjectPropertyDictionary(const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
 {
     std::map<std::string, ObjectSymmetry> objectDict;
-    std::cerr << "LOADING IN OBJECTS\n";
+    ROS_INFO("Loading object symmetric properties");
     for (unsigned int i = 0; i < cur_name.size(); i++) {
-        std::cerr << "Name of obj: " << cur_name[i] << "\n";
+        ROS_INFO("Found symmetric property for object: %s",cur_name[i].c_str());
 
         double r, p, y, step;
         std::string preferred_axis;
@@ -48,7 +48,7 @@ std::map<std::string, ObjectSymmetry> fillObjectPropertyDictionary(const ros::No
 std::map<std::string, ObjectSymmetry> fillObjectPropertyDictionary(std::map<std::string, ModelObjRecRANSACParameter> &modelObjRecRansacParamDict,const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
 {
     std::map<std::string, ObjectSymmetry> objectDict;
-    std::cerr << "LOADING IN OBJECTS\n";
+    ROS_INFO("Loading object symmetric properties");
 
     double default_pair_width, default_voxel_size, default_scene_visibility, default_object_visibility;
     nh.param("default_object_param/pair_width", default_pair_width, 0.005);
@@ -57,7 +57,7 @@ std::map<std::string, ObjectSymmetry> fillObjectPropertyDictionary(std::map<std:
     nh.param("default_object_param/object_visibility", default_object_visibility, 0.1);
 
     for (unsigned int i = 0; i < cur_name.size(); i++) {
-        std::cerr << "Name of obj: " << cur_name[i] << "\n";
+        ROS_INFO("Found symmetric property for object: %s",cur_name[i].c_str());
 
         double r, p, y, step;
         std::string preferred_axis;
@@ -190,8 +190,8 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     }
     this->addModelSymmetricProperty(objectDict);
 #else
-    std::cerr << "WARNING. Could not compute pose because the library is not compiled with USE_OBJRECRANSAC = ON.\n";
-    std::cerr << "This class will only publish the segmented cloud.\n";
+    ROS_WARN("Could not compute pose because the library is not compiled with USE_OBJRECRANSAC = ON.");
+    ROS_INFO("This class will only publish the segmented cloud.");
 #endif
 
 #ifdef USE_TRACKING
@@ -204,7 +204,7 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
         {
             if(!tracker_->addTracker(model))
             {
-                std::cout << "Warning: tried to add duplicate model name to tracker" << std::endl;
+                ROS_WARN("Tried to add duplicate model name to tracker");
             }
         }
     }
@@ -231,13 +231,13 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
 
     if (!useTFinsteadOfPoses)
     {
-        std::cerr << "Node publish pose array.\n";
+        ROS_INFO("Node publish pose array.");
         pose_pub = nh.advertise<geometry_msgs::PoseArray>(POSES_OUT,1000);
         pc_sub = nh.subscribe(POINTS_IN,1,&RosSemanticSegmentation::callbackPoses,this);
     }
     else
     {
-        std::cerr << "Node publish TF.\n";
+        ROS_INFO("Node publish TF frames.");
         spSegmenter = this->nh.advertiseService("SPSegmenter",&RosSemanticSegmentation::serviceCallback,this);
 #ifdef COSTAR
         segmentGripper = this->nh.advertiseService("segmentInGripper",&RosSemanticSegmentation::serviceCallbackGripper,this);
@@ -404,11 +404,11 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
         nh.param("tableTF", tableTFname,std::string("/tableTF"));
         
         tableTFparent = pc.header.frame_id;
-        std::cerr << "Getting Table TF with name: '" << tableTFname << " and parent frame: " << tableTFparent << std::endl;
+        ROS_INFO("Looking for Table frame [%s] with parent frame [%s]",(tableTFname.c_str(), tableTFparent.c_str()));
         if (listener->frameExists(tableTFname) &&
             listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
         {
-            std::cerr << "Table TF found\n";
+            ROS_INFO("Table frame found");
             listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),table_transform);
             tf::transformTFToEigen(table_transform, this->crop_box_pose_table_);
             Eigen::Quaterniond q(this->crop_box_pose_table_.rotation());
@@ -419,7 +419,7 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
             ROS_INFO("Crop Box activated");
         }
         else
-            std::cerr << "Fail to find table TF.\n";
+            ROS_INFO("Fail to find table frame.");
     }
 
     if (this->use_table_segmentation_)
@@ -434,7 +434,7 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
                 sensor_msgs::PointCloud2 output_msg;
                 toROSMsg(*table_corner_points_,output_msg);
                 output_msg.header.frame_id = inputCloud.header.frame_id;
-                // std::cerr << "Published table corner point cloud\n";
+                // ROS_INFO("Published table corner point cloud");
                 table_corner_pub.publish(output_msg);
             }
             else 
@@ -555,8 +555,8 @@ pcl::PointCloud<PointT>::Ptr MedianPointCloud(const std::vector<pcl::PointCloud<
 bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     if (!this->class_ready_) {
-      ROS_ERROR("Class is not ready!");
-      return false;
+        ROS_ERROR("Class is not ready!");
+        return false;
     }
     else if (this->need_preferred_tf_)
     {
@@ -567,12 +567,14 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
     pcl::PointCloud<PointT>::Ptr full_cloud(new pcl::PointCloud<PointT>());
     
     if (!use_median_filter)  // not using median filter
+    {
         fromROSMsg(inputCloud,*full_cloud);
+    }
     else if(cloud_ready == true )
     {
-        std::cerr << "Averaging point clouds" << std::endl;
+        ROS_INFO("Averaging point clouds");
         full_cloud = MedianPointCloud(cloud_vec);
-        std::cerr << "Averaging point clouds Done" << std::endl;
+        ROS_INFO("Averaging point clouds Done");
     }
     else
     {
@@ -662,8 +664,8 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
 bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response)
 {
     if (!this->class_ready_) {
-      ROS_ERROR("Class is not ready!");
-      return false;
+        ROS_ERROR("Class is not ready!");
+        return false;
     }
     else if (this->need_preferred_tf_)
     {
@@ -724,7 +726,7 @@ bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGri
     }
     else
     {
-        std::cerr << "Fail to get transform between: "<< gripperTF << " and "<< inputCloud.header.frame_id << std::endl;
+        ROS_INFO("Fail to get transform between [%s] and [%s]",(gripperTF.c_str(), inputCloud.header.frame_id.c_str()));
         response.result = segmentFail;
     }
     this->setModeObjRecRANSAC(objRecRANSAC_mode_original);
