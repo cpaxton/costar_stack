@@ -76,7 +76,7 @@ poseT greedyObjRansac::recognizeOne(const pcl::PointCloud<myPointXYZ>::Ptr scene
     poseT new_pose = getBestModel(detectedObjects);
     
     pcl::PointCloud<myPointXYZ>::Ptr trans_model(new pcl::PointCloud<myPointXYZ>());
-    for( int i = 0 ; i < models.size() ; i++ )
+    for( std::size_t i = 0 ; i < models.size() ; i++ )
     {
         if(models[i].model_label == new_pose.model_name )
         {
@@ -252,7 +252,7 @@ void greedyObjRansac::visualize(pcl::visualization::PCLVisualizer::Ptr viewer, c
     int count = 0;
     for(std::vector<poseT>::const_iterator it = poses.begin() ; it < poses.end() ; it++, count++ )
     {
-        for( int i = 0 ; i < models.size() ; i++ )
+        for( std::size_t i = 0 ; i < models.size() ; i++ )
         {
             if(models[i].model_label == it->model_name )
             {
@@ -288,7 +288,7 @@ void greedyObjRansac::visualize_m(pcl::visualization::PCLVisualizer::Ptr viewer,
     int count = 0;
     for(std::vector<poseT>::const_iterator it = poses.begin() ; it < poses.end() ; it++, count++ )
     {
-        for( int i = 0 ; i < models.size() ; i++ )
+        for( std::size_t i = 0 ; i < models.size() ; i++ )
         {
             if(models[i].model_label == it->model_name )
             {
@@ -317,7 +317,7 @@ void greedyObjRansac::clearMesh(pcl::visualization::PCLVisualizer::Ptr viewer, c
     int count = 0;
     for(std::vector<poseT>::const_iterator it = poses.begin() ; it < poses.end() ; it++, count++ )
     {
-        for( int i = 0 ; i < models.size() ; i++ )
+        for( std::size_t i = 0 ; i < models.size() ; i++ )
         {
             if(models[i].model_label == it->model_name )
             {
@@ -348,7 +348,7 @@ void greedyObjRansac::ICP(std::vector<poseT> &poses, const pcl::PointCloud<myPoi
     
     for(std::vector<poseT>::iterator it = poses.begin() ; it < poses.end() ; it++ )
     {
-        for( int i = 0 ; i < models.size() ; i++ )
+        for( std::size_t i = 0 ; i < models.size() ; i++ )
         {
             if(models[i].model_label == it->model_name )
             {
@@ -455,7 +455,7 @@ pcl::PointCloud<myPointXYZ>::Ptr greedyObjRansac::FillModelCloud(const std::vect
     pcl::PointCloud<myPointXYZ>::Ptr model_cloud(new pcl::PointCloud<myPointXYZ>());
     for(std::vector<poseT>::const_iterator it = poses.begin() ; it < poses.end() ; it++ )
     {
-        for( int i = 0 ; i < models.size() ; i++ )
+        for( std::size_t i = 0 ; i < models.size() ; i++ )
         {
             if(models[i].model_label == it->model_name )
             {
@@ -519,6 +519,21 @@ void greedyObjRansac::getPairFeas(const pcl::PointCloud<myPointXYZ>::Ptr cloud, 
 }
 
 #if SCENE_PARSING
+ObjRansacHypothesisEigen::ObjRansacHypothesisEigen(const AcceptedHypothesisWithConfidence &input)
+{
+    double* rigid_transform = input.rigid_transform;
+    Eigen::Matrix3f rotation;
+    rotation <<
+        rigid_transform[0], rigid_transform[1], rigid_transform[2],
+        rigid_transform[3], rigid_transform[4], rigid_transform[5],
+        rigid_transform[6], rigid_transform[7], rigid_transform[8];
+    t_ << rigid_transform[9], rigid_transform[10], rigid_transform[11];
+    q_ = Eigen::Quaternionf(rotation);
+    match_ = input.match;
+    model_type_ = input.model_entry->getUserData()->getLabel();
+    confidence_ = input.confidence;
+}
+
 GreedyHypothesis greedyObjRansac::getLatestAcceptedHypothesis(const bool &combined_ransac)
 {
     std::vector<std::vector<AcceptedHypothesisWithConfidence> > acc_hypothesis = objrec.getShapeHypothesis();
@@ -530,7 +545,7 @@ GreedyHypothesis greedyObjRansac::getLatestAcceptedHypothesis(const bool &combin
         {
             if (acc_hypothesis[i].size() > 0)
             {
-                if (!combined_ransac) result.model_id = acc_hypothesis[0][0].model_entry->getUserData()->getLabel();
+                if (!combined_ransac) result.model_id = acc_hypothesis[i][0].model_entry->getUserData()->getLabel();
                 if (combined_ransac) result.model_id = "combined_ransac(UNSUPPORTED)"; 
                 break;
             }
@@ -546,7 +561,14 @@ GreedyHypothesis greedyObjRansac::getLatestAcceptedHypothesis(const bool &combin
 
             // object index starts from 1, not zero.
             std::size_t object_tf_index = i + 1;
-            result.by_object_hypothesis[object_tf_index] = acc_hypothesis[i];
+            std::vector<ObjRansacHypothesisEigen> eigen_objransac_hypotheses;
+
+            for (std::vector<AcceptedHypothesisWithConfidence>::iterator it = acc_hypothesis[i].begin();
+                 it != acc_hypothesis[i].end(); ++it)
+            {
+                eigen_objransac_hypotheses.push_back(ObjRansacHypothesisEigen(*it));
+            }
+            result.by_object_hypothesis[object_tf_index] = eigen_objransac_hypotheses;
         }
     }
 

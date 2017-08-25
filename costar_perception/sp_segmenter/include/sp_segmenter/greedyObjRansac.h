@@ -16,9 +16,22 @@
 #if SCENE_PARSING
 #include <vector>
 #include <map>
+
+struct ObjRansacHypothesisEigen
+{
+    ObjRansacHypothesisEigen(){};
+    ObjRansacHypothesisEigen(const AcceptedHypothesisWithConfidence &input);
+    
+    Eigen::Vector3f t_;
+    Eigen::Quaternionf q_;
+    int match_;
+    std::string model_type_;
+    double confidence_;
+};
+
 struct GreedyHypothesis
 {
-    std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> > by_object_hypothesis;
+    std::map< std::size_t, std::vector<ObjRansacHypothesisEigen> > by_object_hypothesis;
     std::string model_id;
     // std::vector<std::vector<AcceptedHypothesis> > hypothesis;
 };

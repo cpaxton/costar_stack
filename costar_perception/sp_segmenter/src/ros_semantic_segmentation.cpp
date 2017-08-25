@@ -769,44 +769,37 @@ objrec_hypothesis_msgs::AllModelHypothesis RosSemanticSegmentation::generateAllM
     Eigen::Quaternionf base_rotation = this->base_rotation_.template cast<float>  ();
     for (std::vector<GreedyHypothesis>::iterator it = vec_greedy_hypo.begin(); it != vec_greedy_hypo.end(); ++it)
     {
-        std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> > &object_hypotheses = it->by_object_hypothesis;
-        for (std::map< std::size_t, std::vector<AcceptedHypothesisWithConfidence> >::iterator it_2 = object_hypotheses.begin();
+        std::map< std::size_t, std::vector<ObjRansacHypothesisEigen> > &object_hypotheses = it->by_object_hypothesis;
+        for (std::map< std::size_t, std::vector<ObjRansacHypothesisEigen> >::iterator it_2 = object_hypotheses.begin();
             it_2 != object_hypotheses.end(); ++it_2)
         {
             objrec_hypothesis_msgs::ModelHypothesis object_i;
             object_i.model_hypothesis.reserve( it_2->second.size() );
             object_i.model_name = it->model_id;
             const ObjectSymmetry obj_sym = object_dict_.find(it->model_id)->second;
-            for (std::vector<AcceptedHypothesisWithConfidence>::iterator it_3 = it_2->second.begin(); 
+            for (std::vector<ObjRansacHypothesisEigen>::iterator it_3 = it_2->second.begin(); 
                 it_3 != it_2->second.end(); ++it_3)
             {
                 objrec_hypothesis_msgs::Hypothesis tmp;
-                tmp.match = it_3->match;
-                tmp.model_name = it_3->model_entry->getUserData()->getLabel();
-                // transform: 12 double
-                double *rigid_transform = it_3->rigid_transform;
-                Eigen::Matrix3f rotation;
-                rotation <<
-                    rigid_transform[0], rigid_transform[1], rigid_transform[2],
-                    rigid_transform[3], rigid_transform[4], rigid_transform[5], 
-                    rigid_transform[6], rigid_transform[7], rigid_transform[8];
-                Eigen::Quaternionf q(rotation);
-                tmp.transform.translation.x = rigid_transform[9];
-                tmp.transform.translation.y = rigid_transform[10];
-                tmp.transform.translation.z = rigid_transform[11];
+                tmp.match = it_3->match_;
+                tmp.model_name = it_3->model_type_;
 
-                q = normalizeModelOrientation<float>(q,base_rotation, obj_sym);
+                tmp.transform.translation.x = it_3->t_[0];
+                tmp.transform.translation.y = it_3->t_[1];
+                tmp.transform.translation.z = it_3->t_[2];
+
+                Eigen::Quaternionf q = normalizeModelOrientation<float>(it_3->q_,base_rotation, obj_sym);
                 tmp.transform.rotation.x = q.x();
                 tmp.transform.rotation.y = q.y(); 
                 tmp.transform.rotation.z = q.z(); 
                 tmp.transform.rotation.w = q.w();
 
-                tmp.confidence = it_3->confidence;
+                tmp.confidence = it_3->confidence_;
                 object_i.model_hypothesis.push_back(tmp);
 
                 if (it_3 == it_2->second.begin())
                 {
-                    pcl::PointXYZ p(rigid_transform[9], rigid_transform[10], rigid_transform[11]);
+                    pcl::PointXYZ p(it_3->t_[0], it_3->t_[1], it_3->t_[2]);
                     std::vector< int > k_indices(1);
                     std::vector< float > distances(1);
                     tf_coordinate_tree.nearestKSearch(p, 1, k_indices, distances);
