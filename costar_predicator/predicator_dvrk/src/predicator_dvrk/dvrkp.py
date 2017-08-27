@@ -13,6 +13,7 @@ class dvrkPredicator:
         self.predicate_msg = PredicateList()
 
         self.clutch_pressed = False
+        self.camera_pressed = False
 
         if publish_predicates:
             # create predicator things
@@ -21,6 +22,7 @@ class dvrkPredicator:
 
         if start_subscriber:
             self.sub = rospy.Subscriber("/dvrk/footpedals/clutch",Joy,self.callbackClutch)
+            self.sub2 = rospy.Subscriber("/dvrk/footpedals/camera",Joy,self.callbackCamera)
             #self.sub2 = rospy.Subscriber("/dvrk/footpedals/coag",Joy,self.callback)
             #self.sub3 = rospy.Subscriber("/dvrk/footpedals/camera_plus",Joy,self.callback)
             #self.sub4 = rospy.Subscriber("/dvrk/footpedals/camera_minus",Joy,self.callback)
@@ -37,6 +39,16 @@ class dvrkPredicator:
             elif msg.buttons[0] == 0:
                 self.clutch_pressed = False
         print "clutch pedal status:", self.clutch_pressed
+
+    def callbackCamera(self, msg):
+        # if this is for the clutch -- set clutch pressed
+        if len(msg.buttons) > 0:
+            if msg.buttons[0] == 1:
+                # clutch pressed
+                self.camera_pressed = True
+            elif msg.buttons[0] == 0:
+                self.camera_pressed = False
+        print "camera pedal status:", self.camera_pressed
 	
     '''
     add a single message
@@ -53,6 +65,8 @@ class dvrkPredicator:
         self.predicate_msg.pheader.source = self.name
         if self.clutch_pressed:
             self.addPredicate("pressed","clutch")
+        if self.camera_pressed:
+            self.addPredicate("pressed","camera")
         self.pub.publish(self.predicate_msg)
         self.vpub.publish(self.valid_predicates)
 

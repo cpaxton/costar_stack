@@ -3,7 +3,7 @@
   <!-- dvrk bringup -->
   <arg name="master" default="MTMR"/>
   <arg name="slave" default="PSM1"/>
-  <arg name="console_config" default="$(find dvrk_config)/jhu-dVRK/console-MTMR-PSM1-MTML-PSM2-Teleop.json"/>
+  <arg name="arms_config" default="$(find dvrk_config)/jhu-dVRK/console-MTMR-PSM1-MTML-PSM2-Teleop.json"/>
 
   <!-- set to dvrk to hide extra options -->
   <arg name="case" default=""/>
@@ -11,7 +11,7 @@
   <include file="$(find dvrk_robot)/launch/dvrk_master_slave_rviz.launch">
     <arg name="master" value="$(arg master)"/>
     <arg name="slave" value="$(arg slave)"/>
-    <arg name="config" value="$(arg console_config)"/>
+    <arg name="config" value="$(arg arms_config)"/>
   </include>
 
   <!-- CoSTAR bringup -->

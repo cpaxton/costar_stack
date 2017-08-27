@@ -166,7 +166,11 @@ class CostarPSMDriver(CostarArm):
     def servo_to_pose_cb(self,req):
         if self.driver_status == 'SERVO':
             print(req.target)
-            T = pm.fromMsg(req.target)
+            T_temp = pm.fromMsg(req.target)
+            #frame_offset = PyKDL.Frame(PyKDL.Rotation.RPY(-1.569,1.571,-1.395), PyKDL.Vector(0,0,0))
+            # frame_offset = PyKDL.Frame(PyKDL.Rotation.RPY(-1.569,1.571,-1.219), PyKDL.Vector(0,0,0))
+            frame_offset = PyKDL.Frame(PyKDL.Rotation.RPY(-1.569,1.571,-1.435), PyKDL.Vector(0,0,0))
+            T = T_temp * frame_offset
             self.dvrk_arm.move(T)
             return 'SUCCESS - moved to pose'
 
