@@ -243,7 +243,7 @@ class Predicator(object):
     def get_predicates_by_assignment(self, req):
         msg = GetTypedListResponse()
         if req.id in self._predicates_by_assignment.keys():
-            msg.data = self._predicates_by_assignment[req.id]
+            msg.data = list(self._predicates_by_assignment[req.id])
         
         return msg
 
@@ -306,11 +306,15 @@ class Predicator(object):
             '''
 
         self._sources.add(msg.pheader.source)
-        self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates + msg.value_predicates]
+        self._predicates_by_source[msg.pheader.source] = [item for item in msg.predicates]
         self._assignments_by_source[msg.pheader.source] = [item for item in msg.assignments]
         for item in msg.assignments:
-            self._predicates_by_assignment[item] = [item2 for item2 in msg.predicates + msg.value_predicates]
+            if item not in self._predicates_by_assignment:
+                self._predicates_by_assignment[item] = set()
+            for item2 in msg.predicates:
+                self._predicates_by_assignment[item].add(item2)
         for i in range(len(msg.predicate_length)):
+            # TODO(cpaxton): check this length
             self._lengths[msg.predicates[i]] = msg.predicate_length[i]
 
     def get_sources(self, req):

@@ -18,6 +18,10 @@ class CostarGripper(CostarComponent):
       *args, **kwargs):
 
     self.verbose = verbose
+    self.predicator = GripperPredicatorType(
+        start_subscriber=False,
+        publish_predicates=True,
+        gripper_name=name)
 
     if GripperPredicatorType is not None:
       self.predicator = GripperPredicatorType(

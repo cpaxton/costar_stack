@@ -8,7 +8,8 @@ OPTION(BUILD_USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
 OPTION(BUILD_PYTHON_BINDING "Build Python Binding" OFF)
 OPTION(BUILD_ENABLE_TRACKING "Build Enable Tracking Keypoints (EXPERIMENTAL)" OFF)
 
-OPTION(BUILD_SCENE_PARSING_SUPPORT "Build with Scene Parsing Hypothesis Message (EXPERIMENTAL)" ON)
+OPTION(BUILD_SCENE_PARSING_SUPPORT
+  "Build with Scene Parsing Hypothesis Message (EXPERIMENTAL)" OFF)
 
 # Enable C++11
 include(CheckCXXCompilerFlag)

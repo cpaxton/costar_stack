@@ -70,10 +70,10 @@ protected:
     void initializeSemanticSegmentationFromRosParam();
     void populateTFMap(std::vector<objectTransformInformation> all_poses);
 
-#ifdef SCENE_PARSING
-    objrec_hypothesis_msgs::AllModelHypothesis generateAllModelHypothesis() const;
     costar_objrec_msgs::DetectedObjectList last_object_list_;
     sensor_msgs::PointCloud2 last_segmented_cloud_;
+#ifdef SCENE_PARSING
+    objrec_hypothesis_msgs::AllModelHypothesis generateAllModelHypothesis() const;
     bool getLastHypotheses (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 #endif
 
