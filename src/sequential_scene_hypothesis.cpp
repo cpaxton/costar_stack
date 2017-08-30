@@ -214,7 +214,7 @@ bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_
 	}
 
 	std::cerr << " number of obstructed points: " << num_point_obstructed << "/" << model_cloud->size() << std::endl;
-	return num_point_obstructed > 0.6 * model_cloud->size();
+	return num_point_obstructed > 0.4 * model_cloud->size();
 }
 
 bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &object_name,
@@ -247,14 +247,15 @@ bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &object_na
 	Object target_model = obj_database_->getObjectProperty(model_name);
 	col_obj->setCollisionShape(target_model.getCollisionShape());
 	col_obj->setWorldTransform(object_pose);
-	
+	// Replace AABB with OBB!!
 	OverlappingObjectSensor result(*col_obj, object_name);
 	this->physics_engine_->contactTest(col_obj,result);
 
 	delete col_obj;
-	std::cerr << "Overlaps: " << result.total_penetration_depth_ << "; " << result.total_intersecting_volume_ << std::endl;
+	std::cerr << "Overlaps: " << result.total_penetration_depth_ << "; " << result.total_intersecting_volume_ 
+		<< " >? " << 0.3 * result.bounding_box_volume_ << std::endl;
 
-	return false;
+	return result.total_intersecting_volume_ > 0.3 * result.bounding_box_volume_;
 }
 
 

@@ -124,6 +124,8 @@ void assignAllConnectedToParentVertices(SceneSupportGraph &input_graph, const ve
 
 btAABB getCollisionAABB(const btCollisionObject* obj, const btManifoldPoint &pt, const bool &is_body_0, int &shape_index);
 
+double getBoundingBoxVolume(const btAABB &shapeAABB);
+
 double getIntersectingVolume(const btAABB &shapeAABB_a, const btAABB &shapeAABB_b);
 
 SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world, 

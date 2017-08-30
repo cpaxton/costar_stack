@@ -155,7 +155,13 @@ double getIntersectingVolume(const btAABB &shapeAABB_a, const btAABB &shapeAABB_
 {
     btAABB intersecting_box;
     shapeAABB_a.find_intersection(shapeAABB_b,intersecting_box);
-    btVector3 &m_min = intersecting_box.m_min, &m_max = intersecting_box.m_max;
+
+    return getBoundingBoxVolume(intersecting_box);
+}
+
+double getBoundingBoxVolume(const btAABB &shapeAABB)
+{
+    const btVector3 &m_min = shapeAABB.m_min, &m_max = shapeAABB.m_max;
     double volume = 1;
     for (int i = 0; i < 3 ; i++) volume *= m_max[i] - m_min[i];
     return std::abs(volume);

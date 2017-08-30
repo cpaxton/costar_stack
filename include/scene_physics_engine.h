@@ -177,6 +177,7 @@ struct OverlappingObjectSensor : public btCollisionWorld::ContactResultCallback
 	std::string object_id_;
 	double total_intersecting_volume_;
 	double total_penetration_depth_;
+	double bounding_box_volume_;
 
 	//! Called with each contact for your own processing (e.g. test if contacts fall in within sensor parameters)
 	virtual btScalar addSingleResult(btManifoldPoint& cp,
@@ -188,25 +189,30 @@ struct OverlappingObjectSensor : public btCollisionWorld::ContactResultCallback
 
 		btVector3 pt; // will be set to point of collision relative to body
 		std::string other_id;
+		bool other_object_is_1;
 		if (colObj0->m_collisionObject==&body_)
 		{
 			pt = cp.m_localPointA;
+			other_object_is_1 = true;
 			other_id = getObjectIDFromCollisionObject(obj_1);
 		}
 		else
 		{
 			assert(colObj1->m_collisionObject==&body_ && "body does not match either collision object");
 			pt = cp.m_localPointB;
+			other_object_is_1 = false;
 			other_id = getObjectIDFromCollisionObject(obj_0);
 		}
 
+        btAABB shapeAABB_0 = getCollisionAABB(colObj0->getCollisionObject(), cp, true, index0);
+        btAABB shapeAABB_1 = getCollisionAABB(colObj1->getCollisionObject(), cp, false, index1);
+		bounding_box_volume_ = other_object_is_1 ? getBoundingBoxVolume(shapeAABB_0) : getBoundingBoxVolume(shapeAABB_1);
 		if (other_id == "unrecognized_object" || other_id == "background" || other_id == object_id_) return 0;
 
 		// do stuff with the collision point
 		total_penetration_depth_ += cp.getDistance() < 0 ? -cp.getDistance() : 0;
-        btAABB shapeAABB_0 = getCollisionAABB(colObj0->getCollisionObject(), cp, true, index0);
-        btAABB shapeAABB_1 = getCollisionAABB(colObj1->getCollisionObject(), cp, false, index1);
-
+        
+		
         total_intersecting_volume_ += getIntersectingVolume(shapeAABB_0,shapeAABB_1);
 		
 		return 0; // There was a planned purpose for the return value of addSingleResult, but it is not used so you can ignore it.
