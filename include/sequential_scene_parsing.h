@@ -66,6 +66,8 @@ public:
 			btScalar(forces_magnitude_per_point),btScalar(max_point_distance_threshold));
 	}
 
+	ObjectDatabase obj_database_;
+
 private:
 	void getCurrentSceneSupportGraph();
 	void getUpdatedSceneSupportGraph();

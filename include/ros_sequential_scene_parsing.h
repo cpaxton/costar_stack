@@ -50,7 +50,8 @@ private:
 	void addSceneCloud(const sensor_msgs::PointCloud2 &pc);
 	void updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects);
 	void fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses);
-	void processHypothesis();
+	void processDetectedObjectMsgs();
+	void processHypotheses();
 	void updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map);
 
 	// void initialize();
@@ -63,8 +64,13 @@ private:
 	bool has_scene_cloud_;
 
 	bool scene_cloud_updated_;
+	bool object_list_received_;
 	bool object_list_updated_;
+	bool hypothesis_list_received_;
 	bool best_hypothesis_only_;
+
+	costar_objrec_msgs::DetectedObjectList detected_objects_;
+	objrec_hypothesis_msgs::AllModelHypothesis detected_object_hypotheses_;
 
 	// Background mode: 0 = BACKGROUND_PLANE, 1 = BACKGROUND_HULL, 2 = BACKGROUND_MESH
 	int background_mode_;
@@ -84,7 +90,6 @@ private:
 	std::string parent_frame_;
 	std::string tf_z_is_inverse_gravity_direction_;
 	std::string tf_publisher_initial;
-	ObjectDatabase obj_database_;
 	std::map<std::string, PhysicalProperties> physical_properties_database_;
 
 	boost::mutex mtx_;

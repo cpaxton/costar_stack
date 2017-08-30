@@ -137,16 +137,19 @@ void RosSceneHypothesisAssessor::addBackgroundCallback(const sensor_msgs::PointC
 
 void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &pc)
 {
-	std::cerr << "Adding scene points.\n";
+	ROS_INFO("Scene point cloud received.");
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
 	pcl::fromROSMsg(pc, *cloud);
 	if (!cloud->empty())
 	{
-		this->has_scene_cloud_ = true;
 		this->mtx_.lock();
+		this->has_scene_cloud_ = true;
 		this->addScenePointCloud(cloud);
-		this->mtx_.unlock();
 		this->scene_cloud_updated_ = true;
+		this->mtx_.unlock();
+
+		if (object_list_received_) this->processDetectedObjectMsgs();
+		if (hypothesis_list_received_) this->processHypotheses();	
 	}
 	else
 	{
@@ -157,14 +160,101 @@ void RosSceneHypothesisAssessor::addSceneCloud(const sensor_msgs::PointCloud2 &p
 
 void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detected_objects)
 {
-	while (!this->scene_cloud_updated_)
+	ROS_INFO("Detected object list received.");
+	mtx_.lock();
+	detected_objects_ = detected_objects;
+	object_list_received_ = true;
+	mtx_.unlock();
+	if (object_list_received_) this->processDetectedObjectMsgs();
+	if (hypothesis_list_received_) this->processHypotheses();
+}
+
+void RosSceneHypothesisAssessor::updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map)
+{
+	this->object_transforms_tf_.clear();
+	for (std::map<std::string, ObjectParameter>::const_iterator it = input_tf_map.begin(); 
+		it != input_tf_map.end(); ++it)
+	{
+		std::stringstream ss;
+		tf::Transform tf_transform;
+		tf_transform = convertBulletTFToRosTF(it->second);
+		ss << this->tf_publisher_initial << "/" << it -> first;
+		object_transforms_tf_[ss.str()] = tf_transform;
+	}
+}
+
+void RosSceneHypothesisAssessor::publishTf()
+{
+	if (!this->has_tf_) return;
+
+	for (std::map<std::string, tf::Transform>::const_iterator it = this->object_transforms_tf_.begin(); 
+		it != this->object_transforms_tf_.end(); ++it)
+	{
+		this->tf_broadcaster_.sendTransform(tf::StampedTransform(it->second,ros::Time::now(),
+			this->parent_frame_,it->first) );
+	}
+}
+
+void RosSceneHypothesisAssessor::setDebugMode(bool debug)
+{
+	this->setDebug(debug);
+	this->physics_engine_.setDebugMode(debug);
+	this->obj_database_.setDebugMode(debug);
+}
+
+bool RosSceneHypothesisAssessor::fillObjectPropertyDatabase()
+{
+	if (! this->nh_.hasParam("object_property")) return false;
+	XmlRpc::XmlRpcValue object_params;
+	// std::map< std::string, std::string > object_params;
+	this->nh_.getParam("object_property", object_params);
+	for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = object_params.begin(); it != object_params.end(); ++it)
+	{
+		std::string object_name = it->first;
+		std::cerr << "Found object property: " << object_name << std::endl;
+		double mass, friction, rolling_friction;
+		mass = object_params[it->first]["mass"];
+		friction = object_params[it->first]["mass"];
+		rolling_friction = object_params[it->first]["mass"];
+		this->physical_properties_database_[object_name] = PhysicalProperties(mass,friction,rolling_friction);
+	}
+	return true;
+}
+
+void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses)
+{
+	ROS_INFO("Object Hypotheses received.");
+	mtx_.lock();
+	hypothesis_list_received_ = true;
+	detected_object_hypotheses_ = detected_object_hypotheses;
+	mtx_.unlock();
+	if (object_list_received_) this->processDetectedObjectMsgs();
+	if (hypothesis_list_received_) this->processHypotheses();	
+}
+
+void RosSceneHypothesisAssessor::processDetectedObjectMsgs()
+{
+	std::cerr << "Trying to process detected object list.\n";
+	mtx_.lock();
+	if (!this->scene_cloud_updated_)
 	{
 		// wait for the scene cloud to be updated
-		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+		// boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 		std::cerr << "Waiting for scene cloud update.\n";
+		mtx_.unlock();
 		return;
 	}
+	else if (!this->object_list_received_)
+	{
+		std::cerr << "Waiting for new object list data.\n";
+		mtx_.unlock();
+		return;
+	}
+
+	this->object_list_received_ = false;
 	this->scene_cloud_updated_ = false;
+	const costar_objrec_msgs::DetectedObjectList detected_objects = detected_objects_;
+	mtx_.unlock();
 
 	std::cerr << "Updating scene based on detected object message.\n";
 	std::vector<ObjectWithID> objects;
@@ -253,71 +343,32 @@ void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_
 
 	std::cerr << "Published tf with parent frame: "<< this->parent_frame_ << "\n";
 	std::cerr << "Done. Waiting for new detected object message...\n";
-
 }
 
-void RosSceneHypothesisAssessor::updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map)
+void RosSceneHypothesisAssessor::processHypotheses()
 {
-	this->object_transforms_tf_.clear();
-	for (std::map<std::string, ObjectParameter>::const_iterator it = input_tf_map.begin(); 
-		it != input_tf_map.end(); ++it)
-	{
-		std::stringstream ss;
-		tf::Transform tf_transform;
-		tf_transform = convertBulletTFToRosTF(it->second);
-		ss << this->tf_publisher_initial << "/" << it -> first;
-		object_transforms_tf_[ss.str()] = tf_transform;
-	}
-}
+	std::cerr << "Trying to process object hypotheses.\n";
 
-void RosSceneHypothesisAssessor::publishTf()
-{
-	if (!this->has_tf_) return;
-
-	for (std::map<std::string, tf::Transform>::const_iterator it = this->object_transforms_tf_.begin(); 
-		it != this->object_transforms_tf_.end(); ++it)
-	{
-		this->tf_broadcaster_.sendTransform(tf::StampedTransform(it->second,ros::Time::now(),
-			this->parent_frame_,it->first) );
-	}
-}
-
-void RosSceneHypothesisAssessor::setDebugMode(bool debug)
-{
-	this->setDebug(debug);
-	this->physics_engine_.setDebugMode(debug);
-	this->obj_database_.setDebugMode(debug);
-}
-
-bool RosSceneHypothesisAssessor::fillObjectPropertyDatabase()
-{
-	if (! this->nh_.hasParam("object_property")) return false;
-	XmlRpc::XmlRpcValue object_params;
-	// std::map< std::string, std::string > object_params;
-	this->nh_.getParam("object_property", object_params);
-	for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = object_params.begin(); it != object_params.end(); ++it)
-	{
-		std::string object_name = it->first;
-		std::cerr << "Found object property: " << object_name << std::endl;
-		double mass, friction, rolling_friction;
-		mass = object_params[it->first]["mass"];
-		friction = object_params[it->first]["mass"];
-		rolling_friction = object_params[it->first]["mass"];
-		this->physical_properties_database_[object_name] = PhysicalProperties(mass,friction,rolling_friction);
-	}
-	return true;
-}
-
-void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_msgs::AllModelHypothesis &detected_object_hypotheses)
-{
-	while (!this->object_list_updated_)
+	mtx_.lock();
+	if (!this->object_list_updated_)
 	{
 		// wait for the scene cloud to be updated
-		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+		// boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 		std::cerr << "Waiting for object list update.\n";
+		mtx_.unlock();
+		return;
+	}
+	else if (!this->hypothesis_list_received_)
+	{
+		std::cerr << "Waiting for new hypotheses data.\n";
+		mtx_.unlock();
 		return;
 	}
 	this->object_list_updated_ = false;
+	this->hypothesis_list_received_ = false;
+	const objrec_hypothesis_msgs::AllModelHypothesis detected_object_hypotheses = detected_object_hypotheses_;
+	mtx_.unlock();
+
 	std::cerr << "Received input hypotheses list.\n";
 	if (best_hypothesis_only_)
 	{
@@ -366,5 +417,3 @@ void RosSceneHypothesisAssessor::fillObjectHypotheses(const objrec_hypothesis_ms
 
 	this->mtx_.unlock();
 }
-
-
