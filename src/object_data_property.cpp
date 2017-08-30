@@ -74,6 +74,11 @@ btVector3 Object::getInertiaVector() const
 	return this->physical_properties_.inertia_;
 }
 
+objectShapePtr Object::getCollisionShape() const
+{
+	return this->mesh_;
+}
+
 void ObjectWithID::assignPhysicalPropertyFromObject(const Object &input)
 {
 	this->shallowCopy(input);
@@ -107,7 +112,7 @@ btTransform ObjectWithID::getTransform() const
 	return this->transform_;
 }
 
-void ObjectDatabase::setObjectFolderLocation(std::string file_location)
+void ObjectDatabase::setObjectFolderLocation(const std::string &file_location)
 {
 	this->file_location_ = file_location;
 }
@@ -178,12 +183,12 @@ std::size_t ObjectDatabase::loadDatabase(const std::map<std::string, PhysicalPro
 	return unsuccessful_object_count;
 }
 
-Object ObjectDatabase::getObjectProperty(std::string object_name) const
+Object ObjectDatabase::getObjectProperty(const std::string &object_name) const
 {
 	return getContentOfConstantMap(object_name,this->database_);
 }
 
-bool ObjectDatabase::objectExistInDatabase(std::string object_name) const
+bool ObjectDatabase::objectExistInDatabase(const std::string &object_name) const
 {
 	return keyExistInConstantMap(object_name,this->database_);
 }

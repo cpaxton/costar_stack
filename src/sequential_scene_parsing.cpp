@@ -20,6 +20,9 @@ void SceneHypothesisAssessor::setPhysicsEngine(PhysicsEngine* physics_engine)
 	{
 		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH);
 	}
+
+	sequential_scene_hypothesis_.setPhysicsEngine(physics_engine);
+	sequential_scene_hypothesis_.setObjDatabasePtr(&this->obj_database_);
 }
 
 void SceneHypothesisAssessor::addBackground(ImagePtr background_image, int mode)

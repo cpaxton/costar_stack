@@ -13,6 +13,8 @@
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
 
+#include "object_data_property.h"
+#include "scene_physics_engine.h"
 #include "scene_physics_support.h"
 #include "scene_data_forces.h"
 // #include "ObjRecRANSACTool/ObjRecRANSACTool.h"
@@ -153,6 +155,10 @@ public:
 
 	void setSceneData(pcl::PointCloud<pcl::PointXYZ>::Ptr scene_point_cloud);
 
+	void setPhysicsEngine(PhysicsEngine* physics_engine);
+
+	void setObjDatabasePtr(ObjectDatabase* obj_database);
+
 private:
 	SceneChanges findChanges();
 	SceneChanges analyzeChanges();
@@ -174,7 +180,7 @@ private:
 	int updateRemovedObjectStatus(const std::string &object_name, const std::string &model_name, const btTransform &object_pose);
 	bool checkObjectVisible(const std::string &model_name, const btTransform &object_pose);
 	bool checkObjectObstruction(const std::string &model_name, const btTransform &object_pose);
-	bool checkObjectReplaced(const std::string &model_name, const btTransform &object_pose);
+	bool checkObjectReplaced(const std::string &object_name, const std::string &model_name, const btTransform &object_pose);
 
 	// minimum objRecRANSAC confidence for the old hypothesis
 	double minimum_data_probability_threshold_;
@@ -195,6 +201,9 @@ private:
 	Eigen::Matrix<double,3,4> backprojection_matrix_;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr scene_point_cloud_;
 	Eigen::MatrixXd scene_image_pixel_;
+
+	PhysicsEngine * physics_engine_;
+	ObjectDatabase * obj_database_;
 };
 
 #endif

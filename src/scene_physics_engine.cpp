@@ -846,6 +846,11 @@ void PhysicsEngine::setIgnoreDataForces(const std::string &object_id, bool value
 	this->ignored_data_forces_[object_id] = value;
 }
 
+void PhysicsEngine::contactTest(btCollisionObject* col_object, btCollisionWorld::ContactResultCallback& result)
+{
+	m_dynamicsWorld->contactTest(col_object, result);
+}
+
 void PhysicsEngine::applyDataForces()
 {
 	

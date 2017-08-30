@@ -9,6 +9,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/graph/graphviz.hpp>
 
+#include <BulletCollision/CollisionDispatch/btCollisionWorld.h>
+
 // Rendering platform
 #ifdef _WINDOWS
 #include "debugdrawer/Win32DemoApplication.h"
@@ -34,11 +36,11 @@ class PhysicsEngine : public PlatformDemoApplication
 public:
 	PhysicsEngine();
 	virtual ~PhysicsEngine()
-    {
-        exitPhysics();
-    }
+	{
+		exitPhysics();
+	}
 
-    GLDebugDrawer gDebugDraw;
+	GLDebugDrawer gDebugDraw;
 	// use plane as background (table)
 	void addBackgroundPlane(btVector3 plane_normal, btScalar plane_constant, btVector3 plane_center);
 	void addBackgroundConvexHull(const std::vector<btVector3> &plane_points, btVector3 plane_normal);
@@ -73,38 +75,40 @@ public:
 	
 	// vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
 	void stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step);
-    void worldTickCallback(const btScalar &timeStep);
+	void worldTickCallback(const btScalar &timeStep);
 
-    void setFeedbackDataForcesGenerator(FeedbackDataForcesGenerator *data_forces_generator);
+	void setFeedbackDataForcesGenerator(FeedbackDataForcesGenerator *data_forces_generator);
 
-    std::map<std::string, btTransform>  getAssociatedBestPoseDataFromStringVector(
-    	const std::vector<std::string> &input, bool use_best_test_data = false);
-    void removeAllRigidBodyFromWorld();
-    void addExistingRigidBodyBackFromMap(const std::string &object_id, const btTransform &object_pose);
-    void addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies);
-    void removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies);
+	std::map<std::string, btTransform>  getAssociatedBestPoseDataFromStringVector(
+		const std::vector<std::string> &input, bool use_best_test_data = false);
+	void removeAllRigidBodyFromWorld();
+	void addExistingRigidBodyBackFromMap(const std::string &object_id, const btTransform &object_pose);
+	void addExistingRigidBodyBackFromMap(const std::map<std::string, btTransform> &rigid_bodies);
+	void removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies);
 
-    void setIgnoreDataForces(const std::string &object_id, bool value);
+	void setIgnoreDataForces(const std::string &object_id, bool value);
+
+	void contactTest(btCollisionObject* col_object, btCollisionWorld::ContactResultCallback& result);
 
 // Additional functions used for rendering:
-    void initPhysics();
-    void exitPhysics();
+	void initPhysics();
+	void exitPhysics();
 
-    virtual void clientMoveAndDisplay();
+	virtual void clientMoveAndDisplay();
 
-    virtual void displayCallback();
-    virtual void clientResetScene();
+	virtual void displayCallback();
+	virtual void clientResetScene();
 
-    virtual void setCameraClippingPlaneNearFar(btScalar near, btScalar far = 10000.f);
-    virtual void setCameraPositionAndTarget(btVector3 cam_position, btVector3 cam_target);
+	virtual void setCameraClippingPlaneNearFar(btScalar near, btScalar far = 10000.f);
+	virtual void setCameraPositionAndTarget(btVector3 cam_position, btVector3 cam_target);
 
-    static DemoApplication* Create()
-    {
-        PhysicsEngine* demo = new PhysicsEngine;
-        // demo->myinit();
-        demo->initPhysics();
-        return demo;
-    }
+	static DemoApplication* Create()
+	{
+		PhysicsEngine* demo = new PhysicsEngine;
+		// demo->myinit();
+		demo->initPhysics();
+		return demo;
+	}
 
 private:
 	void simulate();
@@ -135,19 +139,19 @@ private:
 	btCollisionDispatcher* m_dispatcher;
 	btSequentialImpulseConstraintSolver* m_solver;
 	// DO NOT DECLARE m_dynamicworld here. It will break OPENGL simulation
-    btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
+	btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
 	
 	std::map<std::string, ObjectPenaltyParameters> object_penalty_parameter_database_by_id_;
-    std::map<std::string, ObjectPenaltyParameters> * object_penalty_parameter_database_;
-    std::map<std::string, std::string> object_label_class_map_;
-    
-    double gravity_magnitude_;
-    btVector3 gravity_vector_;
-    
-    std::map<std::string, MovementComponent> object_velocity_;
-    std::map<std::string, MovementComponent> object_acceleration_;
-    SceneSupportGraph scene_graph_;
-    std::map<std::string, vertex_t> vertex_map_;
+	std::map<std::string, ObjectPenaltyParameters> * object_penalty_parameter_database_;
+	std::map<std::string, std::string> object_label_class_map_;
+	
+	double gravity_magnitude_;
+	btVector3 gravity_vector_;
+	
+	std::map<std::string, MovementComponent> object_velocity_;
+	std::map<std::string, MovementComponent> object_acceleration_;
+	SceneSupportGraph scene_graph_;
+	std::map<std::string, vertex_t> vertex_map_;
 
 	btVector3 camera_coordinate_, target_coordinate_;
 	double simulation_step_;
@@ -161,6 +165,57 @@ private:
 
 	double best_scene_probability_;
 	FeedbackDataForcesGenerator * data_forces_generator_;
+};
+
+struct OverlappingObjectSensor : public btCollisionWorld::ContactResultCallback
+{
+	OverlappingObjectSensor(btCollisionObject& col_obj, const std::string &object_name): 
+		btCollisionWorld::ContactResultCallback(), body_(col_obj), object_id_(object_name),
+		total_intersecting_volume_(0.), total_penetration_depth_(0.) {}
+
+	btCollisionObject& body_;
+	std::string object_id_;
+	double total_intersecting_volume_;
+	double total_penetration_depth_;
+
+	//! Called with each contact for your own processing (e.g. test if contacts fall in within sensor parameters)
+	virtual btScalar addSingleResult(btManifoldPoint& cp,
+		const btCollisionObjectWrapper* colObj0,int partId0,int index0,
+		const btCollisionObjectWrapper* colObj1,int partId1,int index1)
+	{
+		const btCollisionObject* obj_0 = colObj0->getCollisionObject();
+		const btCollisionObject* obj_1 = colObj1->getCollisionObject();
+
+		btVector3 pt; // will be set to point of collision relative to body
+		std::string other_id;
+		if (colObj0->m_collisionObject==&body_)
+		{
+			pt = cp.m_localPointA;
+			other_id = getObjectIDFromCollisionObject(obj_1);
+		}
+		else
+		{
+			assert(colObj1->m_collisionObject==&body_ && "body does not match either collision object");
+			pt = cp.m_localPointB;
+			other_id = getObjectIDFromCollisionObject(obj_0);
+		}
+
+		if (other_id == "unrecognized_object" || other_id == "background" || other_id == object_id_) return 0;
+
+		// do stuff with the collision point
+		total_penetration_depth_ += cp.getDistance() < 0 ? -cp.getDistance() : 0;
+        btAABB shapeAABB_0 = getCollisionAABB(colObj0->getCollisionObject(), cp, true, index0);
+        btAABB shapeAABB_1 = getCollisionAABB(colObj1->getCollisionObject(), cp, false, index1);
+
+        total_intersecting_volume_ += getIntersectingVolume(shapeAABB_0,shapeAABB_1);
+		
+		return 0; // There was a planned purpose for the return value of addSingleResult, but it is not used so you can ignore it.
+	}
+
+	bool checkOverlapWithinThreshold(const double &max_depth_penetration, const double &max_volume_penetration)
+	{
+		return (total_penetration_depth_ < max_depth_penetration) && (total_intersecting_volume_ < max_volume_penetration);
+	}
 };
 
 #endif

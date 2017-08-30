@@ -229,8 +229,8 @@ SceneSupportGraph generateObjectSupportGraph(btDynamicsWorld *world,
                     obj_b_normal_sum += -pt.getDistance() * pt.m_appliedImpulse * pt.m_normalWorldOnB.dot(gravity)/SCALING;
                     
                     // get intersecting AABB
-                    shapeAABB_a = getCollisionAABB(obj_a, pt, true, shape_index_a);
-                    shapeAABB_b = getCollisionAABB(obj_b, pt, false, shape_index_b);
+                    // shapeAABB_a = getCollisionAABB(obj_a, pt, true, shape_index_a);
+                    // shapeAABB_b = getCollisionAABB(obj_b, pt, false, shape_index_b);
 
                     // total_volume_penetration += getIntersectingVolume(shapeAABB_a,shapeAABB_b);
                 }

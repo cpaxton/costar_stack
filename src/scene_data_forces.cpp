@@ -198,6 +198,7 @@ void FeedbackDataForcesGenerator::setSceneData(PointCloudXYZPtr scene_data)
 	if (scene_data->size() > 0)
 	{
 		this->have_scene_data_ = true;
+
 		this->scene_data_ = scene_data;
 		// make a new scene data tree to ensure safer variable deletion
 		scene_data_tree_ = pcl::KdTreeFLANN<pcl::PointXYZ>();
@@ -216,7 +217,12 @@ void FeedbackDataForcesGenerator::setModelCloud(const PointCloudXYZPtr mesh_surf
 {
 	if (mesh_surface_sampled_cloud->size() > 0)
 	{
-		this->model_cloud_map_[model_name] =  mesh_surface_sampled_cloud;
+		PointCloudXYZPtr downsampled_scene_data(new PointCloudXYZ());
+		pcl::VoxelGrid<pcl::PointXYZ> sor;
+		sor.setInputCloud(mesh_surface_sampled_cloud);
+		sor.setLeafSize(0.003f,0.003f,0.003f);
+		sor.filter(*downsampled_scene_data);
+		this->model_cloud_map_[model_name] =  downsampled_scene_data;
 		this->gravity_force_per_point_[model_name] = SCALED_GRAVITY_MAGNITUDE / mesh_surface_sampled_cloud->size();
 	}
 	else
@@ -354,8 +360,8 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::generateCorrespondenceCloud(PointC
 double FeedbackDataForcesGenerator::getIcpConfidenceResult(const PointCloudXYZPtr icp_result,
 	const double &voxel_size) const
 {
-	// If voxel size used is 3mm, the max distance need to be around 3 * sqrt(3) mm.
-	PointCloudXYZPtr nearest_point_correspondence_cloud = generateCorrespondenceCloud(icp_result, true, voxel_size * voxel_size * 3);
+	// If voxel size used is 3mm, the max distance need to be around 0.5 * (3 * sqrt(3)) mm.
+	PointCloudXYZPtr nearest_point_correspondence_cloud = generateCorrespondenceCloud(icp_result, true, voxel_size * voxel_size * 1.5);
 	return double(nearest_point_correspondence_cloud->size())/icp_result->size();
 }
 

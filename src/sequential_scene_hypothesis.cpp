@@ -89,6 +89,16 @@ void SequentialSceneHypothesis::setSceneData(pcl::PointCloud<pcl::PointXYZ>::Ptr
 	this->scene_image_pixel_ = generate2dMatrixFromPixelCoordinate(pixel_matrix);
 }
 
+void SequentialSceneHypothesis::setObjDatabasePtr(ObjectDatabase * obj_database)
+{
+	this->obj_database_ = obj_database;
+}
+
+void SequentialSceneHypothesis::setPhysicsEngine(PhysicsEngine* physics_engine)
+{
+	this->physics_engine_ = physics_engine;
+}
+
 Eigen::MatrixXd SequentialSceneHypothesis::generate2dMatrixFromPixelCoordinate(const Eigen::MatrixXd &pixel_matrix)
 {
 	Eigen::MatrixXd result = Eigen::MatrixXd::Zero(640,480);
@@ -141,17 +151,18 @@ int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &obje
 {
 	enum objectRemovedStatus{REMOVED, NOT_REMOVED, EPHEMERAL};
 
-	bool object_visible = checkObjectVisible(model_name,object_pose);
+	// object is not detected by pose estimator
 	std::cerr << object_name;
-	if (object_visible)
-	{
-		std::cerr << " is visible, thus it will not be removed.\n";
-		return NOT_REMOVED;
-	}
-	else
-	{
-		std::cerr << " is not visible,";
-	}
+	// bool object_visible = checkObjectVisible(model_name,object_pose);
+	// if (object_visible)
+	// {
+	// 	std::cerr << " is visible, thus it will not be removed.\n";
+	// 	return NOT_REMOVED;
+	// }
+	// else
+	// {
+	// 	std::cerr << " is not visible,";
+	// }
 
 	bool object_obstructed = checkObjectObstruction(model_name,object_pose);
 	
@@ -161,7 +172,7 @@ int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &obje
 		return REMOVED;
 	}
 
-	bool object_replaced = checkObjectReplaced(model_name,object_pose);
+	bool object_replaced = checkObjectReplaced(object_name,model_name,object_pose);
 	if (!object_replaced) return EPHEMERAL;
 	else return REMOVED;
 }
@@ -169,7 +180,8 @@ int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &obje
 bool SequentialSceneHypothesis::checkObjectVisible(const std::string &model_name, const btTransform &object_pose)
 {
 	// visible if minimum 5% of the surface is visible
-	return (this->data_probability_check_->getIcpConfidenceResult(model_name, object_pose) > 0.05);
+	std::cerr << " visibility: " << this->data_probability_check_->getIcpConfidenceResult(model_name, object_pose);
+	return (this->data_probability_check_->getIcpConfidenceResult(model_name, object_pose) > 0.20);
 }
 
 bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_name, const btTransform &object_pose)
@@ -202,14 +214,46 @@ bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_
 	}
 
 	std::cerr << " number of obstructed points: " << num_point_obstructed << "/" << model_cloud->size() << std::endl;
-	return num_point_obstructed > 0.5 * model_cloud->size();
+	return num_point_obstructed > 0.6 * model_cloud->size();
 }
 
-bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &model_name, const btTransform &object_pose)
+bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &object_name,
+	const std::string &model_name, const btTransform &object_pose)
 {
 	// use AABB to check if the original object volume has been occupied by something else
 	// TODO: IMPLEMENT THIS!!
 	// use bullet contactTest;
+	if (!obj_database_)
+	{
+		std::cerr << "Error! Cannot check for replaced objects since no object database has been set.\n";
+		return true;
+	}
+	else if (!physics_engine_)
+	{
+		std::cerr << "Error! Cannot check for replaced objects since Physics engine has not been set yet.\n";
+		return true;
+	}
+
+	std::cerr << "Checking replaced objects.\n";
+	if (!obj_database_->objectExistInDatabase(model_name))
+	{
+		std::cerr << "Object " << model_name << " does not exist in database.\n";
+		return true;
+	}
+
+	// check if the object already exist in the world
+	btCollisionObject* col_obj;
+	col_obj = new btCollisionObject();
+	Object target_model = obj_database_->getObjectProperty(model_name);
+	col_obj->setCollisionShape(target_model.getCollisionShape());
+	col_obj->setWorldTransform(object_pose);
+	
+	OverlappingObjectSensor result(*col_obj, object_name);
+	this->physics_engine_->contactTest(col_obj,result);
+
+	delete col_obj;
+	std::cerr << "Overlaps: " << result.total_penetration_depth_ << "; " << result.total_intersecting_volume_ << std::endl;
+
 	return false;
 }
 
@@ -255,8 +299,10 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 		const btTransform &prev_transform = previous_best_scene_hypothesis.scene_support_graph_[prev_obj_vertex].object_pose_;
 
 		const vertex_t &cur_obj_vertex = cur_vertex_map[object_id];
-		const std::size_t dist = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].distance_to_ground_;
+		const std::size_t cur_dist = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].distance_to_ground_;
 		const btTransform &cur_transform = current_best_data_scene_structure_.scene_support_graph_[cur_obj_vertex].object_pose_;
+
+		const std::size_t dist = cur_dist < object_pose_by_dist.size() ? cur_dist :  disconnected_object_dist;
 		
 		const std::string &model_name = object_label_class_map[object_id];
 

@@ -73,6 +73,7 @@ public:
 	// generate rigid body data that can be added to the bullet physics world
 	btRigidBody* generateRigidBody(const btTransform &transform) const;
 	btVector3 getInertiaVector() const;
+	objectShapePtr getCollisionShape() const;
 	// void addSpecialProperty();
 ;
 protected:
@@ -129,7 +130,7 @@ public:
 	~ObjectDatabase();
 
 	// set the folder location that contains the object .bcs file
-	void setObjectFolderLocation(std::string file_location);
+	void setObjectFolderLocation(const std::string &file_location);
 	void setPhysicalPropertyDatabase(const std::map<std::string, PhysicalProperties> &physical_properties_database);
 
 	// add one object to the database. The object file must exist in file_location/object_name.bcs. If true, adding object is successful.
@@ -139,8 +140,8 @@ public:
 
 	// add multiple objects to the database. Returns number of unsuccesful adding object operation
 	std::size_t loadDatabase(const std::map<std::string, PhysicalProperties> &physical_properties_database);
-	Object getObjectProperty(std::string object_name) const;
-	bool objectExistInDatabase(std::string) const;
+	Object getObjectProperty(const std::string &object_name) const;
+	bool objectExistInDatabase(const std::string &object_name) const;
 	std::map<std::string, ObjectPenaltyParameters> * getObjectPenaltyDatabase();
 
 private:
