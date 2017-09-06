@@ -14,7 +14,7 @@ class SceneStructurePublisher:
         self.vpub = rospy.Publisher('/predicator/valid_input', ValidPredicates, queue_size=1000)
         self.valid_msg = ValidPredicates()
         self.valid_msg.pheader.source = rospy.get_name()
-        self.valid_msg.predicates = ['is_base', 'is_part_of_structure', 'is_top_structure']
+        self.valid_msg.predicates = ['is_base_structure', 'is_part_of_structure', 'is_top_structure']
         self.valid_msg.predicate_length = [1, 1, 1]
 
         self.sub = rospy.Subscriber('/scene_structure_list', SceneGraph, self.callback)
@@ -30,7 +30,7 @@ class SceneStructurePublisher:
             structure = msg.structure[idx]
 
             ps = PredicateStatement()
-            ps.predicate = "is_base"
+            ps.predicate = "is_base_structure"
             ps.num_params = 1
             ps.confidence = 1.0
             ps.param_classes.append(object_id)
