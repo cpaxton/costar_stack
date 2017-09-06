@@ -8,6 +8,11 @@
     <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
   </node>
 
+  <!-- detected objects node -->
+  <node pkg="predicator_scene_structure" name="predicator_scene_structure_node" type="scene_structure_node.py">
+    <remap from="/scene_structure_list" to="/sequential_scene_parsing/scene_structure_list"/>
+  </node>
+
   <!-- geometry node -->
   <node name="predicator_geometry_node"
     type="predicator_geometry_node.py"

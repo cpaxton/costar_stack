@@ -38,15 +38,6 @@ class SceneStructurePublisher:
             ps.value = True
             true_msg.statements.append(ps)
 
-            ps = PredicateStatement()
-            ps.predicate = "is_top_structure"
-            ps.num_params = 1
-            ps.confidence = 1.0
-            ps.param_classes.append(object_id)
-            ps.params[0] = object_id
-            ps.value = True
-            true_msg.statements.append(ps)
-
             if len(structure.nodes_level) > 0:
                 ps = PredicateStatement()
                 ps.predicate = "is_part_of_structure"
