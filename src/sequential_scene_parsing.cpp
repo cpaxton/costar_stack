@@ -18,7 +18,8 @@ void SceneHypothesisAssessor::setPhysicsEngine(PhysicsEngine* physics_engine)
 	this->physics_engine_ready_ = (physics_engine_ != NULL);
 	if (this->physics_engine_ready_)
 	{
-		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH);
+		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH,
+			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER), GRAVITY_SCALE_COMPENSATION*10);
 	}
 
 	sequential_scene_hypothesis_.setPhysicsEngine(physics_engine);
@@ -208,11 +209,11 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	seq_mtx_.lock();
 	this->data_forces_generator_.resetCachedIcpResult();
 
-	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
+	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
 		GRAVITY_SCALE_COMPENSATION*10);
 	
 	this->physics_engine_->stepSimulationWithoutEvaluation(0.10 * GRAVITY_SCALE_COMPENSATION, 
-		GRAVITY_SCALE_COMPENSATION/120.);
+		GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 	this->getUpdatedSceneSupportGraph();
 
 	// this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
@@ -270,7 +271,7 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	map_string_transform original_pose_to_test;
 	if (include_prev_observation_)
 	{
-		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
+		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
 			GRAVITY_SCALE_COMPENSATION*30);
 		hypotheses_to_test = 
 			sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(object_test_pose_map_by_dist,
@@ -291,7 +292,7 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 		}
 
 		this->physics_engine_->stepSimulationWithoutEvaluation(0.25 * GRAVITY_SCALE_COMPENSATION, 
-			GRAVITY_SCALE_COMPENSATION/120.);
+			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 		this->getUpdatedSceneSupportGraph();
 
 		// resimulate based on the object structure distance to get the final hypothesis
@@ -306,10 +307,10 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 				this->physics_engine_->addExistingRigidBodyBackFromMap(it->first,original_pose_to_test[it->first]);
 			}
 			this->physics_engine_->stepSimulationWithoutEvaluation(0.5 * GRAVITY_SCALE_COMPENSATION, 
-				GRAVITY_SCALE_COMPENSATION/120.);
+				GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 		}
-		this->physics_engine_->stepSimulationWithoutEvaluation(1.0 * GRAVITY_SCALE_COMPENSATION, 
-			GRAVITY_SCALE_COMPENSATION/120.);
+		this->physics_engine_->stepSimulationWithoutEvaluation(1.5 * GRAVITY_SCALE_COMPENSATION, 
+			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 		this->getUpdatedSceneSupportGraph();
 
 		this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
@@ -395,6 +396,12 @@ bool SceneHypothesisAssessor::loadObjectModels(const std::string &input_model_di
 void SceneHypothesisAssessor::setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map)
 {
 	this->object_symmetry_map_ = object_symmetry_map;
+}
+
+SceneSupportGraph SceneHypothesisAssessor::getSceneGraphData(std::map<std::string, vertex_t> &vertex_map) const
+{
+	vertex_map = this->vertex_map_;
+	return this->scene_support_graph_;
 }
 
 void SceneHypothesisAssessor::setDebug(bool debug)
@@ -744,7 +751,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	}
 	// set the position to the best result for all objects
 	this->physics_engine_->prepareSimulationForWithBestTestPose();
-	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/120.,
+	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
 		GRAVITY_SCALE_COMPENSATION*30);
 	// this->physics_engine_->stepSimulationWithoutEvaluation(.75, 1/120.);
 	this->getUpdatedSceneSupportGraph();

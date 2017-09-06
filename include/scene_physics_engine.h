@@ -57,7 +57,7 @@ public:
 
 	void setObjectPenaltyDatabase(std::map<std::string, ObjectPenaltyParameters> * penalty_database);
 
-	void setSimulationMode(const int &simulation_mode, const double simulation_step = 1./200,
+	void setSimulationMode(const int &simulation_mode, const double simulation_step = 1./120,
 		const unsigned int &number_of_world_tick = 100);
 
 	void setDebugMode(bool debug);

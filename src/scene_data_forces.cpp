@@ -346,10 +346,14 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::generateCorrespondenceCloud(PointC
 	{
 		std::vector< int > k_indices(1);
 		std::vector< float > distances(1);
-		this->scene_data_tree_.nearestKSearch(*input_cloud, i, 1, k_indices, distances);
-		if (!use_filter_distance || (use_filter_distance && distances[0] < max_squared_distance))
+
+		// any neighbor is found
+		if (this->scene_data_tree_.nearestKSearch(*input_cloud, i, 1, k_indices, distances) > 0)
 		{
-			nearest_point_correspondence_cloud->points.push_back(scene_data_->points[k_indices[0]]);
+			if (!use_filter_distance || (use_filter_distance && distances[0] < max_squared_distance))
+			{
+				nearest_point_correspondence_cloud->points.push_back(scene_data_->points[k_indices[0]]);
+			}
 		}
 	}
 	nearest_point_correspondence_cloud->width = nearest_point_correspondence_cloud->size();

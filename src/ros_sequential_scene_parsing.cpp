@@ -76,6 +76,8 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 
 	nh.param("best_hypothesis_only",best_hypothesis_only_,false);
 	nh.param("small_obj_g_comp",GRAVITY_SCALE_COMPENSATION,3);
+	nh.param("sim_freq_multiplier",SIMULATION_FREQUENCY_MULTIPLIER,1.);
+
 	SCALED_GRAVITY_MAGNITUDE = SCALING * GRAVITY_MAGNITUDE / GRAVITY_SCALE_COMPENSATION;
 
 	if (load_table){
@@ -104,6 +106,7 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	this->scene_pcl_sub = this->nh_.subscribe(scene_pcl2_topic,1,&RosSceneHypothesisAssessor::addSceneCloud,this);
 
 	this->done_message_pub = this->nh_.advertise<std_msgs::Empty>("done_hypothesis_msg",1);
+	this->scene_graph_pub = this->nh_.advertise<sequential_scene_parsing::SceneGraph>("scene_structure_list",1);
 
 	// setup objrecransac tool
 	boost::split(object_names,objransac_model_list,boost::is_any_of(","));
@@ -334,6 +337,12 @@ void RosSceneHypothesisAssessor::processDetectedObjectMsgs()
 	std::cerr << "Getting corrected object transform...\n";
 	std::map<std::string, ObjectParameter> object_transforms = this->getCorrectedObjectTransform(best_hypothesis_only_);
 	this->updateTfFromObjTransformMap(object_transforms);
+
+	if (best_hypothesis_only_)
+	{
+		this->scene_graph_pub.publish(this->generateSceneGraphMsgs());
+	}
+
 	this->mtx_.unlock();
 	
 	this->has_tf_ = true;
@@ -415,5 +424,44 @@ void RosSceneHypothesisAssessor::processHypotheses()
 	std_msgs::Empty done_msg;
 	this->done_message_pub.publish(done_msg);
 
+	this->scene_graph_pub.publish(this->generateSceneGraphMsgs());
+
 	this->mtx_.unlock();
 }
+
+
+sequential_scene_parsing::SceneGraph RosSceneHypothesisAssessor::generateSceneGraphMsgs() const
+{
+	std::map<std::string, vertex_t> vertex_map;
+	SceneSupportGraph current_graph = this->getSceneGraphData(vertex_map);
+	std::vector<vertex_t> all_base_structs = getAllChildVertices(current_graph, vertex_map["background"]);
+	sequential_scene_parsing::SceneGraph structure_graph_msg;
+	structure_graph_msg.structure.reserve(all_base_structs.size());
+	structure_graph_msg.base_objects_id.reserve(all_base_structs.size());
+	for (std::vector<vertex_t>::const_iterator it = all_base_structs.begin(); it != all_base_structs.end(); ++it)
+	{
+		sequential_scene_parsing::StructureGraph new_structure;
+		OrderedVertexVisitor all_connected_structures = getOrderedVertexList(current_graph, *it, true);
+		std::map<std::size_t, std::vector<vertex_t> > vertex_visit_by_distances = all_connected_structures.getVertexVisitOrderByDistances();
+		for (std::map<std::size_t, std::vector<vertex_t> >::const_iterator dist_it = vertex_visit_by_distances.begin();
+			dist_it != vertex_visit_by_distances.end(); ++dist_it)
+		{
+			// Do nothing for disconnected vertices;
+			if (dist_it->first == 0) continue;
+
+			sequential_scene_parsing::SceneNodes nodes;
+			nodes.object_names.reserve(dist_it->second.size());
+			for (std::vector<vertex_t>::const_iterator node_it = dist_it->second.begin(); node_it != dist_it->second.end(); ++node_it)
+			{
+				nodes.object_names.push_back(current_graph[*node_it].object_id_);
+			}
+			new_structure.nodes_level.push_back(nodes);
+		}
+
+		structure_graph_msg.structure.push_back(new_structure);
+		structure_graph_msg.base_objects_id.push_back(current_graph[*it].object_id_);
+	}
+
+	return structure_graph_msg;
+}
+

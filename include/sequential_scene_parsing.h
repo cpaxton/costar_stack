@@ -66,6 +66,8 @@ public:
 			btScalar(forces_magnitude_per_point),btScalar(max_point_distance_threshold));
 	}
 
+	SceneSupportGraph getSceneGraphData(std::map<std::string, vertex_t> &vertex_map) const;
+
 	ObjectDatabase obj_database_;
 
 private:

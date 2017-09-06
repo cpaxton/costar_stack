@@ -28,6 +28,11 @@
 #include "sequential_scene_parsing.h"
 #include "symmetric_orientation_realignment.h"
 
+#include "sequential_scene_parsing/SceneNodes.h"
+#include "sequential_scene_parsing/StructureGraph.h"
+#include "sequential_scene_parsing/SceneGraph.h"
+
+
 // Ros bundling for scene parsing
 class RosSceneHypothesisAssessor : public SceneHypothesisAssessor
 {
@@ -54,6 +59,7 @@ private:
 	void processHypotheses();
 	void updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map);
 
+	sequential_scene_parsing::SceneGraph generateSceneGraphMsgs() const;
 	// void initialize();
 	// bool debug_messages_;
 	bool class_ready_;
@@ -79,6 +85,7 @@ private:
 	ros::Subscriber background_pcl_sub;
 	ros::Subscriber scene_pcl_sub;
 	ros::Publisher done_message_pub;
+	ros::Publisher scene_graph_pub;
 	
 	ros::NodeHandle nh_;
 	tf::TransformListener listener_;

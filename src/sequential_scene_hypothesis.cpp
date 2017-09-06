@@ -153,16 +153,16 @@ int SequentialSceneHypothesis::updateRemovedObjectStatus(const std::string &obje
 
 	// object is not detected by pose estimator
 	std::cerr << object_name;
-	// bool object_visible = checkObjectVisible(model_name,object_pose);
-	// if (object_visible)
-	// {
-	// 	std::cerr << " is visible, thus it will not be removed.\n";
-	// 	return NOT_REMOVED;
-	// }
-	// else
-	// {
-	// 	std::cerr << " is not visible,";
-	// }
+	bool object_visible = checkObjectVisible(model_name,object_pose);
+	if (object_visible)
+	{
+		std::cerr << " is visible, thus it will not be removed.\n";
+		return NOT_REMOVED;
+	}
+	else
+	{
+		std::cerr << " is not visible,";
+	}
 
 	bool object_obstructed = checkObjectObstruction(model_name,object_pose);
 	
@@ -220,9 +220,10 @@ bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_
 bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &object_name,
 	const std::string &model_name, const btTransform &object_pose)
 {
+	// disabled for now. Will be updated to OBB test instead
+	return false;
+
 	// use AABB to check if the original object volume has been occupied by something else
-	// TODO: IMPLEMENT THIS!!
-	// use bullet contactTest;
 	if (!obj_database_)
 	{
 		std::cerr << "Error! Cannot check for replaced objects since no object database has been set.\n";
@@ -247,6 +248,7 @@ bool SequentialSceneHypothesis::checkObjectReplaced(const std::string &object_na
 	Object target_model = obj_database_->getObjectProperty(model_name);
 	col_obj->setCollisionShape(target_model.getCollisionShape());
 	col_obj->setWorldTransform(object_pose);
+
 	// Replace AABB with OBB!!
 	OverlappingObjectSensor result(*col_obj, object_name);
 	this->physics_engine_->contactTest(col_obj,result);
