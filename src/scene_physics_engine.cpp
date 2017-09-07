@@ -303,7 +303,7 @@ void PhysicsEngine::simulate()
 		// TODO: Find out why the simulation step not syncing with the internal step callback.
 		for (int i = 0; i < this->number_of_world_tick_; i++)
 		{
-			m_dynamicsWorld->stepSimulation(simulation_step_, 2, 1./120);
+			m_dynamicsWorld->stepSimulation(simulation_step_, 2, fixed_step_);
 			// if (this->checkSteadyState()) break;
 		}
 	}
@@ -322,10 +322,11 @@ void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, c
 	// this->in_simulation_ = true;
 	this->world_tick_counter_ = 0;
 	mtx_.unlock();
+	btScalar fixed_step = simulation_step_ / 1 * 1.05;
 
 	for (int i = 0; i < number_of_world_tick_to_step; i++)
 	{
-		m_dynamicsWorld->stepSimulation(simulation_step, 1, 1./60);
+		m_dynamicsWorld->stepSimulation(simulation_step, 1, fixed_step);
 		this->applyDataForces();
 		// if (this->checkSteadyState()) break;
 	}
@@ -563,6 +564,7 @@ void PhysicsEngine::setSimulationMode(const int &simulation_mode, const double s
 	}
 	this->simulation_step_ = simulation_step;
 	this->number_of_world_tick_ = number_of_world_tick;
+	this->fixed_step_ = simulation_step_ / 2 * 1.05;
 }
 
 void PhysicsEngine::setDebugMode(bool debug)
@@ -639,7 +641,7 @@ void PhysicsEngine::clientMoveAndDisplay()
 	if (m_dynamicsWorld)
 	{
 		if (this->in_simulation_){
-			m_dynamicsWorld->stepSimulation(simulation_step_, 2, 1./120);
+			m_dynamicsWorld->stepSimulation(simulation_step_, 2, fixed_step_);
 		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
@@ -844,6 +846,70 @@ btTransform PhysicsEngine::getTransformOfBestData(const std::string &object_id, 
 void PhysicsEngine::setIgnoreDataForces(const std::string &object_id, bool value)
 {
 	this->ignored_data_forces_[object_id] = value;
+}
+
+void PhysicsEngine::makeObjectStatic(const std::string &object_id, const bool &make_static)
+{
+	// do nothing for invalid object
+	if (!keyExistInConstantMap(object_id, rigid_body_)) return;
+	else if (rigid_body_[object_id]->isStaticObject() && make_static) return;
+
+	if (make_static)
+	{
+		object_original_data_forces_flag_[object_id] = ignored_data_forces_[object_id];
+		ignored_data_forces_[object_id] = false;
+	}
+	else
+	{
+		ignored_data_forces_[object_id] = object_original_data_forces_flag_[object_id];
+	}
+
+	this->makeStatic(*rigid_body_[object_id],make_static);
+}
+
+std::vector<std::string> PhysicsEngine::getAllActiveObjectIds() const
+{
+	std::vector<std::string> result;
+	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
+	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			result.push_back(it->first);
+		}
+	}
+	return result;
+}
+
+void PhysicsEngine::makeStatic(btRigidBody &object, const bool &make_static)
+{
+	if (object.isStaticObject() && make_static) return;
+
+	if (make_static)
+	{
+		btVector3 zero_vector(0,0,0);
+		object_original_mass_prop_[&object] = MassProp(object.getInvMass(), object.getLocalInertia());
+		object.clearForces();
+		object.setLinearVelocity(zero_vector);
+		object.setAngularVelocity(zero_vector);
+
+		object.setMassProps(0,zero_vector);
+		object.updateInertiaTensor();
+	}
+	else
+	{
+		if (keyExistInConstantMap(&object,object_original_mass_prop_))
+		{
+			MassProp &object_mass_prop =  object_original_mass_prop_[&object];
+
+			object.setMassProps(
+				object_mass_prop.mass,
+				object_mass_prop.inertia);
+			object.updateInertiaTensor();
+			object.activate(true);
+		}
+	}
 }
 
 void PhysicsEngine::contactTest(btCollisionObject* col_object, btCollisionWorld::ContactResultCallback& result)

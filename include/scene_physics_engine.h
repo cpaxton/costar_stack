@@ -31,6 +31,18 @@
 
 static void _worldTickCallback(btDynamicsWorld *world, btScalar timeStep);
 
+struct MassProp
+{
+	MassProp() {}
+	MassProp(const btScalar &inv_mass, const btVector3 &local_inertia): inertia(local_inertia)
+	{
+		mass = inv_mass > 0 ? 1/inv_mass : 0; 
+	}
+
+	btScalar mass;
+	btVector3 inertia;
+};
+
 class PhysicsEngine : public PlatformDemoApplication
 {
 public:
@@ -87,6 +99,8 @@ public:
 	void removeExistingRigidBodyWithMap(const std::map<std::string, btTransform> &rigid_bodies);
 
 	void setIgnoreDataForces(const std::string &object_id, bool value);
+	void makeObjectStatic(const std::string &object_id, const bool &make_static);
+	std::vector<std::string> getAllActiveObjectIds() const;
 
 	void contactTest(btCollisionObject* col_object, btCollisionWorld::ContactResultCallback& result);
 
@@ -116,6 +130,7 @@ private:
 	void cacheObjectVelocities(const btScalar &timeStep);
 	void stopAllObjectMotion();
 	void applyDataForces();
+	void makeStatic(btRigidBody &object, const bool &make_static);
 	
 	bool debug_messages_;
 	bool have_background_;
@@ -123,11 +138,17 @@ private:
 	bool rendering_launched_;
 	bool in_simulation_;
 	unsigned int world_tick_counter_;
+
 	// rigid body data from ObjectWithID input with ID information
 	std::map<std::string, btRigidBody*> rigid_body_;
 	std::map<std::string, btTransform> object_best_pose_from_data_;
+
+	std::map<btRigidBody*, MassProp> object_original_mass_prop_;
+	std::map<std::string, bool> object_original_data_forces_flag_;
+
 	// std::map<std::string, btTransform> object_test_pose_map_;
 	std::map<std::string, btTransform> object_best_test_pose_map_;
+
 	std::map<std::string, bool> ignored_data_forces_;
 
 	btRigidBody* background_;
@@ -154,7 +175,7 @@ private:
 	std::map<std::string, vertex_t> vertex_map_;
 
 	btVector3 camera_coordinate_, target_coordinate_;
-	double simulation_step_;
+	double simulation_step_, fixed_step_;
 	boost::mutex mtx_;
 
 	bool reset_obj_vel_every_frame_;

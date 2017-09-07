@@ -17,8 +17,9 @@
   <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
   <arg name="objransac_model_names"          default="block,cube"/>
 
-  <arg name="data_forces_magnitude"          default="0.25"/>
+  <arg name="data_forces_magnitude"          default="0.0"/>
   <arg name="data_forces_max_distance"       default="0.015"/>
+  <arg name="data_forces_model"              default="0" doc="0: closest point, 1: ICP every frame, 2: initial estimated pose"/>
 
   <arg name="best_hypothesis_only"           default="false"/>
   <arg name="small_obj_g_comp"               default="3"/>
@@ -51,6 +52,7 @@
 
     <param name="data_forces_magnitude"        type="double"  value="$(arg data_forces_magnitude)"/>
     <param name="data_forces_max_distance"     type="double"  value="$(arg data_forces_max_distance)"/>
+    <param name="data_forces_model"            type="int"     value="$(arg data_forces_model)"/>
 
     <param name="objransac_model_directory"    type="str"     value="$(arg objransac_model_directory)"/>
     <param name="objransac_model_names"        type="str"     value="$(arg objransac_model_names)"/>

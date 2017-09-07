@@ -12,6 +12,11 @@
 #include <pcl/registration/transforms.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/registration/icp.h>
+
+// for limiting the ICP area to only include area around initial pose estimate
+#include <pcl/filters/crop_box.h>
+#include <pcl/features/moment_of_inertia_estimation.h>
+
 // #include <pcl/recognition/ransac_based/trimmed_icp.h>
 #include "utility.h"
 #include "physics_world_parameters.h"
@@ -22,12 +27,15 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 // Mode for generating the feedback force based on point pair
 enum FeedbackForceMode {
 	// Find the closest point to each mesh point for all mesh point
+	// Moderate speed
 	CLOSEST_POINT, 
 
 	// Find the ICP correspondence from the mesh to the scene points for every frame
+	// Very slow
 	FRAME_BY_FRAME_ICP_CORRESPONDENCE,
 
 	// Use cached icp result for generating feedback force instead of doing icp for every frame
+	// Fastest, but depends on the accuracy of the initial estimated pose
 	CACHED_ICP_CORRESPONDENCE
 };
 

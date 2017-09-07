@@ -279,6 +279,7 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 			this->object_hypotheses_map_);
 
 		this->physics_engine_->removeAllRigidBodyFromWorld();
+		this->data_forces_generator_.resetCachedIcpResult();
 		
 		// resimulate objects with retained object
 		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
@@ -305,10 +306,28 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 				++it)
 			{
 				this->physics_engine_->addExistingRigidBodyBackFromMap(it->first,original_pose_to_test[it->first]);
+				this->data_forces_generator_.resetCachedIcpResult();
 			}
-			this->physics_engine_->stepSimulationWithoutEvaluation(0.5 * GRAVITY_SCALE_COMPENSATION, 
+			this->physics_engine_->stepSimulationWithoutEvaluation(1 * GRAVITY_SCALE_COMPENSATION, 
 				GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
+
+			// std::vector<std::string> active_objects = this->physics_engine_->getAllActiveObjectIds();
+			// for (std::vector<std::string>::const_iterator obj_id_it = active_objects.begin(); obj_id_it != active_objects.end();
+			// 	++obj_id_it)
+			// {
+			// 	this->physics_engine_->makeObjectStatic(*obj_id_it,true);
+			// }
 		}
+
+		this->data_forces_generator_.resetCachedIcpResult();
+		
+		// std::vector<std::string> active_objects = this->physics_engine_->getAllActiveObjectIds();
+		// for (std::vector<std::string>::const_iterator obj_id_it = active_objects.begin(); obj_id_it != active_objects.end();
+		// 	++obj_id_it)
+		// {
+		// 	this->physics_engine_->makeObjectStatic(*obj_id_it,false);
+		// }
+
 		this->physics_engine_->stepSimulationWithoutEvaluation(1.5 * GRAVITY_SCALE_COMPENSATION, 
 			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 		this->getUpdatedSceneSupportGraph();

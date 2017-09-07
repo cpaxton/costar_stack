@@ -58,12 +58,18 @@ public:
 	bool loadObjectModels(const std::string &input_model_directory_path, const std::vector<std::string> &object_names);
 	void setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map);
 
-	template <typename numericStandard>
-	void setDataFeedbackForcesParameters(const numericStandard &forces_magnitude_per_point, 
-		const numericStandard &max_point_distance_threshold)
+	template <typename NumericStandard>
+	void setDataFeedbackForcesParameters(const NumericStandard &forces_magnitude_per_point, 
+		const NumericStandard &max_point_distance_threshold)
 	{
 		data_forces_generator_.setForcesParameter(
 			btScalar(forces_magnitude_per_point),btScalar(max_point_distance_threshold));
+	}
+	
+	template <typename NumericStandard>
+	void setFeedbackForceMode(const NumericStandard &data_forces_model)
+	{
+		data_forces_generator_.setFeedbackForceMode(int(data_forces_model));
 	}
 
 	SceneSupportGraph getSceneGraphData(std::map<std::string, vertex_t> &vertex_map) const;

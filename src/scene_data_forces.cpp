@@ -1,6 +1,9 @@
 #include "scene_data_forces.h"
 #include <pcl/io/pcd_io.h>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
+int idx = 0;
 inline
 btVector3 attractionForceModel(const btVector3 &force_vector, 
 	const btScalar &distance, const btScalar &distance_threshold)
@@ -138,8 +141,16 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::generateDataForce(c
 void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const PointCloudXYZPtr icp_result, 
 	const std::string &object_id)
 {
+	if (icp_result->empty())
+	{
+		std::cerr << "ERROR, trying to update cloud of object [" << object_id << "] with empty cloud";
+		return;
+	}
 	model_cloud_icp_result_map_[object_id] = icp_result;
 	icp_result_confidence_map_[object_id] = getIcpConfidenceResult(icp_result);
+	std::string filename = "result_icp_"+object_id+"_"+boost::lexical_cast<std::string>(idx++)+".pcd";
+	boost::replace_all(filename,"seg/","");
+	pcl::io::savePCDFile(filename,*model_cloud_icp_result_map_[object_id],true);
 }
 
 double FeedbackDataForcesGenerator::getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose)
@@ -168,7 +179,6 @@ void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const btRigidBody &ob
 
 	PointCloudXYZPtr icp_result = this->doICP(transformed_object_mesh_cloud);
 	this->updateCachedIcpResultMap(icp_result, object_id);
-	// pcl::io::savePCDFile("icp_"+object_id+".pcd",*model_cloud_icp_result_map_[object_id],true);
 }
 
 
@@ -179,7 +189,9 @@ void FeedbackDataForcesGenerator::manualSetCachedIcpResultMapFromPose(const btRi
 	PointCloudXYZPtr transformed_object_mesh_cloud = this->getTransformedObjectCloud(object, model_name);
 
 	this->updateCachedIcpResultMap(transformed_object_mesh_cloud, object_id);
-	// pcl::io::savePCDFile("manual_"+object_id+".pcd",*model_cloud_icp_result_map_[object_id],true);
+	std::string filename = "manual_"+object_id+"_"+boost::lexical_cast<std::string>(idx)+".pcd";
+	boost::replace_all(filename,"seg/","");
+	if (!model_cloud_icp_result_map_[object_id]->empty())pcl::io::savePCDFile(filename,*model_cloud_icp_result_map_[object_id],true);
 }
 
 void FeedbackDataForcesGenerator::resetCachedIcpResult()
@@ -195,7 +207,7 @@ void FeedbackDataForcesGenerator::removeCachedIcpResult(const std::string &objec
 
 void FeedbackDataForcesGenerator::setSceneData(PointCloudXYZPtr scene_data)
 {
-	if (scene_data->size() > 0)
+	if (!scene_data->empty())
 	{
 		this->have_scene_data_ = true;
 
@@ -203,7 +215,7 @@ void FeedbackDataForcesGenerator::setSceneData(PointCloudXYZPtr scene_data)
 		// make a new scene data tree to ensure safer variable deletion
 		scene_data_tree_ = pcl::KdTreeFLANN<pcl::PointXYZ>();
 		this->scene_data_tree_.setInputCloud(scene_data);
-		// pcl::io::savePCDFile("scene_data.pcd",*scene_data,true);
+		pcl::io::savePCDFile("scene_data_"+boost::lexical_cast<std::string>(idx)+".pcd",*scene_data,true);
 	}
 	else
 	{
@@ -245,9 +257,9 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::generateDataForceWi
 {
 	btVector3 total_forces, torque;
 	const btVector3 &object_cog = object_pose.getOrigin();
-	std::cerr << "Generating correspondence cloud\n";
+	// std::cerr << "Generating correspondence cloud\n";
 	PointCloudXYZPtr nearest_point_correspondence_cloud = generateCorrespondenceCloud(input_cloud);
-	std::cerr << "Calculate data force\n";
+	// std::cerr << "Calculate data force\n";
 	return this->calculateDataForceFromCorrespondence(input_cloud, nearest_point_correspondence_cloud, object_cog);
 }
 
@@ -279,13 +291,51 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::generateDataForceWi
 
 PointCloudXYZPtr FeedbackDataForcesGenerator::doICP(const PointCloudXYZPtr input_cloud) const
 {
-	PointCloudXYZPtr icp_result(new PointCloudXYZ);
 	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp = icp_;
+
+	PointCloudXYZPtr cloud_around_initial_estimate(new PointCloudXYZ());
+	pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
+	feature_extractor.setInputCloud(input_cloud);
+	feature_extractor.compute();
+
+	pcl::PointXYZ min_point_OBB;
+	pcl::PointXYZ max_point_OBB;
+	pcl::PointXYZ position_OBB;
+	Eigen::Matrix3f rotational_matrix_OBB;
+	feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
+	// Eigen::Affine3f transform;
+	// transform.prerotate(rotational_matrix_OBB);
+
+	Eigen::Vector3f min_cropbox_pt(min_point_OBB.x, min_point_OBB.y, min_point_OBB.z);
+	Eigen::Vector3f max_cropbox_pt(max_point_OBB.x, max_point_OBB.y, max_point_OBB.z);
+
+	// enlarge the box by max_point_distance_threshold
+	Eigen::Vector3f offset(max_point_distance_threshold_,max_point_distance_threshold_,max_point_distance_threshold_);
+
+	pcl::CropBox<pcl::PointXYZ> cropbox_filter;
+	cropbox_filter.setInputCloud(scene_data_);
+	cropbox_filter.setMin((min_cropbox_pt - offset).homogeneous());
+	cropbox_filter.setMax((max_cropbox_pt + offset).homogeneous());
+	// cropbox_filter.setTransform(transform.inverse());
+	cropbox_filter.setTranslation(Eigen::Vector3f(position_OBB.x,position_OBB.y,position_OBB.z));
+	cropbox_filter.setRotation(rotational_matrix_OBB.eulerAngles(2,1,0));
+
+	cropbox_filter.filter(*cloud_around_initial_estimate);
+
+	PointCloudXYZPtr icp_result(new PointCloudXYZ());
+	if (!cloud_around_initial_estimate->empty())pcl::io::savePCDFile("icp_"+boost::lexical_cast<std::string>(idx)+"_cropbox.pcd",*cloud_around_initial_estimate,true);
+	else
+	{
+		return icp_result;
+	}
+
+	icp.setInputSource(input_cloud);
+	icp.setInputTarget(cloud_around_initial_estimate);
 	// icp.setMaximumIterations(this->max_icp_iteration_);
 	// icp.setMaxCorrespondenceDistance(this->max_point_distance_threshold_);
-	icp.setInputSource(input_cloud);
-	icp.setInputTarget(scene_data_);
+
 	icp.align(*icp_result);
+	std::cerr << "has converged:" << icp.hasConverged() << " score: " <<  icp.getFitnessScore() << std::endl;
 	return icp_result;
 }
 
@@ -341,21 +391,30 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::generateCorrespondenceCloud(PointC
 	nearest_point_correspondence_cloud->height = input_cloud->height;
 	nearest_point_correspondence_cloud->is_dense = input_cloud->is_dense;
 	nearest_point_correspondence_cloud->reserve(input_cloud->size());
+	
+	float bad_pt = std::numeric_limits<float>::quiet_NaN();
+
+	pcl::PointXYZ nan_point(bad_pt,bad_pt,bad_pt);
 
 	for (int i = 0; i < input_cloud->size(); i++)
 	{
 		std::vector< int > k_indices(1);
 		std::vector< float > distances(1);
 
-		// any neighbor is found
-		if (this->scene_data_tree_.nearestKSearch(*input_cloud, i, 1, k_indices, distances) > 0)
+		// any neighbors are found within appropriate distance
+		if (
+			(this->scene_data_tree_.nearestKSearch(*input_cloud, i, 1, k_indices, distances) > 0) &&
+			(!use_filter_distance || (use_filter_distance && distances[0] < max_squared_distance))
+			)
 		{
-			if (!use_filter_distance || (use_filter_distance && distances[0] < max_squared_distance))
-			{
-				nearest_point_correspondence_cloud->points.push_back(scene_data_->points[k_indices[0]]);
-			}
+			nearest_point_correspondence_cloud->points.push_back(scene_data_->points[k_indices[0]]);
+		}
+		else
+		{
+			nearest_point_correspondence_cloud->points.push_back(nan_point);
 		}
 	}
+
 	nearest_point_correspondence_cloud->width = nearest_point_correspondence_cloud->size();
 	// pcl::io::savePCDFile("icp_res_correspondence.pcd",*nearest_point_correspondence_cloud,true);
 	return nearest_point_correspondence_cloud;

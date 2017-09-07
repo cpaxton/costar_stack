@@ -24,16 +24,16 @@ bool keyExistInConstantMap(const container_type1 &key, const std::map<container_
 }
 
 
-template <typename numericStandard>
-btVector3 convertEigenToBulletVector(const Eigen::Matrix<numericStandard, 3, 1> &eigentype_vector)
+template <typename NumericStandard>
+btVector3 convertEigenToBulletVector(const Eigen::Matrix<NumericStandard, 3, 1> &eigentype_vector)
 {
 	return btVector3(btScalar(eigentype_vector[0]),
 		btScalar(eigentype_vector[1]),
 		btScalar(eigentype_vector[2]) );
 }
 
-template <typename numericStandard>
-btQuaternion convertEigenToBulletQuaternion(const Eigen::Quaternion<numericStandard> &eigentype_q)
+template <typename NumericStandard>
+btQuaternion convertEigenToBulletQuaternion(const Eigen::Quaternion<NumericStandard> &eigentype_q)
 {
 	return btQuaternion(btScalar(eigentype_q.x()),
 		btScalar(eigentype_q.y()),
@@ -41,41 +41,41 @@ btQuaternion convertEigenToBulletQuaternion(const Eigen::Quaternion<numericStand
 		btScalar(eigentype_q.w()) ) ;
 }
 
-template <typename numericStandard>
-Eigen::Quaternion<numericStandard>convertBulletToEigenQuaternion(const btQuaternion &bt_q)
+template <typename NumericStandard>
+Eigen::Quaternion<NumericStandard>convertBulletToEigenQuaternion(const btQuaternion &bt_q)
 {
-	return Eigen::Quaternion<numericStandard>(
-		numericStandard(bt_q.w() ),
-		numericStandard(bt_q.x() ),
-		numericStandard(bt_q.y() ),
-		numericStandard(bt_q.z() ) );
+	return Eigen::Quaternion<NumericStandard>(
+		NumericStandard(bt_q.w() ),
+		NumericStandard(bt_q.x() ),
+		NumericStandard(bt_q.y() ),
+		NumericStandard(bt_q.z() ) );
 }
 
-template <typename numericStandard>
-Eigen::Matrix<numericStandard, 3, 1> convertBulletToEigenVector(const btVector3 &bt_vector)
+template <typename NumericStandard>
+Eigen::Matrix<NumericStandard, 3, 1> convertBulletToEigenVector(const btVector3 &bt_vector)
 {
-	return Eigen::Matrix<numericStandard, 3, 1> (numericStandard(bt_vector.x()),
-		numericStandard(bt_vector.y()),
-		numericStandard(bt_vector.z()));
+	return Eigen::Matrix<NumericStandard, 3, 1> (NumericStandard(bt_vector.x()),
+		NumericStandard(bt_vector.y()),
+		NumericStandard(bt_vector.z()));
 }
 
 
-template <typename numericStandard>
-btTransform convertEigenToBulletTransform(const Eigen::Transform< numericStandard,3,Eigen::Affine > &input_eigentype_tf)
+template <typename NumericStandard>
+btTransform convertEigenToBulletTransform(const Eigen::Transform< NumericStandard,3,Eigen::Affine > &input_eigentype_tf)
 {
-	Eigen::Quaternion<numericStandard> rotation(input_eigentype_tf.rotation());
+	Eigen::Quaternion<NumericStandard> rotation(input_eigentype_tf.rotation());
 	btVector3 bt_translation = convertEigenToBulletVector(input_eigentype_tf.translation());
 	btQuaternion bt_q = convertEigenToBulletQuaternion(rotation);
 	return btTransform(bt_q,bt_translation);
 }
 
-template <typename numericStandard>
-Eigen::Transform< numericStandard,3,Eigen::Affine > convertBulletToEigenTransform(const btTransform &input_bullettype_tf)
+template <typename NumericStandard>
+Eigen::Transform< NumericStandard,3,Eigen::Affine > convertBulletToEigenTransform(const btTransform &input_bullettype_tf)
 {
-	Eigen::Quaternion<numericStandard> ei_q = convertBulletToEigenQuaternion<numericStandard>(input_bullettype_tf.getRotation());
-	Eigen::Matrix<numericStandard, 3, 1> ei_vec = convertBulletToEigenVector<numericStandard>(input_bullettype_tf.getOrigin());
-	Eigen::Translation<numericStandard,3> tmpTranslation (ei_vec);
-    Eigen::Transform< numericStandard,3,Eigen::Affine >  result = tmpTranslation * ei_q;
+	Eigen::Quaternion<NumericStandard> ei_q = convertBulletToEigenQuaternion<NumericStandard>(input_bullettype_tf.getRotation());
+	Eigen::Matrix<NumericStandard, 3, 1> ei_vec = convertBulletToEigenVector<NumericStandard>(input_bullettype_tf.getOrigin());
+	Eigen::Translation<NumericStandard,3> tmpTranslation (ei_vec);
+    Eigen::Transform< NumericStandard,3,Eigen::Affine >  result = tmpTranslation * ei_q;
     return result;
 }
 

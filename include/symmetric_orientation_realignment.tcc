@@ -1,5 +1,5 @@
-template <typename numericStandard>
-void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rot_matrix, const ObjectSymmetry &object, 
+template <typename NumericStandard>
+void realignOrientation (Eigen::Matrix<NumericStandard, 3, 3> &rot_matrix, const ObjectSymmetry &object, 
     const int axis_to_align, const bool with_rotate_specific_axis, const int rotate_around_specific_axis)
 {
     Eigen::Vector3f obj_axes[3];
@@ -76,12 +76,12 @@ void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rot_matrix, const
         object_limit,best_axis[axis_to_rotate]);
 }
 
-template <typename numericStandard>
-Eigen::Matrix<numericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix<numericStandard, 3, 3> &input, 
+template <typename NumericStandard>
+Eigen::Matrix<NumericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix<NumericStandard, 3, 3> &input, 
     bool reverse_pitch)
 {
-    Eigen::Matrix<numericStandard, 3, 1> result;
-    numericStandard x_component = std::sqrt(input(0,0) * input(0,0) + input(1,0) *input(1,0));
+    Eigen::Matrix<NumericStandard, 3, 1> result;
+    NumericStandard x_component = std::sqrt(input(0,0) * input(0,0) + input(1,0) *input(1,0));
     // since using sqrt, there are 2 solution for x_component
     x_component = reverse_pitch ? -x_component : x_component;
     result[1] = std::atan2(-input(2,0), x_component);
@@ -90,13 +90,13 @@ Eigen::Matrix<numericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix
     return result;
 }
 
-template <typename numericStandard>
-Eigen::Quaternion<numericStandard> normalizeModelOrientation(const Eigen::Quaternion<numericStandard> &q_from_pose,
+template <typename NumericStandard>
+Eigen::Quaternion<NumericStandard> normalizeModelOrientation(const Eigen::Quaternion<NumericStandard> &q_from_pose,
     const ObjectSymmetry &object)
 {
     const double pi = boost::math::constants::pi<double>();
     Eigen::Matrix3f symmetric_offset;
-    Eigen::Quaternion<numericStandard> min_quaternion;
+    Eigen::Quaternion<NumericStandard> min_quaternion;
     unsigned int num_roll_steps = std::ceil(2*pi / object.roll);
     unsigned int num_pitch_steps = std::ceil(2*pi / object.pitch);
     unsigned int num_yaw_steps = std::ceil(2*pi / object.yaw);
@@ -112,35 +112,35 @@ Eigen::Quaternion<numericStandard> normalizeModelOrientation(const Eigen::Quater
                     * Eigen::AngleAxisf(i * object.yaw, Eigen::Vector3f::UnitZ())
                     * Eigen::AngleAxisf(j * object.pitch, Eigen::Vector3f::UnitY())
                     * Eigen::AngleAxisf(k * object.roll, Eigen::Vector3f::UnitX());
-                Eigen::Quaternion<numericStandard> rotated_input_quaternion = q_from_pose * 
-                    Eigen::Quaternion<numericStandard>(symmetric_offset);
+                Eigen::Quaternion<NumericStandard> rotated_input_quaternion = q_from_pose * 
+                    Eigen::Quaternion<NumericStandard>(symmetric_offset);
                 
-                if (minAngle > rotated_input_quaternion.angularDistance(Eigen::Quaternion<numericStandard>::Identity())) 
+                if (minAngle > rotated_input_quaternion.angularDistance(Eigen::Quaternion<NumericStandard>::Identity())) 
                 {
-                    minAngle = rotated_input_quaternion.angularDistance(Eigen::Quaternion<numericStandard>::Identity ());
+                    minAngle = rotated_input_quaternion.angularDistance(Eigen::Quaternion<NumericStandard>::Identity ());
                     min_quaternion = rotated_input_quaternion;
                 }
             }
         }
     }
 
-    Eigen::Matrix<numericStandard, 3, 3> normalize_orientation = min_quaternion.matrix();
+    Eigen::Matrix<NumericStandard, 3, 3> normalize_orientation = min_quaternion.matrix();
     // realignOrientation(normalize_orientation,object,2);
     // realignOrientation(normalize_orientation,object,0,true,2); 
 
-    return Eigen::Quaternion<numericStandard>(normalize_orientation);
+    return Eigen::Quaternion<NumericStandard>(normalize_orientation);
 }
 
-template <typename numericStandard>
-Eigen::Quaternion<numericStandard> normalizeModelOrientation(const Eigen::Quaternion<numericStandard> &q_new, 
-    const Eigen::Quaternion<numericStandard>  &q_previous, const ObjectSymmetry &object)
+template <typename NumericStandard>
+Eigen::Quaternion<NumericStandard> normalizeModelOrientation(const Eigen::Quaternion<NumericStandard> &q_new, 
+    const Eigen::Quaternion<NumericStandard>  &q_previous, const ObjectSymmetry &object)
 {
-  Eigen::Quaternion<numericStandard> rotation_change = q_previous.inverse() * q_new;
+  Eigen::Quaternion<NumericStandard> rotation_change = q_previous.inverse() * q_new;
   // Since the rotation_change should be close to identity, 
   // realign the rotation_change as close as identity based on symmetric property of the object
   rotation_change = normalizeModelOrientation(rotation_change, object);
   
-  Eigen::Quaternion<numericStandard> result = q_previous * rotation_change;
+  Eigen::Quaternion<NumericStandard> result = q_previous * rotation_change;
   // fix the orientation of new pose
   return (result);
 }
