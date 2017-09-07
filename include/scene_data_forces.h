@@ -15,8 +15,8 @@
 
 // for limiting the ICP area to only include area around initial pose estimate
 #include <pcl/filters/crop_box.h>
+#include <pcl/filters/filter.h>
 #include <pcl/features/moment_of_inertia_estimation.h>
-
 // #include <pcl/recognition/ransac_based/trimmed_icp.h>
 #include "utility.h"
 #include "physics_world_parameters.h"
@@ -95,7 +95,7 @@ private:
 		const std::string &model_name, btTransform &object_real_pose) const;
 
 	std::string model_directory_;
-
+	bool debug_;
 	bool have_scene_data_;
 	PointCloudXYZPtr scene_data_;
 	pcl::KdTreeFLANN<pcl::PointXYZ> scene_data_tree_;

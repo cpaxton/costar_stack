@@ -17,6 +17,7 @@ btVector3 attractionForceModel(const btVector3 &force_vector,
 }
 
 FeedbackDataForcesGenerator::FeedbackDataForcesGenerator() : 
+	debug_(false),
 	have_scene_data_(false), force_data_model_(CACHED_ICP_CORRESPONDENCE), 
 	percent_gravity_max_correction_(0.5), max_point_distance_threshold_(0.01),
 	max_icp_iteration_(10)
@@ -143,14 +144,14 @@ void FeedbackDataForcesGenerator::updateCachedIcpResultMap(const PointCloudXYZPt
 {
 	if (icp_result->empty())
 	{
-		std::cerr << "ERROR, trying to update cloud of object [" << object_id << "] with empty cloud";
+		if (debug_)std::cerr << "ERROR, trying to update cloud of object [" << object_id << "] with empty cloud\n";
 		return;
 	}
 	model_cloud_icp_result_map_[object_id] = icp_result;
 	icp_result_confidence_map_[object_id] = getIcpConfidenceResult(icp_result);
-	std::string filename = "result_icp_"+object_id+"_"+boost::lexical_cast<std::string>(idx++)+".pcd";
-	boost::replace_all(filename,"seg/","");
-	pcl::io::savePCDFile(filename,*model_cloud_icp_result_map_[object_id],true);
+	// std::string filename = "result_icp_"+object_id+"_"+boost::lexical_cast<std::string>(idx++)+".pcd";
+	// boost::replace_all(filename,"seg/","");
+	// pcl::io::savePCDFile(filename,*model_cloud_icp_result_map_[object_id],true);
 }
 
 double FeedbackDataForcesGenerator::getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose)
@@ -189,9 +190,9 @@ void FeedbackDataForcesGenerator::manualSetCachedIcpResultMapFromPose(const btRi
 	PointCloudXYZPtr transformed_object_mesh_cloud = this->getTransformedObjectCloud(object, model_name);
 
 	this->updateCachedIcpResultMap(transformed_object_mesh_cloud, object_id);
-	std::string filename = "manual_"+object_id+"_"+boost::lexical_cast<std::string>(idx)+".pcd";
-	boost::replace_all(filename,"seg/","");
-	if (!model_cloud_icp_result_map_[object_id]->empty())pcl::io::savePCDFile(filename,*model_cloud_icp_result_map_[object_id],true);
+	// std::string filename = "manual_"+object_id+"_"+boost::lexical_cast<std::string>(idx)+".pcd";
+	// boost::replace_all(filename,"seg/","");
+	// if (!model_cloud_icp_result_map_[object_id]->empty())pcl::io::savePCDFile(filename,*model_cloud_icp_result_map_[object_id],true);
 }
 
 void FeedbackDataForcesGenerator::resetCachedIcpResult()
@@ -215,7 +216,7 @@ void FeedbackDataForcesGenerator::setSceneData(PointCloudXYZPtr scene_data)
 		// make a new scene data tree to ensure safer variable deletion
 		scene_data_tree_ = pcl::KdTreeFLANN<pcl::PointXYZ>();
 		this->scene_data_tree_.setInputCloud(scene_data);
-		pcl::io::savePCDFile("scene_data_"+boost::lexical_cast<std::string>(idx)+".pcd",*scene_data,true);
+		// pcl::io::savePCDFile("scene_data_"+boost::lexical_cast<std::string>(idx)+".pcd",*scene_data,true);
 	}
 	else
 	{
@@ -321,10 +322,14 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::doICP(const PointCloudXYZPtr input
 	cropbox_filter.setRotation(rotational_matrix_OBB.eulerAngles(2,1,0));
 
 	cropbox_filter.filter(*cloud_around_initial_estimate);
-
+	
+	std::vector< int > unused;
+	pcl::removeNaNFromPointCloud(*cloud_around_initial_estimate,*cloud_around_initial_estimate,unused);
+	// std::cerr << "Cropboxed cloud size: " << cloud_around_initial_estimate->size() << std::endl;
 	PointCloudXYZPtr icp_result(new PointCloudXYZ());
-	if (!cloud_around_initial_estimate->empty())pcl::io::savePCDFile("icp_"+boost::lexical_cast<std::string>(idx)+"_cropbox.pcd",*cloud_around_initial_estimate,true);
-	else
+	// if (!cloud_around_initial_estimate->size() > 100)
+	// 	pcl::io::savePCDFile("icp_"+boost::lexical_cast<std::string>(idx)+"_cropbox.pcd",*cloud_around_initial_estimate,true);
+	if (!cloud_around_initial_estimate->size() < 100)
 	{
 		return icp_result;
 	}
@@ -335,7 +340,7 @@ PointCloudXYZPtr FeedbackDataForcesGenerator::doICP(const PointCloudXYZPtr input
 	// icp.setMaxCorrespondenceDistance(this->max_point_distance_threshold_);
 
 	icp.align(*icp_result);
-	std::cerr << "has converged:" << icp.hasConverged() << " score: " <<  icp.getFitnessScore() << std::endl;
+	if (debug_)std::cerr << "has converged:" << icp.hasConverged() << " score: " <<  icp.getFitnessScore() << std::endl;
 	return icp_result;
 }
 
@@ -353,7 +358,7 @@ std::pair<btVector3, btVector3> FeedbackDataForcesGenerator::calculateDataForceF
 	
 	if (max_cloud_size == 0)
 	{
-		std::cerr << "Input cloud or target cloud size is 0\n";
+		if (debug_)std::cerr << "Input cloud or target cloud size is 0\n";
 		return std::pair<btVector3, btVector3>();
 	}
 	
