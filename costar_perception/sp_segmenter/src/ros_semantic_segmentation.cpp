@@ -9,19 +9,18 @@ segmentedObjectTF::segmentedObjectTF()
     this->TFname = "dummyTF";
 }
 
-segmentedObjectTF::segmentedObjectTF(const ObjectTransformInformation &input)
+segmentedObjectTF::segmentedObjectTF(const ObjectTransformInformation &input, const std::string &ns)
 {
     this->transform.setOrigin(tf::Vector3( input.origin_.x(), input.origin_.y(), input.origin_.z() ));
     this->transform.setRotation(tf::Quaternion(
                                              input.rotation_.x(),input.rotation_.y(),input.rotation_.z(),input.rotation_.w()));
-    this->TFname = input.transform_name_;
+    this->TFname = ns + input.transform_name_;
 }
 
 tf::StampedTransform segmentedObjectTF::generateStampedTransform(const std::string &parent) const
 {
     return tf::StampedTransform(this->transform,ros::Time::now(),parent, this->TFname);
 }
-
 
 // Load in parameters for objects from ROS namespace
 std::map<std::string, ObjectSymmetry> fillObjectPropertyDictionary(const ros::NodeHandle &nh, const std::vector<std::string> &cur_name)
@@ -174,6 +173,8 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
         this->nh.param("external_segment_done_topic",external_segmentation_done_topic,std::string("/costar_perception/segment_done"));
         external_segmentation_sub = nh.subscribe(external_segmentation_done_topic,1,&RosSemanticSegmentation::processExternalSegmentationResult,this);
     }
+
+    this->nh.param("frame_namespace", frame_namespace_, std::string("seg/"));
 
     std::string mesh_path;
     //get parameter for mesh path and cur_name
@@ -478,7 +479,7 @@ void RosSemanticSegmentation::populateTFMap(std::vector<ObjectTransformInformati
     
     for (std::vector<ObjectTransformInformation>::const_iterator it = all_poses.begin(); it != all_poses.end(); ++it)
     {
-        const segmentedObjectTF &segmented_object = *it;
+        const segmentedObjectTF segmented_object(*it,frame_namespace_);
         segmentedObjectTFV.push_back(segmented_object);
 
 #ifdef COSTAR

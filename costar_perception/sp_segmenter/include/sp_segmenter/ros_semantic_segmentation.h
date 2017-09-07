@@ -41,7 +41,7 @@ struct segmentedObjectTF
 {
     tf::Transform transform;
     std::string TFname;
-    segmentedObjectTF(const ObjectTransformInformation &input);
+    segmentedObjectTF(const ObjectTransformInformation &input, const std::string &ns);
     segmentedObjectTF();
     tf::StampedTransform generateStampedTransform(const std::string &parent) const;
 };
@@ -83,6 +83,7 @@ protected:
     // TF related
     bool hasTF;
 
+    std::string frame_namespace_;
     std::string targetNormalObjectTF;
     std::vector<segmentedObjectTF> segmentedObjectTFV;
 
