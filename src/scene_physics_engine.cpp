@@ -234,6 +234,10 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 			object_penalty_parameter_database_by_id_[it->getID()] = 
 				(*object_penalty_parameter_database_)[it->getObjectClass()];
 			object_label_class_map_[it->getID()] = it->getObjectClass();
+
+			// add the best pose from hypothesis to cached icp result for new objects. Otherwise, use the previous best pose for cached icp result
+			data_forces_generator_->manualSetCachedIcpResultMapFromPose(
+				*(this->rigid_body_[it->getID()]), it->getObjectClass());
 		}
 		else
 		{
@@ -247,10 +251,6 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 		{
 			m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
 		}
-		
-		// add the best pose from hypothesis to cached icp result
-		data_forces_generator_->manualSetCachedIcpResultMapFromPose(
-			*(this->rigid_body_[it->getID()]), it->getObjectClass());
 
 		if (this->debug_messages_)
 		{
@@ -313,24 +313,27 @@ void PhysicsEngine::simulate()
 	mtx_.unlock();
 }
 
-void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step)
+void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step, const bool &data_forces_enabled)
 {
 	int number_of_world_tick_to_step = delta_time / simulation_step;
 	mtx_.lock();
+	int tmp = this->number_of_world_tick_;
 
 	this->skip_scene_evaluation_ = true;
+	enable_data_forces_ = data_forces_enabled;
 	// this->in_simulation_ = true;
 	this->world_tick_counter_ = 0;
-	mtx_.unlock();
+	this->in_simulation_ = true;
 	btScalar fixed_step = simulation_step_ / 1 * 1.05;
+	this->number_of_world_tick_ = number_of_world_tick_to_step;
+	mtx_.unlock();
 
-	for (int i = 0; i < number_of_world_tick_to_step; i++)
-	{
-		m_dynamicsWorld->stepSimulation(simulation_step, 1, fixed_step);
-		this->applyDataForces();
-		// if (this->checkSteadyState()) break;
-	}
+	this->simulate();
+	
+	mtx_.lock();
 	this->skip_scene_evaluation_ = false;
+	this->number_of_world_tick_ = tmp;
+	mtx_.unlock();
 }
 
 void PhysicsEngine::removeAllRigidBodyFromWorld()
@@ -364,6 +367,7 @@ void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::string &object_id
 		this->rigid_body_[object_id]->setWorldTransform(object_pose);
 		this->object_best_test_pose_map_[object_id] = object_pose;
 		if (!this->rigid_body_[object_id]->isInWorld()) m_dynamicsWorld->addRigidBody(this->rigid_body_[object_id]);
+		this->rigid_body_[object_id]->activate();
 	}
 	mtx_.unlock();
 }
@@ -735,6 +739,10 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 			}
 		}
 	}
+	else if (enable_data_forces_)
+	{
+		this->applyDataForces();
+	}
 	mtx_.unlock();
 }
 
@@ -775,7 +783,7 @@ void PhysicsEngine::resetObjectMotionState(const bool &reset_object_pose,
 		if (reset_object_pose) rigid_body_[it->first]->setWorldTransform(it->second);
 
 		// reset the forces and velocity of the objects
-		rigid_body_[it->first]->clearForces();
+		// rigid_body_[it->first]->clearForces();
 		rigid_body_[it->first]->setLinearVelocity(zero_vector);
 		rigid_body_[it->first]->setAngularVelocity(zero_vector);
 
@@ -821,6 +829,7 @@ void PhysicsEngine::changeBestTestPoseMap(const std::string &object_id, const bt
 {
 	mtx_.lock();
 	this->object_best_test_pose_map_[object_id] = object_pose;
+	data_forces_generator_->manualSetCachedIcpResultMapFromPose(object_pose,object_label_class_map_[object_id], object_id);
 	mtx_.unlock();
 }
 
@@ -890,7 +899,7 @@ void PhysicsEngine::makeStatic(btRigidBody &object, const bool &make_static)
 	{
 		btVector3 zero_vector(0,0,0);
 		object_original_mass_prop_[&object] = MassProp(object.getInvMass(), object.getLocalInertia());
-		object.clearForces();
+		// object.clearForces();
 		object.setLinearVelocity(zero_vector);
 		object.setAngularVelocity(zero_vector);
 
@@ -937,6 +946,7 @@ void PhysicsEngine::applyDataForces()
 
 		if (it->second->getActivationState() != ISLAND_SLEEPING)
 		{
+			// it->second->applyGravity();
 			this->data_forces_generator_->applyFeedbackForces(*(it->second),object_label_class_map_[it->first]);
 		}
 	}

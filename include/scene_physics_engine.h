@@ -86,7 +86,7 @@ public:
 	btTransform getTransformOfBestData(const std::string &object_id, bool use_best_test_data = false) const;
 	
 	// vertex_t getObjectVertexFromSupportGraph(const std::string &object_name, btTransform &object_position);
-	void stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step);
+	void stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step, const bool &data_forces_enabled = true);
 	void worldTickCallback(const btScalar &timeStep);
 
 	void setFeedbackDataForcesGenerator(FeedbackDataForcesGenerator *data_forces_generator);
@@ -137,6 +137,7 @@ private:
 	bool use_background_normal_as_gravity_;
 	bool rendering_launched_;
 	bool in_simulation_;
+	bool enable_data_forces_;
 	unsigned int world_tick_counter_;
 
 	// rigid body data from ObjectWithID input with ID information

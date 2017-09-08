@@ -46,6 +46,7 @@ public:
 	
 	void setFeedbackForceMode(int mode);
 	void applyFeedbackForces(btRigidBody &object, const std::string &model_name);
+	std::pair<btVector3, btVector3> applyFeedbackForcesDebug(const btTransform &object_real_pose, const std::string &model_name);
 
 	void setSceneData(PointCloudXYZPtr scene_data);
 
@@ -61,7 +62,11 @@ public:
 		const std::string &model_name);
 	void manualSetCachedIcpResultMapFromPose(const btRigidBody &object, 
 		const std::string &model_name);
+	void manualSetCachedIcpResultMapFromPose(const btTransform &object_pose,
+		const std::string &object_id, const std::string &model_name);
 	double getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose);
+
+	void setDebugMode(const bool &debug_flag);
 	
 	PointCloudXYZPtr getTransformedObjectCloud(const std::string &model_name, const btTransform &object_real_pose) const;
 	
@@ -86,7 +91,7 @@ private:
 		const btTransform &object_pose) const;
 	double getIcpConfidenceResult(const PointCloudXYZPtr icp_result, const double &voxel_size = 0.003) const;
 	PointCloudXYZPtr generateCorrespondenceCloud(PointCloudXYZPtr input_cloud, 
-		const bool &filter_distance = false, const double &max_distance = 0.0) const;
+		const bool &filter_distance = false, const double &max_distance = 0.0, const bool keep_index_aligned = true) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
 		const std::string &model_name) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 

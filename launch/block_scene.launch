@@ -17,8 +17,8 @@
   <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
   <arg name="objransac_model_names"          default="wood_cube" />
 
-  <arg name="data_forces_magnitude"          default="0.1"/>
-  <arg name="data_forces_max_distance"       default="0.01"/>
+  <arg name="data_forces_magnitude"          default="2.0"/>
+  <arg name="data_forces_max_distance"       default="0.015"/>
   <arg name="data_forces_model"              default="2"/>
 
   <arg name="best_hypothesis_only"           default="true"/>

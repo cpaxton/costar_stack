@@ -124,6 +124,14 @@ std::string printTransform(const btTransform &transform)
 }
 
 static
+std::string printBtVector3(const btVector3 &vec)
+{
+	std::stringstream ss;
+	ss << vec.x() << ", " << vec.y() << ", " << vec.z();
+	return ss.str();
+}
+
+static
 std::string printVecString(const std::vector<std::string> &list_of_strings)
 {
 	std::stringstream ss;

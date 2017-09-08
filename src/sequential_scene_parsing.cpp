@@ -19,7 +19,7 @@ void SceneHypothesisAssessor::setPhysicsEngine(PhysicsEngine* physics_engine)
 	if (this->physics_engine_ready_)
 	{
 		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME + RUN_UNTIL_HAVE_SUPPORT_GRAPH,
-			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER), GRAVITY_SCALE_COMPENSATION*10);
+			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER), GRAVITY_SCALE_COMPENSATION*100);
 	}
 
 	sequential_scene_hypothesis_.setPhysicsEngine(physics_engine);
@@ -207,12 +207,11 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	else std::cerr << "Getting corrected object transform from the current frame's best pose data confidence.\n";
 
 	seq_mtx_.lock();
-	this->data_forces_generator_.resetCachedIcpResult();
-
+	
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
 		GRAVITY_SCALE_COMPENSATION*10);
 	
-	this->physics_engine_->stepSimulationWithoutEvaluation(0.10 * GRAVITY_SCALE_COMPENSATION, 
+	this->physics_engine_->stepSimulationWithoutEvaluation(0.1 * GRAVITY_SCALE_COMPENSATION, 
 		GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 	this->getUpdatedSceneSupportGraph();
 
@@ -277,9 +276,6 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 			sequential_scene_hypothesis_.generateObjectHypothesesWithPreviousKnowledge(object_test_pose_map_by_dist,
 			object_childs_map,
 			this->object_hypotheses_map_);
-
-		this->physics_engine_->removeAllRigidBodyFromWorld();
-		this->data_forces_generator_.resetCachedIcpResult();
 		
 		// resimulate objects with retained object
 		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
@@ -292,44 +288,33 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 			}
 		}
 
-		this->physics_engine_->stepSimulationWithoutEvaluation(0.25 * GRAVITY_SCALE_COMPENSATION, 
+		this->physics_engine_->stepSimulationWithoutEvaluation(0.15 * GRAVITY_SCALE_COMPENSATION, 
 			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 		this->getUpdatedSceneSupportGraph();
 
 		// resimulate based on the object structure distance to get the final hypothesis
 		this->getSceneSupportGraphFromCurrentObjects(object_background_support_status,object_test_pose_map_by_dist,
 			object_childs_map);
-		this->physics_engine_->removeAllRigidBodyFromWorld();
 		for (std::size_t dist_idx = 0; dist_idx < object_test_pose_map_by_dist.size(); ++dist_idx)
 		{
 			for (map_string_transform::const_iterator it = object_test_pose_map_by_dist[dist_idx].begin(); it != object_test_pose_map_by_dist[dist_idx].end();
 				++it)
 			{
 				this->physics_engine_->addExistingRigidBodyBackFromMap(it->first,original_pose_to_test[it->first]);
-				this->data_forces_generator_.resetCachedIcpResult();
 			}
-			this->physics_engine_->stepSimulationWithoutEvaluation(1 * GRAVITY_SCALE_COMPENSATION, 
+			this->physics_engine_->stepSimulationWithoutEvaluation(0.15 * GRAVITY_SCALE_COMPENSATION, 
 				GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
-
-			// std::vector<std::string> active_objects = this->physics_engine_->getAllActiveObjectIds();
-			// for (std::vector<std::string>::const_iterator obj_id_it = active_objects.begin(); obj_id_it != active_objects.end();
-			// 	++obj_id_it)
-			// {
-			// 	this->physics_engine_->makeObjectStatic(*obj_id_it,true);
-			// }
 		}
 
-		this->data_forces_generator_.resetCachedIcpResult();
-		
-		// std::vector<std::string> active_objects = this->physics_engine_->getAllActiveObjectIds();
-		// for (std::vector<std::string>::const_iterator obj_id_it = active_objects.begin(); obj_id_it != active_objects.end();
-		// 	++obj_id_it)
-		// {
-		// 	this->physics_engine_->makeObjectStatic(*obj_id_it,false);
-		// }
-
-		this->physics_engine_->stepSimulationWithoutEvaluation(1.5 * GRAVITY_SCALE_COMPENSATION, 
+		this->physics_engine_->stepSimulationWithoutEvaluation(0.15 * GRAVITY_SCALE_COMPENSATION, 
 			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
+
+
+		this->physics_engine_->stepSimulationWithoutEvaluation(2. * GRAVITY_SCALE_COMPENSATION, 
+			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),false);
+
+		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
+			GRAVITY_SCALE_COMPENSATION*30);
 		this->getUpdatedSceneSupportGraph();
 
 		this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
@@ -455,7 +440,7 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 		if (verbose)
 		{
 			std::cerr << object_label << " is skipped because it is not supported by the ground.\n";
-			return 0;
+			// return 0;
 		}
 	}
 	// std::cerr << "Calculating physical probability criterion.\n";
@@ -540,7 +525,6 @@ double SceneHypothesisAssessor::evaluateSceneOnObjectHypothesis(std::map<std::st
 void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 {
 	// Set the best test pose map based on the best data
-	this->data_forces_generator_.resetCachedIcpResult();
 	std::map<std::string, bool> object_background_support_status;
 
 	// optimize the scene probability by the distance to the ground vertex
@@ -576,7 +560,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 			this->physics_engine_->addExistingRigidBodyBackFromMap(object_test_pose_map_by_dist[dist_idx]);
 		}
 
-		this->physics_engine_->stepSimulationWithoutEvaluation(1.0 * GRAVITY_SCALE_COMPENSATION, 
+		this->physics_engine_->stepSimulationWithoutEvaluation(0.15 * GRAVITY_SCALE_COMPENSATION, 
 			GRAVITY_SCALE_COMPENSATION/120.);
 		this->getUpdatedSceneSupportGraph();
 		this->physics_engine_->changeBestTestPoseMap(this->physics_engine_->getCurrentObjectPoses());
@@ -687,7 +671,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 				std::map<std::string, ObjectParameter> tmp_object_pose_config;
 				for (int i = 0; i < 2; i++)
 				{
-					this->physics_engine_->stepSimulationWithoutEvaluation(.5 * GRAVITY_SCALE_COMPENSATION, 
+					this->physics_engine_->stepSimulationWithoutEvaluation(.15 * GRAVITY_SCALE_COMPENSATION, 
 						GRAVITY_SCALE_COMPENSATION/120.);
 
 					seq_mtx_.lock();
@@ -708,7 +692,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 				{
 					// check object probability after the object stable and the childs get added back together
 					this->physics_engine_->addExistingRigidBodyBackFromMap(object_childs_map[object_pose_label]);
-					this->physics_engine_->stepSimulationWithoutEvaluation(.5/GRAVITY_SCALE_COMPENSATION, 
+					this->physics_engine_->stepSimulationWithoutEvaluation(.15/GRAVITY_SCALE_COMPENSATION, 
 						GRAVITY_SCALE_COMPENSATION/120.);
 
 					seq_mtx_.lock();
@@ -772,8 +756,10 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	this->physics_engine_->prepareSimulationForWithBestTestPose();
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
 		GRAVITY_SCALE_COMPENSATION*30);
-	// this->physics_engine_->stepSimulationWithoutEvaluation(.75, 1/120.);
+	this->physics_engine_->stepSimulationWithoutEvaluation(2./GRAVITY_SCALE_COMPENSATION, 
+			GRAVITY_SCALE_COMPENSATION/120.,false);
 	this->getUpdatedSceneSupportGraph();
+
 	double scene_hypothesis = this->evaluateSceneProbabilityFromGraph(object_action_map);
 	std::cerr << "Final Scene probability = " << scene_hypothesis << std::endl;
 	SceneHypothesis final_scene(vertex_map_,scene_support_graph_,
