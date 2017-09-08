@@ -676,11 +676,11 @@ std::vector<ObjectTransformInformation> SemanticSegmentation::calculateObjTransf
 
         // loop over all segmented object clouds
         // #pragma omp parallel for schedule(dynamic, 1)
-        for(size_t j = 1 ; j <= cloud_set.size(); j++ )
+        for(std::size_t j = 1 ; j < cloud_set.size(); j++ )
         {
             if (cloud_idx_map.find(j-1) == cloud_idx_map.end())
             {
-                std::cerr << "Cloud is skipped because its label index " << j << " is above the known segmentation index.\n";
+                std::cerr << "Cloud is skipped because its label index [" << j << "] is above the known segmentation index.\n";
                 continue;
             }
 
@@ -689,7 +689,7 @@ std::vector<ObjectTransformInformation> SemanticSegmentation::calculateObjTransf
             pcl::removeNaNFromPointCloud(*cloud_set[j],*cloud_set[j], indices);
 
             const std::string &object_name = cloud_idx_map[j-1];
-            if(cloud_set[j]->empty() == false)
+            if(!cloud_set[j]->empty())
             {
                 std::cerr << object_name << " cloud set " << j << " size: " << cloud_set[j]->size() << std::endl;
                 std::vector<poseT> tmp_poses;

@@ -239,9 +239,9 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     else
     {
         ROS_INFO("Node publish TF frames.");
-        spSegmenter = this->nh.advertiseService("SPSegmenter",&RosSemanticSegmentation::serviceCallback,this);
+        spSegmenter = this->nh.advertiseService("segmenter",&RosSemanticSegmentation::serviceCallback,this);
 #ifdef COSTAR
-        segmentGripper = this->nh.advertiseService("segmentInGripper",&RosSemanticSegmentation::serviceCallbackGripper,this);
+        segmentGripper = this->nh.advertiseService("segment_in_gripper",&RosSemanticSegmentation::serviceCallbackGripper,this);
 #endif
         pc_sub = this->nh.subscribe(POINTS_IN,1,&RosSemanticSegmentation::updateCloudData,this);
     }
@@ -252,7 +252,7 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
 
 #ifdef SCENE_PARSING
     hypothesis_pub_ = nh.advertise<objrec_hypothesis_msgs::AllModelHypothesis>("object_hypothesis",1);
-    last_hypotheses_server_ = this->nh.advertiseService("GetLastHypothesis",&RosSemanticSegmentation::getLastHypotheses,this);
+    last_hypotheses_server_ = this->nh.advertiseService("get_last_hypothesis",&RosSemanticSegmentation::getLastHypotheses,this);
 #endif
 
     this->nh.param("maxFrames",maxframes,15);

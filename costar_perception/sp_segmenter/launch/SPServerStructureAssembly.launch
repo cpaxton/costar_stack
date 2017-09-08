@@ -39,7 +39,7 @@
   <arg name="useObjectPersistence" default="false" doc="use Rtree to check for existing objects to preserve orientation and TF names" />
   <arg name="max_distance_persistence" default="0.025" doc="Maximum allowed distance for a pose to be considered as the previous pose" />
 
-  <arg name="NodeName"       default="costar_segmenter" doc="The name of the ros topic" />
+  <arg name="NodeName"       default="costar_perception" doc="The name of the ros topic" />
 
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
@@ -47,7 +47,7 @@
   <arg name="poses_out"      default="poses_out"/>
   <arg name="useTF"          default="true" doc="Whether use TF frames instead of pose array for object pose representation" />
   <!--<node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)" launch-prefix="valgrind - -log-file=$(env HOME)/valgrind.log">  -->
-  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p " output="screen"> 
+  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p " output="screen" > 
     <param name="compute_pose"   type="bool"   value="$(arg compute_pose)"/>
     <param name="visualization"  type="bool"   value="$(arg visualization)"/>
     <!-- SPSegmenterNode Node arg pass -->
