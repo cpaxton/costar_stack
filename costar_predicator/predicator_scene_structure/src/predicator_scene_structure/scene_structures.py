@@ -5,6 +5,7 @@ from predicator_msgs.msg import *
 '''
 convert scene structure msg into predicate messages we can query later on
 '''
+
 class SceneStructurePublisher:
 
     valid_msg = None
@@ -14,7 +15,7 @@ class SceneStructurePublisher:
         self.vpub = rospy.Publisher('/predicator/valid_input', ValidPredicates, queue_size=1000)
         self.valid_msg = ValidPredicates()
         self.valid_msg.pheader.source = rospy.get_name()
-        self.valid_msg.predicates = ['is_base_structure', 'is_part_of_structure', 'is_top_structure']
+        self.valid_msg.predicates = ['is_base_structure', 'is_part_of_structure', 'is_top_structure', 'is_free_object']
         self.valid_msg.predicate_length = [1, 1, 1]
 
         self.sub = rospy.Subscriber('/scene_structure_list', SceneGraph, self.callback)
@@ -47,11 +48,19 @@ class SceneStructurePublisher:
                 ps.params[0] = object_id
                 ps.value = len(structure.nodes_level) > 0
                 true_msg.statements.append(ps)
-
+            else:
+                ps = PredicateStatement()
+                ps.predicate = "is_free_object"
+                ps.num_params = 1
+                ps.confidence = 1.0
+                ps.param_classes.append(object_id)
+                ps.params[0] = object_id
+                ps.value = True
+                true_msg.statements.append(ps)
 
         for structure in msg.structure:
             top_of_structure_idx = len(structure.nodes_level) - 1
-            if top_of_structure_idx == 0:
+            if len(structure.nodes_level) == 0:
                 continue
             self.valid_msg.assignments.append(object_id)
 
