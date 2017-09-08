@@ -20,6 +20,7 @@
         - link_uniform
         - drill
         - table
+        - wood_cube
       </rosparam>
       <rosparam param="regions">
         - in_back_of
@@ -39,6 +40,9 @@
       <rosparam param="references">
         - world
       </rosparam>
+
+      <rosparam param="scene_parsing_pose">false</rosparam>
+      <rosparam param="scene_parsing_namespace">/sequential_scene_parsing</rosparam>
     </group>
   </group>
 </launch>

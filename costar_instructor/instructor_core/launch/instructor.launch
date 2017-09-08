@@ -5,7 +5,7 @@
 
   <!-- CORE -->
   <node pkg="instructor_core" type="instructor_view.py" name="instructor_view" >
-    <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
+    <remap from="/detected_object_list" to="/costar/detected_object_list"/>
     <param name="cases" value="$(arg instructor_cases)"/>
   </node>
 

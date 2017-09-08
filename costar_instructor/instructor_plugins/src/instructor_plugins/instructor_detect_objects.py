@@ -50,7 +50,7 @@ class NodeActionDetectObjects(ServiceNode):
 
     def make_service_call(self,request,*args):
         # Check to see if service exists
-        service_name = '/SPServer/SPSegmenter'
+        service_name = '/costar_perception/segmenter'
         try:
             rospy.wait_for_service(service_name)
         except rospy.ROSException as e:

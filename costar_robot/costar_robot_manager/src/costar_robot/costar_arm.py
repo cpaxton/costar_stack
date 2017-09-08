@@ -51,7 +51,7 @@ class CostarArm(CostarComponent):
             max_dist_from_table = 0.5,
             dof=7,
             debug=False,
-            perception_ns="/SPServer",):
+            perception_ns="/costar",):
 
         super(CostarArm, self).__init__(name="Arm", namespace=namespace)
         

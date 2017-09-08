@@ -108,7 +108,7 @@ moveitPlanningSceneGenerator::moveitPlanningSceneGenerator(const ros::NodeHandle
     if(useDetectedObjectMsgs){
         std::cerr << "This node will update the planning scene automatically when it receieved the costar object msgs\n";
         std::string detectedObjectTopic;
-        this->nh.param("detectedObjectTopic",detectedObjectTopic,std::string("/SPServer/detected_object_list"));
+        this->nh.param("detectedObjectTopic",detectedObjectTopic,std::string("/costar_sp_segmenter/detected_object_list"));
         getDetectedObject = this->nh.subscribe(detectedObjectTopic,1,&moveitPlanningSceneGenerator::autoUpdateScene,this);
     }
     else std::cerr << "This node need service call to update the planning scene.\n";

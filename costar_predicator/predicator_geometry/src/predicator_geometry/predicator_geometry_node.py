@@ -6,6 +6,7 @@ import tf
 import PyKDL as kdl
 import tf_conversions.posemath as pm
 from predicator_msgs.msg import *
+from costar_objrec_msgs.msg import * 
 
 class GeometryPredicator(object):
 
@@ -14,7 +15,10 @@ class GeometryPredicator(object):
         self._publisher = rospy.Publisher(pub_topic, PredicateList, queue_size=1000)
         self._valid_publisher = rospy.Publisher(valid_pub_topic, ValidPredicates, queue_size=1000)
         self._value_publisher = rospy.Publisher(value_pub_topic, FeatureValues, queue_size=1000)
-        self._frames = rospy.get_param('~frames')
+        self._detected_objects_subsriber = rospy.Subscriber('/costar/detected_object_list', DetectedObjectList, self.updateAvailableFrames)
+        self._default_frames = rospy.get_param('~frames')
+        self._frames = self._default_frames + []
+        self._cached_frames = set(self._frames)
         self._reference_frames = rospy.get_param('~reference_frames', [])
         if len(self._reference_frames) == 0:
             self._reference_frames = self._frames
@@ -227,6 +231,15 @@ class GeometryPredicator(object):
 
         return predicate_statement_list
 
+    '''
+    updateAvailableFrames()
+    Add detected object frames into the set of available frames to manipulate 
+    '''
+    def updateAvailableFrames(self, msg):
+        for detected_object in msg.objects:
+            self._cached_frames.add(detected_object.id)
+
+        self._frames = list(self._cached_frames)
 
     '''
     getPredicateMessage()

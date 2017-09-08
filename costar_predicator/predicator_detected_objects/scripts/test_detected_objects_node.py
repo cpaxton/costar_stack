@@ -26,7 +26,7 @@ obj3.symmetry.z_symmetries = 4
 ls.objects = [obj1,obj2,obj3]
 
 rate = rospy.Rate(10)
-pub = rospy.Publisher("SPServer/detected_object_list",DetectedObjectList,queue_size=1000)
+pub = rospy.Publisher("/costar/detected_object_list",DetectedObjectList,queue_size=1000)
 
 tfb = tf.TransformBroadcaster()
 

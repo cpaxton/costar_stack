@@ -579,7 +579,7 @@ class Instructor(QWidget):
         #self.info_textbox.notify('Detecting objects...')
         self.toast('Please wait... Detecting Objects')
         self.detect_objects_button.setEnabled(False)
-        service_name = '/SPServer/SPSegmenter'
+        service_name = '/costar_perception/segmenter'
         self.send_service_command(service_name)
         #self.info_textbox.notify('Detecting objects...DONE')
         self.detect_objects_button.setEnabled(True)

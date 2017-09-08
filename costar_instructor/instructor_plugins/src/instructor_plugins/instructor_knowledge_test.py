@@ -48,7 +48,6 @@ class NodeKnowledgeTestGUI(NodeGUI):
 
         ### Git initial list of targets ###
         rospy.loginfo('Waiting for service...')
-        self.refresh_data()
 
         # Finish
         self.reset()

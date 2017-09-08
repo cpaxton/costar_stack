@@ -5,6 +5,7 @@ import tf
 from costar_objrec_msgs.msg import *
 import numpy as np
 import threading
+import copy
 
 # mtx = None
 # broadcaster = None 
@@ -15,15 +16,20 @@ import threading
 def detected_objects_cb(msg):
 	rospy.loginfo("Received detected object messages")
 	global republish_frame_list
+	# global republished_msg
+	republished_msg = copy.deepcopy(msg)
 	# global mtx
 
 	# mtx.acquire()
 
-	for obj in msg.objects:
+	for idx,obj in enumerate(msg.objects):
 		frame_id = obj.id.split('/')[-1]
+		republished_msg.objects[idx].id = frame_id
 		
 		republish_frame_list.append((obj.id,frame_id))
-
+	
+	global detected_objects_repub
+	detected_objects_repub.publish(republished_msg)
 	# mtx.release()
 		
 
@@ -54,7 +60,7 @@ if __name__ == '__main__':
 		source_namespace = rospy.get_param("/costar/smartmove/scene_parsing_namespace")
 	else:
 		rospy.loginfo("Using sp_segmenter pose")
-		source_namespace = "costar_sp_segmenter"
+		source_namespace = "costar_perception"
 
 	global listener
 	global broadcaster
@@ -67,6 +73,9 @@ if __name__ == '__main__':
 	# mtx = threading.Lock()
 
 	detected_objects = rospy.Subscriber(source_namespace+'/detected_object_list', DetectedObjectList, detected_objects_cb)
+	
+	global detected_objects_repub
+	detected_objects_repub = rospy.Publisher('/costar/detected_object_list',DetectedObjectList,queue_size = 1)
 	r = rospy.Rate(10)
 
 	while not rospy.is_shutdown():
