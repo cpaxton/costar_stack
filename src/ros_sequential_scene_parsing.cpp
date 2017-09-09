@@ -367,6 +367,8 @@ void RosSceneHypothesisAssessor::processDetectedObjectMsgs()
 	if (best_hypothesis_only_)
 	{
 		this->scene_graph_pub.publish(this->generateSceneGraphMsgs());
+		std_msgs::Empty done_msg;
+		this->done_message_pub.publish(done_msg);
 	}
 
 	this->mtx_.unlock();

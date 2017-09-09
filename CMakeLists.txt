@@ -34,6 +34,7 @@ find_package(catkin REQUIRED COMPONENTS
   costar_objrec_msgs
   objrec_hypothesis_msgs
   std_msgs geometry_msgs message_generation
+  roslib
 )
 
 add_service_files(
@@ -185,3 +186,9 @@ target_link_libraries(
 )
 
 target_link_libraries(load_and_pub_pcd  ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(data_forces_test unit_test/data_forces_test.cpp)
+
+target_link_libraries(
+ data_forces_test SceneDataForces ${BULLET_LIBRARIES} ${catkin_LIBRARIES}
+)

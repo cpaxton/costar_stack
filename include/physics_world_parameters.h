@@ -5,7 +5,7 @@
 // applied to collision shapes, gravity, and transforms in physics engine world. 
 // When returning real world results, it will be rescaled back appropriately.
 
-#define SCALING 1000
+#define SCALING 100
 #define GRAVITY_MAGNITUDE 9.807
 static int GRAVITY_SCALE_COMPENSATION = 3;
 static double SCALED_GRAVITY_MAGNITUDE = SCALING * GRAVITY_MAGNITUDE / GRAVITY_SCALE_COMPENSATION;
