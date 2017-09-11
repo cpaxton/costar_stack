@@ -27,15 +27,16 @@ class SceneStructurePublisher:
         true_msg.pheader.source = rospy.get_name()
 
         for idx, object_id in enumerate(msg.base_objects_id):
-            self.valid_msg.assignments.append(object_id)
+            renamed_id = object_id.split('/')[-1]
+            self.valid_msg.assignments.append(renamed_id)
             structure = msg.structure[idx]
 
             ps = PredicateStatement()
             ps.predicate = "is_base_structure"
             ps.num_params = 1
             ps.confidence = 1.0
-            ps.param_classes.append(object_id)
-            ps.params[0] = object_id
+            ps.param_classes.append(renamed_id)
+            ps.params[0] = renamed_id
             ps.value = True
             true_msg.statements.append(ps)
 
@@ -44,8 +45,8 @@ class SceneStructurePublisher:
                 ps.predicate = "is_part_of_structure"
                 ps.num_params = 1
                 ps.confidence = 1.0
-                ps.param_classes.append(object_id)
-                ps.params[0] = object_id
+                ps.param_classes.append(renamed_id)
+                ps.params[0] = renamed_id
                 ps.value = len(structure.nodes_level) > 0
                 true_msg.statements.append(ps)
             else:
@@ -53,8 +54,8 @@ class SceneStructurePublisher:
                 ps.predicate = "is_free_object"
                 ps.num_params = 1
                 ps.confidence = 1.0
-                ps.param_classes.append(object_id)
-                ps.params[0] = object_id
+                ps.param_classes.append(renamed_id)
+                ps.params[0] = renamed_id
                 ps.value = True
                 true_msg.statements.append(ps)
 
@@ -62,17 +63,18 @@ class SceneStructurePublisher:
             top_of_structure_idx = len(structure.nodes_level) - 1
             if len(structure.nodes_level) == 0:
                 continue
-            self.valid_msg.assignments.append(object_id)
+            self.valid_msg.assignments.append(renamed_id)
 
             for idx, nodes in enumerate(structure.nodes_level):
                 is_top_structure = idx == top_of_structure_idx
                 for object_id in nodes.object_names:
+                    renamed_id = object_id.split('/')[-1]
                     ps = PredicateStatement()
                     ps.predicate = "is_part_of_structure"
                     ps.num_params = 1
                     ps.confidence = 1.0
-                    ps.param_classes.append(object_id)
-                    ps.params[0] = object_id
+                    ps.param_classes.append(renamed_id)
+                    ps.params[0] = renamed_id
                     ps.value = True
                     true_msg.statements.append(ps)
 
@@ -81,8 +83,8 @@ class SceneStructurePublisher:
                         ps.predicate = "is_top_structure"
                         ps.num_params = 1
                         ps.confidence = 1.0
-                        ps.param_classes.append(object_id)
-                        ps.params[0] = object_id
+                        ps.param_classes.append(renamed_id)
+                        ps.params[0] = renamed_id
                         ps.value = True
                         true_msg.statements.append(ps)
         self.pub.publish(true_msg)

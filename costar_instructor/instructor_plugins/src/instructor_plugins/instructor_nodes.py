@@ -29,6 +29,10 @@ class NodeParamConditionGUI(NodeGUI):
         self.layout_.addWidget(self.param)
         self.layout_.addWidget(self.value)
 
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(), self.label.full(), self.param.full(), self.value.full()]):
             return NodeParamCondition(self.get_name(), self.get_label(), self.param.get(), self.value.get())

@@ -1572,14 +1572,26 @@ class Instructor(QWidget):
           self.app_.exit()
 
 # MAIN #######################################################
-if __name__ == '__main__':
-  rospy.init_node('instructor_view',anonymous=True)
-  app = QApplication(sys.argv)
-  wrapper = Instructor(app)
-  # Running
-  app.exec_()
-  # Done
+def main():
+    rospy.init_node('instructor_view',anonymous=True)
+    app = QApplication(sys.argv)
+    wrapper = Instructor(app)
+    app.exec_()
 
+if __name__ == '__main__':
+  # rospy.init_node('instructor_view',anonymous=True)
+  # app = QApplication(sys.argv)
+  # wrapper = Instructor(app)
+  # # Running
+  # app.exec_()
+  # Done
+  profile = False
+  
+  if profile:
+    import cProfile
+    cProfile.run('main()')
+  else:
+    main()
 
 
 

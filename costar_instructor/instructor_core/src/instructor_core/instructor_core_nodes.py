@@ -56,7 +56,7 @@ class NodeGUI(QWidget):
         self.load_data(data)
 
     def load_data(self,data):
-        raise NotImplementedError('refresh_data is not implemented in base class NodeGUI')
+        raise NotImplementedError('load_data is not implemented in base class NodeGUI')
         # raise NotImplementedError('load_data is not implemented in base class NodeGUI')
     def refresh_data(self):
         pass
