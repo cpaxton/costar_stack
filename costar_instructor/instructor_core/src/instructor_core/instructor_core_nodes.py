@@ -40,7 +40,7 @@ class NodeGUI(QWidget):
         data = self.save_data(data)
         return data
     def save_data(self,data):
-        return data
+        raise NotImplementedError('save_data is not implemented in base class NodeGUI')
     def load(self,data):
         for name, obj in inspect.getmembers(self):
             if isinstance(obj, NamedField):
@@ -54,8 +54,10 @@ class NodeGUI(QWidget):
                 obj.set_index(datum['index'])
                 obj.set_value(datum['current_value'])
         self.load_data(data)
+
     def load_data(self,data):
-        pass
+        raise NotImplementedError('refresh_data is not implemented in base class NodeGUI')
+        # raise NotImplementedError('load_data is not implemented in base class NodeGUI')
     def refresh_data(self):
         pass
 #-------------------------------------------------------------------------------
@@ -69,6 +71,12 @@ class NodeRootGUI(NodeGUI):
         self.title.setStyleSheet('background-color:#00C8FF;color:#ffffff')
         self.name.set_field('root')
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        pass
+
     def generate(self):
         return beetree.NodeRoot('root','root')
 
@@ -77,6 +85,13 @@ class NodeParallelOneGUI(NodeGUI):
         super(NodeParallelOneGUI,self).__init__()
         self.title.setText('PARALLEL ONE LOGIC')
         self.title.setStyleSheet('background-color:#00C8FF;color:#ffffff')
+
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
 
     def generate(self):
         if all([self.name.full()]):
@@ -90,6 +105,13 @@ class NodeParallelAllGUI(NodeGUI):
         self.title.setText('PARALLEL ALL LOGIC')
         self.title.setStyleSheet('background-color:#00C8FF;color:#ffffff')
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+
     def generate(self):
         if all([self.name.full()]):
             return beetree.NodeParallelAll(self.get_name(),self.get_label())
@@ -102,6 +124,13 @@ class NodeParallelRemoveGUI(NodeGUI):
         self.title.setText('PARALLEL REMOVE LOGIC')
         self.title.setStyleSheet('background-color:#00C8FF;color:#ffffff')
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+        
     def generate(self):
         if all([self.name.full()]):
             return beetree.NodeParallelRemove(self.get_name(),self.get_label())
@@ -114,6 +143,13 @@ class NodeSequenceGUI(NodeGUI):
         self.title.setText('SEQUENCE LOGIC')
         self.title.setStyleSheet('background-color:#00C8FF;color:#ffffff')
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+        
     def generate(self):
         if all([self.name.full()]):
             return beetree.NodeSequence(self.get_name(),self.get_label())
@@ -126,6 +162,13 @@ class NodeIteratorGUI(NodeGUI):
         self.title.setText('ITERATOR LOGIC')
         self.title.setStyleSheet('background-color:#00C8FF;color:#ffffff')
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+        
     def generate(self):
         if all([self.name.full()]):
             return beetree.NodeIterator(self.get_name(),self.get_label())
@@ -138,6 +181,13 @@ class NodeSelectorGUI(NodeGUI):
         self.title.setText('SELECTOR LOGIC')
         self.title.setStyleSheet('background-color:#00C8FF;color:#ffffff')
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+        
     def generate(self):
         if all([self.name.full()]):
             return beetree.NodeSelector(self.get_name(),self.get_label())
@@ -153,6 +203,13 @@ class NodeDecoratorRepeatGUI(NodeGUI):
         self.repeat.set_field('-1')
         self.layout_.addWidget(self.repeat)
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+        
     def generate(self):
         if all([self.name.full(),self.repeat.full()]):
             return beetree.NodeDecoratorRepeat(self.get_name(),self.get_label(),int(self.repeat.get()))
@@ -167,6 +224,13 @@ class NodeDecoratorResetGUI(NodeGUI):
         self.reset = NamedField('Reset (-1) for infinity',self.get_label())
         self.layout_.addWidget(self.reset)
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+        
     def generate(self):
         if all([self.name.full(),self.reset.full()]):
             return beetree.NodeDecoratorReset(self.get_name(),self.get_label(),int(self.reset.get()))
@@ -181,6 +245,13 @@ class NodeDecoratorIgnoreFailGUI(NodeGUI):
         self.repeat = NamedField('Repeat',self.get_label())
         self.layout_.addWidget(self.repeat)
 
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
+        
     def generate(self):
         if all([self.name.full()]):
             return beetree.NodeDecoratorIgnoreFail(self.get_name(),self.get_label())
@@ -195,6 +266,13 @@ class NodeDecoratorWaitForSuccessGUI(NodeGUI):
         self.timeout = NamedField('Timeout',self.get_label())
         self.timeout.set_field('-1')
         self.layout_.addWidget(self.timeout)
+
+    def save_data(self,data):
+        return data
+
+    def load_data(self,data):
+        # no data to load
+        pass
 
     def generate(self):
         if all([self.name.full(),self.timeout.full()]):

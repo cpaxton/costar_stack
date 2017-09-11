@@ -195,6 +195,7 @@ class NodeActionSmartmoveGUI(NodeGUI):
         data['smartmove'] = {'value':self.selected_smartmove}
         data['vel'] = {'value':self.command_vel}
         data['acc'] = {'value':self.command_acc}
+        data['predicates'] = {'value':self.selected_predicates}
         return data
 
     def load_data(self,data):
@@ -221,6 +222,11 @@ class NodeActionSmartmoveGUI(NodeGUI):
                 self.command_acc = data['acc']['value']
                 self.waypoint_ui.acc_field.setText(str(float(self.command_acc)*100/1.5))
                 self.waypoint_ui.acc_slider.setSliderPosition(int(float(self.command_acc)*100/1.5))
+        if data.has_key('predicates'):
+            if data['predicates']['value']!=None:
+                self.selected_predicates = copy.deepcopy(data['predicates']['value'])
+                for item in self.selected_predicates:
+                    self.waypoint_ui.selected_pred_list.addItem(item)
         self.update_regions()
         self.update_references()
         self.update_objects()
@@ -267,7 +273,7 @@ class NodeActionSmartmove(ServiceNode):
         self.command_vel = vel
         self.manager = smartmove_manager
         self.listener_ = smartmove_manager.listener
-        self.selected_predicates = list(selected_predicates)
+        self.selected_predicates = selected_predicates
 
     def make_service_call(self,request,*args):
         self.manager.load_all()

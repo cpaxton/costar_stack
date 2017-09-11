@@ -120,7 +120,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.waypoint_ui.selected_pred_list.clear()
 
         for predicate in list(self.selected_predicates):
-        	self.waypoint_ui.selected_pred_list.addItem(predicate)
+            self.waypoint_ui.selected_pred_list.addItem(predicate)
 
         try:
             predicate_list = self.get_predicate_names_by_source('/predicator_scene_structure_node').data
@@ -208,10 +208,6 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         data['acc'] = {'value':self.command_acc}
         data['backoff'] = {'value':self.command_backoff}
         data['predicates'] = {'value':self.selected_predicates}
-        print('Saving data...')
-        print(self)
-        # if data['value'] == 'smart_grasp_0'
-        print(data)
 
         return data
 
@@ -245,10 +241,10 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
                 self.waypoint_ui.backoff_field.setText(str(float(self.command_backoff)*1000.))
                 self.waypoint_ui.backoff_slider.setSliderPosition(int(float(self.command_backoff)*1000.))
         if data.has_key('predicates'):
-        	if data['predicates']['value']!=None:
-        		self.selected_predicates = copy.deepcopy(data['predicates']['value'])
-        		for item in self.selected_predicates:
-        			self.waypoint_ui.selected_pred_list.addItem(item)
+            if data['predicates']['value']!=None:
+                self.selected_predicates = copy.deepcopy(data['predicates']['value'])
+                for item in self.selected_predicates:
+                    self.waypoint_ui.selected_pred_list.addItem(item)
         self.update_regions()
         self.update_references()
         self.update_objects()
