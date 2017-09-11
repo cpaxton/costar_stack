@@ -132,6 +132,14 @@
       description="publish_message"
       cases=""
       name="Publish Message" />
+
+    <instructor plugin="instructor.NodeWaitForMessageGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="wait_message"
+      cases=""
+      name="Wait For Message"/>
+
     <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
       type="CONDITION"
       group="SCENE"

@@ -21,6 +21,7 @@ from costar_robot_msgs.srv import *
 from smart_waypoint_manager import SmartWaypointManager
 from predicator_msgs.msg import *
 from predicator_msgs import srv
+import copy
 
 colors = ColorOptions().colors
 
@@ -118,6 +119,9 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.waypoint_ui.available_pred_list.clear()
         self.waypoint_ui.selected_pred_list.clear()
 
+        for predicate in list(self.selected_predicates):
+        	self.waypoint_ui.selected_pred_list.addItem(predicate)
+
         try:
             predicate_list = self.get_predicate_names_by_source('/predicator_scene_structure_node').data
             rospy.loginfo('Found list of predicates: %s',(" ".join(predicate_list)))
@@ -138,7 +142,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
     def remove_predicates_cb(self,item):
         item_idx = self.waypoint_ui.selected_pred_list.row(item)
         self.waypoint_ui.selected_pred_list.takeItem(item_idx)
-        self.selected_predicates.discard(str(item.text()))
+        self.selected_predicates.remove(str(item.text()))
         rospy.loginfo("Removed %s from the selected predicate",item.text() )
 
     def update_regions(self):
@@ -203,6 +207,12 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         data['vel'] = {'value':self.command_vel}
         data['acc'] = {'value':self.command_acc}
         data['backoff'] = {'value':self.command_backoff}
+        data['predicates'] = {'value':self.selected_predicates}
+        print('Saving data...')
+        print(self)
+        # if data['value'] == 'smart_grasp_0'
+        print(data)
+
         return data
 
     def load_data(self,data):
@@ -234,9 +244,15 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
                 self.command_backoff = data['backoff']['value']
                 self.waypoint_ui.backoff_field.setText(str(float(self.command_backoff)*1000.))
                 self.waypoint_ui.backoff_slider.setSliderPosition(int(float(self.command_backoff)*1000.))
+        if data.has_key('predicates'):
+        	if data['predicates']['value']!=None:
+        		self.selected_predicates = copy.deepcopy(data['predicates']['value'])
+        		for item in self.selected_predicates:
+        			self.waypoint_ui.selected_pred_list.addItem(item)
         self.update_regions()
         self.update_references()
         self.update_objects()
+        self.update_predicates()
 
     def generate(self):
         if all([self.name.full(), self.selected_object, self.selected_smartmove]):
@@ -309,7 +325,7 @@ class NodeActionSmartmoveMultiPurpose(ServiceNode):
         self.grasp = grasp
         self.manager = smartmove_manager
         self.listener_ = smartmove_manager.listener
-        self.selected_predicates = list(selected_predicates)
+        self.selected_predicates = copy.deepcopy(selected_predicates)
 
     def make_service_call(self,request,*args):
         self.manager.load_all()
