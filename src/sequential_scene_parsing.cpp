@@ -1,14 +1,13 @@
 #include "sequential_scene_parsing.h"
 
 
-SceneHypothesisAssessor::SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image)
-{
-	this->addBackground(background_image);
-	// this->processImage(input);
-	this->physics_engine_ready_ = false;
-}
+// SceneHypothesisAssessor::SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image)
+// {
+// 	this->addBackground(background_image);
+// 	// this->processImage(input);
+// 	this->physics_engine_ready_ = false;
+// }
 
-// void SceneHypothesisAssessor::setPhysicsEngine(PhysicsEngine* physics_engine)
 void SceneHypothesisAssessor::setPhysicsEngine(PhysicsEngine* physics_engine)
 {
 	if (this->debug_messages_) std::cerr <<"Setting physics engine into the scene graph.\n";
@@ -310,7 +309,7 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER));
 
 
-		this->physics_engine_->stepSimulationWithoutEvaluation(2. * GRAVITY_SCALE_COMPENSATION, 
+		this->physics_engine_->stepSimulationWithoutEvaluation(0.5 * GRAVITY_SCALE_COMPENSATION, 
 			GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),false);
 
 		this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
@@ -370,6 +369,7 @@ std::map<std::string, ObjectParameter> SceneHypothesisAssessor::getCorrectedObje
 	// set test pose to the converged best data pose
 	std::map<std::string, ObjectParameter> result = this->physics_engine_->getCurrentObjectPoses();
 	this->physics_engine_->changeBestTestPoseMap(result);
+	if (best_hypothesis_only_) this->obj_previous_frame_pose_ = result;
 
 	// set the current scene observation data
 	SceneHypothesis final_scene(vertex_map_,scene_support_graph_,
@@ -457,8 +457,20 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 	double object_data_compliance = object_action != SUPPORT_RETAINED_OBJECT ? 
 		dataProbabilityScale(ransac_confidence) : 1.0;
 	
+	double obj_transition_probability;
+	if (keyExistInConstantMap(object_label,obj_previous_frame_pose_))
+	{
+		obj_transition_probability = calculateFrameTransitionPenalty(object_pose,obj_previous_frame_pose_[object_label],
+			this->physics_engine_->getGravityDirection(),
+			0.5,1.);
+	}
+	else
+	{
+		obj_transition_probability = 1.;
+	}
+
 	double object_total_probability = object_data_compliance 
-		* support_probability * stability_probability * collision_probability;
+		* support_probability * stability_probability * collision_probability * obj_transition_probability;
 
 	if (verbose)
 	{
@@ -467,7 +479,8 @@ double SceneHypothesisAssessor::evaluateObjectProbability(const std::string &obj
 			<< "data = " << ransac_confidence << ", "
 			<< "stability = " << stability_probability << ", "
 			<< "support = " << support_probability << ", "
-			<< "collision = " << collision_probability
+			<< "collision = " << collision_probability << ", "
+			<< "frame_transition = " << obj_transition_probability
 			// << ", " << "penetration_depth = " << object_physics_status.penetration_distance_ 
 			<< std::endl;
 	}
@@ -756,7 +769,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 	this->physics_engine_->prepareSimulationForWithBestTestPose();
 	this->physics_engine_->setSimulationMode(RESET_VELOCITY_ON_EACH_FRAME,GRAVITY_SCALE_COMPENSATION/(120. * SIMULATION_FREQUENCY_MULTIPLIER),
 		GRAVITY_SCALE_COMPENSATION*30);
-	this->physics_engine_->stepSimulationWithoutEvaluation(2./GRAVITY_SCALE_COMPENSATION, 
+	this->physics_engine_->stepSimulationWithoutEvaluation(1./GRAVITY_SCALE_COMPENSATION, 
 			GRAVITY_SCALE_COMPENSATION/120.,false);
 	this->getUpdatedSceneSupportGraph();
 
@@ -769,6 +782,7 @@ void SceneHypothesisAssessor::evaluateAllObjectHypothesisProbability()
 
 	this->current_scene_ = SceneObservation(final_scene, scene_hypotheses_list, this->object_label_class_map);
 	
+	this->obj_previous_frame_pose_ = this->physics_engine_->getCurrentObjectPoses();
 	// return scene_hypothesis;
 }
 

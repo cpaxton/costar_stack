@@ -2,5 +2,5 @@
 object_property:
   wood_cube:
     mass: 1.0
-    friction: 0.0
-    rolling_friction: 0.0
+    friction: 1.0
+    rolling_friction: 1.0

@@ -196,6 +196,7 @@ void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 		<< gravity_vector_[2] << std::endl;
 	m_dynamicsWorld->setGravity(gravity_vector_);
 	this->gravity_magnitude_ = gravity_vector_.norm();
+	this->gravity_unit_vector_ = gravity_vector_.normalized();
 }
 
 void PhysicsEngine::setGravityFromBackgroundNormal(const bool &input)
@@ -203,6 +204,11 @@ void PhysicsEngine::setGravityFromBackgroundNormal(const bool &input)
 	this->use_background_normal_as_gravity_ = input;
 	if (this->use_background_normal_as_gravity_ && this->have_background_)
 		this->setGravityVectorDirection(-background_surface_normal_);
+}
+
+btVector3 PhysicsEngine::getGravityDirection() const
+{
+	return this->gravity_unit_vector_;
 }
 
 void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
@@ -571,6 +577,24 @@ void PhysicsEngine::setSimulationMode(const int &simulation_mode, const double s
 	this->fixed_step_ = simulation_step_ / 2 * 1.05;
 }
 
+
+void PhysicsEngine::setPhysicsSolverSetting(const int &m_numIterations, const bool randomize_order, const int &m_splitImpulse, 
+	const btScalar &m_splitImpulsePenetrationThreshold)
+{
+	btContactSolverInfo& info = m_dynamicsWorld->getSolverInfo();
+	info.m_numIterations = m_numIterations;
+	if (randomize_order)
+	{
+		info.m_solverMode = info.m_solverMode & ~SOLVER_RANDMIZE_ORDER;
+	}
+	else
+	{
+		info.m_solverMode = info.m_solverMode | SOLVER_RANDMIZE_ORDER;
+	}
+	info.m_splitImpulse = m_splitImpulse; 
+	info.m_splitImpulsePenetrationThreshold = m_splitImpulsePenetrationThreshold;
+}
+
 void PhysicsEngine::setDebugMode(bool debug)
 {
 	this->debug_messages_ = debug;
@@ -685,7 +709,7 @@ void PhysicsEngine::setCameraPositionAndTarget(btVector3 cam_position, btVector3
 	this->m_cameraPosition -= 0.5*(m_cameraPosition - m_cameraTargetPosition);
 
 	// calculate polar coordinate of the camera
-	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalize();
+	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalized();
 	this->m_ele = 90 - acos(target_to_cam_direction[1]) * 57.29577951308232;
 	this->m_azi = atan2(-target_to_cam_direction[0],-target_to_cam_direction[2]) * 57.29577951308232;
 }

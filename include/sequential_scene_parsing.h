@@ -37,8 +37,8 @@
 class SceneHypothesisAssessor
 {
 public:
-	SceneHypothesisAssessor() : physics_engine_ready_(false) {};
-	SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image);
+	SceneHypothesisAssessor() : physics_engine_ready_(false), best_hypothesis_only_(false) {};
+	// SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image);
 	
 	// set physics engine environment to be used.
 	void setPhysicsEngine(PhysicsEngine* physics_engine);
@@ -75,6 +75,7 @@ public:
 	SceneSupportGraph getSceneGraphData(std::map<std::string, vertex_t> &vertex_map) const;
 
 	ObjectDatabase obj_database_;
+	bool best_hypothesis_only_;
 
 private:
 	void getCurrentSceneSupportGraph();
@@ -110,6 +111,9 @@ private:
 
 	std::map<std::string, std::string> object_label_class_map;
 	std::string background_label_;
+
+	std::map<std::string, btTransform> obj_previous_frame_pose_;
+
 	std::map<std::string, ImagePtr> object_point_cloud_;
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map_;

@@ -62,6 +62,7 @@ public:
 	void setGravityVectorDirectionFromTfYUp(const btTransform &transform_y_is_inverse_gravity_direction);
 	void setGravityVectorDirection(const btVector3 &gravity);
 	void setGravityFromBackgroundNormal(const bool &input);
+	btVector3 getGravityDirection() const;
 	void addObjects(const std::vector<ObjectWithID> &objects);
 	std::map<std::string, btTransform>  getUpdatedObjectPoses();
 	std::map<std::string, btTransform>  getCurrentObjectPoses();
@@ -71,6 +72,9 @@ public:
 
 	void setSimulationMode(const int &simulation_mode, const double simulation_step = 1./120,
 		const unsigned int &number_of_world_tick = 100);
+	// solver setting: check http://bulletphysics.org/mediawiki-1.5.8/index.php/BtContactSolverInfo
+	void setPhysicsSolverSetting(const int &m_numIterations, const bool randomize_order = true, 
+		const int &m_splitImpulse = 1, const btScalar &m_splitImpulsePenetrationThreshold = -0.02);
 
 	void setDebugMode(bool debug);
 	void renderingLaunched(const bool &flag = true);
@@ -169,6 +173,7 @@ private:
 	
 	double gravity_magnitude_;
 	btVector3 gravity_vector_;
+	btVector3 gravity_unit_vector_;
 	
 	std::map<std::string, MovementComponent> object_velocity_;
 	std::map<std::string, MovementComponent> object_acceleration_;

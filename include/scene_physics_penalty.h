@@ -34,6 +34,9 @@ struct ObjectPenaltyParameters
 
 };
 
+double calculateFrameTransitionPenalty(const btTransform &current_frame, const btTransform &prev_frame, 
+	const btVector3 &gravity_direction, const btScalar &horizontal_weight, const btScalar &rotation_weight);
+
 double calculateStabilityPenalty(const MovementComponent &acceleration,
 	const ObjectPenaltyParameters &penalty_params, const double &gravity_magnitude);
 

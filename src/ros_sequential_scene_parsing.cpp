@@ -80,6 +80,16 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("small_obj_g_comp",GRAVITY_SCALE_COMPENSATION,3);
 	nh.param("sim_freq_multiplier",SIMULATION_FREQUENCY_MULTIPLIER,1.);
 
+	// physics engine solver settings: check http://bulletphysics.org/mediawiki-1.5.8/index.php/BtContactSolverInfo
+	int num_iterations;
+	bool split_impulse, randomize_order;
+	double impulse_penetration_threshold;
+	nh.param("p_solver_iter",num_iterations,10);
+	nh.param("p_randomize_order",randomize_order,false);
+	nh.param("p_split_impulse",split_impulse,false);
+	nh.param("p_penetration_threshold",impulse_penetration_threshold,-0.02);
+	this->physics_engine_.setPhysicsSolverSetting(num_iterations, randomize_order, 
+		int(split_impulse), impulse_penetration_threshold);
 
 	SCALED_GRAVITY_MAGNITUDE = SCALING * GRAVITY_MAGNITUDE / GRAVITY_SCALE_COMPENSATION;
 

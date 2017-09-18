@@ -73,7 +73,6 @@ private:
 	bool object_list_received_;
 	bool object_list_updated_;
 	bool hypothesis_list_received_;
-	bool best_hypothesis_only_;
 
 	costar_objrec_msgs::DetectedObjectList detected_objects_;
 	objrec_hypothesis_msgs::AllModelHypothesis detected_object_hypotheses_;
