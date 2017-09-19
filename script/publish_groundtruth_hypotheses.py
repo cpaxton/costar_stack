@@ -164,8 +164,8 @@ class GroundtruthHypothesisGenerator(object):
 	def hypothesis_generator(self,current_frame_tf_accumulator):
 		message_to_publish = AllModelHypothesis()
 		object_hypothesis_dict = dict()
-		self.current_hypothesis_noise = dict()
 		induced_noise = dict()
+		self.current_hypothesis_noise = dict()
 		# ModelHypothesis()	
 
 		for transform_list_information in current_frame_tf_accumulator:
@@ -240,7 +240,7 @@ class GroundtruthHypothesisGenerator(object):
 			point_cloud_data.header = Header(seq=self.seq, stamp=rospy.Time.now(),frame_id='camera_link')
 
 			self.seg_cloud_pub.publish(point_cloud_data)
-			# print "Cloud published"
+			print "Cloud published"
 			rospy.sleep(0.3)
 
 			obj_list_to_publish, current_frame_tf_accumulator = self.detected_object_in_frame[self.frame_to_publish]
@@ -248,11 +248,11 @@ class GroundtruthHypothesisGenerator(object):
 			obj_list_to_publish.header.stamp = rospy.Time.now()
 
 			self.det_obj_pub.publish(obj_list_to_publish)
-			# print "Obj list published"
+			print "Obj list published"
 			rospy.sleep(0.3)
 
-			# self.hypo_obj_pub.publish(self.hypothesis_generator(current_frame_tf_accumulator))
-			# print "all data published"
+			self.hypo_obj_pub.publish(self.hypothesis_generator(current_frame_tf_accumulator))
+			print "all data published"
 			self.seq += 1
 		return []
 
@@ -286,7 +286,7 @@ class GroundtruthHypothesisGenerator(object):
 		rospy.init_node('groundtruth_h_generator')
 		object_pub_service = rospy.Service('pub_objects', hypothesis_request, self.publish_detected_object_msgs)
 		
-		rospy.Subscriber('/sequential_scene_ros/done_hypothesis_msg', Empty, self.evaluate_scene_result)
+		rospy.Subscriber('/sequential_scene_parsing/done_hypothesis_msg', Empty, self.evaluate_scene_result)
 
 		self.det_obj_pub = rospy.Publisher('/SPServer/detected_object_list', DetectedObjectList,queue_size=1)
 		self.hypo_obj_pub = rospy.Publisher('/SPServer/object_hypothesis', AllModelHypothesis, queue_size=1) 

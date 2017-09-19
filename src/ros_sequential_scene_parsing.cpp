@@ -371,7 +371,7 @@ void RosSceneHypothesisAssessor::processDetectedObjectMsgs()
 	this->addNewObjectTransforms(objects);
 	this->setObjectSymmetryMap(object_symmetry_map);
 	std::cerr << "Getting corrected object transform...\n";
-	std::map<std::string, ObjectParameter> object_transforms = this->getCorrectedObjectTransform(best_hypothesis_only_);
+	std::map<std::string, ObjectParameter> object_transforms = this->getCorrectedObjectTransform(true);
 	this->updateTfFromObjTransformMap(object_transforms, best_hypothesis_only_);
 
 	if (best_hypothesis_only_)

@@ -17,14 +17,20 @@
   <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
   <arg name="objransac_model_names"          default="block,cube"/>
 
-  <arg name="data_forces_magnitude"          default="0.0"/>
+  <arg name="data_forces_magnitude"          default="0.25"/>
   <arg name="data_forces_max_distance"       default="0.015"/>
-  <arg name="data_forces_model"              default="0" doc="0: closest point, 1: ICP every frame, 2: initial estimated pose"/>
+  <arg name="data_forces_model"              default="2" doc="0: closest point, 1: ICP every frame, 2: initial estimated pose"/>
 
   <arg name="best_hypothesis_only"           default="false"/>
   <arg name="small_obj_g_comp"               default="3"/>
   <arg name="sim_freq_multiplier"            default="1."/>
 
+  <!-- physics solver settings: check http://bulletphysics.org/mediawiki-1.5.8/index.php/BtContactSolverInfo -->
+  <arg name="p_solver_iter"                  default="20"/>
+  <arg name="p_randomize_order"              default="true"/>
+  <arg name="p_split_impulse"                default="false"/>
+  <arg name="p_penetration_threshold"        default="-0.02"/>
+  
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_parsing"
   output="screen" 
   >  
@@ -46,6 +52,11 @@
     <param name="background_mode"         type="int"     value="$(arg background_mode)"/>
     <param name="table_location"          type="str"     value="$(arg table_location)"/>
     <param name="bg_normal_as_gravity"    type="bool"    value="$(arg background_normal_as_gravity)"/>
+
+    <param name="p_solver_iter"            type="int"    value="$(arg p_solver_iter)"/>
+    <param name="p_randomize_order"        type="bool"     value="$(arg p_randomize_order)"/>
+    <param name="p_split_impulse"          type="bool"     value="$(arg p_split_impulse)"/>
+    <param name="p_penetration_threshold"  type="double"    value="$(arg p_penetration_threshold)"/>
 
     <param name="render_scene"            type="bool"    value="$(arg render_scene)"/>
     <param name="best_hypothesis_only"    type="bool"    value="$(arg best_hypothesis_only)"/>
