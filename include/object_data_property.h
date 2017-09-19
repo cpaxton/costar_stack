@@ -31,8 +31,8 @@ struct PhysicalProperties
 	PhysicalProperties() : mass_(1.0), friction_(1.0), rolling_friction_(1.0) {};
 
 	// template constructor
-	template <typename numericStandard>
-	PhysicalProperties(const numericStandard &mass, const numericStandard &friction, const numericStandard &rolling_friction): 
+	template <typename NumericStandard>
+	PhysicalProperties(const NumericStandard &mass, const NumericStandard &friction, const NumericStandard &rolling_friction): 
 		mass_(mass), friction_(friction), rolling_friction_(rolling_friction) {};
 
 	// copy assignment

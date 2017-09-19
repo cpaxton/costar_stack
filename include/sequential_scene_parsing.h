@@ -37,8 +37,8 @@
 class SceneHypothesisAssessor
 {
 public:
-	SceneHypothesisAssessor() : physics_engine_ready_(false) {};
-	SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image);
+	SceneHypothesisAssessor() : physics_engine_ready_(false), best_hypothesis_only_(false) {};
+	// SceneHypothesisAssessor(ImagePtr input, ImagePtr background_image);
 	
 	// set physics engine environment to be used.
 	void setPhysicsEngine(PhysicsEngine* physics_engine);
@@ -58,17 +58,24 @@ public:
 	bool loadObjectModels(const std::string &input_model_directory_path, const std::vector<std::string> &object_names);
 	void setObjectSymmetryMap(const std::map<std::string, ObjectSymmetry> &object_symmetry_map);
 
-	template <typename numericStandard>
-	void setDataFeedbackForcesParameters(const numericStandard &forces_magnitude_per_point, 
-		const numericStandard &max_point_distance_threshold)
+	template <typename NumericStandard>
+	void setDataFeedbackForcesParameters(const NumericStandard &forces_magnitude_per_point, 
+		const NumericStandard &max_point_distance_threshold)
 	{
 		data_forces_generator_.setForcesParameter(
 			btScalar(forces_magnitude_per_point),btScalar(max_point_distance_threshold));
+	}
+	
+	template <typename NumericStandard>
+	void setFeedbackForceMode(const NumericStandard &data_forces_model)
+	{
+		data_forces_generator_.setFeedbackForceMode(int(data_forces_model));
 	}
 
 	SceneSupportGraph getSceneGraphData(std::map<std::string, vertex_t> &vertex_map) const;
 
 	ObjectDatabase obj_database_;
+	bool best_hypothesis_only_;
 
 private:
 	void getCurrentSceneSupportGraph();
@@ -104,6 +111,9 @@ private:
 
 	std::map<std::string, std::string> object_label_class_map;
 	std::string background_label_;
+
+	std::map<std::string, btTransform> obj_previous_frame_pose_;
+
 	std::map<std::string, ImagePtr> object_point_cloud_;
 	std::map<std::string, ObjectParameter> object_instance_parameter_;
 	std::map<std::string, ObjectHypothesesData > object_hypotheses_map_;

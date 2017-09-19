@@ -12,6 +12,11 @@
 #include <pcl/registration/transforms.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/registration/icp.h>
+
+// for limiting the ICP area to only include area around initial pose estimate
+#include <pcl/filters/crop_box.h>
+#include <pcl/filters/filter.h>
+#include <pcl/features/moment_of_inertia_estimation.h>
 // #include <pcl/recognition/ransac_based/trimmed_icp.h>
 #include "utility.h"
 #include "physics_world_parameters.h"
@@ -22,12 +27,15 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 // Mode for generating the feedback force based on point pair
 enum FeedbackForceMode {
 	// Find the closest point to each mesh point for all mesh point
+	// Moderate speed
 	CLOSEST_POINT, 
 
 	// Find the ICP correspondence from the mesh to the scene points for every frame
+	// Very slow
 	FRAME_BY_FRAME_ICP_CORRESPONDENCE,
 
 	// Use cached icp result for generating feedback force instead of doing icp for every frame
+	// Fastest, but depends on the accuracy of the initial estimated pose
 	CACHED_ICP_CORRESPONDENCE
 };
 
@@ -38,6 +46,7 @@ public:
 	
 	void setFeedbackForceMode(int mode);
 	void applyFeedbackForces(btRigidBody &object, const std::string &model_name);
+	std::pair<btVector3, btVector3> applyFeedbackForcesDebug(const btTransform &object_real_pose, const std::string &model_name);
 
 	void setSceneData(PointCloudXYZPtr scene_data);
 
@@ -53,7 +62,11 @@ public:
 		const std::string &model_name);
 	void manualSetCachedIcpResultMapFromPose(const btRigidBody &object, 
 		const std::string &model_name);
+	void manualSetCachedIcpResultMapFromPose(const btTransform &object_pose,
+		const std::string &object_id, const std::string &model_name);
 	double getIcpConfidenceResult(const std::string &model_name, const btTransform &object_pose);
+
+	void setDebugMode(const bool &debug_flag);
 	
 	PointCloudXYZPtr getTransformedObjectCloud(const std::string &model_name, const btTransform &object_real_pose) const;
 	
@@ -78,7 +91,7 @@ private:
 		const btTransform &object_pose) const;
 	double getIcpConfidenceResult(const PointCloudXYZPtr icp_result, const double &voxel_size = 0.003) const;
 	PointCloudXYZPtr generateCorrespondenceCloud(PointCloudXYZPtr input_cloud, 
-		const bool &filter_distance = false, const double &max_distance = 0.0) const;
+		const bool &filter_distance = false, const double &max_distance = 0.0, const bool keep_index_aligned = true) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
 		const std::string &model_name) const;
 	PointCloudXYZPtr getTransformedObjectCloud(const btRigidBody &object, 
@@ -87,7 +100,7 @@ private:
 		const std::string &model_name, btTransform &object_real_pose) const;
 
 	std::string model_directory_;
-
+	bool debug_;
 	bool have_scene_data_;
 	PointCloudXYZPtr scene_data_;
 	pcl::KdTreeFLANN<pcl::PointXYZ> scene_data_tree_;

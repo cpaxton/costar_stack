@@ -1,9 +1,9 @@
 <launch>
   <!-- Scene topic arguments-->
-  <arg name="background_pcl2_topic"          default="/SPServer/table_corner" />
-  <arg name="scene_pcl2_topic"               default="/SPServer/points_out" />
-  <arg name="detected_object_topic"          default="/SPServer/detected_object_list"/>
-  <arg name="object_hypotheses_topic"        default="/SPServer/object_hypothesis" />
+  <arg name="background_pcl2_topic"          default="/costar_perception/table_corner" />
+  <arg name="scene_pcl2_topic"               default="/costar_perception/points_out" />
+  <arg name="detected_object_topic"          default="/costar_perception/detected_object_list"/>
+  <arg name="object_hypotheses_topic"        default="/costar_perception/object_hypothesis" />
 
   <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" />
   <arg name="background_normal_as_gravity"   default="true"/>
@@ -11,17 +11,17 @@
   <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3"/>
   <arg name="tf_publisher_initial"           default="scene"/>
   <arg name="debug"                          default="false"/>
-  <arg name="load_table"                     default="true"/>
+  <arg name="load_table"                     default="false"/>
   <arg name="table_location"                 default="$(find sequential_scene_parsing)/mesh/table.pcd"/>
   <arg name="render_scene"                   default="true"/>
   <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
-  <arg name="objransac_model_names"          default="block,cube"/>
+  <arg name="objransac_model_names"          default="link_uniform,node_uniform"/>
 
-  <arg name="data_forces_magnitude"          default="0.0"/>
+  <arg name="data_forces_magnitude"          default="2.0"/>
   <arg name="data_forces_max_distance"       default="0.015"/>
-  <arg name="data_forces_model"              default="0" doc="0: closest point, 1: ICP every frame, 2: initial estimated pose"/>
+  <arg name="data_forces_model"              default="2" doc="0: closest point, 1: ICP every frame, 2: initial estimated pose"/>
 
-  <arg name="best_hypothesis_only"           default="false"/>
+  <arg name="best_hypothesis_only"           default="true"/>
   <arg name="small_obj_g_comp"               default="3"/>
   <arg name="sim_freq_multiplier"            default="1."/>
 
@@ -58,10 +58,10 @@
     <param name="objransac_model_names"        type="str"     value="$(arg objransac_model_names)"/>
 
     <!-- objectDatabase -->
-    <rosparam command="load" file="$(find sequential_scene_parsing)/mesh/object_property_database.yaml" />
+    <rosparam command="load" file="$(find sequential_scene_parsing)/mesh/link_node_database.yaml" />
     
   </node>
 
-  <node pkg="tf" type="static_transform_publisher" name="camera_tf_pub" args="0 0 0 0 0 0 /world /camera_link 300" />
+  <!-- <node pkg="tf" type="static_transform_publisher" name="camera_tf_pub" args="0 0 0 0 0 0 /world /camera_link 300" /> -->
 
 </launch>

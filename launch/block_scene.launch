@@ -17,12 +17,19 @@
   <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh"/>
   <arg name="objransac_model_names"          default="wood_cube" />
 
-  <arg name="data_forces_magnitude"          default="0.15"/>
-  <arg name="data_forces_max_distance"       default="0.015"/>
+  <arg name="data_forces_magnitude"          default="2.0"/>
+  <arg name="data_forces_max_distance"       default="0.05"/>
+  <arg name="data_forces_model"              default="2"/>
 
-  <arg name="best_hypothesis_only"           default="true"/>
-  <arg name="small_obj_g_comp"               default="5"/>
-  <arg name="sim_freq_multiplier"            default="1."/>
+  <arg name="best_hypothesis_only"           default="false"/>
+  <arg name="small_obj_g_comp"               default="2"/>
+  <arg name="sim_freq_multiplier"            default="3."/>
+
+  <!-- physics solver settings: check http://bulletphysics.org/mediawiki-1.5.8/index.php/BtContactSolverInfo -->
+  <arg name="p_solver_iter"                  default="20"/>
+  <arg name="p_randomize_order"              default="true"/>
+  <arg name="p_split_impulse"                default="false"/>
+  <arg name="p_penetration_threshold"        default="-0.02"/>
 
   <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_parsing"
   output="screen" 
@@ -49,8 +56,14 @@
     <param name="render_scene"            type="bool"    value="$(arg render_scene)"/>
     <param name="best_hypothesis_only"    type="bool"    value="$(arg best_hypothesis_only)"/>
 
+    <param name="p_solver_iter"            type="int"    value="$(arg p_solver_iter)"/>
+    <param name="p_randomize_order"        type="bool"     value="$(arg p_randomize_order)"/>
+    <param name="p_split_impulse"          type="bool"     value="$(arg p_split_impulse)"/>
+    <param name="p_penetration_threshold"  type="double"    value="$(arg p_penetration_threshold)"/>
+
     <param name="data_forces_magnitude"        type="double"  value="$(arg data_forces_magnitude)"/>
     <param name="data_forces_max_distance"     type="double"  value="$(arg data_forces_max_distance)"/>
+    <param name="data_forces_model"            type="int"     value="$(arg data_forces_model)"/>
 
     <param name="objransac_model_directory"    type="str"     value="$(arg objransac_model_directory)"/>
     <param name="objransac_model_names"        type="str"     value="$(arg objransac_model_names)"/>

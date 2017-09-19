@@ -196,6 +196,7 @@ void PhysicsEngine::setGravityVectorDirection(const btVector3 &gravity)
 		<< gravity_vector_[2] << std::endl;
 	m_dynamicsWorld->setGravity(gravity_vector_);
 	this->gravity_magnitude_ = gravity_vector_.norm();
+	this->gravity_unit_vector_ = gravity_vector_.normalized();
 }
 
 void PhysicsEngine::setGravityFromBackgroundNormal(const bool &input)
@@ -203,6 +204,11 @@ void PhysicsEngine::setGravityFromBackgroundNormal(const bool &input)
 	this->use_background_normal_as_gravity_ = input;
 	if (this->use_background_normal_as_gravity_ && this->have_background_)
 		this->setGravityVectorDirection(-background_surface_normal_);
+}
+
+btVector3 PhysicsEngine::getGravityDirection() const
+{
+	return this->gravity_unit_vector_;
 }
 
 void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
@@ -234,6 +240,10 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 			object_penalty_parameter_database_by_id_[it->getID()] = 
 				(*object_penalty_parameter_database_)[it->getObjectClass()];
 			object_label_class_map_[it->getID()] = it->getObjectClass();
+
+			// add the best pose from hypothesis to cached icp result for new objects. Otherwise, use the previous best pose for cached icp result
+			data_forces_generator_->manualSetCachedIcpResultMapFromPose(
+				*(this->rigid_body_[it->getID()]), it->getObjectClass());
 		}
 		else
 		{
@@ -247,10 +257,6 @@ void PhysicsEngine::addObjects(const std::vector<ObjectWithID> &objects)
 		{
 			m_dynamicsWorld->addRigidBody(this->rigid_body_[it->getID()]);
 		}
-		
-		// add the best pose from hypothesis to cached icp result
-		data_forces_generator_->manualSetCachedIcpResultMapFromPose(
-			*(this->rigid_body_[it->getID()]), it->getObjectClass());
 
 		if (this->debug_messages_)
 		{
@@ -303,7 +309,7 @@ void PhysicsEngine::simulate()
 		// TODO: Find out why the simulation step not syncing with the internal step callback.
 		for (int i = 0; i < this->number_of_world_tick_; i++)
 		{
-			m_dynamicsWorld->stepSimulation(simulation_step_, 2, 1./120);
+			m_dynamicsWorld->stepSimulation(simulation_step_, 2, fixed_step_);
 			// if (this->checkSteadyState()) break;
 		}
 	}
@@ -313,23 +319,27 @@ void PhysicsEngine::simulate()
 	mtx_.unlock();
 }
 
-void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step)
+void PhysicsEngine::stepSimulationWithoutEvaluation(const double & delta_time, const double &simulation_step, const bool &data_forces_enabled)
 {
 	int number_of_world_tick_to_step = delta_time / simulation_step;
 	mtx_.lock();
+	int tmp = this->number_of_world_tick_;
 
 	this->skip_scene_evaluation_ = true;
+	enable_data_forces_ = data_forces_enabled;
 	// this->in_simulation_ = true;
 	this->world_tick_counter_ = 0;
+	this->in_simulation_ = true;
+	btScalar fixed_step = simulation_step_ / 1 * 1.05;
+	this->number_of_world_tick_ = number_of_world_tick_to_step;
 	mtx_.unlock();
 
-	for (int i = 0; i < number_of_world_tick_to_step; i++)
-	{
-		m_dynamicsWorld->stepSimulation(simulation_step, 1, 1./60);
-		this->applyDataForces();
-		// if (this->checkSteadyState()) break;
-	}
+	this->simulate();
+	
+	mtx_.lock();
 	this->skip_scene_evaluation_ = false;
+	this->number_of_world_tick_ = tmp;
+	mtx_.unlock();
 }
 
 void PhysicsEngine::removeAllRigidBodyFromWorld()
@@ -363,6 +373,7 @@ void PhysicsEngine::addExistingRigidBodyBackFromMap(const std::string &object_id
 		this->rigid_body_[object_id]->setWorldTransform(object_pose);
 		this->object_best_test_pose_map_[object_id] = object_pose;
 		if (!this->rigid_body_[object_id]->isInWorld()) m_dynamicsWorld->addRigidBody(this->rigid_body_[object_id]);
+		this->rigid_body_[object_id]->activate();
 	}
 	mtx_.unlock();
 }
@@ -563,6 +574,25 @@ void PhysicsEngine::setSimulationMode(const int &simulation_mode, const double s
 	}
 	this->simulation_step_ = simulation_step;
 	this->number_of_world_tick_ = number_of_world_tick;
+	this->fixed_step_ = simulation_step_ / 2 * 1.05;
+}
+
+
+void PhysicsEngine::setPhysicsSolverSetting(const int &m_numIterations, const bool randomize_order, const int &m_splitImpulse, 
+	const btScalar &m_splitImpulsePenetrationThreshold)
+{
+	btContactSolverInfo& info = m_dynamicsWorld->getSolverInfo();
+	info.m_numIterations = m_numIterations;
+	if (randomize_order)
+	{
+		info.m_solverMode = info.m_solverMode & ~SOLVER_RANDMIZE_ORDER;
+	}
+	else
+	{
+		info.m_solverMode = info.m_solverMode | SOLVER_RANDMIZE_ORDER;
+	}
+	info.m_splitImpulse = m_splitImpulse; 
+	info.m_splitImpulsePenetrationThreshold = m_splitImpulsePenetrationThreshold;
 }
 
 void PhysicsEngine::setDebugMode(bool debug)
@@ -639,7 +669,7 @@ void PhysicsEngine::clientMoveAndDisplay()
 	if (m_dynamicsWorld)
 	{
 		if (this->in_simulation_){
-			m_dynamicsWorld->stepSimulation(simulation_step_, 2, 1./120);
+			m_dynamicsWorld->stepSimulation(simulation_step_, 2, fixed_step_);
 		}
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
@@ -679,7 +709,7 @@ void PhysicsEngine::setCameraPositionAndTarget(btVector3 cam_position, btVector3
 	this->m_cameraPosition -= 0.5*(m_cameraPosition - m_cameraTargetPosition);
 
 	// calculate polar coordinate of the camera
-	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalize();
+	btVector3 target_to_cam_direction = (m_cameraPosition - m_cameraTargetPosition).normalized();
 	this->m_ele = 90 - acos(target_to_cam_direction[1]) * 57.29577951308232;
 	this->m_azi = atan2(-target_to_cam_direction[0],-target_to_cam_direction[2]) * 57.29577951308232;
 }
@@ -733,6 +763,10 @@ void PhysicsEngine::worldTickCallback(const btScalar &timeStep) {
 			}
 		}
 	}
+	else if (enable_data_forces_)
+	{
+		this->applyDataForces();
+	}
 	mtx_.unlock();
 }
 
@@ -773,7 +807,7 @@ void PhysicsEngine::resetObjectMotionState(const bool &reset_object_pose,
 		if (reset_object_pose) rigid_body_[it->first]->setWorldTransform(it->second);
 
 		// reset the forces and velocity of the objects
-		rigid_body_[it->first]->clearForces();
+		// rigid_body_[it->first]->clearForces();
 		rigid_body_[it->first]->setLinearVelocity(zero_vector);
 		rigid_body_[it->first]->setAngularVelocity(zero_vector);
 
@@ -819,6 +853,7 @@ void PhysicsEngine::changeBestTestPoseMap(const std::string &object_id, const bt
 {
 	mtx_.lock();
 	this->object_best_test_pose_map_[object_id] = object_pose;
+	data_forces_generator_->manualSetCachedIcpResultMapFromPose(object_pose,object_label_class_map_[object_id], object_id);
 	mtx_.unlock();
 }
 
@@ -846,6 +881,70 @@ void PhysicsEngine::setIgnoreDataForces(const std::string &object_id, bool value
 	this->ignored_data_forces_[object_id] = value;
 }
 
+void PhysicsEngine::makeObjectStatic(const std::string &object_id, const bool &make_static)
+{
+	// do nothing for invalid object
+	if (!keyExistInConstantMap(object_id, rigid_body_)) return;
+	else if (rigid_body_[object_id]->isStaticObject() && make_static) return;
+
+	if (make_static)
+	{
+		object_original_data_forces_flag_[object_id] = ignored_data_forces_[object_id];
+		ignored_data_forces_[object_id] = false;
+	}
+	else
+	{
+		ignored_data_forces_[object_id] = object_original_data_forces_flag_[object_id];
+	}
+
+	this->makeStatic(*rigid_body_[object_id],make_static);
+}
+
+std::vector<std::string> PhysicsEngine::getAllActiveObjectIds() const
+{
+	std::vector<std::string> result;
+	for (std::map<std::string, btRigidBody*>::const_iterator it = this->rigid_body_.begin(); 
+		it != this->rigid_body_.end(); ++it)
+	{
+		// skips object that are not in the world
+		if (!it->second->isInWorld())
+		{
+			result.push_back(it->first);
+		}
+	}
+	return result;
+}
+
+void PhysicsEngine::makeStatic(btRigidBody &object, const bool &make_static)
+{
+	if (object.isStaticObject() && make_static) return;
+
+	if (make_static)
+	{
+		btVector3 zero_vector(0,0,0);
+		object_original_mass_prop_[&object] = MassProp(object.getInvMass(), object.getLocalInertia());
+		// object.clearForces();
+		object.setLinearVelocity(zero_vector);
+		object.setAngularVelocity(zero_vector);
+
+		object.setMassProps(0,zero_vector);
+		object.updateInertiaTensor();
+	}
+	else
+	{
+		if (keyExistInConstantMap(&object,object_original_mass_prop_))
+		{
+			MassProp &object_mass_prop =  object_original_mass_prop_[&object];
+
+			object.setMassProps(
+				object_mass_prop.mass,
+				object_mass_prop.inertia);
+			object.updateInertiaTensor();
+			object.activate(true);
+		}
+	}
+}
+
 void PhysicsEngine::contactTest(btCollisionObject* col_object, btCollisionWorld::ContactResultCallback& result)
 {
 	m_dynamicsWorld->contactTest(col_object, result);
@@ -871,6 +970,7 @@ void PhysicsEngine::applyDataForces()
 
 		if (it->second->getActivationState() != ISLAND_SLEEPING)
 		{
+			// it->second->applyGravity();
 			this->data_forces_generator_->applyFeedbackForces(*(it->second),object_label_class_map_[it->first]);
 		}
 	}

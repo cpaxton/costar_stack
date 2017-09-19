@@ -181,7 +181,7 @@ bool SequentialSceneHypothesis::checkObjectVisible(const std::string &model_name
 {
 	// visible if minimum 5% of the surface is visible
 	std::cerr << " visibility: " << this->data_probability_check_->getIcpConfidenceResult(model_name, object_pose);
-	return (this->data_probability_check_->getIcpConfidenceResult(model_name, object_pose) > 0.20);
+	return (this->data_probability_check_->getIcpConfidenceResult(model_name, object_pose) > 0.05);
 }
 
 bool SequentialSceneHypothesis::checkObjectObstruction(const std::string &model_name, const btTransform &object_pose)
@@ -548,26 +548,6 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 			vertex_t &observed_removed_vertex = prev_vertex_map[*it];
 			const btTransform &transform = previous_best_scene_graph[observed_removed_vertex].object_pose_;
 
-			int removed_status = updateRemovedObjectStatus(*it,object_label_class_map[*it],transform);
-			switch(removed_status)
-			{
-				case 0: // object is removed
-					++it;
-					continue;
-					break;
-				case 1: // object is not removed
-					compare_scene_result.support_retained_object_.push_back(*it);
-					// removed_objects.erase(it++);
-					// continue;
-					break;
-				default: // object is ephemeral
-					// just assume that object should be added
-					compare_scene_result.support_retained_object_.push_back(*it);
-					// removed_objects.erase(it++);
-					// continue;
-					break;
-			}
-
 // TODO: Fix implementation for ephemeral object...
 
 			// Fix distance map for previously supported object
@@ -584,8 +564,7 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 					std::string &supported_object_id = previous_best_scene_graph[*sup_it].object_id_;
 
 					// if the object became not ground supported without the removed object
-					if ((removed_objects.find(supported_object_id) == removed_objects.end()) && 
-						(!cur_best_graph[cur_vertex_map[supported_object_id]].ground_supported_))
+					if (removed_objects.find(supported_object_id) == removed_objects.end())
 					{
 						exclude_removed_object = true;
 						flying_object_had_support.push_back(supported_object_id);
@@ -596,9 +575,10 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 
 				if (exclude_removed_object)
 				{
-					// compare_scene_result.support_retained_object_.push_back(*it);
+					compare_scene_result.support_retained_object_.push_back(*it);
 					flying_object_support_retained_[*it] = flying_object_had_support;
-					// removed_objects.erase(it++);
+					removed_objects.erase(it++);
+					continue;
 				}
 // TODO: Fix this later
 #if 0
@@ -613,7 +593,26 @@ SceneChanges SequentialSceneHypothesis::analyzeChanges()
 			}
 #else
 			}
+			int removed_status = updateRemovedObjectStatus(*it,object_label_class_map[*it],transform);
+			switch(removed_status)
+			{
+				case 0: // object is removed
+					++it;
+					continue;
+					break;
+				case 1: // object is not removed
+					compare_scene_result.support_retained_object_.push_back(*it);
+					// continue;
+					break;
+				default: // object is ephemeral
+					// just assume that object should be added
+					compare_scene_result.support_retained_object_.push_back(*it);
+					// removed_objects.erase(it++);
+					// continue;
+					break;
+			}
 			removed_objects.erase(it++);
+			
 #endif
 
 		}

@@ -19,16 +19,16 @@ struct ObjectSymmetry
     double preferred_step;
 
     // NOTE: input is in degrees
-    template <typename numericStandard>
-    ObjectSymmetry(const numericStandard &input_roll, const numericStandard &input_pitch, const numericStandard &input_yaw)
+    template <typename NumericStandard>
+    ObjectSymmetry(const NumericStandard &input_roll, const NumericStandard &input_pitch, const NumericStandard &input_yaw)
         : roll(input_roll), pitch(input_pitch), yaw(input_yaw),
           preferred_axis(""),
           preferred_step(0.0) {}
 
     // NOTE: input is in degrees
-    template <typename numericStandard>
-    ObjectSymmetry(const numericStandard &input_roll, const numericStandard &input_pitch, const numericStandard &input_yaw,
-        const std::string &axis, const numericStandard& step)
+    template <typename NumericStandard>
+    ObjectSymmetry(const NumericStandard &input_roll, const NumericStandard &input_pitch, const NumericStandard &input_yaw,
+        const std::string &axis, const NumericStandard& step)
         : roll(input_roll), pitch(input_pitch), yaw(input_yaw),
           preferred_axis(axis),
           preferred_step(step) {}
@@ -50,12 +50,12 @@ struct ObjectSymmetry
     }
 };
 
-template <typename numericStandard>
-void realignOrientation (Eigen::Matrix<numericStandard, 3, 3> &rot_matrix, const ObjectSymmetry &object, 
+template <typename NumericStandard>
+void realignOrientation (Eigen::Matrix<NumericStandard, 3, 3> &rot_matrix, const ObjectSymmetry &object, 
     const int axis_to_align, const bool with_rotate_specific_axis = false, const int rotate_around_specific_axis = 0);
 
-template <typename numericStandard>
-Eigen::Matrix<numericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix<numericStandard, 3, 3> &input,
+template <typename NumericStandard>
+Eigen::Matrix<NumericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix<NumericStandard, 3, 3> &input,
     bool reverse_pitch = false);
 
 // Compute the best matching orientation for an object with multiple symmetries.
@@ -64,16 +64,16 @@ Eigen::Matrix<numericStandard, 3, 1> extractRPYfromRotMatrix(const Eigen::Matrix
 // each axis with a step specified in the ObjectSymmetry struct.
 // For example:
 // A cube might have 90 degree steps around x, y, and z.
-template <typename numericStandard>
-Eigen::Quaternion<numericStandard> normalizeModelOrientation(const Eigen::Quaternion<numericStandard> &q_from_pose,
+template <typename NumericStandard>
+Eigen::Quaternion<NumericStandard> normalizeModelOrientation(const Eigen::Quaternion<NumericStandard> &q_from_pose,
     const ObjectSymmetry &object);
 
-template <typename numericStandard>
-void printQuaternion(const Eigen::Quaternion<numericStandard> &input);
+template <typename NumericStandard>
+void printQuaternion(const Eigen::Quaternion<NumericStandard> &input);
 
-template <typename numericStandard>
-Eigen::Quaternion<numericStandard> normalizeModelOrientation(const Eigen::Quaternion<numericStandard> &q_new, 
-    const Eigen::Quaternion<numericStandard>  &q_previous, const ObjectSymmetry &object);
+template <typename NumericStandard>
+Eigen::Quaternion<NumericStandard> normalizeModelOrientation(const Eigen::Quaternion<NumericStandard> &q_new, 
+    const Eigen::Quaternion<NumericStandard>  &q_previous, const ObjectSymmetry &object);
 
 #include "symmetric_orientation_realignment.tcc"
 

@@ -41,7 +41,7 @@ struct scene_support_vertex_properties
 
 struct scene_support_edge_properties
 {
-    std::map<int, std::set<int> > interecting_volume_index_;
+    std::map<int, std::set<int> > intersecting_volume_index_;
     
     // This should always be positive, otherwise, we need to reverse the edge direction
     double total_normal_force_;
@@ -51,9 +51,9 @@ struct scene_support_edge_properties
 
     bool collision_pair_exists(const int &shape_index_1, const int &shape_index_2 )
     {
-        if (keyExistInConstantMap(shape_index_1, interecting_volume_index_))
+        if (keyExistInConstantMap(shape_index_1, intersecting_volume_index_))
         {
-            const std::set<int> &index_set = getContentOfConstantMap(shape_index_1, interecting_volume_index_);
+            const std::set<int> &index_set = getContentOfConstantMap(shape_index_1, intersecting_volume_index_);
             return index_set.find(shape_index_2) != index_set.end();
         }
         else
@@ -62,7 +62,7 @@ struct scene_support_edge_properties
 
     void add_pair(const int &shape_index_1, const int &shape_index_2)
     {
-        this->interecting_volume_index_[shape_index_1].insert(shape_index_2);
+        this->intersecting_volume_index_[shape_index_1].insert(shape_index_2);
     }
 };
 

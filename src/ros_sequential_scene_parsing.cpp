@@ -50,6 +50,7 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	std::string objransac_model_location, objransac_model_list;
 	std::vector<std::string> object_names;
 
+	int data_forces_model;
 	double data_forces_magnitude_per_point;
 	double data_forces_max_distance;
 
@@ -73,10 +74,22 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 
 	nh.param("data_forces_magnitude",data_forces_magnitude_per_point,0.5);
 	nh.param("data_forces_max_distance",data_forces_max_distance,0.01);
+	nh.param("data_forces_model",data_forces_model,0);
 
 	nh.param("best_hypothesis_only",best_hypothesis_only_,false);
 	nh.param("small_obj_g_comp",GRAVITY_SCALE_COMPENSATION,3);
 	nh.param("sim_freq_multiplier",SIMULATION_FREQUENCY_MULTIPLIER,1.);
+
+	// physics engine solver settings: check http://bulletphysics.org/mediawiki-1.5.8/index.php/BtContactSolverInfo
+	int num_iterations;
+	bool split_impulse, randomize_order;
+	double impulse_penetration_threshold;
+	nh.param("p_solver_iter",num_iterations,10);
+	nh.param("p_randomize_order",randomize_order,false);
+	nh.param("p_split_impulse",split_impulse,false);
+	nh.param("p_penetration_threshold",impulse_penetration_threshold,-0.02);
+	this->physics_engine_.setPhysicsSolverSetting(num_iterations, randomize_order, 
+		int(split_impulse), impulse_penetration_threshold);
 
 	SCALED_GRAVITY_MAGNITUDE = SCALING * GRAVITY_MAGNITUDE / GRAVITY_SCALE_COMPENSATION;
 
@@ -107,6 +120,7 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 
 	this->done_message_pub = this->nh_.advertise<std_msgs::Empty>("done_hypothesis_msg",1);
 	this->scene_graph_pub = this->nh_.advertise<sequential_scene_parsing::SceneGraph>("scene_structure_list",1);
+	this->scene_objects_pub = this->nh_.advertise<costar_objrec_msgs::DetectedObjectList>("detected_object_list",1);
 
 	// setup objrecransac tool
 	boost::split(object_names,objransac_model_list,boost::is_any_of(","));
@@ -116,6 +130,7 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	
 	// setup feedback force parameters
 	this->setDataFeedbackForcesParameters(data_forces_magnitude_per_point, data_forces_max_distance);
+	this->setFeedbackForceMode(data_forces_model);
 
 	// sleep for caching the initial TF frames.
 	sleep(1.0);
@@ -172,17 +187,37 @@ void RosSceneHypothesisAssessor::updateSceneFromDetectedObjectMsgs(const costar_
 	if (hypothesis_list_received_) this->processHypotheses();
 }
 
-void RosSceneHypothesisAssessor::updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map)
+void RosSceneHypothesisAssessor::updateTfFromObjTransformMap(const std::map<std::string, ObjectParameter> &input_tf_map, const bool &publish_object_list)
 {
 	this->object_transforms_tf_.clear();
+	costar_objrec_msgs::DetectedObjectList scene_objects_data;
+	
 	for (std::map<std::string, ObjectParameter>::const_iterator it = input_tf_map.begin(); 
 		it != input_tf_map.end(); ++it)
 	{
 		std::stringstream ss;
 		tf::Transform tf_transform;
 		tf_transform = convertBulletTFToRosTF(it->second);
-		ss << this->tf_publisher_initial << "/" << it -> first;
+		if (tf_publisher_initial != "") ss << this->tf_publisher_initial << "/" << it -> first;
+		else ss << it -> first;
 		object_transforms_tf_[ss.str()] = tf_transform;
+
+		if (publish_object_list)
+		{
+			// fill the detected scene object data
+			costar_objrec_msgs::DetectedObject object_data = object_msg_property_map_[it->first];
+			object_data.id = ss.str();
+			scene_objects_data.objects.push_back(object_data);
+		}
+	}
+
+	if (publish_object_list)
+	{
+		ROS_INFO("Published scene object list");
+		scene_objects_data.header.seq = number_of_object_list_published_++;
+		scene_objects_data.header.stamp = ros::Time::now();
+		scene_objects_data.header.frame_id = parent_frame_;
+		scene_objects_pub.publish(scene_objects_data);
 	}
 }
 
@@ -271,6 +306,7 @@ void RosSceneHypothesisAssessor::processDetectedObjectMsgs()
 	// get and save the TF name and pose in the class variable
 	for (unsigned int i = 0; i < detected_objects.objects.size(); i++) {
 		std::string object_tf_frame = detected_objects.objects.at(i).id;
+		object_msg_property_map_[object_tf_frame] = detected_objects.objects.at(i);
 		if (this->listener_.waitForTransform(object_tf_frame,this->parent_frame_,now,ros::Duration(1.0)))
 		{
 			ObjectWithID obj_tmp;
@@ -336,11 +372,13 @@ void RosSceneHypothesisAssessor::processDetectedObjectMsgs()
 	this->setObjectSymmetryMap(object_symmetry_map);
 	std::cerr << "Getting corrected object transform...\n";
 	std::map<std::string, ObjectParameter> object_transforms = this->getCorrectedObjectTransform(best_hypothesis_only_);
-	this->updateTfFromObjTransformMap(object_transforms);
+	this->updateTfFromObjTransformMap(object_transforms, best_hypothesis_only_);
 
 	if (best_hypothesis_only_)
 	{
 		this->scene_graph_pub.publish(this->generateSceneGraphMsgs());
+		std_msgs::Empty done_msg;
+		this->done_message_pub.publish(done_msg);
 	}
 
 	this->mtx_.unlock();

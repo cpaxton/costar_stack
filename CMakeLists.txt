@@ -34,6 +34,7 @@ find_package(catkin REQUIRED COMPONENTS
   costar_objrec_msgs
   objrec_hypothesis_msgs
   std_msgs geometry_msgs message_generation
+  roslib
 )
 
 add_service_files(
@@ -95,21 +96,23 @@ set(ObjConvexDecomposition tool/obj_convex_decomposition.cpp)
 add_library(objConvexDecomposition ${ObjConvexDecomposition})
 
 set(ObjectDataProperty src/object_data_property.cpp  src/scene_physics_penalty.cpp)
-add_library(objectDataProperty ${ObjectDataProperty})
+add_library(ObjectDataProperty ${ObjectDataProperty})
 
 add_library(ObjRecRANSACTool include/ObjRecRANSACTool/ObjRecRANSACTool.cpp) 
 
-set(PhysicsEngine src/scene_physics_engine.cpp src/scene_physics_support.cpp src/scene_data_forces.cpp)
-add_library(physicsEngine ${PhysicsEngine})
+add_library(SceneDataForces src/scene_data_forces.cpp)
+
+set(PhysicsEngine src/scene_physics_engine.cpp src/scene_physics_support.cpp)
+add_library(PhysicsEngine ${PhysicsEngine})
 
 set(SequentialSceneHypothesis src/sequential_scene_hypothesis)
 add_library(SequentialSceneHypothesis ${SequentialSceneHypothesis})
 
 set(SequentialSceneParsing src/sequential_scene_parsing.cpp)
-add_library(sequentialSceneParsing ${SequentialSceneParsing})
+add_library(SequentialSceneParsing ${SequentialSceneParsing})
 
 set(RosSequentialSceneParsing src/ros_sequential_scene_parsing.cpp)
-add_library(rosSequentialSceneParsing ${RosSequentialSceneParsing})
+add_library(RosSequentialSceneParsing ${RosSequentialSceneParsing})
 
 ## Declare a C++ executable
 add_executable(obj_main_decomposition tool/main.cpp)
@@ -140,7 +143,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- objectDataProperty ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader
+ ObjectDataProperty ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader
 )
 
 target_link_libraries(
@@ -148,27 +151,32 @@ target_link_libraries(
 )
 
 target_link_libraries(
- physicsEngine objectDataProperty OpenGLSupport ${BULLET_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES}
+ SceneDataForces ${PCL_LIBRARIES} ${BULLET_LIBRARIES} ${Boost_LIBRARIES}
+)
+
+
+target_link_libraries(
+ PhysicsEngine ObjectDataProperty OpenGLSupport SceneDataForces ${BULLET_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES}
 )
 
 target_link_libraries(
- SequentialSceneHypothesis physicsEngine ${Boost_LIBRARIES} ${BULLET_LIBRARIES} ${PCL_LIBRARIES}
+ SequentialSceneHypothesis PhysicsEngine ${Boost_LIBRARIES} ${BULLET_LIBRARIES} ${PCL_LIBRARIES}
 )
 
 target_link_libraries(
- sequentialSceneParsing SequentialSceneHypothesis objectDataProperty physicsEngine ObjRecRANSACTool
+ SequentialSceneParsing SequentialSceneHypothesis ObjectDataProperty PhysicsEngine ObjRecRANSACTool
 )
 
 target_link_libraries(
- rosSequentialSceneParsing objectDataProperty sequentialSceneParsing ${catkin_LIBRARIES}
+ RosSequentialSceneParsing ObjectDataProperty SequentialSceneParsing ${catkin_LIBRARIES}
 )
 
 target_link_libraries(
- sequential_scene_ros physicsEngine rosSequentialSceneParsing
+ sequential_scene_ros PhysicsEngine RosSequentialSceneParsing
 )
 
 #target_link_libraries(
-# bare_scene_ros rosSequentialSceneParsing
+# bare_scene_ros RosSequentialSceneParsing
 #)
 
 add_executable(draw_bullet_hello_world tool/main_bullet_hello_world_draw.cpp tool/bullet_hello_world_draw.cpp )
@@ -178,3 +186,9 @@ target_link_libraries(
 )
 
 target_link_libraries(load_and_pub_pcd  ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(data_forces_test unit_test/data_forces_test.cpp)
+
+target_link_libraries(
+ data_forces_test SceneDataForces ${BULLET_LIBRARIES} ${catkin_LIBRARIES}
+)
