@@ -119,7 +119,7 @@ class NodeActionSmartmoveMultiPurposeGUI(NodeGUI):
         self.waypoint_ui.available_pred_list.clear()
         self.waypoint_ui.selected_pred_list.clear()
 
-        for predicate in list(self.selected_predicates):
+        for predicate in self.selected_predicates:
             self.waypoint_ui.selected_pred_list.addItem(predicate)
 
         try:
