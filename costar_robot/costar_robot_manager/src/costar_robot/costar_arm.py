@@ -48,7 +48,7 @@ class CostarArm(CostarComponent):
             default_distance = 0.05,
             state_validity_penalty = 1e5,
             table_frame = "table_frame",
-            max_dist_from_table = 0.5,
+            max_dist_from_table = 0.75,
             dof=7,
             debug=False,
             perception_ns="/costar",):

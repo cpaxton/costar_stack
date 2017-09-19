@@ -16,34 +16,45 @@ import copy
 def detected_objects_cb(msg):
 	rospy.loginfo("Received detected object messages")
 	global republish_frame_list
-	# global republished_msg
-	republished_msg = copy.deepcopy(msg)
-	# global mtx
+	global republished_msg
+	global mtx
 
-	# mtx.acquire()
+	mtx.acquire()
+	republished_msg = copy.deepcopy(msg)
 
 	for idx,obj in enumerate(msg.objects):
 		frame_id = obj.id.split('/')[-1]
 		republished_msg.objects[idx].id = frame_id
+		republished_msg.objects[idx].symmetry = ObjectSymmetry(x_symmetries=1, x_rotation = 2 * np.pi,
+			y_symmetries=1, y_rotation = 2 * np.pi, z_symmetries=obj.symmetry.z_symmetries,z_rotation=obj.symmetry.z_rotation)
 		
 		republish_frame_list.append((obj.id,frame_id))
 	
-	global detected_objects_repub
-	detected_objects_repub.publish(republished_msg)
-	# mtx.release()
+	mtx.release()
 		
 
 def frame_broadcaster():
+	global mtx
+
+	mtx.acquire()
 	global republish_frame_list
 	global broadcaster
-	# global mtx
-
-	# mtx.acquire()
 	for obj_id, renamed_frame_id in republish_frame_list:
 		broadcaster.sendTransform((0.,0.,0.),tf.transformations.quaternion_from_euler(0.,0.,0.),
 			rospy.Time.now(),
 			renamed_frame_id,
 			obj_id)
+
+	global republished_msg
+	if republished_msg is not None:
+		global detected_objects_repub
+		detected_objects_repub.publish(republished_msg)
+		republished_msg = None
+	mtx.release()
+
+
+	# global detected_objects_repub
+	# detected_objects_repub.publish(republished_msg)
 	# mtx.release()
 	
 if __name__ == '__main__':
@@ -60,7 +71,7 @@ if __name__ == '__main__':
 		source_namespace = rospy.get_param("/costar/smartmove/scene_parsing_namespace")
 	else:
 		rospy.loginfo("Using sp_segmenter pose")
-		source_namespace = "costar_perception"
+		source_namespace = "costar_sp_segmenter"
 
 	global listener
 	global broadcaster
@@ -69,8 +80,10 @@ if __name__ == '__main__':
 	listener = tf.TransformListener()
 	broadcaster = tf.TransformBroadcaster()
 	
-	# global mtx
-	# mtx = threading.Lock()
+	global mtx
+	global republished_msg
+	republished_msg = None
+	mtx = threading.Lock()
 
 	detected_objects = rospy.Subscriber(source_namespace+'/detected_object_list', DetectedObjectList, detected_objects_cb)
 	
