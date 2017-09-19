@@ -288,8 +288,10 @@ std::map<std::string, AdditionalHypotheses> SequentialSceneHypothesis::generateO
 
 	SceneHypothesis &previous_best_scene_hypothesis = this->previous_scene_observation_.best_scene_hypothesis_;
 	std::map<std::string, vertex_t> prev_vertex_map = previous_best_scene_hypothesis.vertex_map_;
+
+	std::cerr << "object_pose_by_dist size: " << object_pose_by_dist.size() << std::endl;
 	// last element of object_pose_by_dist
-	std::size_t disconnected_object_dist = object_pose_by_dist.size() - 1;
+	std::size_t disconnected_object_dist = object_pose_by_dist.size() > 0 ? object_pose_by_dist.size() - 1 : 0;
 	std::map<std::string, vertex_t> cur_vertex_map = this->current_best_data_scene_structure_.vertex_map_;
 	
 	std::map<std::string, std::string> &object_label_class_map = this->previous_scene_observation_.object_label_class_map_;
