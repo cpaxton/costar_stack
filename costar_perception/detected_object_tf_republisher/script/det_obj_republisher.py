@@ -71,7 +71,7 @@ if __name__ == '__main__':
 		source_namespace = rospy.get_param("/costar/smartmove/scene_parsing_namespace")
 	else:
 		rospy.loginfo("Using sp_segmenter pose")
-		source_namespace = "costar_sp_segmenter"
+		source_namespace = rospy.get_param("/costar/smartmove/sp_segmenter_namespace")
 
 	global listener
 	global broadcaster

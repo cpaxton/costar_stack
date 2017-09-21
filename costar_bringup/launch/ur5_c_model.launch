@@ -16,6 +16,9 @@
   <arg name="ee_frame" value="ee_link"/>
   <arg name="base_frame" value="base_link"/>
 
+  <arg name="use_scene_parsing_pose" value="false" doc="Use the stable pose generated from the scene parsing algorithm"/>
+  <arg name="use_external_segmenter" value="false" doc="Use external point cloud segmentation for sp_segmenter, e.g. color_nn_segmenter"/>
+
   <include file="$(find costar_bringup)/launch/utilities.launch">
     <arg name="start_robotiq_force_sensor" value="$(arg start_robotiq_force_sensor)"/>
   </include>
@@ -23,7 +26,10 @@
   <include file="$(find costar_bringup)/launch/predicator_nodes.launch"/>
 
   <!-- Bringup default configuration for the UR5 -->
-  <include file="$(find costar_bringup)/launch/config/ur5.launch"/>
+  <include file="$(find costar_bringup)/launch/config/ur5.launch">
+    <arg name="use_scene_parsing_pose" value="$(arg use_scene_parsing_pose)"/>
+    <arg name="use_external_segmenter" value="$(arg use_external_segmenter)"/>
+  </include>
 
   <group unless="$(arg sim)">
 
