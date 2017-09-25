@@ -143,7 +143,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- ObjectDataProperty ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader
+ ObjectDataProperty  ${PCL_LIBRARIES} ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader
 )
 
 # target_link_libraries(

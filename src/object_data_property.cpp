@@ -1,5 +1,32 @@
 #include "object_data_property.h"
 
+void Obb::generateObb(std::vector<btVector3> corner_points)
+{
+	pcl::PointCloud<pcl::PointXYZ> cloud = convertVectorBtVec3ToPcl(corner_points);
+	pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
+	feature_extractor.setInputCloud(cloud.makeShared());
+	feature_extractor.compute();
+
+	pcl::PointXYZ min_point_OBB;
+	pcl::PointXYZ max_point_OBB;
+	pcl::PointXYZ position_OBB;
+	Eigen::Matrix3f rotational_matrix_OBB;
+	feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
+	Eigen::Quaternionf quaternion_obb(rotational_matrix_OBB);
+
+	btQuaternion rot = convertEigenToBulletQuaternion(quaternion_obb);
+	btVector3 pos = pclPointToBulletVector(position_OBB);
+
+	this->min_point_ = pclPointToBulletVector(min_point_OBB);
+	this->max_point_ = pclPointToBulletVector(max_point_OBB);
+	this->pose_ = btTransform(rot,pos);
+}
+
+Obb::Obb(std::vector<btVector3> corner_points)
+{
+	this->generateObb(corner_points);
+}
+
 void Object::setPhysicalProperties(const objectShapePtr mesh, const PhysicalProperties &physical_properties)
 {
 	this->mesh_ = mesh;
@@ -7,6 +34,8 @@ void Object::setPhysicalProperties(const objectShapePtr mesh, const PhysicalProp
 	this->mesh_->calculateLocalInertia(this->physical_properties_.mass_, this->physical_properties_.inertia_);
 
 	this->physical_data_ready_ = true;
+
+	this->computeObb();
 }
 
 void Object::shallowCopyPhysicalProperties(objectShapePtr &mesh_out, PhysicalProperties &physical_properties_out) const
@@ -53,6 +82,8 @@ void Object::shallowCopy(const Object& other)
 	
 	this->physical_properties_ = phy_temp;
 	this->physical_data_ready_ = true;
+	
+	this->copyObbProperty(other);
 }
 
 void Object::deepCopy(const Object& other)
@@ -67,6 +98,8 @@ void Object::deepCopy(const Object& other)
 	
 	this->physical_properties_ = phy_temp;
 	this->physical_data_ready_ = true;
+
+	this->copyObbProperty(other);
 }
 
 btVector3 Object::getInertiaVector() const
@@ -77,6 +110,74 @@ btVector3 Object::getInertiaVector() const
 objectShapePtr Object::getCollisionShape() const
 {
 	return this->mesh_;
+}
+
+void Object::getObbProperty(Obb &entire_shape_obb, std::vector<Obb> &child_shape_obb) const
+{
+	entire_shape_obb = this->entire_shape_obb_;
+	child_shape_obb = this->child_shape_obb_;
+}
+
+void Object::copyObbProperty(const Object& other)
+{	
+	Obb other_entire_shape_obb;
+	std::vector<Obb> other_child_shape_obb;
+	other.getObbProperty(other_entire_shape_obb,other_child_shape_obb);
+	this->entire_shape_obb_ = other_entire_shape_obb;
+	this->child_shape_obb_ = other_child_shape_obb;
+}
+
+bool Object::computeObb()
+{
+	if (!mesh_)
+	{
+		std::cerr << "Object mesh is still empty! Fail to compute Obb\n";
+		return false;
+	}
+
+    if (!mesh_->isCompound())
+    {
+    	std::cerr << "Object mesh is not a compound shape! Fail to compute Obb\n";
+    	return false;
+    }
+
+    const btCompoundShape* compound_shape = (btCompoundShape*)mesh_;
+
+	this->child_shape_obb_.reserve(compound_shape->getNumChildShapes());
+
+	std::vector<btVector3> accumulated_hull_vertices;
+	// assumed max 20 points per convex hull for reserving space
+	accumulated_hull_vertices.reserve(compound_shape->getNumChildShapes()*20);
+
+	for (int i = 0; i < compound_shape->getNumChildShapes(); ++i)
+	{
+		const btCollisionShape *child = compound_shape->getChildShape(i);
+		if (child->isConvex())
+		{
+			const btConvexHullShape* child_hull = (btConvexHullShape*)child;
+			std::vector<btVector3> child_hull_vertices;
+			child_hull_vertices.reserve(child_hull->getNumPoints());
+			const btVector3* points = child_hull->getUnscaledPoints();
+			for (int j = 0; j < child_hull->getNumPoints(); ++j)
+			{
+				child_hull_vertices.push_back(points[j]);
+			}
+
+			Obb child_obb(child_hull_vertices);
+			child_shape_obb_.push_back(child_obb);
+
+			accumulated_hull_vertices.insert(accumulated_hull_vertices.end(),
+				child_hull_vertices.begin(),child_hull_vertices.end());
+		}
+		else
+		{
+			// only supports convex hull object for now
+			continue;
+		}
+	}
+
+	this->entire_shape_obb_ = Obb(accumulated_hull_vertices);
+	return true;
 }
 
 void ObjectWithID::assignPhysicalPropertyFromObject(const Object &input)
