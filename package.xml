@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
   <name>sequential_scene_parsing</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>The sequential_scene_parsing package</description>
 
-  <maintainer email="FelixJonathan@todo.todo">FelixJonathan</maintainer>
+  <maintainer email="fjonath1@jhu.edu">FelixJonathan</maintainer>
 
   <license>TODO</license>
 
