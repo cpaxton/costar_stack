@@ -23,7 +23,7 @@ ELSE (OPENGL_FOUND)
 	SET(OPENGL_glu_LIBRARY glu32)
 ENDIF (OPENGL_FOUND)
 
-find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
+# find_library(ObjRecRANSAC_LIBRARY ObjRecRANSAC)
 
 find_package(catkin REQUIRED COMPONENTS
   VTK
@@ -98,7 +98,7 @@ add_library(objConvexDecomposition ${ObjConvexDecomposition})
 set(ObjectDataProperty src/object_data_property.cpp  src/scene_physics_penalty.cpp)
 add_library(ObjectDataProperty ${ObjectDataProperty})
 
-add_library(ObjRecRANSACTool include/ObjRecRANSACTool/ObjRecRANSACTool.cpp) 
+# add_library(ObjRecRANSACTool include/ObjRecRANSACTool/ObjRecRANSACTool.cpp) 
 
 add_library(SceneDataForces src/scene_data_forces.cpp)
 
@@ -146,9 +146,9 @@ target_link_libraries(
  ObjectDataProperty ${BULLET_LIBRARIES} BulletWorldImporter BulletFileLoader
 )
 
-target_link_libraries(
- ObjRecRANSACTool ${PCL_LIBRARIES} ${VTK_LIBS} ${BULLET_LIBRARIES} ${ObjRecRANSAC_LIBRARY}
-)
+# target_link_libraries(
+#  ObjRecRANSACTool ${PCL_LIBRARIES} ${VTK_LIBS} ${BULLET_LIBRARIES} ${ObjRecRANSAC_LIBRARY}
+# )
 
 target_link_libraries(
  SceneDataForces ${PCL_LIBRARIES} ${BULLET_LIBRARIES} ${Boost_LIBRARIES}
@@ -164,7 +164,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
- SequentialSceneParsing SequentialSceneHypothesis ObjectDataProperty PhysicsEngine ObjRecRANSACTool
+ SequentialSceneParsing SequentialSceneHypothesis ObjectDataProperty PhysicsEngine #ObjRecRANSACTool
 )
 
 target_link_libraries(
