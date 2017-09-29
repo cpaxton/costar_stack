@@ -31,6 +31,7 @@ class collision_environment
 		std::vector<objectTF> detectedObjectsTF;
         std::vector<moveit_msgs::CollisionObject>* segmentedObjects;
         moveit_msgs::CollisionObject tableObject;
+        std::vector<moveit_msgs::CollisionObject> retained_obstacle_objects;
         
         std::string tableTFname, parentTableTF, baseLinkName;
 		std::string mesh_source, file_extension;
@@ -58,6 +59,11 @@ class collision_environment
         void setNodeHandle(const ros::NodeHandle &nh);
 		void getAllObjectTF();
         void getAllObjectTFfromDetectedObjectMsgs(const costar_objrec_msgs::DetectedObjectList &detectedObject);
+
+        bool addObjectAsRetainedObstacle(const std::string &frame_id);
+        void removeAllRetainedObstacles();
+        
+        moveit_msgs::CollisionObject generateCollisionObjectFromObjectTF(const objectTF &object_info);
         
 		void updateCollisionObjects(const bool &updateFrame = true);
         std::vector<std::string> getListOfTF() const;

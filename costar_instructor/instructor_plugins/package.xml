@@ -21,7 +21,7 @@
       type="ACTION"
       group="TIMING"
       description="Sleep Action"
-      cases="baseline"
+      cases="baseline drvk"
       name="Sleep"/>
     <instructor plugin="instructor.NodeActionWaypointGUI"
       type="ACTION"
@@ -42,19 +42,19 @@
       cases="perception"
       name="Move Relative"/>
     <instructor plugin="instructor.NodePlanWaypointGUI"
-      type="ACTION"
-      group="ROBOT"
+      type="TASK"
+      group="MOTION PLANNING"
       description="Instructor Plan to Waypoint Action"
       cases="planning"
       name="Plan to Waypoint"/>
     <instructor plugin="instructor.PlanToHomeGUI"
-      type="ACTION"
-      group="ROBOT"
+      type="TASK"
+      group="MOTION PLANNING"
       description="Instructor Plan to Home Action"
       cases="planning"
       name="Plan to Home"/>
     <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
-      type="ACTION" group="ROBOT"
+      type="TASK" group="MOTION PLANNING"
       description="Instructor Plan to Relative Waypoint"
       cases=""
       name="Plan Relative"/>
@@ -76,45 +76,45 @@
     <!-- GRASPING MODE COMMANDS -->
     <instructor plugin="instructor.NodeActionSGripperBasicModeGUI"
       type="ACTION"
-      group="GRIPPER"
+      group="GRASP MODE"
       description="Switch to Basic Grasp Mode"
       cases=""
       name="Basic Grasp"/>
     <instructor plugin="instructor.NodeActionSGripperScissorModeGUI"
       type="ACTION"
-      group="GRIPPER"
+      group="GRASP MODE"
       description="Switch to Scissor Grasp Mode"
       cases=""
       name="Scissor Grasp"/>
     <instructor plugin="instructor.NodeActionSGripperWideModeGUI"
       type="ACTION"
-      group="GRIPPER"
+      group="GRASP MODE"
       description="Switch tp Wide Grasp Mode"
       cases=""
       name="Wide Grasp"/>
     <instructor plugin="instructor.NodeActionSGripperPinchModeGUI"
       type="ACTION"
-      group="GRIPPER"
+      group="GRASP MODE"
       description="Switch to Pinch Grasp Mode"
       cases=""
       name="Pinch Grasp"/>
 
     <!-- SMART MOVE OPERATIONS -->
     <instructor plugin="instructor.NodeActionSmartmoveGUI"
-      type="ACTION"
-      group="ROBOT"
+      type="TASK"
+      group="HIGH LEVEL"
       description="Instructor Smart Move"
       cases=""
       name="Smart Move"/>
     <instructor plugin="instructor.NodeActionSmartmoveGraspGUI"
-      type="ACTION"
-      group="ROBOT"
+      type="TASK"
+      group="HIGH LEVEL"
       description="Smart Grasp"
       cases="smartmove"
       name="Smart Grasp"/>
     <instructor plugin="instructor.NodeActionSmartmoveReleaseGUI"
-      type="ACTION"
-      group="ROBOT"
+      type="TASK"
+      group="HIGH LEVEL"
       description="Smart Release"
       cases="smartmove"
       name="Smart Release"/>
@@ -132,6 +132,14 @@
       description="publish_message"
       cases=""
       name="Publish Message" />
+
+    <instructor plugin="instructor.NodeWaitForMessageGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="wait_message"
+      cases=""
+      name="Wait For Message"/>
+
     <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
       type="CONDITION"
       group="SCENE"

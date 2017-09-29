@@ -47,8 +47,6 @@ dist: trusty
 sudo: required
 language:
   - generic
-cache:
-  - apt
 
 # Configuration variables. All variables are global now, but this can be used to
 # trigger a build matrix for different ROS distributions if desired.
@@ -59,6 +57,7 @@ env:
     - CI_SOURCE_PATH=$(pwd)
     - CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
     - ROS_PARALLEL_JOBS='-j8 -l6'
+    - PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages
 #- ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
 
 ################################################################################

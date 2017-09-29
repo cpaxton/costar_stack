@@ -26,6 +26,10 @@ class NodeActionForceZeroGUI(NodeGUI):
         self.title.setStyleSheet('background-color:'+colors['green'].normal+';color:#ffffff')
         self.note = NoteField('This will zero the force sensor','green')
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full()]):
             return NodeActionForceZero(self.get_name(),self.get_label())

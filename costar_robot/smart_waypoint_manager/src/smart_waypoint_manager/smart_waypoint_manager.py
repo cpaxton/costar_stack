@@ -46,7 +46,10 @@ class SmartWaypointManager:
 
         self.get_assignment_service = rospy.ServiceProxy('/predicator/get_assignment', predicator_msgs.srv.GetAssignment)
 
-        self.detected_objects = rospy.Subscriber(ns + '/detected_object_list', DetectedObjectList, self.detected_objects_cb)
+        use_scene_parsing_pose = rospy.get_param("/costar/smartmove/scene_parsing_pose")
+        if use_scene_parsing_pose:
+            rospy.loginfo('Use scene parsing pose for smartmove')
+            self.detected_objects = rospy.Subscriber('/costar/detected_object_list', DetectedObjectList, self.detected_objects_cb)
 
         if not broadcaster is None:
             self.broadcaster = broadcaster

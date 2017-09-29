@@ -49,6 +49,18 @@ bool moveitPlanningSceneGenerator::updateCollisionObject (std_srvs::Empty::Reque
     return anyUpdate;
 }
 
+bool moveitPlanningSceneGenerator::addRetainedCollisionObject (moveit_collision_environment::RetainedCollision::Request& request, 
+        moveit_collision_environment::RetainedCollision::Response& response)
+{
+    return collisionObjectGenerator.addObjectAsRetainedObstacle(request.frame_id);
+}
+
+bool moveitPlanningSceneGenerator::removeAllRetainedObject(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    collisionObjectGenerator.removeAllRetainedObstacles();
+    return true;
+}
+
 void moveitPlanningSceneGenerator::autoUpdateScene(const costar_objrec_msgs::DetectedObjectList &detectedObject)
 {
     // this function will automatically update scene when it got detectedObject msgs
@@ -96,7 +108,7 @@ moveitPlanningSceneGenerator::moveitPlanningSceneGenerator(const ros::NodeHandle
     if(useDetectedObjectMsgs){
         std::cerr << "This node will update the planning scene automatically when it receieved the costar object msgs\n";
         std::string detectedObjectTopic;
-        this->nh.param("detectedObjectTopic",detectedObjectTopic,std::string("/SPServer/detected_object_list"));
+        this->nh.param("detectedObjectTopic",detectedObjectTopic,std::string("/costar_sp_segmenter/detected_object_list"));
         getDetectedObject = this->nh.subscribe(detectedObjectTopic,1,&moveitPlanningSceneGenerator::autoUpdateScene,this);
     }
     else std::cerr << "This node need service call to update the planning scene.\n";

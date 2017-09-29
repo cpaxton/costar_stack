@@ -38,7 +38,7 @@ sudo make install
 
 If you want to build the code with pose estimation, you will need to build and install ObjRecRANSAC:
 ```
-git clone https://github.com/ahundt/ObjRecRANSAC
+git clone https://github.com/jhu-lcsr/ObjRecRANSAC
 cd ObjRecRANSAC
 mkdir build
 cmake ..

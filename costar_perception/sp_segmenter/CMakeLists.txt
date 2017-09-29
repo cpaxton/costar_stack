@@ -9,7 +9,7 @@ OPTION(BUILD_PYTHON_BINDING "Build Python Binding" OFF)
 OPTION(BUILD_ENABLE_TRACKING "Build Enable Tracking Keypoints (EXPERIMENTAL)" OFF)
 
 OPTION(BUILD_SCENE_PARSING_SUPPORT
-  "Build with Scene Parsing Hypothesis Message (EXPERIMENTAL)" OFF)
+  "Build with Scene Parsing Hypothesis Message (EXPERIMENTAL)" ON)
 
 # Enable C++11
 include(CheckCXXCompilerFlag)
@@ -120,7 +120,7 @@ target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${
 add_library(SpCompact src/sp_compact.cpp)
 target_link_libraries(SpCompact PoolLib Utility linear ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
-add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/common.cpp)
+add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/spatial_pose.cpp src/common.cpp)
 
 
 # Enable OBJRECRANSAC
