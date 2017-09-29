@@ -80,6 +80,9 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("small_obj_g_comp",GRAVITY_SCALE_COMPENSATION,3);
 	nh.param("sim_freq_multiplier",SIMULATION_FREQUENCY_MULTIPLIER,1.);
 
+	std::cerr << "Debug mode: " << debug_mode << std::endl;
+	this->setDebugMode(debug_mode);
+
 	// physics engine solver settings: check http://bulletphysics.org/mediawiki-1.5.8/index.php/BtContactSolverInfo
 	int num_iterations;
 	bool split_impulse, randomize_order;
@@ -90,6 +93,8 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 	nh.param("p_penetration_threshold",impulse_penetration_threshold,-0.02);
 	this->physics_engine_.setPhysicsSolverSetting(num_iterations, randomize_order, 
 		int(split_impulse), impulse_penetration_threshold);
+
+	this->physics_engine_.setGravityFromBackgroundNormal(background_normal_as_gravity_);
 
 	SCALED_GRAVITY_MAGNITUDE = SCALING * GRAVITY_MAGNITUDE / GRAVITY_SCALE_COMPENSATION;
 
@@ -105,9 +110,6 @@ void RosSceneHypothesisAssessor::setNodeHandle(const ros::NodeHandle &nh)
 		else
 			std::cerr << "Failed to load the background points\n"; 
 	}
-
-	std::cerr << "Debug mode: " << debug_mode << std::endl;
-	this->setDebugMode(debug_mode);
 
 	this->obj_database_.setObjectFolderLocation(object_folder_location);
 	if (this->fillObjectPropertyDatabase()) this->obj_database_.loadDatabase(this->physical_properties_database_);

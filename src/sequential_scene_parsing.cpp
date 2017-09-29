@@ -54,6 +54,13 @@ void SceneHypothesisAssessor::addBackground(ImagePtr background_image, int mode)
 	btVector3 normal_bt = convertEigenToBulletVector(normal);
 	float coeff = coefficients->values[3];
 
+	// make the plane normal to always point in opposite direction to the camera frame Z axis
+	if (normal_bt.dot(btVector3(0,0,1)) > 0)
+	{
+		normal_bt = -normal_bt;
+		coeff = -coeff;
+	}
+
 	Eigen::Vector4f cloud_centroid;
 	pcl::compute3DCentroid(*background_image,cloud_centroid);
 	btVector3 bt_cloud_centroid(cloud_centroid[0],cloud_centroid[1],cloud_centroid[2]);
