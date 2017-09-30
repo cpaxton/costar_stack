@@ -11,11 +11,12 @@
   <arg name="num_to_capture"          default="200"/>
   <arg name="do_cluster"              default="true"  doc="Do clusterization of point cloud after segmenting the objects above table. Set this to false if the number of object above the table is just 1." />
   <arg name="auto_capture"             default="true" />
+  <arg name="load_table"               default="false"/>
 
   <!-- Plane segmentation arguments-->
   <include file="$(find object_on_table_segmenter)/launch/table_seg_params.launch">
     <arg name="namespace"                value="object_on_table_segmenter" />
-    <arg name="load_table"               value="false"/>
+    <arg name="load_table"               value="$(arg load_table)"/>
     <arg name="update_table"             value="true" />
     <arg name="load_table_path"          value="$(find object_on_table_segmenter)/data/table.pcd" />
     <arg name="table_tf"                 value="ar_marker_0" />
