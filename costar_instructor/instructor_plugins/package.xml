@@ -167,6 +167,37 @@
       cases="planning,perception"
       name="Detect Objects"/>
 
+    <!-- LEARNING OPERATIONS -->
+    <instructor plugin="instructor.NodeRepeatUntilGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Repeat Until Logic Node"
+      cases="dummy"
+      name="Repeat until"/>
+    <instructor plugin="instructor.NodeLearningSequenceGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Learning Sequence Node"
+      cases="dummy"
+      name="Learning Sequence"/>
+    <instructor plugin="instructor.NodeLearnedSequenceGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Learned Sequence Node"
+      cases="dummy"
+      name="Learned Sequence"/>
+    <instructor plugin="instructor.NodeDummyConditionalGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="Dummy Conditional Node"
+      cases="dummy"
+      name="Dummy Condition"/>
+    <instructor plugin="instructor.NodeDummyRobotActionGUI"
+      type="TASK"
+      group="HIGH LEVEL"
+      description="Dummy Robot Action Node"
+      cases="dummy"
+      name="Dummy Robot Action"/>
   </export>
 
 </package>
