@@ -28,8 +28,6 @@ class NodeActionDetect8020GUI(NodeGUI):
         return data
     def load_data(self,data):
         pass
-    def load_data(self,data):
-        pass
     def generate(self):
         if all([self.name.full(),self.label.full()]):
             return NodeActionDetect8020(self.get_name(),self.get_label())

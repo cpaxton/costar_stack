@@ -15,6 +15,7 @@
       <rosparam param = "rotation_weight">1.0</rosparam>
       <rosparam param = "has_planning_scene">true</rosparam>
       <rosparam param = "has_gripper">true</rosparam>
+
     </group>
     <group ns="smartmove">
       <rosparam param="available_objects">
@@ -33,6 +34,7 @@
         - up_from
         - down_from
       </rosparam>
+      <rosparam param="N_stack">3</rosparam>
       <!-- Unused reference
           - ar_marker_0
           - ar_marker_1
