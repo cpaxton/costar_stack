@@ -34,7 +34,7 @@
         - up_from
         - down_from
       </rosparam>
-      <rosparam param="N_stack">3</rosparam>
+      <rosparam param="N_stack">4</rosparam>
       <!-- Unused reference
           - ar_marker_0
           - ar_marker_1
