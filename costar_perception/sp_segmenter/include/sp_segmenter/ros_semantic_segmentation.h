@@ -8,6 +8,7 @@
 #include <geometry_msgs/PoseArray.h>
 
 // for TF services
+#include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
@@ -21,6 +22,13 @@
 #ifdef USE_TRACKING
 #include "sp_segmenter/tracker.h"
 #endif
+
+#ifdef SCENE_PARSING
+#include <objrec_hypothesis_msgs/Hypothesis.h>
+#include <objrec_hypothesis_msgs/ModelHypothesis.h>
+#include <objrec_hypothesis_msgs/AllModelHypothesis.h>
+#endif
+
 // include to convert from messages to pointclouds and vice versa
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -29,13 +37,11 @@
 // ros service messages for segmenting gripper
 #include "sp_segmenter/SegmentInGripper.h"
 
-class segmentedObjectTF
+struct segmentedObjectTF
 {
-private:
     tf::Transform transform;
-public:
     std::string TFname;
-    segmentedObjectTF(const objectTransformInformation &input);
+    segmentedObjectTF(const ObjectTransformInformation &input, const std::string &ns);
     segmentedObjectTF();
     tf::StampedTransform generateStampedTransform(const std::string &parent) const;
 };
@@ -58,17 +64,26 @@ public:
 #endif
 
 protected:
+    void processExternalSegmentationResult(const std_msgs::Empty &input_msgs);
     bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc);
     void updateCloudData (const sensor_msgs::PointCloud2 &pc);
     void initializeSemanticSegmentationFromRosParam();
-    void populateTFMap(std::vector<objectTransformInformation> all_poses);
+    void populateTFMap(std::vector<ObjectTransformInformation> all_poses);
+
+    costar_objrec_msgs::DetectedObjectList last_object_list_;
+    sensor_msgs::PointCloud2 last_segmented_cloud_;
+#ifdef SCENE_PARSING
+    objrec_hypothesis_msgs::AllModelHypothesis generateAllModelHypothesis() const;
+    bool getLastHypotheses (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+#endif
 
     ros::NodeHandle nh;
-    bool classReady, useTFinsteadOfPoses;
+    bool useTFinsteadOfPoses;
 
     // TF related
     bool hasTF;
 
+    std::string frame_namespace_;
     std::string targetNormalObjectTF;
     std::vector<segmentedObjectTF> segmentedObjectTFV;
 
@@ -88,7 +103,7 @@ protected:
     unsigned int table_corner_published;
     std::string POINTS_IN, POINTS_OUT, POSES_OUT;
     ros::Publisher pc_pub, pose_pub, detected_object_pub, table_corner_pub;
-    ros::Subscriber pc_sub;
+    ros::Subscriber pc_sub, external_segmentation_sub;
     unsigned int number_of_segmentation_done;
     
     std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > cloud_vec;
@@ -100,6 +115,12 @@ protected:
     Eigen::Vector3f crop_box_size, crop_box_gripper_size;
     Eigen::Affine3d crop_box_pose_table_;
     bool has_crop_box_pose_table_, use_crop_box_, need_preferred_tf_ ;
+
+#ifdef SCENE_PARSING
+    ros::Publisher hypothesis_pub_;
+    ros::ServiceServer last_hypotheses_server_;
+#endif
+    
 
 #ifdef USE_TRACKING
     boost::shared_ptr<Tracker> tracker_;

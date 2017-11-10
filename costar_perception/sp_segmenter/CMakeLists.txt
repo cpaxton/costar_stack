@@ -8,6 +8,9 @@ OPTION(BUILD_USE_OBJRECRANSAC "Use ObjRecRANSAC" ON)
 OPTION(BUILD_PYTHON_BINDING "Build Python Binding" OFF)
 OPTION(BUILD_ENABLE_TRACKING "Build Enable Tracking Keypoints (EXPERIMENTAL)" OFF)
 
+OPTION(BUILD_SCENE_PARSING_SUPPORT
+  "Build with Scene Parsing Hypothesis Message (EXPERIMENTAL)" ON)
+
 # Enable C++11
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -31,7 +34,7 @@ message(STATUS "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
 # CORE LIBRARIES NEEDED FOR SP_SEGMENTER
 find_package(PCL REQUIRED) 
-find_package(OpenCV REQUIRED) 
+find_package(OpenCV 2 REQUIRED) 
 find_package(OpenMP )
 find_package(Boost)
 find_package(VTK)
@@ -78,6 +81,11 @@ IF (BUILD_ROS_BINDING)
       # DEPENDS PCL OpenCV OpenMP
     )
   endif()
+
+  if(BUILD_SCENE_PARSING_SUPPORT)
+    ADD_DEFINITIONS( -DSCENE_PARSING)
+  endif()
+
 ENDIF()
 
 
@@ -112,7 +120,7 @@ target_link_libraries(DataParser Utility ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${
 add_library(SpCompact src/sp_compact.cpp)
 target_link_libraries(SpCompact PoolLib Utility linear ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${VTK_LIBS} )
 
-add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/common.cpp)
+add_library(SemanticSegmentation src/semantic_segmentation.cpp src/table_segmenter.cpp src/spatial_pose.cpp src/common.cpp)
 
 
 # Enable OBJRECRANSAC
@@ -121,6 +129,7 @@ IF (BUILD_USE_OBJRECRANSAC)
   message(STATUS "ObjRecRANSAC enabled")
   ADD_DEFINITIONS( -DUSE_OBJRECRANSAC)
   add_library(GreedyObjRecRANSAC include/sp_segmenter/greedyObjRansac.h src/greedyObjRansac.cpp) 
+  include_directories(${ObjRecRANSAC_INCLUDE_DIRS})
   target_link_libraries(GreedyObjRecRANSAC Utility ${ObjRecRANSAC_LIBRARY})
 
   if(NOT EXISTS OBJREC_USE_CUDA)

@@ -40,7 +40,7 @@
     </include>
 
     <!-- start gripper server anyway, just don't connect it -->
-    <include file="$(find costar_gripper_manager)/launch/s_model.launch"/>
+    <include file="$(find gripper_robotiq)/launch/s_model.launch"/>
   </group>
 
   <!-- When not launching as a simulation, we do not need to namespace everything.-->
@@ -72,7 +72,7 @@
       args="$(arg gripper_ip_address)"/>
 
     <!-- Start S model-->
-    <include file="$(find costar_gripper_manager)/launch/s_model.launch">
+    <include file="$(find gripper_robotiq)/launch/s_model.launch">
       <arg name="ee_frame" value="$(arg ee_frame)"/>
     </include>
 

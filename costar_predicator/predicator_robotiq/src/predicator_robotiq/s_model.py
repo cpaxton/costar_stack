@@ -60,7 +60,7 @@ class SModelPredicator:
         if publish_predicates:
             # create predicator things
             self.pub = rospy.Publisher("predicator/input",PredicateList,queue_size=1000)
-            self.vpub = rospy.Publisher("predicator/valid_predicates",PredicateList,queue_size=1000)
+            self.vpub = rospy.Publisher("predicator/valid_input",PredicateList,queue_size=1000)
 
         if start_subscriber:
             self.sub = rospy.Subscriber("SModelRobotInput",inputMsg,self.callback)

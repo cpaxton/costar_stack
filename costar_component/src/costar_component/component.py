@@ -2,6 +2,9 @@
 import os
 import rospy
 
+'''
+Abstract/Base Component Class
+'''
 class CostarComponent(object):
 
   def make_service(self, name, srv_t, callback, *args, **kwargs):
@@ -20,11 +23,19 @@ class CostarComponent(object):
       service_name = os.path.join(self.namespace, name)
     else:
       service_name = name
-      rospy.loginfo("Connecting to service with name: %s"%service_name)
-      rospy.wait_for_service(service_name)
-      rospy.loginfo("Connected to service successfully.")
-      return rospy.ServiceProxy(service_name,srv_t)
+    rospy.logerr("Connecting to service with name: %s"%service_name)
+    rospy.wait_for_service(service_name)
+    rospy.logerr("Connected to service successfully.")
+    return rospy.ServiceProxy(service_name,srv_t)
 
   def __init__(self, name, namespace):
     self.name = name
     self.namespace = namespace
+
+  '''
+  Override this with any logic that needs to be performed repeatedly. This
+  includes things like updating arm information, re-computing predicates,
+  etc.
+  '''
+  def tick(self):
+    raise RuntimeError('tick() not implemented in abstract component!')

@@ -13,6 +13,30 @@
 #include <eigen3/Eigen/src/Geometry/Quaternion.h>
 
 
+#if SCENE_PARSING
+#include <vector>
+#include <map>
+
+struct ObjRansacHypothesisEigen
+{
+    ObjRansacHypothesisEigen(){};
+    ObjRansacHypothesisEigen(const AcceptedHypothesisWithConfidence &input);
+    
+    Eigen::Vector3f t_;
+    Eigen::Quaternionf q_;
+    int match_;
+    std::string model_type_;
+    double confidence_;
+};
+
+struct GreedyHypothesis
+{
+    std::map< std::size_t, std::vector<ObjRansacHypothesisEigen> > by_object_hypothesis;
+    std::string model_id;
+    // std::vector<std::vector<AcceptedHypothesis> > hypothesis;
+};
+#endif
+
 class greedyObjRansac{
 public:
     greedyObjRansac(double pairWidth = 0.1, double voxelSize = 0.03, double relNumOfPairsInHashTable_ = 0.5);
@@ -45,7 +69,11 @@ public:
     void mergeHypotheses(const pcl::PointCloud<myPointXYZ>::Ptr scene_xyz, std::list<AcceptedHypothesis> &acc_hypotheses, std::vector<poseT> &poses);
     pcl::PointCloud<myPointXYZ>::Ptr FillModelCloud(const std::vector<poseT> &poses);
     void setUseCUDA(bool useCUDA){objrec.setUseCUDA(useCUDA);}
-    
+
+#if SCENE_PARSING
+    GreedyHypothesis getLatestAcceptedHypothesis(const bool &combined_ransac = false);
+#endif
+
 private:
     std::vector<ModelT> models;
     ObjRecRANSAC objrec;
@@ -61,6 +89,8 @@ private:
     
     double visibility;              //0.1   
     double relativeObjSize;         //0.1
+
+    double min_confidence;
 };
     
 

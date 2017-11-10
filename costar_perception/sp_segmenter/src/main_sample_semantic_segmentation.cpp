@@ -86,11 +86,11 @@ int main(int argc, char** argv)
         {
             std::cerr << "Object point cloud segmentation is successful.\n";
 #ifdef USE_OBJRECRANSAC
-            std::vector<objectTransformInformation> pose_estimation = segmenter.calculateObjTransform(segmented_point_cloud_labels);
+            std::vector<ObjectTransformInformation> pose_estimation = segmenter.calculateObjTransform(segmented_point_cloud_labels);
             if (pose_estimation.size() > 0)
             {
                 std::cerr << "Object transform calculated successfully.\n";
-                for (std::vector<objectTransformInformation>::const_iterator it = pose_estimation.begin(); it!=pose_estimation.end(); ++it)
+                for (std::vector<ObjectTransformInformation>::const_iterator it = pose_estimation.begin(); it!=pose_estimation.end(); ++it)
                 {
                     std::cerr << *it;
                 }

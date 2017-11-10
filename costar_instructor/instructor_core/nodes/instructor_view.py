@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-#import roslib; roslib.load_manifest('instructor_core')
-#from roslib import rospack
-
 import rospy
 from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
@@ -22,15 +19,18 @@ import rospkg
 import tf; 
 import tf_conversions as tf_c
 from instructor_core.instructor_qt import *
-# Using roslib.rospack even though it is deprecated
+
 import threading
 import yaml
 from librarian_msgs.msg import *
 from librarian_msgs.srv import *
 import time
 import copy
+
+
 # import cProfile
 # from memory_profiler import profile
+
 # ==============================================================
 # SRVs
 import costar_robot_msgs
@@ -132,22 +132,22 @@ class Instructor(QWidget):
         self.app_ = app
         self.types__ = ['LOGIC',
                 'ACTION',
+                'TASK',
                 'CONDITION',
-                'QUERY',
                 'PROCESS',
                 'SERVICE',
                 'VARIABLE']
         self.colors__ = ['blue',
                 'green',
+                'sea_green',
                 'purple',
-                'orange',
                 'pink',
                 'gray',
                 'gray']
         self.labels__ = ['BUILDING BLOCKS',
-                'ROBOT ACTIONS',
+                'BASIC ACTIONS',
+                'ADVANCED ACTIONS',
                 'SYSTEM KNOWLEDGE',
-                'QUERIES',
                 'PROCESSES',
                 'SERVICE',
                 'VARIABLES']
@@ -163,6 +163,10 @@ class Instructor(QWidget):
         self.rospack__ = rospkg.RosPack()
         ui_path = self.rospack__.get_path('instructor_core') + '/ui/view.ui'
         uic.loadUi(ui_path, self)
+
+        # Notification DIALOG
+        self.notification_dialog = NotificationDialog(self)
+
         # Create the Graph Visualization Pane
         self.drawer = Drawer(self)
         self.splitter.setStyleSheet('background-color:#444444')
@@ -233,6 +237,7 @@ class Instructor(QWidget):
         self.current_plugins = []
         self.active_plugin_widgets = []
         self.is_set_up = False
+        self.current_node_plugin_name = None
         #######################
 
         # Get known Beetree Builder Node Plugins
@@ -252,6 +257,7 @@ class Instructor(QWidget):
         self.lib_set_type_service('instructor_subtree')
         self.set_up_gui()
 
+
     def toast(self,m):
         self.toast_message = m
         self.toast_signal.emit()
@@ -268,7 +274,7 @@ class Instructor(QWidget):
         self.toast_label.hide()
 
     def parse_plugin_info(self):
-        rospy.logwarn('INSTRUCTOR: LOADING PLUGINS')
+        rospy.loginfo('INSTRUCTOR: LOADING PLUGINS')
         self.plugins = {}
         self.node_counter = {}
         plugins, plugin_descriptions, plugin_names, plugin_types, plugin_groups = load_instructor_plugins(self.cases)
@@ -291,7 +297,7 @@ class Instructor(QWidget):
                 self.core_plugins.append(p['description'])
                 self.current_plugins.append(p['description'])
 
-        rospy.logwarn('INSTRUCTOR: LOADING GENERATORS')
+        rospy.loginfo('INSTRUCTOR: LOADING GENERATORS')
         for name,plugin in self.plugins.items():
             if not name in self.all_generators:
                 self.all_generators[name] = plugin['module']()
@@ -302,14 +308,21 @@ class Instructor(QWidget):
         self.drawer.move(self.container_widget.geometry().left()-360,50)
         self.drawer.hide()
 
-    def window_resized(self,event):
+    def update_drawer_geometry(self):
         visible = self.drawer.isVisible()
         self.drawer.resize(360,self.container_widget.geometry().height()-100)
         self.drawer.move(self.container_widget.geometry().left()-360,50)
+        self.drawer_open_geo = QRect(self.drawer.geometry())
+        self.drawer_close_geo = QRect(self.drawer.geometry().x()+360,self.drawer.geometry().y(),0,self.drawer.geometry().height())
+        self.drawer.hide()
         if visible:
             self.drawer.show()
         else:
             self.drawer.hide()
+
+    def window_resized(self,event):
+        self.update_drawer_geometry()
+
     
     def collapse_unused(self,id):
         self.hide_menu()
@@ -319,6 +332,7 @@ class Instructor(QWidget):
         self.load_sub_btn.hide()
         self.remove_sub_btn.hide()
         self.close_drawer()
+        self.info_textbox.hide()
         for k,v in self.component_widgets.items():
             if k is not id:
                 v.contract()
@@ -348,8 +362,11 @@ class Instructor(QWidget):
             # self.clear_node_info()
             if self.current_node_plugin_name is not None:
                 if not self.current_node_plugin_name in self.all_generators:
-                    rospy.logerr('%s not in current set of loaded nodes!')
-                    raise RuntimeError('Tried to generate unavailable node.')
+                    message = ('Bug Detected: %s tried to add a node that is not enabled'
+                               ' a part of the current instructor setup! Ex: user studies'
+                               ' with varying functionality configurations.' % self.current_node_plugin_name)
+                    self.notification_dialog.notify(message, 'error')
+                    raise RuntimeError(message)
                     #self.all_generators[self.current_node_plugin_name] = self.plugins[self.current_node_plugin_name]['module']()
                 else:
                     self.all_generators[self.current_node_plugin_name].refresh_data()
@@ -374,12 +391,14 @@ class Instructor(QWidget):
             self.drawer_state = 'CLOSED'
     
     def set_up_gui(self):
+
         ### DRAWER ###
-        self.drawer.resize(360,self.container_widget.geometry().height()-100)
-        self.drawer.move(self.container_widget.geometry().left()-360,50)
-        self.drawer_open_geo = QRect(self.drawer.geometry())
-        self.drawer_close_geo = QRect(self.drawer.geometry().x()+360,self.drawer.geometry().y(),0,self.drawer.geometry().height())
-        self.drawer.hide()
+        #self.drawer.resize(360,self.container_widget.geometry().height()-100)
+        #self.drawer.move(self.container_widget.geometry().left()-360,50)
+        #self.drawer_open_geo = QRect(self.drawer.geometry())
+        #self.drawer_close_geo = QRect(self.drawer.geometry().x()+360,self.drawer.geometry().y(),0,self.drawer.geometry().height())
+        #self.drawer.hide()
+        self.update_drawer_geometry()
         self.drawer_state = 'CLOSED'
         self.add_node_above_btn = InterfaceButton('ADD ABOVE',colors['gray_light'])
         self.add_node_above_btn.clicked.connect(self.add_sibling_before_cb)
@@ -412,8 +431,8 @@ class Instructor(QWidget):
         self.waypoint_dialog_saved_geom = None
 
         # SMARTMOVE DIALOG
-        self.smartmove_dialog = SmartMoveDialog(self.show_smartmove)
-        self.smartmove_button.clicked.connect(self.show_smartmove)
+        self.smartmove_dialog = SmartMoveDialog()
+        self.smartmove_button.clicked.connect(self.smartmove_dialog.show_hide_slide)
 
         # CLEAR #
         self.clear_btn = InterfaceButton('CLEAR',colors['dark_red'])
@@ -427,7 +446,7 @@ class Instructor(QWidget):
         self.load_sub_btn = InterfaceButton('LOAD',colors['green'])
         self.load_sub_btn.hide()
         self.load_sub_btn.clicked.connect(self.load_selected_subtree)
-        self.remove_sub_btn = InterfaceButton('REMOVE',colors['red'])
+        self.remove_sub_btn = InterfaceButton('DELETE FILE',colors['red'])
         self.remove_sub_btn.hide()
         self.remove_sub_btn.clicked.connect(self.delete_selected_subtree)
         self.save_btn = InterfaceButton('SAVE',colors['gray'])
@@ -497,7 +516,7 @@ class Instructor(QWidget):
             self.component_widgets[t] = w
             self.component_layout.addWidget(w)
 
-        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['green_light'],'large')
+        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['orange'],'large')
         # self.node_container = ListContainer('NODES','NODES',colors['pink'],'large')
         self.subtree_container.show()
         self.subtree_container.register_callbacks(self.collapse_unused,self.subtree_selected_callback)
@@ -509,6 +528,11 @@ class Instructor(QWidget):
         # self.load_widgets['NODES'] = self.node_container
         self.component_layout.addWidget(self.subtree_container)
         # self.component_layout.addWidget(self.node_container)
+
+        self.info_textbox = TextEdit(self,'INFO_TEXTBOX','',color=colors['gray_light'])
+        self.info_textbox.setReadOnly(True)
+        self.info_textbox.hide()
+        self.component_layout.addWidget(self.info_textbox)
 
         ### DIALOG ###
         self.save_dialog = Dialog()
@@ -540,33 +564,40 @@ class Instructor(QWidget):
         for w in self.component_widgets.values():
             w.contract()
         self.subtree_container.contract()
+        self.info_textbox.hide()
 
     def calibrate_cb(self):
-        rospy.logwarn('Calibrating...')
+        #self.info_textbox.notify('Calibrating...')
         self.toast('Please wait... calibrating...')
         self.calibrate_button.setEnabled(False)
         service_name = '/calibrate'
         self.send_service_command(service_name)
-        rospy.logwarn('Calibrating...DONE')
+        self.info_textbox.notify('Calibrating...DONE')
         self.calibrate_button.setEnabled(True)
 
     def detect_objects_cb(self):
-        rospy.logwarn('Detecting objects...')
+        #self.info_textbox.notify('Detecting objects...')
         self.toast('Please wait... Detecting Objects')
         self.detect_objects_button.setEnabled(False)
-        service_name = '/SPServer/SPSegmenter'
+        service_name = '/costar_perception/segmenter'
         self.send_service_command(service_name)
-        rospy.logwarn('Detecting objects...DONE')
+        #self.info_textbox.notify('Detecting objects...DONE')
         self.detect_objects_button.setEnabled(True)
 
     def update_scene_cb(self):
-        rospy.logwarn('Updating Scene objects...')
+        #self.info_textbox.notify('Updating Scene objects...')
         self.toast('Please wait... Updating Scene')
         self.update_scene_button.setEnabled(False)
         service_name = '/planningSceneGenerator/planningSceneGenerator'
         self.send_service_command(service_name)
-        rospy.logwarn('Updating Scene...DONE')
+        #self.info_textbox.notify('Updating Scene...DONE')
         self.update_scene_button.setEnabled(True)
+
+    def stop_robot_trajectory_cb(self):
+        self.info_textbox.notify('Stopping robot actions...')
+        self.toast('Stopping robot action...')
+        service_name = '/costar/StopTrajectory'
+        self.send_service_command(service_name)
 
     def gripper_mode_cb(self,text):
         mode = str(text).lower()
@@ -600,7 +631,7 @@ class Instructor(QWidget):
         try:
             rospy.wait_for_service(service_name)
         except rospy.ROSException as e:
-            rospy.logerr('Could not find service ['+str(e)+']')
+            self.info_textbox.notify('Could not find service ['+str(e)+']')
             return
         # Make servo call to robot
         try:
@@ -608,7 +639,7 @@ class Instructor(QWidget):
             result = service_cmd_proxy()
             return
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service ['+str(e)+']')
+            self.info_textbox.notify('There was a problem with the service ['+str(e)+']')
             return
 
     def show_menu(self):
@@ -624,17 +655,6 @@ class Instructor(QWidget):
         self.menu_visible = False
         self.menu_widget.hide()
 
-    def show_smartmove(self):
-        if self.smartmove_dialog.isVisible():
-            self.smartmove_dialog.saved_geom = self.smartmove_dialog.geometry()
-            self.smartmove_dialog.hide()
-        else:
-            if self.smartmove_dialog.saved_geom is not None:
-                self.smartmove_dialog.move(self.smartmove_dialog.saved_geom.x(),self.smartmove_dialog.saved_geom.y())
-            else:
-                self.smartmove_dialog.move(self.geometry().x()+self.geometry().width()/2-self.smartmove_dialog.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.smartmove_dialog.geometry().height()/2)
-            self.smartmove_dialog.show()
-            self.smartmove_dialog.update_all()
 
     def show_waypoint_manager(self):
         if self.waypoint_dialog.isVisible():
@@ -675,9 +695,11 @@ class Instructor(QWidget):
             self.dot_widget.animate_to(jump.x,jump.y)
 
     def show_save_dialog(self):
-        self.save_dialog.move(self.geometry().x()+self.geometry().width()/2-self.save_dialog.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.save_dialog.geometry().height()/2)
+        self.save_dialog.move(
+                self.geometry().x()+self.geometry().width()/2-self.save_dialog.geometry().width()/2,
+                self.geometry().y()+self.geometry().height()/2-self.save_dialog.geometry().height()/2)
         self.save_dialog.show()
-        self.save_dialog.label.setText('To save the selected node, click SAVE NODE.\nTo save the subtree starting with the selected node, click SAVE SUBTREE.')
+        self.save_dialog.label.setText('To save the subtree starting with the selected node, click SAVE SUBTREE.')
 
     def hide_save_dialog(self):
         self.save_dialog.hide()
@@ -689,7 +711,7 @@ class Instructor(QWidget):
         elif self.left_selected_node is not None:
             val = self.left_selected_node
         else:
-            rospy.logwarn('[INSTRUCTOR] Cannot collapse node since no node has been selected yet.')
+            self.notification_dialog.notify('[INSTRUCTOR] Cannot collapse node since no node has been selected yet.', 'warn')
             return
 
         node = self.current_tree[val]
@@ -742,7 +764,7 @@ class Instructor(QWidget):
                 self.sound_pub.publish(String("notify_4"))
                 self.running__ = True
                 self.run_timer_.start(5)
-                rospy.logwarn('INSTRUCTOR: Task Tree STARTING')
+                self.info_textbox.notify('Task Tree starting')
                 self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #F62459;border-radius: 0px;background-color: #F62459;color:#ffffff}QPushButton#run_button:pressed{border: 2px solid #F62459;border-radius: 0px;background-color: #F62459;color:#ffffff}''')
                 self.run_button.setText('STOP EXECUTION')
 
@@ -752,7 +774,7 @@ class Instructor(QWidget):
         #rospy.logwarn(result)
         # self.regenerate_tree()
         if result[:7] == 'SUCCESS':
-            rospy.loginfo('INSTRUCTOR: Task Tree FINISHED WITH SUCCESS: %s'%result)
+            self.notification_dialog.notify('Task Tree finished with %s'%result)
             self.sound_pub.publish(String("notify_4_succeed"))
             self.run_timer_.stop()
             self.running__ = False
@@ -761,7 +783,7 @@ class Instructor(QWidget):
             self.run_button.setText('EXECUTE PLAN')
             self.regenerate_tree()
         elif result[:7] == 'FAILURE':
-            rospy.logerr('INSTRUCTOR: Task Tree FINISHED WITH FAILURE: %s'%result)
+            self.notification_dialog.notify('Task Tree finished with %s'%result,'error')
             self.run_timer_.stop()
             self.running__ = False
             # self.root_node.reset()
@@ -771,7 +793,7 @@ class Instructor(QWidget):
             rospy.sleep(.5)
             self.sound_pub.publish(String("notify_4_fail"))
         elif result == 'NODE_ERROR':
-            rospy.logerr('INSTRUCTOR: Task Tree ERROR')
+            self.notification_dialog.notify('Task Tree error','error')
             self.run_timer_.stop()
             self.running__ = False
             # self.root_node.reset()
@@ -782,8 +804,9 @@ class Instructor(QWidget):
             self.regenerate_tree(True)
             pass
 
-    def stop_tree(self):
-        rospy.logwarn('INSTRUCTOR: Task Tree STOPPED')
+    def stop_tree(self, notify=True):
+        self.notification_dialog.notify('Task Tree stopped')
+        self.stop_robot_trajectory_cb()
         self.run_timer_.stop()
         self.running__ = False
         # self.root_node.reset()
@@ -797,20 +820,20 @@ class Instructor(QWidget):
 
     def save_subtree(self):
         if self.left_selected_node == None:
-            rospy.logerr('There is no head node selected to save')
+            self.notification_dialog.notify('There is no head node selected to save','error')
         else:
             if self.save_name != None:
                 tree = self.walk_tree(self.current_tree[self.left_selected_node]) # this should start from the selected node
                 # tree = self.walk_tree(self.root_node) #this will always start from root
                 D = yaml.dump({'name':self.save_name,'tree':tree})
-                rospy.logwarn('SAVING SUBTREE to %s'%self.save_name)
+                self.notification_dialog.notify('SAVING SUBTREE to %s'%self.save_name)
                 print self.lib_save_service(id=self.save_name,type='instructor_subtree',text=D)
                 # Hide on successful save    
                 #self.subtree_save_widget.hide()
                 self.hide_save_dialog()
                 self.load_subtree_list()
             else:
-                rospy.logerr('You must enter a name to save the subtree')
+                self.notification_dialog.notify('You must enter a name to save the subtree', 'error')
 
     def walk_tree(self,node):
         t = [self.walk_tree(C) for C in node.children_]
@@ -820,7 +843,7 @@ class Instructor(QWidget):
         t = [st for st in t if st is not None]
 
         if node.name_ not in self.current_plugin_names:
-            rospy.logerr("Invalid child name: %s"%node.name_)
+            self.notification_dialog.notify("Invalid child name: %s"%node.name_, 'error')
             return None
 
         # Generate Info
@@ -837,8 +860,10 @@ class Instructor(QWidget):
         self.selected_subtree = val
         self.load_sub_btn.show()
         self.remove_sub_btn.show()
+        self.info_textbox.setText('')
+        self.info_textbox.show()
         self.load_sub_btn.setText('LOAD [ '+val.upper()+' ]')
-        self.remove_sub_btn.setText('REMOVE [ '+val.upper()+' ]')
+        self.remove_sub_btn.setText('DELETE FILE [ '+val.upper()+' ]')
         self.close_drawer()
 
         self.selected_subtree_data = yaml.load(self.lib_load_service(id=self.selected_subtree,type='instructor_subtree').text)
@@ -846,11 +871,18 @@ class Instructor(QWidget):
             selected_subtree_root_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
             #print selected_subtree_root_name
             if 'root' in selected_subtree_root_name.lower():
-                rospy.loginfo('You have selected a tree with a root node.  If a node is currently selected, this subtree will be added as a child tree of the selected node.  If the graph is empty, this subtree will be added as the entire tree.')
+                message = ('Root Node Found in selected subtree.'
+                    ' If a node is currently selected, this subtree will be added '
+                    'as a child tree of the selected node.  If the graph is empty, '
+                    'this subtree will be added as the entire tree.')
+                self.info_textbox.notify(message)
             else:
-                rospy.loginfo('The selected subtree has no root node.  If a node is currently selected, this subtree will be added as a child tree.  If no node is selected, the subtree will be added along with a root node.')
+                self.info_textbox.notify('No Root Node Found in selected subtree.  If a node is '
+                    'currently selected, this subtree will be added as a child tree. '
+                    'If no node is selected, the subtree will be added along with a '
+                    'root node.')
         else:
-            rospy.logerr('Subtree %s does not exist.'%val)
+            self.notification_dialog.notify('Subtree %s does not exist.'%val, 'error')
             self.selected_subtree = None
 
     def delete_selected_subtree(self):
@@ -859,31 +891,36 @@ class Instructor(QWidget):
             self.load_subtree_list()
 
     def load_selected_subtree(self):
+        load_exception_message=('There was a problem loading the tree, '
+                                'which is most likely due to a node that '
+                                'did not generate properly. Consider restarting '
+                                'instructor with another launch file with these '
+                                'capabilities enabled, such as: '
+                                'roslaunch instructor_core instructor.launch')
         if self.selected_subtree != None:
             clear_cmd()
-            rospy.loginfo('Loading subtree...')
+            self.info_textbox.notify('Loading ' + self.selected_subtree.upper() + ' subtree...')
             if self.root_node != None: # There is an existing tree, with a root node
-                rospy.logwarn('Loading as subtree...')
+                self.info_textbox.notify('Loading ' + self.selected_subtree.upper() + ' as subtree...')
                 if self.left_selected_node == None:
-                    rospy.logwarn('You must select a node as a parent for the subtree')
+                    self.notification_dialog.notify('You must select a node as a parent for the subtree','warn')
                 else:
                     # Test to see if the subtree has a root...
                     node_plugin_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
                     if node_plugin_name == 'Root':
-                        rospy.logwarn('Found root in subtree... removing')
+                        self.info_textbox.notify('Found root in subtree... removing')
                         start_point = self.selected_subtree_data['tree']['children'][0]
                     else:
-                        rospy.loginfo('No root, starting with '+node_plugin_name)
+                        self.info_textbox.notify('No root, starting with '+node_plugin_name)
                         start_point = self.selected_subtree_data['tree']
                     try:
                         self.recursive_add_nodes(start_point,self.current_tree[self.left_selected_node])
                         self.regenerate_tree(center=True)
                     except Exception as e:
-                        rospy.logerr('There was a problem loading the tree, most likely a node that didnt generate properly')
-                        rospy.logerr(e)
+                        self.notification_dialog.notify(load_exception_message, 'error')
 
             else: # The tree is empty
-                rospy.logwarn('Loading as full tree...')
+                self.info_textbox.notify('Loading ' + self.selected_subtree.upper() + ' as full tree...')
                 try:
                     # Test to see if the subtree has a root...
                     node_plugin_name = self.selected_subtree_data['tree']['save_info']['plugin_name']
@@ -895,9 +932,11 @@ class Instructor(QWidget):
                     else:
                         self.recursive_add_nodes(self.selected_subtree_data['tree'],None)
                         self.regenerate_tree(center=True)
+                    
+                    self.info_textbox.notify('Tree ' + self.selected_subtree.upper() + ' loaded.')
                 except Exception as e:
-                    rospy.logerr('There was a problem loading the tree, most likely a node that did not generate properly')
-                    rospy.logerr(str(e))
+                    # TODO(ahundt): set the correct error message here
+                    self.notification_dialog.notify('Failed to load tree with %s'%str(e), 'error')
 
             # Finish
             self.load_sub_btn.hide()
@@ -905,7 +944,7 @@ class Instructor(QWidget):
             self.selected_subtree = None
             self.view_fit()
         else:
-            rospy.logerr('You must select a subtree to load')
+            self.notification_dialog.notify('You must select a subtree to load', 'error')
 
     def recursive_add_nodes(self,info,parent):
         if parent == None:
@@ -927,7 +966,7 @@ class Instructor(QWidget):
                 self.add_node_to_tree(current_name, node_to_add, regenerate_tree = False)
                 self.root_node = node_to_add
             else:
-                rospy.logwarn('node plugin undefined: %s'%node_plugin_name)
+                self.notification_dialog.notify('node plugin undefined: %s'%node_plugin_name, 'warn')
             # recusively call child nodes
             for C in info['children']:
                 self.recursive_add_nodes(C,node_to_add)
@@ -950,8 +989,7 @@ class Instructor(QWidget):
                 # self.add_node_prime_gui()
 
             else:
-                rospy.logwarn(node_plugin_name)
-                rospy.logwarn('node plugin undefined')
+                self.notification_dialog.notify('node plugin undefined: ' + node_plugin_name, 'warn')
             # recusively call child nodes
             for C in info['children']:
                 self.recursive_add_nodes(C,node_to_add)
@@ -985,7 +1023,7 @@ class Instructor(QWidget):
     
     # @profile
     def component_selected_callback(self,name):
-        rospy.loginfo('Selected node with type [' + str(self.plugins[name]['type']) + '] from list.')
+        self.info_textbox.notify('Selected node with type [' + str(self.plugins[name]['type']) + '] from list.')
         self.open_drawer()
         # if self.plugins[name]['type'] == 'LOGIC':
         #     self.add_node_root_btn.show()
@@ -1010,7 +1048,7 @@ class Instructor(QWidget):
         if self.plugins.has_key(name):
 
             if not name in self.all_generators:
-                rospy.logerr('node with name %s not loaded correctly!'%name)
+                self.info_textbox.notify('node with name %s not loaded correctly!'%name)
                 raise RuntimeError('Error loading plugin named %s'%name)
                 #self.all_generators[name] = self.plugins[name]['module']()
             else:
@@ -1071,15 +1109,16 @@ class Instructor(QWidget):
                 if self.current_node_types[event] == 'LOGIC':
                     self.selected_node_field.set_color(colors['blue'])
                     if 'root' in event.lower():
-                        self.run_button.setStyleSheet('''QPushButton#run_button{border: 2px solid #3FC380;
-border-radius: 0px;
-background-color: #3FC380;
-color:#ffffff}
-QPushButton#run_button:pressed{
-border: 2px solid #3FC380;
-border-radius: 0px;
-background-color: #3FC380;
-color:#ffffff}''')
+                        self.run_button.setStyleSheet('''
+                            QPushButton#run_button{border: 2px solid #3FC380;
+                            border-radius: 0px;
+                            background-color: #3FC380;
+                            color:#ffffff}
+                            QPushButton#run_button:pressed{
+                            border: 2px solid #3FC380;
+                            border-radius: 0px;
+                            background-color: #3FC380;
+                            color:#ffffff}''')
                         self.clear_btn.show()
                         # self.run_button.show()
                         pass
@@ -1109,7 +1148,7 @@ color:#ffffff}''')
         self.left_selected_node = None
         # experimental
         currentPos = self.mapFromGlobal(QCursor.pos())
-        rospy.logwarn(currentPos)
+        rospy.loginfo(currentPos)
         self.context_popup.move(currentPos.x()-90,currentPos.y()-70)
 
         if event == 'none':
@@ -1148,20 +1187,23 @@ color:#ffffff}''')
         self.selected_node_field.set_color(colors['pink'])
         self.clear_node_info()
         self.open_drawer()
+
         if self.left_selected_node:
-            self.current_node_generator = self.all_generators[self.current_plugin_names[self.left_selected_node]]
+            selected_node = self.left_selected_node
         else:
-            self.current_node_generator = self.all_generators[self.current_plugin_names[self.right_selected_node]]
+            selected_node = self.right_selected_node
+
+        self.current_node_generator = self.all_generators[
+            self.current_plugin_names[selected_node]]
+
+        # Refresh the current node -- make sure everything like waypoints, actions,
+        # parameters are all up to date.
         self.current_node_generator.refresh_data()
+        self.current_node_generator.show()
         self.current_node_generator.name.set_read_only(True)
-        if self.left_selected_node:
-            self.current_node_generator.load(self.current_node_info[self.left_selected_node])
-            self.current_node_type = self.current_node_types[self.left_selected_node]
-            self.current_node_plugin_name = self.current_plugin_names[self.left_selected_node]
-        else:    
-            self.current_node_generator.load(self.current_node_info[self.right_selected_node])
-            self.current_node_type = self.current_node_types[self.right_selected_node]
-            self.current_node_plugin_name = self.current_plugin_names[self.right_selected_node]
+        self.current_node_generator.load(self.current_node_info[selected_node])
+        self.current_node_type = self.current_node_types[selected_node]
+        self.current_node_plugin_name = self.current_plugin_names[selected_node]
         self.drawer.node_info_layout.addWidget(self.current_node_generator)
         self.regenerate_btn.show()
         self.context_popup.hide()
@@ -1170,7 +1212,7 @@ color:#ffffff}''')
 
     def regenerate_node(self):
         if self.current_node_type is self.plugins['Root']['type']:
-            rospy.logerr('[INSTRUCTOR]: Regenerate command ignored because it is a Root node')
+            self.info_textbox.notify('Regenerate command ignored because Root nodes do not have settings to regenerate.')
             return
 
         if self.left_selected_node:
@@ -1183,7 +1225,7 @@ color:#ffffff}''')
             self.current_node_generator.refresh_data()
             replacement_node = self.current_node_generator.generate()
             if isinstance(replacement_node,str):
-                rospy.logerr(str(replacement_node))
+                self.info_textbox.notify(str(replacement_node))
             else:
                 current_child = self.current_tree[current_name]
                 current_parent = self.current_tree[current_name].get_parent()
@@ -1200,13 +1242,13 @@ color:#ffffff}''')
                     self.view_center_btn.hide()
                     # self.save_state()
                 else:
-                    rospy.logwarn('Child to replace was not a member of the parent. Something went wrong.')
+                    self.notification_dialog.notify('Child to replace was not a member of the parent. Something went wrong.', 'warn')
         
 # Add and delete nodes ---------------------------------------------------------
     # This is a little brittle because it assumes that the name of the root plugin 
     # will not change... which I think is ok considering it is a core component
     def generate_root(self):
-        rospy.logwarn('Generating new ROOT node')
+        self.info_textbox.notify('Generating new ROOT node')
         if not 'Root' in self.all_generators:
             self.all_generators['Root'] = self.plugins['Root']['module']()
         self.current_node_generator = self.all_generators['Root']
@@ -1214,7 +1256,7 @@ color:#ffffff}''')
         self.current_node_plugin_name = 'Root'
         node_to_add = self.current_node_generator.generate()
         if type(node_to_add) == str:
-            rospy.logerr(str(node_to_add))
+            self.info_textbox.notify(str(node_to_add))
         else:
             current_name = self.current_node_generator.get_name()
             self.current_tree[current_name] = node_to_add
@@ -1225,12 +1267,12 @@ color:#ffffff}''')
             self.regenerate_tree()
 
     def add_root_cb(self):
-        rospy.logwarn('adding ROOT node')
+        self.info_textbox.notify('adding ROOT node')
         if self.current_node_type != None:
             if self.root_node == None:
                 node_to_add = self.current_node_generator.generate()
                 if type(node_to_add) == str:
-                    rospy.logerr(str(node_to_add))
+                     self.info_textbox.notify(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
                     self.current_tree[current_name] = node_to_add
@@ -1243,9 +1285,9 @@ color:#ffffff}''')
                     # self.save_state()
                     self.node_leftclick_cb(current_name)
             else:
-                rospy.logwarn('THERE IS ALREADY A ROOT NODE')
+               self.notification_dialog.notify('THERE IS ALREADY A ROOT NODE', 'warn')
         else:
-            rospy.logwarn('NO NODE SELECTED')
+            self.notification_dialog.notify('NO NODE SELECTED', 'warn')
 
     def add_node_to_tree(self, name, node, add_node_function = None, regenerate_tree = True):
         self.current_tree[name] = node
@@ -1274,18 +1316,20 @@ color:#ffffff}''')
     
     def add_child_cb(self):
         if self.current_node_type != None:
-            rospy.logwarn('adding node of type ' + str(self.current_node_type))
+            self.info_textbox.notify('Adding node of type ' + str(self.current_node_type))
+            if self.root_node is None:
+                self.notification_dialog.notify('First create a root node under BUILDING BLOCKS', 'warn')
             if self.left_selected_node == None:
-                rospy.logerr('There is no parent node selected')
+                self.notification_dialog.notify('There is no parent node selected', 'warn')
             else:
 
                 if not self.current_node_types[self.left_selected_node] == 'LOGIC':
-                    rospy.logwarn('Parent must be a logic node')
+                    self.notification_dialog.notify('Parent must be a building block node', 'warn')
                     return
 
                 node_to_add = self.current_node_generator.generate()
                 if type(node_to_add) == str:
-                    rospy.logerr(str(node_to_add))
+                    self.notification_dialog.notify(str(node_to_add), 'warn')
                 else:
                     current_name = self.current_node_generator.get_name()
                     self.add_node_to_tree(current_name, node_to_add, self.current_tree[self.left_selected_node].add_child)
@@ -1295,19 +1339,19 @@ color:#ffffff}''')
                         self.node_leftclick_cb(current_name)
 
     def add_sibling_before_cb(self):
-        print 'adding sibling node of type ' + self.current_node_type
+        self.info_textbox.notify('Adding sibling node of type ' + self.current_node_type)
         if self.current_node_type != None:
             if self.left_selected_node == None:
-              rospy.logerr('There is no left sibling node selected')
+              self.notification_dialog.notify('There is no left sibling node selected')
             else:
                 parent_node_name = self.current_tree[self.left_selected_node].get_parent().get_node_name()
                 if not self.plugins[parent_node_name]['type'] == 'LOGIC':
-                    rospy.logwarn('Parent must be a logic node')
+                    self.notification_dialog.notify('Parent must be a building block node', 'warn')
                     return
 
                 node_to_add = self.current_node_generator.generate()
                 if type(node_to_add) == str:
-                    rospy.logerr(str(node_to_add))
+                     self.info_textbox.notify(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
                     sibling_node = self.current_tree[self.left_selected_node]
@@ -1321,9 +1365,9 @@ color:#ffffff}''')
         if self.left_selected_node != None:
             if not self.current_node_types[self.left_selected_node] == 'LOGIC':
                 current_name = self.left_selected_node
-                rospy.logwarn('selected node: ' + current_name)
+                self.info_textbox.notify('selected node: ' + current_name)
                 new_name = self.current_node_generator.get_name()
-                rospy.logwarn('new node: ' + new_name)
+                self.info_textbox.notify('new node: ' + new_name)
                 replacement_node = self.current_node_generator.generate()
                 # current_name = self.current_node_generator.get_name()
                 current_child = self.current_tree[current_name]
@@ -1341,7 +1385,7 @@ color:#ffffff}''')
                                 else:
                                     self.delete_node(current_name,keep_children=False)
                             else:
-                                rospy.logerr("[Instructor]: Tries to access a nonexistent current_node_type key")
+                                 self.info_textbox.notify("[Instructor]: Tries to access a nonexistent current_node_type key")
                         self.regenerate_tree()
                         self.close_drawer()
                         # self.save_state()
@@ -1350,27 +1394,27 @@ color:#ffffff}''')
                                 self.node_leftclick_cb(current_name)
 
                     else:
-                        rospy.logerr('Replacing node failed: '+ current_name + ' , '+ new_name)
+                        self.notification_dialog.notify('Replacing node failed: '+ current_name + ' , '+ new_name, 'error')
                 else:
-                    rospy.logerr(str(replacement_node))
+                    self.notification_dialog.notify(str(replacement_node), 'error')
             else:
-                rospy.logwarn("Replace failed. Replacing logic node (sequence/root) with other nodes is disabled.")
+                self.notification_dialog.notify("Replace failed. Replacing building block node (sequence/root) with other nodes is disabled.", 'warn')
 
 
     def add_sibling_after_cb(self):
         print 'adding sibling node of type ' + self.current_node_type
         if self.current_node_type != None:
             if self.left_selected_node == None:
-              rospy.logerr('There is no left sibling node selected')
+              self.notification_dialog.notify('There is no left sibling node selected')
             else:
                 parent_node_name = self.current_tree[self.left_selected_node].get_parent().get_node_name()
                 if not self.plugins[parent_node_name]['type'] == 'LOGIC':
-                    rospy.logwarn('Parent must be a logic node')
+                    self.notification_dialog.notify('Parent must be a building block node', 'warn')
                     return
 
                 node_to_add = self.current_node_generator.generate()
                 if type(node_to_add) == str:
-                    rospy.logerr(str(node_to_add))
+                     self.info_textbox.notify(str(node_to_add))
                 else:
                     current_name = self.current_node_generator.get_name()
                     sibling_node = self.current_tree[self.left_selected_node]
@@ -1395,7 +1439,7 @@ color:#ffffff}''')
             # Stop Execution if running
             if self.root_node is not None:
                 self.dot_widget.zoom_image(1, center=True)
-                self.stop_tree()
+                self.stop_tree(notify=False)
 
                 # self.root_node = None
 
@@ -1444,8 +1488,8 @@ color:#ffffff}''')
             pass
         else:
             if self.left_selected_node == None:
-                rospy.logerr('There is no node selected in the gui')
-                return
+                 self.info_textbox.notify('There is no node selected in the gui')
+                 return
             else:
                 self.delete_node(self.left_selected_node)
             self.left_selected_node = None
@@ -1463,15 +1507,13 @@ color:#ffffff}''')
             node.remove_self()
             self.clear_node(name)
             self.regenerate_tree()
-        rospy.logwarn('Removed node ['+name+']')
+        self.info_textbox.notify('Removed node ['+name+']')
 
     def regenerate_tree(self,runtime=False,center=False):
         if self.root_node == None:
             self.dot_widget.set_dotcode('digraph behavior_tree {}')
         else:
-            #rospy.logwarn(self.root_node.generate_dot(runtime))
             self.dot_widget.set_dotcode(self.root_node.generate_dot(runtime),False)
-        # rospy.logwarn(self.current_tree)
 
 # UI Specific Functions --------------------------------------------------------
     def clear_node_info(self):
@@ -1487,6 +1529,9 @@ color:#ffffff}''')
             if event.key() == 16777220:
                 if self.selected_subtree != None:
                     self.load_selected_subtree()
+                elif self.current_node_plugin_name is None:
+                    # do nothing: no current node selected
+                    pass
                 elif 'root' in self.current_node_plugin_name.lower():
                     self.add_root_cb()
                 else:
@@ -1527,14 +1572,26 @@ color:#ffffff}''')
           self.app_.exit()
 
 # MAIN #######################################################
-if __name__ == '__main__':
-  rospy.init_node('instructor_view',anonymous=True)
-  app = QApplication(sys.argv)
-  wrapper = Instructor(app)
-  # Running
-  app.exec_()
-  # Done
+def main():
+    rospy.init_node('instructor_view',anonymous=True)
+    app = QApplication(sys.argv)
+    wrapper = Instructor(app)
+    app.exec_()
 
+if __name__ == '__main__':
+  # rospy.init_node('instructor_view',anonymous=True)
+  # app = QApplication(sys.argv)
+  # wrapper = Instructor(app)
+  # # Running
+  # app.exec_()
+  # Done
+  profile = False
+  
+  if profile:
+    import cProfile
+    cProfile.run('main()')
+  else:
+    main()
 
 
 

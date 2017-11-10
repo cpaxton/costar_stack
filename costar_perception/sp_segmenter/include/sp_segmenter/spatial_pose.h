@@ -20,229 +20,52 @@
 namespace bg = boost::geometry;
 namespace bgi = boost::geometry::index;
 
-struct objectPose {
+struct ObjectPose {
     poseT pose;
     double timestamp;
-    std::string tfName;
+    std::string frame_name;
     unsigned int index;
-    // define node equality for rtree remove function
-    bool operator==(const objectPose& valueToCompare) const
+    // define node equality for rtree_ remove function
+    bool operator==(const ObjectPose& value_to_compare) const
     {
         return (
-//                tfName == valueToCompare.tfName && timestamp == valueToCompare.timestamp &&
-                pose.model_name == valueToCompare.pose.model_name &&
-                pose.shift == valueToCompare.pose.shift &&
-                pose.rotation.isApprox(valueToCompare.pose.rotation)
+                pose.model_name == value_to_compare.pose.model_name &&
+                pose.shift == value_to_compare.pose.shift &&
+                pose.rotation.isApprox(value_to_compare.pose.rotation)
                 );
     }
 };
 
 typedef bg::model::point<double, 3, bg::cs::cartesian> point3d; // boost point (x,y,z) double
 typedef bg::model::box<point3d> box;
-typedef std::pair<point3d,objectPose> value;
-typedef bgi::rtree <value, bgi::linear<16> > objectRtree;
+typedef std::pair<point3d,ObjectPose> value;
 
-struct is_correct_model
+class SpatialPose
 {
-    is_correct_model(std::string model_name)
-    :model_name_(model_name)
-    {}
-    
-    template <typename Value>
-    bool operator()(Value const& v)
-    {
-        return std::get<1>(v).pose.model_name == model_name_;
-    }
-    
-    std::string model_name_;
+public:
+    SpatialPose() : max_distance_(0.025) {};
+    void createNewTree(const std::map<std::string, ObjectSymmetry> &object_dict, std::vector<poseT> &all_poses, 
+        const double &timestamp, std::map<std::string, unsigned int> &tf_index_map, 
+        const Eigen::Quaternion<double> &base_rotation = Eigen::Quaternion<double>(1,0,0,0));
+    void updateTree(const std::vector<poseT> &all_poses,
+        const double &timestamp, std::map<std::string, unsigned int> &tf_index_map);
+    void updateOneValue(std::string frame_name, std::vector<poseT> &all_poses, const double &timestamp, 
+        std::map<std::string, unsigned int> &tf_index_map);
+    void setMaxDistance(const double &distance);
+    std::size_t size() const;
+    std::vector<value> getAllNodes() const;
+    std::vector<poseT> getAllPoses() const;
+    std::vector<value> getRecentNodes(const double &cur_timestamp, const double &max_delta_time = 0.20) const;
+    std::string getFrameName (const value &Node) const;
+
+private:
+    point3d generatePoint(const poseT &pose) const;
+    box generateBox(const poseT &pose, const double &distance) const;
+
+    std::map<std::string, ObjectSymmetry> object_dict_;
+    Eigen::Quaternion<float> base_rotation_;
+    bgi::rtree<value, bgi::linear<16> > rtree_;
+    double max_distance_;
 };
-
-inline
-std::string getTFname (const value &Node)
-{
-    return std::get<1>(Node).tfName;
-}
-
-inline
-point3d generatePoint(const poseT &pose)
-{
-    point3d point(pose.shift.x(),pose.shift.y(),pose.shift.z());
-    return point;
-}
-
-inline
-box generateBox(const poseT &pose, const double &distance)
-{
-    point3d pointA(pose.shift.x()-distance,pose.shift.y()-distance,pose.shift.z()-distance),
-        pointB(pose.shift.x()+distance,pose.shift.y()+distance,pose.shift.z()+distance);
-    return box(pointA,pointB);
-}
-
-inline
-void treeInsert(objectRtree &rtree, const std::vector<poseT> &all_poses, const double &timestamp, 
-    std::map<std::string, unsigned int> &objectTFindex)
-{
-    for (const poseT &p: all_poses) {
-        objectPose tmpObject;
-        tmpObject.pose = p;
-        tmpObject.timestamp = timestamp;
-        std::stringstream child;
-        tmpObject.index = ++objectTFindex[p.model_name];
-        // Does not have tracking yet, can not keep the label on object.
-        child << "obj_" << p.model_name << "_" << tmpObject.index;
-        tmpObject.tfName = child.str();
-        rtree.insert(value(generatePoint(p),tmpObject));
-    }
-}
-
-inline
-void updateOneValue(objectRtree &rtree, std::string tfToUpdate, const std::map<std::string, objectSymmetry> &objectDict, 
-    std::vector<poseT> &all_poses, const double &timestamp, 
-    std::map<std::string, unsigned int> &objectTFindex, 
-    const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0))
-{
-  if (all_poses.size() < 1) {
-    std::cerr << "No poses to use for updating TF data\n";
-    return; //Do nothing
-  }
-  std::cerr << "Old rtree size: " << rtree.size() << std::endl;
-
-  std::vector<value> result_nn;
-  rtree.query(bgi::satisfies([tfToUpdate](value const& node){ 
-    // std::cerr << tfToUpdate << " " << std::get<1>(node).tfName << " match: "<< (tfToUpdate==std::get<1>(node).tfName) <<std::endl;
-    return (tfToUpdate==std::get<1>(node).tfName); 
-    }),std::back_inserter(result_nn));
-  objectPose tmpObject;
-  std::string object_type;
-
-  Eigen::Quaternion<float> baseRotation;
-  std::cerr << __FILE__ << ":" << __LINE__ << " DBG\n";
-  if (result_nn.size() > 0) 
-  {
-    // std::cerr << "Found old pose: " << result_nn.size() << std::endl;
-    baseRotation = std::get<1>(result_nn.at(0)).pose.rotation; // use old orientation
-    object_type = std::get<1>(result_nn.at(0)).pose.model_name; // get old object type
-    rtree.remove(result_nn.at(0)); // remove old value
-  }
-  else
-  {
-    baseRotation = Eigen::Quaternion<float>(baseRotationInput.w(),
-        baseRotationInput.x(),
-        baseRotationInput.y(),
-        baseRotationInput.z());
-  }
-
-  for (const poseT &p: all_poses) {
-    if (p.model_name!=object_type && result_nn.size() != 0) continue; //Do nothing to pose from different object type
-    else
-    {
-        objectPose tmpObject;
-        tmpObject.pose = p;
-        tmpObject.timestamp = timestamp;
-        std::stringstream child;
-        
-        tmpObject.pose.rotation = normalizeModelOrientation<float>(p.rotation,baseRotation,objectDict.find(p.model_name)->second);
-        tmpObject.tfName = tfToUpdate;
-        if (result_nn.size() == 0)
-        {
-            tmpObject.index = ++objectTFindex[p.model_name];
-        }
-        else tmpObject.index = std::get<1>(result_nn.at(0)).index;
-        rtree.insert(value(generatePoint(p),tmpObject)); // add new value
-        break;
-    }
-  }
-  std::cerr << "New rtree size: " << rtree.size() << std::endl;
-}
-
-inline
-void createTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> &objectDict, std::vector<poseT> &all_poses, 
-    const double &timestamp, std::map<std::string, unsigned int> &objectTFindex, 
-    const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0)) {
-    // clear all elements
-    rtree.clear();
-    Eigen::Quaternion<float> baseRotation(baseRotationInput.w(),baseRotationInput.x(),baseRotationInput.y(),baseRotationInput.z());
-    normalizeAllModelOrientation<float>(all_poses, baseRotation, objectDict);
-    treeInsert(rtree, all_poses, timestamp, objectTFindex);
-}
-
-inline
-void updateTree(objectRtree &rtree, const std::map<std::string, objectSymmetry> &objectDict, const std::vector<poseT> &all_poses,
-    const double &timestamp, std::map<std::string, unsigned int> &objectTFindex, 
-    const Eigen::Quaternion<double> baseRotationInput = Eigen::Quaternion<double>(1,0,0,0))
-{
-    objectRtree tmpRtree;
-    std::cerr << "Old rtree size: " << rtree.size() << std::endl;
-    Eigen::Quaternion<float> baseRotation(baseRotationInput.w(),baseRotationInput.x(),baseRotationInput.y(),baseRotationInput.z());
-    //get closest point that belongs to same object
-    int knnNumber = 2;
-    double distance = 0.025; // Limit search area to 2.5 cm around the point
-    for (const poseT &p: all_poses) {
-        objectPose tmpObject;
-        tmpObject.timestamp = timestamp;
-        std::vector<value> result_nn;
-        box boundary = generateBox(p, distance);
-        tmpObject.pose = p;
-        rtree.query(bgi::nearest(generatePoint(p),knnNumber)
-                    && bgi::within(boundary)
-                    && bgi::satisfies(
-                    [&](value const& v) {return  std::get<1>(v).pose.model_name == p.model_name;}
-                    )
-                    ,
-                    std::back_inserter(result_nn)
-                    );
-        
-        
-        if (result_nn.size() > 0) { // the pose exists in the prior rTree
-            // std::cerr << "Found old value\n";
-            tmpObject.pose.rotation = normalizeModelOrientation<float>(
-                                                                p, std::get<1>(result_nn.at(0)).pose,
-                                                                objectDict.find(std::get<1>(result_nn.at(0)).pose.model_name)->second
-                                                                );
-            tmpObject.tfName = std::get<1>(result_nn.at(0)).tfName; // Disabled keeping old TF name
-            tmpObject.index = std::get<1>(result_nn.at(0)).index;
-            // tmpObject.index = ++objectTFindex[p.model_name];
-            // Does not have tracking yet, can not keep the label on object.
-            // std::stringstream child;
-            // child << "obj_" << p.model_name << "_" << tmpObject.index;
-            // tmpObject.tfName = child.str();
-            rtree.remove(result_nn.at(0)); // each nearest neighboor only can be assigned to one match
-        
-        }
-        else // new pose
-        {
-            tmpObject.pose.rotation = normalizeModelOrientation<float>(p.rotation, baseRotation, objectDict.find(p.model_name)->second);
-            std::stringstream child;
-            tmpObject.index = ++objectTFindex[p.model_name];
-            // Does not have tracking yet, can not keep the label on object.
-            child << "obj_" << p.model_name << "_" << tmpObject.index;
-            tmpObject.tfName = child.str();
-        }
-        
-        tmpRtree.insert(value(generatePoint(tmpObject.pose),tmpObject));
-    }
-
-    rtree.swap(tmpRtree); //get new rtree value
-    std::cerr << "New rtree size: " << rtree.size() << std::endl;
-}
-
-inline
-std::vector<value> getAllNodes (const objectRtree &rtree)
-{
-    std::vector<value> nodes;
-    rtree.query(bgi::satisfies([](value const&){ return true; }),std::back_inserter(nodes));
-    return nodes;
-}
-
-inline
-std::vector<poseT> getAllPoses (const objectRtree &rtree)
-{
-    std::vector<value> nodes = getAllNodes(rtree);
-    std::vector<poseT> poses;
-    for (size_t i = 0; i < nodes.size(); i++) {
-        poses.push_back(std::get<1>(nodes.at(i)).pose);
-    }
-    return poses;
-}
 
 #endif /* spatial_pose_h */

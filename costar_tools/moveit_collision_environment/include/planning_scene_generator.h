@@ -14,6 +14,8 @@
 #include <costar_objrec_msgs/DetectedObject.h>
 #include <costar_objrec_msgs/DetectedObjectList.h>
 
+#include "moveit_collision_environment/RetainedCollision.h"
+
 #include <boost/thread/mutex.hpp>
 
 class moveitPlanningSceneGenerator
@@ -37,6 +39,9 @@ public:
     void addCollisionObjects (const std::vector<moveit_msgs::CollisionObject>& collision_objects);
     moveitPlanningSceneGenerator(const ros::NodeHandle &nh);
     bool updateWithBackground(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool addRetainedCollisionObject (moveit_collision_environment::RetainedCollision::Request& request, 
+        moveit_collision_environment::RetainedCollision::Response& response);
+    bool removeAllRetainedObject(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     ;
 };
 

@@ -33,7 +33,7 @@ def toc():
 class WaypointManager(object):
     def __init__(self):
         rospy.init_node('instructor_waypoint_manager',anonymous=True)
-        rospy.logwarn('Waypoint Manager Starting Up...')
+        rospy.loginfo('Waypoint Manager Starting Up...')
         self.broadcaster_ = tf.TransformBroadcaster()
         self.listener_ = tf.TransformListener()
         self.add_waypoint_service = rospy.Service('instructor_core/AddWaypoint', AddWaypoint, self.add_waypoint)
@@ -46,7 +46,7 @@ class WaypointManager(object):
         self.landmarks = {}
         self.saved_landmark_frames = {}
         # Set up librarian
-        rospy.logwarn('Waypoint Manager Waiting for Librarian Services')
+        rospy.loginfo('Waypoint Manager Waiting for Librarian Services')
         rospy.wait_for_service('/librarian/add_type',5)
         self.set_type_service = rospy.ServiceProxy('/librarian/add_type', librarian_msgs.srv.AddType)
         self.save_service = rospy.ServiceProxy('/librarian/save', librarian_msgs.srv.Save)
@@ -66,7 +66,7 @@ class WaypointManager(object):
 
         # load existing waypoints if any
         self.load()
-        rospy.logwarn('Waypoint Manager Running')
+        rospy.loginfo('Waypoint Manager Running')
         rospy.sleep(1.0)
 
         self.ms.applyChanges()
@@ -90,8 +90,8 @@ class WaypointManager(object):
             self.add_waypoint_marker('/' + name)
 
         relative_waypoint_names = self.list_service('instructor_relative_waypoint').entries
-        rospy.logwarn('Found Relative Waypoints:')
-        rospy.logwarn(relative_waypoint_names)
+        rospy.loginfo('Found Relative Waypoints:')
+        rospy.loginfo(relative_waypoint_names)
         for name in relative_waypoint_names:
             data = yaml.load(self.load_service(id=name,type='instructor_relative_waypoint').text)
             self.relative_waypoints['/' + name] = data
@@ -141,6 +141,7 @@ class WaypointManager(object):
                 landmark_tf_name = rospy.get_param(L)
             except KeyError:
                 rospy.logerr("Could not find landmark %s!"%(L))
+                continue
             #rospy.logwarn(landmark_tf_name)
 
             try:
@@ -190,48 +191,49 @@ class WaypointManager(object):
         pass
 
     def add_waypoint(self,msg):
-        # rospy.logwarn("### ADD WAYPOINT ###")
+        name = str(msg.name).strip('/')
         if msg.relative_frame_name == '': # frame in world coordinates
-            rospy.logwarn('Adding Waypoint: ['+msg.name+']')
+            rospy.logwarn('Adding Waypoint: ['+name+']')
             if msg.name not in self.waypoints.keys():
                 self.waypoints[msg.name] = msg.world_pose
                 self.add_waypoint_marker(msg.name)
-                self.save_service(id=str(msg.name).strip('/'),type='instructor_waypoint',text=yaml.dump(msg.world_pose))
+                self.save_service(id=str(name),type='instructor_waypoint',text=yaml.dump(msg.world_pose))
                 # rospy.logwarn("### DONE ###")
-                return 'SUCCESS IN ADDING WAYPOINT'
+                return 'Added Waypoint ['+name+']'
             else:
                 # rospy.logwarn("### DONE ###")
-                return 'DUPLICATE, NOT ADDED'
+                return 'Waypoint ['+name+'] already exists!'
                 
         else: # frame in relative coordinates
             if msg.name not in self.relative_waypoints.keys():
-                rospy.logwarn('Adding Relative Waypoint: ['+msg.name+'] with landmark ['+msg.relative_frame_name+']')
+                rospy.logwarn('Adding Relative Waypoint: ['+name+'] with landmark ['+msg.relative_frame_name+']')
                 self.relative_waypoints[msg.name] = [msg.relative_pose, msg.relative_frame_name]
                 self.add_relative_waypoint_marker(msg.name)
-                self.save_service(id=str(msg.name).strip('/'),type='instructor_relative_waypoint',text=yaml.dump([msg.relative_pose, msg.relative_frame_name]))
+                self.save_service(id=name,type='instructor_relative_waypoint',text=yaml.dump([msg.relative_pose, msg.relative_frame_name]))
                 # rospy.logwarn("### DONE ###")
-                return 'SUCCESS IN ADDING RELATIVE WAYPOINT'
+                return 'Added Waypoint ['+name+'] relative to  ['+msg.relative_frame_name+']'
             else:
                 # rospy.logwarn("### DONE ###")
-                return 'DUPLICATE, NOT ADDED'
+                return 'Waypoint ['+name+'] already exists!'
 
     def remove_waypoint(self,msg):
         # rospy.logwarn("### REMOVING WAYPOINT ###")
+        name = str(msg.name).strip('/')
         if msg.name in self.waypoints.keys():
             self.waypoints.pop(msg.name)
             self.remove_waypoint_marker(msg.name)
-            self.delete_service(id=str(msg.name).strip('/'),type='instructor_waypoint')
+            self.delete_service(id=name,type='instructor_waypoint')
             # rospy.logwarn("### DONE ###")
-            return 'SUCCESS IN REMOVING WAYPOINT'
+            return 'Removed Waypoint ['+name+']'
         elif msg.name in self.relative_waypoints.keys():
             self.relative_waypoints.pop(msg.name)
             self.remove_relative_waypoint_marker(msg.name)
-            self.delete_service(id=str(msg.name).strip('/'),type='instructor_relative_waypoint')
+            self.delete_service(id=name,type='instructor_relative_waypoint')
             # rospy.logwarn("### DONE ###")
-            return 'SUCCESS IN REMOVING RELATIVE WAYPOINT'
+            return 'Removed Relative Waypoint ['+name+']'
         else:
             # rospy.logwarn("### DONE ###")
-            return 'FAILED, WAPOINT NOT IN MANAGER'
+            return 'Waypoint ['+name+'] does not exist!'
 
     def get_landmark_list(self,msg):
         # rospy.logwarn("### GETTING LANDMARKS ###")

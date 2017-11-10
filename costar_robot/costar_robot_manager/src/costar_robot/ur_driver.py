@@ -25,15 +25,7 @@ urscript_commands = {'TEACH':'set robotmode freedrive','SERVO':'set robotmode ru
 
 class CostarUR5Driver(CostarArm):
 
-    def __init__(self,ip_address,simulation=False,
-            world="/world",
-            listener=None,
-            traj_step_t=0.1,
-            max_acc=1,
-            max_vel=1,
-            max_goal_diff = 0.02,
-            goal_rotation_weight = 0.01,
-            max_q_diff = 1e-6,
+    def __init__(self, simulation=False,
             max_dist_from_table = 0.35,
             *args,
             **kwargs):
@@ -41,19 +33,13 @@ class CostarUR5Driver(CostarArm):
         self.simulation = simulation
         self.ur_script_pub = rospy.Publisher('/ur_driver/URScript', String, queue_size=10,*args,**kwargs)
 
-        base_link = "base_link"
-        end_link = "ee_link"
-        planning_group = "manipulator"
-
         self.closed_form_IK_solver = InverseKinematicsUR5()
-        self.joint_weights = np.array([8.0, 7.0, 5.0, 2.5, 1.5, 1.2])
         self.closed_form_IK_solver.setEERotationOffsetROS()
-        self.closed_form_IK_solver.setJointWeights(self.joint_weights)
+        # self.closed_form_IK_solver.setJointWeights(self.joint_weights)
         self.closed_form_IK_solver.setJointLimits(-np.pi, np.pi)
 
-        super(CostarUR5Driver, self).__init__(base_link,end_link,planning_group,
-            steps_per_meter=10,
-            base_steps=10,
+        super(CostarUR5Driver, self).__init__(steps_per_meter=10,
+            base_steps=5,
             dof=6,
             closed_form_IK_solver=self.closed_form_IK_solver)
 
@@ -61,15 +47,20 @@ class CostarUR5Driver(CostarArm):
 
     def acquire(self):
         stamp = rospy.Time.now().to_sec()
+
+        self.cur_stamp_mtx.acquire()
         if self.cur_stamp is not None:
             self.client.stop_tracking_goal()
             # self.client.wait_for_result()
             self.client.cancel_all_goals()
             rospy.sleep(0.1)
             # rospy.logwarn("[UR_DRIVER]: current stamp is not None?")
+        self.cur_stamp_mtx.release()
 
         if stamp > self.cur_stamp:
+            self.cur_stamp_mtx.acquire()
             self.cur_stamp = stamp
+            self.cur_stamp_mtx.release()
             return stamp
         else:
             return None
@@ -82,6 +73,13 @@ class CostarUR5Driver(CostarArm):
 
         rate = rospy.Rate(30)
         t = rospy.Time(0)
+        
+        # Make sure that the trajectory 0 is the current joint position
+        traj.points[0].positions = self.q0
+
+        if not self.valid_verify(stamp):
+            #rospy.logerr('verify failed:'+ str(stamp) + ", " + str(self.cur_stamp))
+            return 'FAILURE - preempted'
 
         if self.simulation:
             if not linear:
@@ -92,16 +90,11 @@ class CostarUR5Driver(CostarArm):
                         self.send_cart(pt.positions,acceleration,velocity) ##
                     self.set_goal(pt.positions)
 
-                    # print " -- %s"%(str(pt.positions))
                     start_t = rospy.Time.now()
-
-                    if self.cur_stamp > stamp:
-                        return 'FAILURE - preempted'
 
                     rospy.sleep(rospy.Duration(pt.time_from_start.to_sec() - t.to_sec()))
                     t = pt.time_from_start
 
-            # print " -- GOAL: %s"%(str(traj.points[-1].positions))
             if not cartesian:
                 self.send_q(traj.points[-1].positions,acceleration,velocity)
             else:
@@ -125,14 +118,25 @@ class CostarUR5Driver(CostarArm):
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
 
-        if stamp >= self.cur_stamp:
-            self.client.send_goal_and_wait(goal, preempt_timeout=rospy.Duration.from_sec(10.0))
+        if self.valid_verify(stamp):
+            self.client.send_goal(goal)
             # max time before returning = 30 s
-            self.client.wait_for_result(rospy.Duration.from_sec(30.0))
+            done = False
+            #while self.valid_verify(stamp) and not done:
+            self.client.wait_for_result()#rospy.Duration.from_sec(1.0))
+
+        # Check to make sure we weren't preempted.
+        if not self.valid_verify(stamp):
+            #rospy.logerr('verify failed:'+ str(stamp) + ", " + str(self.cur_stamp))
+            res = None
+        else:
+            #rospy.logerr('verify succeeded:'+ str(stamp) + ", " + str(self.cur_stamp))
             res = self.client.get_result()
 
         if res is not None and res.error_code >= 0:
             return "SUCCESS"
+        elif res is None:
+            return "FAILURE - UR actionlib call aborted"
         else:
             return "FAILURE - %s"%res.error_code
 

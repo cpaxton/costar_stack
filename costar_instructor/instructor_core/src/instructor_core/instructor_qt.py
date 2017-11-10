@@ -6,9 +6,10 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 class Color:
-    def __init__(self,normal,hover):
+    def __init__(self,normal,hover, disabled='#dddddd'):
         self.normal = normal
         self.hover = hover
+        self.disabled = disabled
 
 class ColorOptions:
     def __init__(self):
@@ -58,6 +59,52 @@ class Button(QPushButton):
         self.setStyleSheet(self.default_style)
 
 
+class TextEdit(QTextEdit):
+
+    def __init__(self, name, label, txtsz=12, color=Color('#222222','#ffffff'),parent=None):
+        QTextEdit.__init__(self, parent)
+        self.document().contentsChanged.connect(self.sizeChange)
+
+        self.heightMin = 100
+        self.heightMax = 300
+        # self.setMouseTracking(True)
+        self.name = name
+        self.label = label
+        self.setText(self.label)
+        # COLOR
+        self.color = color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.setStyleSheet(self.default_style)
+        # self.font = QtGui.QFont("Ubuntu", txtsz, QtGui.QFont.Bold)
+        # self.setCurrentFont(self.font)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setMinimumHeight(30)
+
+    def set_color(self,color):
+        self.color = color
+        self.default_style = 'border: solid 4px #ffffff; background-color:'+self.color.normal+';color:'+'#ffffff'+';border:none;'
+        self.hover_style = 'border: solid 4px #ffffff; background-color:'+self.color.hover+';color:'+'#ffffff'+';border:none;'
+        self.setStyleSheet(self.default_style)
+
+    def notify(self, message, severity='info'):
+        self.show()
+        self.setText(message)
+        if severity is 'warn':
+            rospy.logwarn(message)
+        elif severity is 'error':
+            rospy.logerr(message)
+        else:
+            rospy.loginfo(message)
+        self.sizeChange()
+
+    def sizeChange(self):
+        docHeight = self.document().size().height()
+        if self.heightMin <= docHeight and docHeight <= self.heightMax:
+            self.setMaximumHeight(docHeight)
+
+
+
 class OverlayDialog(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
@@ -78,7 +125,7 @@ class NamedField(QWidget):
     self.title.setAlignment(Qt.AlignCenter)
     self.title.setMinimumWidth(119)
     # self.title.adjustSize()
-    self.title.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum))
+    self.title.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum,QtGui.QSizePolicy.Maximum))
     # self.title.setMaximumWidth(120)
     self.title.setMinimumHeight(31)
     self.title.setMaximumHeight(32)

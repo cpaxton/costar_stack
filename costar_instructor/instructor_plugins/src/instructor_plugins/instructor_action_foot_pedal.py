@@ -29,12 +29,16 @@ class NodeActionPedalGUI(NodeGUI):
         self.note = NoteField('(Time (s) to press pedal)','green')
         self.layout_.addWidget(self.duration)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.duration.full()]):
             return NodeActionPedal(self.get_name(),self.get_label(),int(self.duration.get()))
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionPedal(Node):
@@ -60,7 +64,7 @@ class NodeActionPedal(Node):
             if not self.running: # Thread is not running
                 try:
                     self.pedal_pub_.publish(UInt16(self.duration))
-                    rospy.logwarn('PEDAL PRESS ['+self.name_+']: STARTED')
+                    rospy.loginfo('PEDAL PRESS ['+self.name_+']: STARTED')
                     self.sleep_thread.start()
                     self.running = True
                     return self.set_status('RUNNING')

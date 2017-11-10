@@ -52,6 +52,15 @@ link_uniform:
 sander_makita:
   pair_width: 0.16
 
+wood_cube:
+  x: 90.0
+  y: 90.0
+  z: 90.0
+
+  preferred: "z"
+  preferred_step: 90.0
+  pair_width: 0.04
+
 default_object_param:
 # Contains default parameter for ObjRecRANSAC
   pair_width: 0.05

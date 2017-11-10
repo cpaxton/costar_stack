@@ -9,13 +9,13 @@ from beetree import *
 from smart_waypoint_manager import SmartWaypointManager
 
 class SmartMoveDialog(QWidget):
-    def __init__(self, show_hide_fn,parent=None):
+    def __init__(self, parent=None):
         QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
         # GUI
         rp = rospkg.RosPack()
         w_path = rp.get_path('instructor_core') + '/ui/smart_move.ui'
         uic.loadUi(w_path, self)
-        self.show_hide = show_hide_fn
+        self.show_hide = self.show_hide_slide
         self.selected_object = None
         self.selected_move = None
         self.saved_geom = None
@@ -33,6 +33,19 @@ class SmartMoveDialog(QWidget):
 
         self.update_objects()
         self.update_moves()
+
+
+    def show_hide_slide(self):
+        if self.isVisible():
+            self.saved_geom = self.geometry()
+            self.hide()
+        else:
+            if self.saved_geom is not None:
+                self.move(self.saved_geom.x(),self.saved_geom.y())
+            else:
+                self.move(self.geometry().x()+self.geometry().width()/2-self.geometry().width()/2,self.geometry().y()+self.geometry().height()/2-self.geometry().height()/2)
+            self.show()
+            self.update_all()
 
     def update_all(self):
         self.update_objects()
@@ -59,12 +72,20 @@ class SmartMoveDialog(QWidget):
         self.found_objects = self.manager.get_detected_objects()
         # Populate objects in list
         if self.found_objects is not None:
-            for m in self.found_objects:
-                self.object_list.addItem(QListWidgetItem(m.strip('/')))
-            self.object_list.sortItems()
-            self.object_list.setCurrentRow(0)
-            if self.object_list.currentItem() is not None:
-                self.selected_object = str(self.object_list.currentItem().text())
+            self.found_objects.sort()
+            idx = None
+            for i,m in enumerate(self.found_objects):
+                name = m.strip('/')
+                if self.selected_object is not None and self.selected_object == name:
+                    idx = i
+                self.object_list.addItem(QListWidgetItem(name))
+
+            if idx is None:
+                self.object_list.setCurrentRow(0)
+                if self.object_list.currentItem() is not None:
+                    self.selected_object = str(self.object_list.currentItem().text())
+            else:
+                self.object_list.setCurrentRow(idx)
 
     def update_moves(self):
         if self.selected_object is not None:
@@ -74,12 +95,20 @@ class SmartMoveDialog(QWidget):
             self.manager.load_all()
             self.found_moves = self.manager.get_moves_for_object(self.selected_object)
             if self.found_moves is not None:
-                for m in self.found_moves:
-                    self.move_list.addItem(QListWidgetItem(m.strip('/')))
-                self.move_list.sortItems()
-                self.move_list.setCurrentRow(0)
-                if self.move_list.currentItem() is not None:
-                    self.selected_move = str(self.move_list.currentItem().text())
+                self.found_moves.sort()
+                idx = None
+                for i, m in enumerate(self.found_moves):
+                    name = m.strip('/')
+                    self.move_list.addItem(QListWidgetItem(name))
+                    if self.selected_move is not None and self.selected_move == name:
+                        idx = i
+
+                if idx is None:
+                    self.move_list.setCurrentRow(0)
+                    if self.move_list.currentItem() is not None:
+                        self.selected_move = str(self.move_list.currentItem().text())
+                else:
+                    self.move_list.setCurrentRow(idx)
 
     def add_move(self):
         self.update_objects()

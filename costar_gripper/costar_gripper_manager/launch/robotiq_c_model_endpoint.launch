@@ -1,8 +1,0 @@
-<launch>
-
-  <arg name="ee_frame" default="/endpoint"/>
-
-  <node pkg="tf" type="static_transform_publisher" name="endpoint_to_marker" args="0.00784624   0.0835316 -0.00871847 -0.0457574 0.0869102 0.673131 0.732971 $(arg ee_frame) /endpoint_marker 10"/> 
-  <node pkg="tf" type="static_transform_publisher" name="gripper_center" args=" 0.20 -0.010 -0.010  0  0  0  1   $(arg ee_frame) /gripper_center 10"/> 
-
-</launch>

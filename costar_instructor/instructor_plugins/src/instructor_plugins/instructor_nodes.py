@@ -29,11 +29,15 @@ class NodeParamConditionGUI(NodeGUI):
         self.layout_.addWidget(self.param)
         self.layout_.addWidget(self.value)
 
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(), self.label.full(), self.param.full(), self.value.full()]):
             return NodeParamCondition(self.get_name(), self.get_label(), self.param.get(), self.value.get())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 
 class NodeActionTestGUI(NodeGUI):
@@ -44,12 +48,16 @@ class NodeActionTestGUI(NodeGUI):
         self.simulate_success = NamedField('Simulate Success', 'True')
         self.layout_.addWidget(self.simulate_success)
 
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         print self.wait.get()
         if all([self.name.full(), self.label.full(), self.wait.full(), self.simulate_success.full()]):
             return NodeActionTest(self.get_name(), self.get_label(), int(self.wait.get()),  self.simulate_success.get())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 
 class NodeActionSleepGUI(NodeGUI):
@@ -60,11 +68,15 @@ class NodeActionSleepGUI(NodeGUI):
         self.wait = NamedField('Sleep Time', '','green')
         self.layout_.addWidget(self.wait)
 
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),  self.wait.full()]):
             return NodeActionSleep(self.get_name(),  self.get_label(),  float(self.wait.get()))
         else:
-            return 'ERROR: sleep action node not properly defined'
+            return 'ERROR: sleep action check that all menu items are properly selected for this node'
 
 
 # Nodes -------------------------------------------------------------------
@@ -106,6 +118,11 @@ class NodeActionTest(Node):
         self.wait_thread_ = Thread(target=self.sleep_fn,  args=(self.wait_, 1))
         self.simulate_success_ = simulate_success
         self.running_ = False
+
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def get_node_type(self):
         return 'ACTION'
     def get_node_name(self):
@@ -154,6 +171,10 @@ class NodeActionSleep(Node):
         self.running = False
         self.needs_reset = False
 
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def get_node_type(self):
         return 'SLEEP_ACTION'
 
@@ -168,7 +189,7 @@ class NodeActionSleep(Node):
             if not self.running: # Thread is not running
                 try:
                     self.sleep_thread.start()
-                    rospy.logwarn('SLEEP ACTION ['+self.name_+']: STARTED')
+                    rospy.loginfo('SLEEP ACTION ['+self.name_+']: STARTED')
                     self.running = True
                     return self.set_status('RUNNING')
                 except Exception,  errtxt:

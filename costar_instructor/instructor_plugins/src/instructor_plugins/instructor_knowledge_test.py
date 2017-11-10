@@ -47,22 +47,7 @@ class NodeKnowledgeTestGUI(NodeGUI):
 
 
         ### Git initial list of targets ###
-        rospy.logwarn('Waiting for service...')
-        try:
-            rospy.wait_for_service('/predicator/get_possible_assignment',2)
-            rospy.logwarn('FOUND')
-        except:
-            rospy.logerr('Could not find service')
-        try:
-            proxy = rospy.ServiceProxy('predicator/get_possible_assignment', srv.GetTypedList)
-            
-            rospy.logwarn('Found TARGETS:')
-            self.found_assignments = proxy().data
-            rospy.logwarn(self.found_assignments)
-            for a in self.found_assignments:
-                self.ui.target_box.addItem(str(a).upper())
-        except rospy.ServiceException, e:
-            print e
+        rospy.loginfo('Waiting for service...')
 
         # Finish
         self.reset()
@@ -76,7 +61,34 @@ class NodeKnowledgeTestGUI(NodeGUI):
         self.ui.statement_label.hide()
         self.ui.value_box.setCurrentIndex(0)
         self.ui.knowledge_box.setCurrentIndex(0)
+        self.refresh_data()
         self.ui.target_box.setCurrentIndex(0)
+
+    def refresh_data(self):
+        try:
+            rospy.wait_for_service('/predicator/get_possible_assignment',2)
+            rospy.loginfo('FOUND')
+        except:
+            rospy.logerr('Could not find service')
+        try:
+            proxy = rospy.ServiceProxy('predicator/get_possible_assignment', srv.GetTypedList)
+
+            rospy.loginfo('Found TARGETS:')
+            self.found_assignments = proxy().data
+            rospy.loginfo(self.found_assignments)
+            
+            self.ui.target_box.clear();
+            list_of_items = []
+            for a in self.found_assignments:
+                # self.ui.target_box.addItem(str(a).upper())
+                list_of_items.append(str(a).upper())
+            
+            list_of_items.sort()
+            for item in list_of_items:
+                self.ui.target_box.addItem(item)
+
+        except rospy.ServiceException, e:
+            print e
 
     def reset_knowledge(self):
         self.ui.knowledge_box.clear()
@@ -96,8 +108,12 @@ class NodeKnowledgeTestGUI(NodeGUI):
 
     def target_selected(self,index):
         obj = str(self.ui.target_box.itemText(index)).lower()
-        rospy.logwarn('Selected object ['+str(obj)+']')
+        rospy.loginfo('Selected object ['+str(obj)+']')
         self.selected_target = str(obj)
+        # self.refresh_data()
+        # idx = self.ui.target_box.findText(self.selected_target)
+        # self.ui.target_box.setCurrentIndex(idx)
+
         self.reset_knowledge()
         self.ui.knowledge_box.show()
         self.ui.knowledge_label.show()
@@ -108,9 +124,9 @@ class NodeKnowledgeTestGUI(NodeGUI):
             return
         try:
             proxy = rospy.ServiceProxy('predicator/get_predicate_names_by_assignment', srv.GetTypedList)
-            rospy.logwarn('fetching predicates for ['+self.selected_target+']')
+            rospy.loginfo('fetching predicates for ['+self.selected_target+']')
             self.found_predicates = proxy(self.selected_target).data
-            rospy.logwarn(self.found_predicates)
+            rospy.loginfo(self.found_predicates)
             for a in self.found_predicates:
                 self.ui.knowledge_box.addItem(str(a))
         except rospy.ServiceException, e:
@@ -118,7 +134,7 @@ class NodeKnowledgeTestGUI(NodeGUI):
 
     def predicate_selected(self,index):
         pred = str(self.ui.knowledge_box.itemText(index)).lower()
-        rospy.logwarn('Selected predicate ['+str(pred).upper()+']')
+        rospy.loginfo('Selected predicate ['+str(pred).upper()+']')
         self.ui.value_box.clear()
         self.reset_value()
         self.ui.result_label.show()
@@ -133,16 +149,16 @@ class NodeKnowledgeTestGUI(NodeGUI):
         try:
             proxy = rospy.ServiceProxy('predicator/test_predicate', srv.TestPredicate)
             self.selected_pred_value = proxy(PredicateStatement( self.selected_pred, 1, PredicateStatement.TRUE, 1, [self.selected_target, '', ''],[])).found
-            rospy.logwarn(self.selected_pred_value)
+            rospy.loginfo(self.selected_pred_value)
         except rospy.ServiceException, e:
             print e
         self.ui.result_label.setText(self.selected_target.upper()+':  '+self.selected_pred+' = '+str(self.selected_pred_value).upper()+'')
 
     def value_selected(self,index):
         val = str(self.ui.value_box.itemText(index)).lower()
-        rospy.logwarn(val)
+        rospy.loginfo(val)
         self.selected_value = True if val == 'true' else False
-        rospy.logwarn(self.selected_value)
+        rospy.loginfo(self.selected_value)
         self.ui.statement_label.show()
         self.ui.statement_label.setText('This test will succeed if\n'+self.selected_target.upper()+':  '+self.selected_pred+'\nis '+str(self.selected_value).upper())
 
@@ -151,7 +167,7 @@ class NodeKnowledgeTestGUI(NodeGUI):
         if all([self.name.full(), self.selected_target != None, self.selected_value != None, self.selected_pred != None]):
             return NodeKnowledgeTest(self.get_name(), self.get_label(), self.selected_target, self.selected_value, self.selected_pred)
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
     def save_data(self,data):
         data['target'] = {'value':self.selected_target}
@@ -173,7 +189,11 @@ class NodeKnowledgeTestGUI(NodeGUI):
 # NODE
 class NodeKnowledgeTest(Node):
     def __init__(self, name, label, target, value, predicate):
-        L = 'IF '+target.upper()+'['+predicate+'] = '+str(value).upper()
+        #L = 'IF '+target.upper()+'['+predicate+'] = '+str(value).upper()
+        if value:
+            L = "ASSERT %s(%s)"%(predicate.upper(), target)
+        else:
+            L = "ASSERT NOT %s(%s)"%(predicate.upper(), target)
         color = colors['purple'].normal
         super(NodeKnowledgeTest, self).__init__(name, L, color)
         self.target = target
@@ -200,7 +220,7 @@ class NodeKnowledgeTest(Node):
                     self.running = True
                     return self.set_status('RUNNING')
                 except Exception,  errtxt:
-                    rospy.logwarn('['+self.name_+']: FAILED TO START THREAD')
+                    rospy.logerr('['+self.name_+']: FAILED TO START THREAD')
                     self.running = False
                     self.needs_reset = True
                     return self.set_status('FAILURE')
@@ -218,10 +238,10 @@ class NodeKnowledgeTest(Node):
 
     def make_service_call(self,request,*args):
         # Find Service
-        rospy.logwarn('Finding service...')
+        rospy.loginfo('Finding service...')
         try:
             rospy.wait_for_service('/predicator/test_predicate',2)
-            rospy.logwarn('FOUND!')
+            rospy.loginfo('FOUND!')
         except:
             rospy.logerr('Could not find service')
         # Perform Test
@@ -230,15 +250,15 @@ class NodeKnowledgeTest(Node):
             statement = PredicateStatement( self.predicate, 1, PredicateStatement.TRUE, 1, [self.target, '', ''],[])
             V = proxy(statement).found
             if V == self.value:
-                rospy.logwarn('Value ['+str(V)+'] matched ['+str(self.value)+']')
+                rospy.loginfo('Value ['+str(V)+'] matched ['+str(self.value)+']')
                 self.finished_with_success = True
                 return
             else:
-                rospy.logwarn('Value ['+str(V)+'] did NOT match ['+str(self.value)+']')
+                rospy.loginfo('Value ['+str(V)+'] did NOT match ['+str(self.value)+']')
                 self.finished_with_success = False
                 return
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            rospy.logerr(e)
 
     def reset_self(self):
         self.service_thread = Thread(target=self.make_service_call, args=('request',1))

@@ -61,7 +61,7 @@ class NodeVariableWaypointGUI(NodeGUI):
                 # Set command waypoint if call to waypoint manager succeeds
                 self.set_command_waypoint(self.new_waypoint_name)
             except rospy.ServiceException, e:
-                rospy.logwarn(e)
+                rospy.logerr(e)
         else:
             rospy.logerr('You need to input a name for the waypoint')
 
@@ -88,6 +88,6 @@ class NodeVariableWaypointGUI(NodeGUI):
         if all([self.name.full(),self.label.full(), self.command_waypoint_name]):
             return NodeVariableWaypoint(self.get_name(),self.command_waypoint_name)
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 

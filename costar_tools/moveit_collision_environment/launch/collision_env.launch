@@ -31,7 +31,7 @@
 
 
   <arg name="useDetectedObjectMsgs"   default="true" doc="Use the published costar_objrec_msgs DetectedObjectList msgs to get the tf name and type of the object" />
-  <arg name="detectedObjectTopic"   default="/SPServer/detected_object_list" doc="The name of detected object msgs topic. Oonly used if useDetectedObjectMsgs == true" />
+  <arg name="detectedObjectTopic"   default="/costar/detected_object_list" doc="The name of detected object msgs topic. Oonly used if useDetectedObjectMsgs == true" />
 
   <!-- Enable for debugging purpose -->
   <arg name="debug"               default="false" />

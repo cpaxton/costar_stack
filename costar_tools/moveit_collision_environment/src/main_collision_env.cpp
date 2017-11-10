@@ -13,6 +13,10 @@ int main(int argc, char** argv)
     ros::ServiceServer planningSceneGenerator = nh.advertiseService("planningSceneGenerator", &moveitPlanningSceneGenerator::updateCollisionObject, &planningScene);
 
     ros::ServiceServer updatePlanningSceneBackground = nh.advertiseService("updateWithBackground", &moveitPlanningSceneGenerator::updateWithBackground, &planningScene);
+
+    ros::ServiceServer addRetainedCollisionObject = nh.advertiseService("addRetainedCollisionObject", &moveitPlanningSceneGenerator::addRetainedCollisionObject, &planningScene);
+    ros::ServiceServer removeAllRetainedObject = nh.advertiseService("removeAllRetainedObject", &moveitPlanningSceneGenerator::removeAllRetainedObject, &planningScene);
+
     ros::spin();
 	return 1;
 }

@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore, uic
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 # Beetree and Instructor
-import beetree; from beetree import Node
+from service_node import ServiceNode
 from instructor_core import NodeGUI
 from instructor_core.instructor_qt import NamedField, ColorOptions
 import rospkg
@@ -61,7 +61,7 @@ class NodeActionWaypointGUI(NodeGUI):
             get_waypoints_proxy = rospy.ServiceProxy('/instructor_core/GetWaypointList',GetWaypointList)
             found_waypoints = get_waypoints_proxy('').names
         except rospy.ServiceException, e:
-            rospy.logwarn(e)
+            rospy.logerr(e)
         for w in found_waypoints:
             self.waypoint_ui.waypoint_list.addItem(QListWidgetItem(w.strip('/')))
         self.waypoint_ui.waypoint_label.setText('NONE')
@@ -93,7 +93,6 @@ class NodeActionWaypointGUI(NodeGUI):
         return data
 
     def load_data(self,data):
-        rospy.logwarn(data)
         if data.has_key('waypoint_name'):
             if data['waypoint_name']['value']!=None:
                 self.set_command_waypoint(data['waypoint_name']['value'])
@@ -114,70 +113,18 @@ class NodeActionWaypointGUI(NodeGUI):
             # rospy.logwarn('Generating Move with acc='+str(self.command_acc)+' and vel='+str(self.command_vel))
             return NodeActionWaypoint(self.get_name(),self.get_label(),self.command_waypoint_name,self.command_vel,self.command_acc,self.listener_)
         else:
-            rospy.logwarn('NODE NOT PROPERLY DEFINED')
-            return 'ERROR: node not properly defined'
+            rospy.logerr('check that all menu items are properly selected for this node')
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
-class NodeActionWaypoint(Node):
+class NodeActionWaypoint(ServiceNode):
     def __init__(self,name,label,waypoint_name,vel,acc,tfl):
         L = 'MOVE TO ['+waypoint_name.upper()+']'
-        super(NodeActionWaypoint,self).__init__(name,L,'#26A65B')
+        super(NodeActionWaypoint,self).__init__(name,L,'#26A65B','Save Frame')
         self.command_waypoint_name = waypoint_name
         self.command_vel = vel
         self.command_acc = acc
         self.listener_ = tfl
-        # Reset params
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-    def get_node_type(self):
-        return 'SERVICE'
-    def get_node_name(self):
-        return 'Service'
-
-    def execute(self):
-        if self.needs_reset:
-            rospy.loginfo('Waypoint Service [' + self.name_ + '] already ['+self.get_status()+'], needs reset')
-            return self.get_status()
-        else:
-            if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
-                    try:
-                        self.service_thread.start()
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] running')
-                        self.running = True
-                        return self.set_status('RUNNING')
-                    except Exception, errtxt:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] thread failed')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('FAILURE')
-                        
-            else:# If thread is running
-                if self.service_thread.is_alive():
-                    return self.set_status('RUNNING')
-                else:
-                    if self.finished_with_success == True:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] succeeded')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('SUCCESS')
-                    else:
-                        rospy.loginfo('Waypoint Service [' + self.name_ + '] failed')
-                        self.running = False
-                        self.needs_reset = True
-                        self.set_color(colors['gray'].normal)
-                        return self.set_status('FAILURE')
-
-    def reset_self(self):
-        self.service_thread = Thread(target=self.make_service_call, args=('',1))
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
-        self.set_color('#26A65B')
 
     def make_service_call(self,request,*args):
         # Check to see if service exists
@@ -200,20 +147,20 @@ class NodeActionWaypoint(Node):
             msg.vel = self.command_vel
             msg.accel = self.command_acc
             # Send Servo Command
-            rospy.logwarn('Single Servo Move Started')
+            rospy.loginfo('Single Servo Move Started')
             result = pose_servo_proxy(msg)
-            if 'FAILED' in str(result.ack):
+            if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return
             else:
-                rospy.logwarn('Single Servo Move Finished')
-                rospy.logwarn('Robot driver reported: '+str(result.ack))
+                rospy.loginfo('Single Servo Move Finished')
+                rospy.loginfo('Robot driver reported: '+str(result.ack))
                 self.finished_with_success = True
                 return
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the tf lookup or service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the tf lookup or service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return

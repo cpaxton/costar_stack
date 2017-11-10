@@ -16,6 +16,10 @@
   <arg name="ee_frame" value="ee_link"/>
   <arg name="base_frame" value="base_link"/>
 
+  <arg name="use_scene_parsing_pose" default="false" doc="Use the stable pose generated from the scene parsing algorithm"/>
+  <arg name="use_external_segmenter" default="false" doc="Use external point cloud segmentation for sp_segmenter, e.g. color_nn_segmenter"/>
+  <arg name="use_filtered_marker_tf" default="false" doc="Use filtered ar_marker from instructor_core/launch/shoulder_smooth.launch"/>
+
   <include file="$(find costar_bringup)/launch/utilities.launch">
     <arg name="start_robotiq_force_sensor" value="$(arg start_robotiq_force_sensor)"/>
   </include>
@@ -23,7 +27,10 @@
   <include file="$(find costar_bringup)/launch/predicator_nodes.launch"/>
 
   <!-- Bringup default configuration for the UR5 -->
-  <include file="$(find costar_bringup)/launch/config/ur5.launch"/>
+  <include file="$(find costar_bringup)/launch/config/ur5.launch">
+    <arg name="use_scene_parsing_pose" value="$(arg use_scene_parsing_pose)"/>
+    <arg name="use_external_segmenter" value="$(arg use_external_segmenter)"/>
+  </include>
 
   <group unless="$(arg sim)">
 
@@ -40,11 +47,12 @@
     <include if="$(arg start_camera)" file="$(find costar_bringup)/launch/camera.launch">
       <param name="start_alvar" value="$(arg start_alvar)"/>
       <param name="table_frame" value="$(arg table_frame)"/>
+      <arg name="use_filtered_marker_tf" value="$(arg use_filtered_marker_tf)"/>
     </include>
 
     <!-- gripper bringup: connect to s model via TCP/IP -->
     <node name="robotiq_c_model_interface" pkg="robotiq_c_model_control" type="CModelTcpNode.py" args="$(arg gripper_ip_address)"/>
-    <include file="$(find costar_gripper_manager)/launch/c_model.launch">
+    <include file="$(find gripper_robotiq)/launch/c_model.launch">
       <arg name="ee_frame" value="$(arg ee_frame)"/>
     </include>
 

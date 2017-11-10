@@ -9,11 +9,13 @@ from PyQt4.QtCore import *
 # Beetree and Instructor
 import beetree; from beetree import Node, NodeQuery
 from instructor_core import NodeGUI
-from instructor_core.instructor_qt import NamedField, NamedComboBox
+from instructor_core.instructor_qt import NamedField, NamedComboBox, ColorOptions
 # For testing the service node
 import instructor_plugins
 from instructor_plugins.srv import *
 from threading import Thread
+
+colors = ColorOptions().colors
 
 # Sample Node Wrappers -----------------------------------------------------------
 class NodeActionSampleGUI(NodeGUI):
@@ -24,7 +26,7 @@ class NodeActionSampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return beetree.NodeAction(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeServiceSampleGUI(NodeGUI):
     def __init__(self):
@@ -34,7 +36,7 @@ class NodeServiceSampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeServiceSample(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeQuerySampleGUI(NodeGUI):
     def __init__(self):
@@ -44,7 +46,7 @@ class NodeQuerySampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeQuerySample(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 class NodeVariableSampleGUI(NodeGUI):
     def __init__(self):
@@ -54,7 +56,7 @@ class NodeVariableSampleGUI(NodeGUI):
         if all([self.name.full(),self.label.full()]):
             return NodeVariableSample(self.get_name(),self.get_label())
         else:
-            return 'ERROR: node not properly defined'
+            return 'ERROR: check that all menu items are properly selected for this node'
 
 # Sample Nodes -------------------------------------------------------------------
 class NodeQuerySample(NodeQuery):
@@ -114,8 +116,8 @@ class NodeServiceSample(Node):
             else:
                 if self.finished_with_success == True:
                     rospy.loginfo('Test Service succeeded')
-                    return self.set_status('SUCCESS')
                     self.running = False
+                    return self.set_status('SUCCESS')
                 else:
                     rospy.loginfo('Test Service failed')
                     return self.set_status('FAILURE')

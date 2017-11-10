@@ -30,11 +30,16 @@ class NodeActionStopGUI(NodeGUI):
         self.stop_time = NamedField('Stop Time', '','green')
         self.layout_.addWidget(self.stop_time)
 
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
+        
     def generate(self):
         if all([self.name.full(),  self.stop_time.full()]):
             return NodeActionStop(self.get_name(),  self.get_label(),  float(self.stop_time.get()))
         else:
-            return 'ERROR: STOP action node not properly defined'
+            return 'ERROR: STOP action check that all menu items are properly selected for this node'
 
 # Nodes -------------------------------------------------------------------
 class NodeActionStop(Node):
@@ -61,7 +66,7 @@ class NodeActionStop(Node):
             if not self.running: # Thread is not running
                 try:
                     self.stop_thread.start()
-                    rospy.logwarn('STOP ACTION ['+self.name_+']: STARTED')
+                    rospy.loginfo('STOP ACTION ['+self.name_+']: STARTED')
                     self.running = True
                     return self.set_status('RUNNING')
                 except Exception,  errtxt:
@@ -103,8 +108,8 @@ class NodeActionStop(Node):
             return
 
         except (rospy.ServiceException), e:
-            rospy.logwarn('There was a problem with the service:')
-            rospy.logwarn(e)
+            rospy.logerr('There was a problem with the service:')
+            rospy.logerr(e)
             self.finished_with_success = False
             return
 
@@ -112,5 +117,6 @@ class NodeActionStop(Node):
         self.stop_thread = Thread(target=self.stop,  args=(self.wait_time, 1))
         self.running = False
         self.needs_reset = False
-        self.set_color('#26A65B')
+        #self.set_color('#26A65B')
+        self.set_color(colors['green'].normal)
 

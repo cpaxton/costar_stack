@@ -12,6 +12,14 @@ If you find this code useful, please cite:
 }
 ```
 
+## Adding plugins
+
+Make sure you setup `instructor_plugins/src/instructor_plugins/__init__.py` to load your ui element.
+Also add your ui element in
+`costar_instructor/instructor_plugins/package.xml`. Take a look at the `case` entry, it will determine whether your plugin will be enabled/disabled under certain instructor roslaunch
+
+For example if a plugin should appear in all cases, it makes sense to put `baseline` as your case.
+
 ## Marlin Demo
 
 ```roslaunch instructor_core marlin_cameras.launch```
