@@ -17,7 +17,7 @@
   <arg name="base_frame" value="base_link"/>
 
   <arg name="use_scene_parsing_pose" default="false" doc="Use the stable pose generated from the scene parsing algorithm"/>
-  <arg name="use_external_segmenter" default="false" doc="Use external point cloud segmentation for sp_segmenter, e.g. color_nn_segmenter"/>
+  <arg name="use_external_segmenter" default="false" doc="Use external point cloud segmentation false for sp_segmenter, true for something else e.g. color_nn_segmenter (k means color segmentation)"/>
   <arg name="use_filtered_marker_tf" default="false" doc="Use filtered ar_marker from instructor_core/launch/shoulder_smooth.launch"/>
 
   <include file="$(find costar_bringup)/launch/utilities.launch">

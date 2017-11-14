@@ -90,7 +90,12 @@ training_data
         └── ...
 ```
 
-This following command can be used:
+This following command can be used to do the training with k-means color segmentation:
+
 ```
 roslaunch color_nn_segmenter costar_segmenter.launch load_table:=true load_existing_model:=false model_name:=rgby_wood_block_bin background_labels:=wood_block,black_bin 
 ```
+
+
+If we want to do training the load_table parameter doesn't have an effect. During runtime, if we want to do color segmentation then load_table will be used for object on table segmentation before perfoming color segmentation. 
+

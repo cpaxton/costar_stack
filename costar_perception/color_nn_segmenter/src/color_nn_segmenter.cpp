@@ -315,6 +315,20 @@ bool ColorNnSegmenter::loadModel(const std::string &model_dat_file_path)
 }
 
 
+void ColorNnSegmenter::setForegroundColorLabel(const std::string &foreground_labels)
+{
+	this->use_manual_foreground_color_label= true;
+	std::vector<std::string> foreground_label_list;
+	boost::split(foreground_label_list,foreground_labels,boost::is_any_of(","));
+
+	unsigned int label_idx = 1;
+	for (std::vector<std::string>::const_iterator it = foreground_label_list.begin(); it != foreground_label_list.end(); ++it, ++label_idx)
+	{
+		label_index_map[label_idx] = *it;
+	}
+
+}
+
 void ColorNnSegmenter::setBackgroundColorLabel(const std::string &ignored_labels)
 {
 	background_label_index_map.clear();

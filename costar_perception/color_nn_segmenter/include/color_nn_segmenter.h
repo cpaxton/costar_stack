@@ -34,12 +34,13 @@ typedef pcl::PointCloud<pcl::PointXYZL> PointCloudXYZL;
 class ColorNnSegmenter
 {
 public:
-	ColorNnSegmenter() : ready(false), unlabelled_model_cloud(new PointCloudXYZ()) {};
+	ColorNnSegmenter() : ready(false), use_manual_foreground_color_label(false), unlabelled_model_cloud(new PointCloudXYZ()) {};
 	
 	bool trainModel(const std::string &training_data_directory, const  int kmeans_point_per_model = 5);
 	bool saveModel(const std::string &target_directory, const std::string &model_name);
 	bool loadModel(const std::string &model_dat_file_path);
 
+	void setForegroundColorLabel(const std::string &foreground_labels);
 	void setBackgroundColorLabel(const std::string &ignored_labels);
 	
 	PointCloudXYZL::Ptr segment(const PointCloudXYZRGB &input_cloud);
@@ -51,6 +52,7 @@ private:
 	PointCloudXYZ::Ptr openCvKMeans(const PointCloudXYZ &input_cloud, const int &cluster_size);
 
 	bool ready;
+	bool use_manual_foreground_color_label;
 	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
 	PointCloudXYZ::Ptr unlabelled_model_cloud;
 	PointCloudXYZL::Ptr model_cloud;
