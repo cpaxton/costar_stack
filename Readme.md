@@ -61,8 +61,18 @@ There is a more detailed [startup guide](docs/startup.md).
     * [Training the color segmenter](docs/collect_data.md): a quick overview of how you can train the color segmenter.
   * [Robot](costar_robot/Readme.md): utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Gripper: utilities for integrating different grippers into UI
-  * Tools: packages used for data collection, maintaining MoveIt planning scene, and other purposes
-    * [Object on Table Segmenter](costar_tools/object_on_table_segmenter/README.md)
+ 
+### Tools
+
+Packages used for data collection, maintaining MoveIt planning scene, and other purposes
+
+  * [Object on Table Segmenter](costar_tools/object_on_table_segmenter/README.md): Utility for dataset collection. It provides a simple process for defining regions of a scene that are table, object, robot etc and generates files according
+  * [moveit_collision_environment](costar_tools/moveit_collision_environment/README.md): Publishes a MoveIt planning scene that contains the collision object and table that is detected via TF frames defined for those objects. 
+
+
+More minor utilities:
+
+  * [object_symmetry_republisher](costar_tools/object_symmetry_republisher/Readme.md): Takes in object information from perception (for example, sp_segmenter) and outputs poses for possible symmetries of that object.
     
 
 ## Contact
