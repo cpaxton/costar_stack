@@ -58,9 +58,12 @@ There is a more detailed [startup guide](docs/startup.md).
   * [Librarian](costar_librarian/Readme.md): file management
   * [Predicator](costar_predicator/Readme.md): robot knowledge management
   * [Perception](costar_perception/Readme.md): semantic segmentation and object detection via [SP Segmenter](https://github.com/jhu-lcsr/sp_segmenter)
+    * [Training the color segmenter](docs/collect_data.md): a quick overview of how you can train the color segmenter.
   * [Robot](costar_robot/Readme.md): utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Gripper: utilities for integrating different grippers into UI
   * Tools: packages used for data collection, maintaining MoveIt planning scene, and other purposes
+    * [Object on Table Segmenter](costar_tools/object_on_table_segmenter/README.md)
+    
 
 ## Contact
 
