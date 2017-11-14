@@ -1,6 +1,7 @@
 <launch>
 
   <arg name="handeye_output" default="screen"/>
+  <arg name="use_filtered_marker_tf" default="false" />
   <arg name="table_frame" default="table_frame"/>
   <arg name="table_ar_marker" default="ar_marker_3"/>
   <arg name="fake_table_frame" default="true"/>
@@ -35,7 +36,8 @@
 
   <!-- handeye calibration -->
   <node name="handeye_calibration_server" type="calibration_server.py" pkg="simple_handeye_calibration" output="$(arg handeye_output)">
-    <param name="camera_marker" value="ar_marker_0"/>
+    <param name="camera_marker" value="ar_marker_0" unless="$(arg use_filtered_marker_tf)"/>
+    <param name="camera_marker" value="filtered/ar_marker_0" if="$(arg use_filtered_marker_tf)"/>
     <param name="ee_marker" value="endpoint_marker"/>
     <param name="base_link" value="world"/>
     <param name="camera_link" value="camera_link"/>
