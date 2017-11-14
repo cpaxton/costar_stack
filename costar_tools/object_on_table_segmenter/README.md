@@ -2,6 +2,8 @@
 
 Author: Felix Jonathan (fjonath1@jhu.edu)
 
+This ros package will perform plane segmentation and find the biggest plane found on the input point cloud to be used as a table convex hull. This table convex hull will be used in pcl ExtractPolygonalPrismData to extract objects above the table.
+
 ## Prerequisites
 
 To run this code you need:
@@ -17,20 +19,41 @@ How to run the code:
 roslaunch object_on_table_segmenter object_on_table_segmenter.launch
 ```
 
+### Roslaunch Parameters
 It is possible to pass some arguments to set the directory data, point cloud input, etc.
-Args list:
-object		:	the object folder name without extension. Default: ```cloud_cluster_```
-pcl_in		:	Input point cloud topic name. Default: ```/camera/depth_registered/points```
-viewer	    	:	See first distance filtered and table segmented pcl. Default: ```false```
-save_directory	:	Location of save directory for the data collection. Default: ```$(find object_on_table_segmenter)/result```
 
-save_index = 0
 
-load_directory
+#### Object on table segmentation parameters
+| Parameter Name         | Explanation                                            | Default                                                                                                                                                                                                                                                                                      |
+|------------------------|--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| object                 | cloud_cluster                                          | The name of the object                                                                                                                                                                                                                                                                       |
+| save_directory         | $(find object_on_table_segmenter)/result/$(arg object) | The directory where the resulting object on table segmentation will be saved                                                                                                                                                                                                                 |
+| ground_truth_directory | $(arg save_directory)/ground_truth                     | The location where the segmented point cloud will be saved                                                                                                                                                                                                                                   |
+| original_directory     | $(arg save_directory)/original                         | The location where the raw input point cloud will be saved                                                                                                                                                                                                                                   |
+| pcl_in                 | /camera/depth_registered/points                        | Input point cloud topic for the object on table segmentation                                                                                                                                                                                                                                 |
+| save_index             | 0                                                      | Starting index for point cloud                                                                                                                                                                                                                                                               |
+| environment_only       | false                                                  | Will just save everything in the point cloud without doing any object point cloud segmentation                                                                                                                                                                                               |
+| time_step              | 0.5                                                    | Auto capture time step in seconds                                                                                                                                                                                                                                                            |
+| num_to_capture         | 200                                                    | Number of frames captured in auto_capture before stopping                                                                                                                                                                                                                                    |
+| do_cluster             | true                                                   | Do clusterization of point cloud after segmenting the objects above,table. Set this to false if the number of object above the table is just,1. If you have multiple of the same object type in the scene that are,easily separable, you can cluster them into individual point cloud,files. |
+| auto_capture           | true                                                   | Automatically periodically capture the object after the table point cloud is known (for use with turntables or ongoing motion)                                                                                                                                                               |
 
-table_tf    : marker we are going to use
+#### Table segmentation parameters
+| Parameter Name           | Explanation                                                                                                                                                | Default            |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
+| load_table               | Load the table.pcd located in the data folder for convex hull                                                                                              | false              |
+| update_table             | Update the table data located in the data folder                                                                                                           | true               |
+| load_table_path          | Where the table.pcd located                                                                                                                                | .../data/table.pcd |
+| table_tf                 | Frame that marks the table surface center. An example of this frame would be the TF frame of an AR tag you have placed on the table.                       | ar_marker_0        |
+| use_tf_surface           | Use xy-plane of the table_tf frame as the table surface. If false, algorithm will try to find the biggest plane around the surface to get the convex hull. | false              |
+| table_distance_threshold | PCL Plane segmentation distance threshold                                                                                                                  | 0.02               |
+| table_angular_threshold  | PCL Plane segmentation angular threshold                                                                                                                   | 2                  |
+| table_minimal_inliers    | PCL Plane segmentation minimal inliers                                                                                                                     | 7500               |
+| use_rosbag               | Data collection is done on rosbag. Setting this to true should fix the TF frame failed to be found when using rosbag.                                      | false              |
+| above_table_min          | Min distance from the table                                                                                                                                | 0.02               |
+| above_table_max          | Max distance from the table                                                                                                                                | 0.5                |
+| plane_seg_viewer         | Enable visualization of the box filtered cloud and the plane segmentation result                                                                           | false              |
 
-See launch/object_on_table_segmenter.launch for more arguments that can be passed into the code.
 
 ## Examples
 
@@ -86,8 +109,8 @@ Results will be placed in the local directory with the following structure
 
 ```
 
-"original" will contain the full source pcd (pcl point cloud format) files.
-"ground_truth" will contain only segmented object data.
+original will contain the full source pcd (pcl point cloud format) files.
+ground_truth will contain only segmented object data.
 
 Files are written as follows:
 ```

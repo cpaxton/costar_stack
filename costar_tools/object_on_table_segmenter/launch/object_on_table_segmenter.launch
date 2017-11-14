@@ -7,27 +7,43 @@
   <arg name="pcl_in"                  default="/camera/depth_registered/points" />
   <arg name="save_index"              default="0" doc="Starting index for point cloud"/>
   <arg name="environment_only"        default="false" doc="Will just save everything in the point cloud without doing any object point cloud segmentation"/>
-  <arg name="time_step"               default="0.5"/>
-  <arg name="num_to_capture"          default="200"/>
-  <arg name="do_cluster"              default="true"  doc="Do clusterization of point cloud after segmenting the objects above table. Set this to false if the number of object above the table is just 1." />
-  <arg name="auto_capture"             default="true" />
-  <arg name="load_table"               default="false"/>
+  <arg name="time_step"               default="0.5" doc="Auto capture time step in seconds"/>
+  <arg name="num_to_capture"          default="200" doc="Number of frames captured in auto_capture before stopping"/>
+  <arg name="do_cluster"              default="true"  doc="Do clusterization of point cloud after segmenting the objects above table. Set this to false if the number of object above the table is just 1. If you have multiple of the same object type in the scene that are easily separable, you can cluster them into individual point cloud files." />
+  <arg name="auto_capture"            default="true" doc="Automatically periodically capture the object after the table point cloud is known (for use with turntables or ongoing motion)"/>
+  
 
   <!-- Plane segmentation arguments-->
+  <!-- For explanation, check table_seg_params.launch -->
+  <arg name="load_table"               default="false" doc="Use existing table to define region that is excluded from the objects from previous run in catkin_ws/src/costar_stack/costar_tools/object_on_table_segmenter/data/table.pcd"/>
+  <arg name="update_table"             default="true" />
+  <arg name="table_tf"                 default="ar_marker_0" doc="Frame that marks the table surface center. An example of this frame would be the TF frame of an AR tag you have placed on the table. Another could simply be the robot base frame, if that is good enough."/>
+  <arg name="use_tf_surface"           default="false" doc="Use xy-plane of the table_tf frame as the table surface"/>
+  <arg name="use_rosbag"               default="false" />
+  <arg name="above_table_min"          default="0.02" />
+  <arg name="above_table_max"          default="0.5" />
+  <arg name="plane_seg_viewer"         default="false" />
+  <arg name="table_distance_threshold" default="0.02" />
+  <arg name="table_angular_threshold"  default="2" />
+  <arg name="table_minimal_inliers"    default="7500" />
+
+  <!-- Load the plane segmentation arguments-->
   <include file="$(find object_on_table_segmenter)/launch/table_seg_params.launch">
     <arg name="namespace"                value="object_on_table_segmenter" />
     <arg name="load_table"               value="$(arg load_table)"/>
-    <arg name="update_table"             value="true" />
+    <arg name="update_table"             value="$(arg update_table)" />
     <arg name="load_table_path"          value="$(find object_on_table_segmenter)/data/table.pcd" />
-    <arg name="table_tf"                 value="ar_marker_0" />
-    <arg name="use_tf_surface"           value="false" />
-    <arg name="table_distance_threshold" value="0.02" />
-    <arg name="table_angular_threshold"  value="2" />
-    <arg name="table_minimal_inliers"    value="7500" />
-    <arg name="use_rosbag"               value="false" />
-    <arg name="above_table_min"          value="0.02" />
-    <arg name="above_table_max"          value="0.5" />
-    <arg name="plane_seg_viewer"         value="false" />
+    <arg name="table_tf"                 value="$(arg table_tf)" />
+    <arg name="use_tf_surface"           value="$(arg use_tf_surface)" />
+
+    <arg name="use_rosbag"               value="$(arg use_rosbag)" />
+    <arg name="above_table_min"          value="$(arg above_table_min)" />
+    <arg name="above_table_max"          value="$(arg above_table_max)" />
+    <arg name="plane_seg_viewer"         value="$(arg plane_seg_viewer)" />
+
+    <arg name="table_distance_threshold" value="$(arg table_distance_threshold)" />
+    <arg name="table_angular_threshold"  value="$(arg table_angular_threshold)"/>
+    <arg name="table_minimal_inliers"    value="$(arg table_minimal_inliers)" />
   </include>
 
   <node pkg="object_on_table_segmenter" type="object_on_table_segmenter" name="object_on_table_segmenter" output="screen">  

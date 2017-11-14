@@ -23,6 +23,8 @@
     <param name="load_table_path"            type="str"    value="$(arg load_table_path)" />
     <param name="table_tf"                   type="str"    value="$(arg table_tf)"/>
 
+    <!-- Organized multiplane segmentation parameters. -->
+    <!-- See http://docs.pointclouds.org/1.7.0/classpcl_1_1_organized_multi_plane_segmentation.html -->
     <param name="table_distance_threshold"   type="double" value="$(arg table_distance_threshold)"/>
     <param name="table_angular_threshold"    type="double" value="$(arg table_angular_threshold)"/>
     <param name="table_minimal_inliers"      type="double" value="$(arg table_minimal_inliers)"/>
