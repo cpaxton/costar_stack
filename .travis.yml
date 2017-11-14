@@ -66,13 +66,12 @@ env:
 before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-  # Do not build/test costar-perception: it requires OpenCV-nonfree, which is not automatically installed.
   - sudo apt-get update -qq
   - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
   - sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
   - sudo apt-get update 
-  - sudo apt-get install libopencv-nonfree-dev
-  # - sudo apt-get install -y ros-$ROS_DISTRO-fcl ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-moveit-full liburdfdom-headers-dev ros-$ROS_DISTRO-control-msgs ros-$ROS_DISTRO-gazebo-ros-control ros-$ROS_DISTRO-python-orocos-kdl xdot ros-$ROS_DISTRO-ros-control ros-$ROS_DISTRO-universal-robot ros-$ROS_DISTRO-ur-msgs ros-$ROS_DISTRO-octomap-msgs ros-$ROS_DISTRO-object-recognition-msgs ros-$ROS_DISTRO-realtime-tools ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-gazebo-plugins ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-socketcan-interface ros-$ROS_DISTRO-rqt-gui ros-$ROS_DISTRO-rqt-gui-py ros-$ROS_DISTRO-position-controllers ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-state-controller ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-trajectory-controller ros-$ROS_DISTRO-openni2-launch
+  - sudo apt-get install libopencv-nonfree-dev mongodb
+  - sudo apt-get install ros-indigo-moveit-ros-visualization # hack to force install
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep to install dependencies.
   - sudo rosdep init
