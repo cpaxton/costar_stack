@@ -9,6 +9,7 @@ sudo apt-get update -qq
 
 # Set up your basic deps
 sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
+sudo pip install bullet3
 
 # Set up Opencv-nonfree
 sudo add-apt-repository --yes ppa:xqms/opencv-nonfree

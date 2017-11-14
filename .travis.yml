@@ -72,6 +72,7 @@ before_install:
   - sudo apt-get update 
   - sudo apt-get install libopencv-nonfree-dev mongodb
   - sudo apt-get install ros-indigo-moveit-ros-visualization # hack to force install
+  - sudo pip install bullet3
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep to install dependencies.
   - sudo rosdep init
