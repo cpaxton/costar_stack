@@ -1,0 +1,78 @@
+<launch>
+  <!-- Scene topic arguments-->
+  <arg name="background_pcl2_topic"          default="/SPServer/table_corner" doc="PointCloud2 topic which provides the background point cloud of the scene" />
+  <arg name="scene_pcl2_topic"               default="/SPServer/points_out" doc="PointCloud2 topic which provides the object segmented point cloud of the scene" />
+  <arg name="detected_object_topic"          default="/SPServer/detected_object_list" doc="DetectedObjectList topic which provides the list of detected objects in the scene" />
+  <arg name="object_hypotheses_topic"        default="/SPServer/object_hypothesis" doc="AllModelHypothesis topic which provides the list of available object pose hypotheses in the scene" />
+
+  <arg name="object_folder_location"         default="$(find sequential_scene_parsing)/mesh" doc="The folder location that contains the surface point cloud and the simplified object meshes" />
+  <arg name="background_normal_as_gravity"   default="true" doc="The background points asssumed to be a single plane where all objects will be placed, and the normal of this plane represents the gravity vector direction." />
+  <arg name="background_mode"                default="0" doc="The background points can be simulated as a plane (0), convex hull(1), or a mesh(2). When the background is just a flat plane, selecting simpler background_mode will results in better simulation speed and accuracy." />
+  <arg name="TF_z_inv_gravity_dir"           default="/ar_marker_3" doc="Set the gravity direction to be the opposite of direction of a z axis of a certain frame." />
+  <arg name="tf_publisher_initial"           default="scene" doc="Frame namespace used for the estimated object poses. For example, if the old frame name is object_1 and the tf_publisher_initial is scene, the new frame name will be scene/object_1"/>
+  <arg name="debug"                          default="false" doc="Enables more console prints for debugging purpose"/>
+  <arg name="load_table"                     default="true" doc="Use existing table point cloud" />
+  <arg name="table_location"                 default="$(find sequential_scene_parsing)/mesh/table.pcd"/>
+  <arg name="render_scene"                   default="true" doc="Enables the rendered scene visualization" />
+  <arg name="objransac_model_directory"      default="$(find sequential_scene_parsing)/mesh" doc="The folder location that contains the surface point cloud"/>
+  <arg name="objransac_model_names"          default="block,cube" doc="The name of objects that needs to be loaded."/>
+
+  <arg name="data_forces_magnitude"          default="0.25" doc="The maximum magnitude of the data forces. If set to 0.5, the maximum data forces magnitude is half of the gravity force applied in the simulation" />
+  <arg name="data_forces_max_distance"       default="0.015" doc="The maximum point pair distance between input scene points and the simulated object surface. Point pairs with a distance higher than the maximum distance will be ignored" />
+  <arg name="data_forces_model"              default="2" doc="The model used for computing the point pair correspondense. 0: closest point to the input scene points, 1: ICP to the input scene points performed every frame, 2: point pair distance to the initial estimated pose"/>
+
+  <arg name="best_hypothesis_only"           default="false" doc="Only perform scene parsing using the best hypothesis."/>
+  <arg name="small_obj_g_comp"               default="3" doc="Increase the simulation time by x times when objects used in the world is small compared to the gravity. Modify this value when the simulated objects tend to penetrate other objects or the background" />
+  <arg name="sim_freq_multiplier"            default="1." doc="Increase the simulation frequency. Higher number will increase accuracy in exchange for slower performance"/>
+
+  <!-- physics solver settings: check http://bulletphysics.org/mediawiki-1.5.8/index.php/BtContactSolverInfo -->
+  <arg name="p_solver_iter"                  default="20"/>
+  <arg name="p_randomize_order"              default="true"/>
+  <arg name="p_split_impulse"                default="false"/>
+  <arg name="p_penetration_threshold"        default="-0.02"/>
+  
+  <node pkg="sequential_scene_parsing" type="sequential_scene_ros" name="sequential_scene_parsing"
+  output="screen" 
+  >  
+    <!-- sequential_scene_ros common Node arg pass -->
+    <param name="small_obj_g_comp"        type="int"     value="$(arg small_obj_g_comp)"/>
+    <param name="sim_freq_multiplier"     type="double"  value="$(arg sim_freq_multiplier)"/>
+
+    <param name="background_pcl2_topic"   type="str"     value="$(arg background_pcl2_topic)" />
+    <param name="scene_pcl2_topic"        type="str"     value="$(arg scene_pcl2_topic)" />
+
+    <param name="object_folder_location"  type="str"     value="$(arg object_folder_location)"/>
+    <param name="detected_object_topic"   type="str"     value="$(arg detected_object_topic)"/>
+    <param name="TF_z_inv_gravity_dir"    type="str"     value="$(arg TF_z_inv_gravity_dir)"/>
+    <param name="tf_publisher_initial"    type="str"     value="$(arg tf_publisher_initial)"/>
+    <param name="object_hypotheses_topic" type="str"     value="$(arg object_hypotheses_topic)"/>
+
+    <param name="debug_mode"              type="bool"    value="$(arg debug)"/>
+    <param name="load_table"              type="bool"    value="$(arg load_table)"/>
+    <param name="background_mode"         type="int"     value="$(arg background_mode)"/>
+    <param name="table_location"          type="str"     value="$(arg table_location)"/>
+    <param name="bg_normal_as_gravity"    type="bool"    value="$(arg background_normal_as_gravity)"/>
+
+    <param name="p_solver_iter"            type="int"    value="$(arg p_solver_iter)"/>
+    <param name="p_randomize_order"        type="bool"     value="$(arg p_randomize_order)"/>
+    <param name="p_split_impulse"          type="bool"     value="$(arg p_split_impulse)"/>
+    <param name="p_penetration_threshold"  type="double"    value="$(arg p_penetration_threshold)"/>
+
+    <param name="render_scene"            type="bool"    value="$(arg render_scene)"/>
+    <param name="best_hypothesis_only"    type="bool"    value="$(arg best_hypothesis_only)"/>
+
+    <param name="data_forces_magnitude"        type="double"  value="$(arg data_forces_magnitude)"/>
+    <param name="data_forces_max_distance"     type="double"  value="$(arg data_forces_max_distance)"/>
+    <param name="data_forces_model"            type="int"     value="$(arg data_forces_model)"/>
+
+    <param name="objransac_model_directory"    type="str"     value="$(arg objransac_model_directory)"/>
+    <param name="objransac_model_names"        type="str"     value="$(arg objransac_model_names)"/>
+
+    <!-- objectDatabase -->
+    <rosparam command="load" file="$(find sequential_scene_parsing)/mesh/object_property_database.yaml" />
+    
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="camera_tf_pub" args="0 0 0 0 0 0 /world /camera_link 300" />
+
+</launch>
