@@ -6,6 +6,9 @@
 
 // Contains the datatype used for this library
 #include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/features/moment_of_inertia_estimation.h>
+
 #include <Eigen/Geometry>
 #include <btBulletDynamicsCommon.h>
 
@@ -20,6 +23,18 @@ typedef btCollisionShape* objectShapePtr;
 typedef btCollisionShape objectShape;
 
 enum background_mode {BACKGROUND_PLANE, BACKGROUND_HULL, BACKGROUND_MESH};
+
+struct Obb
+{
+	// oriented bounding box
+	btTransform pose_;
+	btVector3 min_point_;
+	btVector3 max_point_;
+
+	Obb() {}
+	Obb(std::vector<btVector3> corner_points);
+	void generateObb(std::vector<btVector3> corner_points);
+};
 
 struct PhysicalProperties
 {
@@ -74,25 +89,21 @@ public:
 	btRigidBody* generateRigidBody(const btTransform &transform) const;
 	btVector3 getInertiaVector() const;
 	objectShapePtr getCollisionShape() const;
+
+	void getObbProperty(Obb &entire_shape_obb, std::vector<Obb> &child_shape_obb) const;
+	void copyObbProperty(const Object& other);
 	// void addSpecialProperty();
 ;
 protected:
-	// list of supporting force that could be generated from the object and its effective range
-	// std::vector<std::pair<std::string, double> > support_property_;
-	// std::string object_fit_match_;
-
+	bool computeObb();
 	bool physical_data_ready_;
-
-	// object physical parameters in SI units (manually set)
 	objectShapePtr mesh_;
+
+	// object physical parameters in SI units
 	PhysicalProperties physical_properties_;
 
-	// object physical parameters in SI units (automatically generated)
-	// btScalar mass_;
-	// btScalar friction_;
-	// btScalar rolling_friction_;
-	
-
+	Obb entire_shape_obb_;
+	std::vector<Obb> child_shape_obb_;
 };
 
 // Object class with id information.

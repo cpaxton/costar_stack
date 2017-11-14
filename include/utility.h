@@ -4,6 +4,7 @@
 #include <Eigen/Geometry>
 #include <btBulletDynamicsCommon.h>
 #include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 #include <map>
 #include <vector>
 #include <set>
@@ -22,7 +23,6 @@ bool keyExistInConstantMap(const container_type1 &key, const std::map<container_
 {
 	return database.find(key) != database.end();
 }
-
 
 template <typename NumericStandard>
 btVector3 convertEigenToBulletVector(const Eigen::Matrix<NumericStandard, 3, 1> &eigentype_vector)
@@ -59,7 +59,6 @@ Eigen::Matrix<NumericStandard, 3, 1> convertBulletToEigenVector(const btVector3 
 		NumericStandard(bt_vector.z()));
 }
 
-
 template <typename NumericStandard>
 btTransform convertEigenToBulletTransform(const Eigen::Transform< NumericStandard,3,Eigen::Affine > &input_eigentype_tf)
 {
@@ -83,6 +82,23 @@ template <typename PointT>
 btVector3 pclPointToBulletVector(const PointT &input)
 {
 	return btVector3(input.x,input.y,input.z);
+}
+
+static
+pcl::PointCloud<pcl::PointXYZ> convertVectorBtVec3ToPcl(const std::vector<btVector3> &points)
+{
+	pcl::PointCloud<pcl::PointXYZ> result;
+	result.width    = points.size();
+	result.height   = 1;
+	result.is_dense = false;
+	result.points.resize(result.width * result.height);
+
+	for (std::vector<btVector3>::const_iterator it = points.begin(); it != points.end(); ++it)
+	{
+		pcl::PointXYZ tmp(it->x(),it->y(),it->z());
+		result.points.push_back(tmp);
+	}
+	return result;
 }
 
 
@@ -157,8 +173,6 @@ std::string printSetString(const std::set<std::string> &set_of_strings)
 	return ss.str();
 }
 
-
-
 static
 std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &list_of_strings)
 {
@@ -170,7 +184,6 @@ std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &list_
 	}
 	return os;
 }
-
 
 static
 std::ostream &operator<<(std::ostream &os, const std::set<std::string> &set_of_strings)
