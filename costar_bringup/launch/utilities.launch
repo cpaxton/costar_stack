@@ -3,6 +3,7 @@
   <arg name="start_robotiq_force_sensor" default="false" doc="(bool) Launch robotiq force sensor."/>
   <arg name="start_instructor" default="true" doc="(bool) Launch user interface."/>
   <arg name="instructor_cases" default="" doc="(string) Limit allowed plugins to specific cases."/>
+  <arg name="rviz" default="true"/>
 
   <!-- Librarian -->
   <node pkg="librarian_core" type="core.py" name="librarian_core"/>
@@ -23,6 +24,9 @@
 
     <arg name="instructor_cases" value="$(arg instructor_cases)"/>
   </include>
+
+  <include if="$(arg rviz)"
+    file="$(find costar_bringup)/launch/rviz.launch"/>
 
   <group ns="costar">
     <!-- Waypoint Manager 2.0 -->

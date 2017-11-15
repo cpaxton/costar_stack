@@ -30,6 +30,11 @@ class NodeActionStopGUI(NodeGUI):
         self.stop_time = NamedField('Stop Time', '','green')
         self.layout_.addWidget(self.stop_time)
 
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
+        
     def generate(self):
         if all([self.name.full(),  self.stop_time.full()]):
             return NodeActionStop(self.get_name(),  self.get_label(),  float(self.stop_time.get()))

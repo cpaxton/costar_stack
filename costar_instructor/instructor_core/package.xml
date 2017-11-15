@@ -65,6 +65,12 @@
       description="Wait for Success Decorator Node"
       cases=""
       name="Wait for Success"/>
+    <instructor plugin="instructor_core.NodeParallelAllGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Parallel All Logic Node"
+      cases=""
+      name="Parallel"/>
   </export>
 
 </package>

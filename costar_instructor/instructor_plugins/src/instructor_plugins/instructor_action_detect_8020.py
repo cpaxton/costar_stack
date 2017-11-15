@@ -24,6 +24,10 @@ class NodeActionDetect8020GUI(NodeGUI):
         super(NodeActionDetect8020GUI,self).__init__()
         self.title.setText('8020 DETECT ONCE')
         self.title.setStyleSheet('background-color:'+colors['purple'].normal+';color:#ffffff')
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.label.full()]):
             return NodeActionDetect8020(self.get_name(),self.get_label())

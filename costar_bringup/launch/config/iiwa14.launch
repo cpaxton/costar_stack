@@ -10,6 +10,8 @@
       <rosparam param = "joint_weights">[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]</rosparam>
       <rosparam param = "translation_weight">1.0</rosparam>
       <rosparam param = "rotation_weight">0.2</rosparam>
+      <rosparam param = "has_planning_scene">true</rosparam>
+      <rosparam param = "has_gripper">true</rosparam>
     </group>
     <group ns="smartmove">
       <rosparam param="available_objects">

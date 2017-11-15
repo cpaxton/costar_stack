@@ -149,7 +149,7 @@ class NodeActionWaypoint(ServiceNode):
             # Send Servo Command
             rospy.loginfo('Single Servo Move Started')
             result = pose_servo_proxy(msg)
-            if 'FAILED' in str(result.ack):
+            if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return

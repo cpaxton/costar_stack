@@ -29,6 +29,10 @@ class NodeActionPedalGUI(NodeGUI):
         self.note = NoteField('(Time (s) to press pedal)','green')
         self.layout_.addWidget(self.duration)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.duration.full()]):
             return NodeActionPedal(self.get_name(),self.get_label(),int(self.duration.get()))

@@ -19,8 +19,8 @@ class DetectedObjectsPublisher:
 
         self.sub = rospy.Subscriber('/detected_object_list', DetectedObjectList, self.callback)
 
+
     def callback(self,msg):
-        print msg
         true_msg = PredicateList()
         true_msg.pheader.source = rospy.get_name()
 

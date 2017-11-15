@@ -49,6 +49,9 @@ class Node(object):
         self.subtree_label = subtree_label
         self.size = size
 
+    def set_label(self, label):
+        self.label_ = label
+
     def set_color(self,c):
         self.color_ = c
 
@@ -397,15 +400,14 @@ class NodeParallelAll(Node):
             L_alt = name.upper()+' Subtree'
         color='#22A7F0'
         super(NodeParallelAll,self).__init__(name,L,color,alt_label=L_alt)
-        self.num_success = None
+        self.num_success = 0
     def get_node_type(self):
         return 'PARALLEL'
     def get_node_name(self):
         return 'Parallel'
     def execute(self):
         # print 'Executing Parallel: (' + self.name_ + ')'
-        if self.num_success == None:
-            self.num_success = 0
+        self.num_success = 0
 
         for C in self.children_:
             self.child_status_ = C.execute()
@@ -422,10 +424,12 @@ class NodeParallelAll(Node):
 
         # Only return if all children succeed
         if self.num_success == self.num_children_:
-            self.num_success = None
             return self.set_status('SUCCESS')
         else:
             return self.set_status('RUNNING')
+    def reset(self):
+        super(NodeParallelAll, self).reset()
+        self.num_success = 0
 
 class NodeParallelRemove(Node):
     ''' Parallel Remove Node
@@ -516,7 +520,7 @@ class NodeDecoratorRepeat(Node):
         if runs == -1:
             L = 'REPEAT\\nFOREVER'
         else:
-            L = 'REPEAT ['+str(runs)+']'
+            L = 'REPEAT [0/'+str(runs)+']'
         if label != '':
             L_alt = label
         else:
@@ -540,11 +544,10 @@ class NodeDecoratorRepeat(Node):
             elif self.child_status_[:7] == 'RUNNING':
                 return self.set_status('RUNNING')
             elif self.child_status_[:7] == 'FAILURE':
-                rospy.logwarn('REPEAT DECORATOR ['+self.name_+']: FAILED, RESET')
-                self.children_[0].reset()
-                return self.set_status('RUNNING')
+                return self.set_status('FAILURE')
         else:
-            ### FIX ME ###
+            # TODO(cpaxton) or TODO(fjonath) figure out why this does not work
+            # right. Counter increments when it should not.
             if self.num_runs_ < self.runs_:
                 self.child_status_ = self.children_[0].execute()
                 if self.child_status_[:7] == 'SUCCESS':
@@ -555,6 +558,13 @@ class NodeDecoratorRepeat(Node):
                     return self.set_status('FAILURE')
             else:
                 return self.set_status('SUCCESS')
+            L = 'REPEAT [%d/%d]'%(self.num_runs_,self.runs_)
+            self.set_label(L)
+
+    def reset(self):
+        super(NodeDecoratorRepeat, self).reset()
+        if not self.runs_ == -1:
+            self.num_runs_ = 0
 
 class NodeDecoratorIgnoreFail(Node):
     ''' Decorator Ignore Fail

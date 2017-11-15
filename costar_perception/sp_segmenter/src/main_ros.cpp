@@ -29,10 +29,10 @@
 
 
 bool hasTF;
-objectRtree sp_segmenter_poses;
+SpatialPose sp_segmenter_poses;
 
 // for orientation normalization
-std::map<std::string, objectSymmetry> objectDict;
+std::map<std::string, ObjectSymmetry> objectDict;
 std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
 
 bool compute_pose = true;
@@ -185,12 +185,12 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			std::cout << "# Poses found: " << all_poses.size() << std::endl;
             
             // normalize symmetric object Orientation
-            if (!hasTF) createTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
-            else updateTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            if (!hasTF) sp_segmenter_poses.createTree(objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            else sp_segmenter_poses.updateTree(all_poses, ros::Time::now().toSec(), objectTFIndex);
             hasTF = true;
             
             all_poses.clear();
-            all_poses = getAllPoses(sp_segmenter_poses);
+            all_poses = sp_segmenter_poses.getAllPoses();
 
 			for (poseT &p: all_poses) {
 				geometry_msgs::Pose pmsg;
