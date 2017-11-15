@@ -13,7 +13,8 @@ roslaunch object_on_table_segmenter object_on_table_segmenter.launch object:=whi
 Bring these up in separate windows (I'm working on a script for this):
 ```
 roscore
-roslaunch costar_bringup ur5_c_model.launch
+roslaunch costar_bringup ur5_c_model.launch use_scene_parsing_pose:=true \
+  use_external_segmenter:=true
 roslaunch color_nn_segmenter costar_segmenter.launch load_table:=true \
   load_existing_model:=true model_name:=rgby_wood_white_bin \
   background_labels:=wood_block,white_bin \

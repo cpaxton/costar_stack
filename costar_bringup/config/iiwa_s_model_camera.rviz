@@ -40,7 +40,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.03
         Value: Lines
@@ -53,7 +53,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: world
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -127,21 +127,17 @@ Visualization Manager:
           Value: false
         marker_link:
           Value: false
-        objects/wood_cube/1:
+        objects/wood_cube/11:
           Value: true
-        objects/wood_cube/2:
+        objects/wood_cube/13:
+          Value: true
+        objects/wood_cube/25:
+          Value: true
+        objects/wood_cube/28:
+          Value: true
+        objects/wood_cube/29:
           Value: true
         objects/wood_cube/3:
-          Value: true
-        objects/wood_cube/4:
-          Value: true
-        objects/wood_cube/5:
-          Value: true
-        objects/wood_cube/6:
-          Value: true
-        objects/wood_cube/7:
-          Value: true
-        objects/wood_cube/8:
           Value: true
         place1:
           Value: true
@@ -153,21 +149,31 @@ Visualization Manager:
           Value: true
         preferred_orientation:
           Value: false
-        seg/obj_wood_cube_1:
+        scene/seg/obj_wood_cube_11:
           Value: true
-        seg/obj_wood_cube_2:
+        scene/seg/obj_wood_cube_13:
+          Value: true
+        scene/seg/obj_wood_cube_23:
+          Value: true
+        scene/seg/obj_wood_cube_25:
+          Value: true
+        scene/seg/obj_wood_cube_28:
+          Value: true
+        scene/seg/obj_wood_cube_29:
+          Value: true
+        scene/seg/obj_wood_cube_3:
+          Value: true
+        seg/obj_wood_cube_11:
+          Value: true
+        seg/obj_wood_cube_13:
+          Value: true
+        seg/obj_wood_cube_25:
+          Value: true
+        seg/obj_wood_cube_28:
+          Value: true
+        seg/obj_wood_cube_29:
           Value: true
         seg/obj_wood_cube_3:
-          Value: true
-        seg/obj_wood_cube_4:
-          Value: true
-        seg/obj_wood_cube_5:
-          Value: true
-        seg/obj_wood_cube_6:
-          Value: true
-        seg/obj_wood_cube_7:
-          Value: true
-        seg/obj_wood_cube_8:
           Value: true
         shoulder_link:
           Value: false
@@ -197,21 +203,31 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              seg/obj_wood_cube_1:
+              scene/seg/obj_wood_cube_11:
                 {}
-              seg/obj_wood_cube_2:
+              scene/seg/obj_wood_cube_13:
+                {}
+              scene/seg/obj_wood_cube_23:
+                {}
+              scene/seg/obj_wood_cube_25:
+                {}
+              scene/seg/obj_wood_cube_28:
+                {}
+              scene/seg/obj_wood_cube_29:
+                {}
+              scene/seg/obj_wood_cube_3:
+                {}
+              seg/obj_wood_cube_11:
+                {}
+              seg/obj_wood_cube_13:
+                {}
+              seg/obj_wood_cube_25:
+                {}
+              seg/obj_wood_cube_28:
+                {}
+              seg/obj_wood_cube_29:
                 {}
               seg/obj_wood_cube_3:
-                {}
-              seg/obj_wood_cube_4:
-                {}
-              seg/obj_wood_cube_5:
-                {}
-              seg/obj_wood_cube_6:
-                {}
-              seg/obj_wood_cube_7:
-                {}
-              seg/obj_wood_cube_8:
                 {}
           world:
             00 Home:
@@ -246,21 +262,17 @@ Visualization Manager:
                               {}
               table_frame:
                 {}
-            objects/wood_cube/1:
+            objects/wood_cube/11:
               {}
-            objects/wood_cube/2:
+            objects/wood_cube/13:
+              {}
+            objects/wood_cube/25:
+              {}
+            objects/wood_cube/28:
+              {}
+            objects/wood_cube/29:
               {}
             objects/wood_cube/3:
-              {}
-            objects/wood_cube/4:
-              {}
-            objects/wood_cube/5:
-              {}
-            objects/wood_cube/6:
-              {}
-            objects/wood_cube/7:
-              {}
-            objects/wood_cube/8:
               {}
             place1:
               {}
@@ -684,22 +696,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.768504
+      Distance: 0.93487
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.727214
-        Y: 0.00867184
-        Z: 0.164382
+        X: 0.599894
+        Y: -0.0987895
+        Z: 0.244679
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.1398
+      Pitch: 1.0548
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.87331
+      Yaw: 6.00331
     Saved: ~
 Window Geometry:
   Displays:
