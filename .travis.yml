@@ -72,7 +72,7 @@ before_install:
   - sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
   - sudo apt-get update 
   - sudo apt-get install libopencv-nonfree-dev mongodb
-  - sudo apt-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl 
+  - sudo add-apt-repository --yes ppa:v-launchpad-jochen-sprickerhof-de/pcl 
   - sudo apt-get update 
   - sudo apt-get install libpcl-all 
   - sudo apt-get install ros-indigo-moveit-ros-visualization # hack to force install
