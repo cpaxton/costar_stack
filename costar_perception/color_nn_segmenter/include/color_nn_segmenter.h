@@ -34,14 +34,22 @@ typedef pcl::PointCloud<pcl::PointXYZL> PointCloudXYZL;
 class ColorNnSegmenter
 {
 public:
-	ColorNnSegmenter() : ready(false), unlabelled_model_cloud(new PointCloudXYZ()) {};
+	ColorNnSegmenter() : ready(false), remap_color_label(false), unlabelled_model_cloud(new PointCloudXYZ()) {};
 	
+	// train a k means clustering color segmenter
 	bool trainModel(const std::string &training_data_directory, const  int kmeans_point_per_model = 5);
+	// save the model data to a file
 	bool saveModel(const std::string &target_directory, const std::string &model_name);
+	// load the model data from a file
 	bool loadModel(const std::string &model_dat_file_path);
 
-	void setBackgroundColorLabel(const std::string &ignored_labels);
-	
+    // remap color label numbers to a newly defined set of numbers using a comma separated list of labels.
+    // ex: setColorLabels("wood_block,white_bin", "red_block, green_block, blue_block, yellow_block")
+    // will map to #s:     0,                 0    1,         2,           3,          4     
+    // any items not in the foreground labels list will automatically be put in the background labels list
+    void setColorLabels(const std::string& foreground_labels, const std::string ignored_labels = std::string());
+
+    // perform segmentation
 	PointCloudXYZL::Ptr segment(const PointCloudXYZRGB &input_cloud);
 
 private:
@@ -51,11 +59,14 @@ private:
 	PointCloudXYZ::Ptr openCvKMeans(const PointCloudXYZ &input_cloud, const int &cluster_size);
 
 	bool ready;
+	bool remap_color_label;
 	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
 	PointCloudXYZ::Ptr unlabelled_model_cloud;
 	PointCloudXYZL::Ptr model_cloud;
 	std::map<unsigned int, std::string> label_index_map;
 	std::set<unsigned int> background_label_index_map;
+	// helps make setColorLabels work
+	std::map<unsigned int, unsigned int> remapped_label_index_map;
 };
 
 #endif

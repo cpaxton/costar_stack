@@ -37,7 +37,7 @@ Check out [installation instructions](docs/install.md).
 
 We are working on experimental install scripts:
   - [ROS Indigo/Ubuntu 14.04 LTS](install_indigo.sh)
-  - [ROS Kinetic/Ubuntu 16.04 LTS](install_kinetic.sh) -- not yet supported
+  - [ROS Kinetic/Ubuntu 16.04 LTS](install_kinetic.sh)
 
 ## Tests
 
@@ -59,6 +59,7 @@ There is a more detailed [startup guide](docs/startup.md).
   * [Predicator](costar_predicator/Readme.md): robot knowledge management
   * [Perception](costar_perception/Readme.md): semantic segmentation and object detection via [SP Segmenter](https://github.com/jhu-lcsr/sp_segmenter)
     * [Training the color segmenter](docs/collect_data.md): a quick overview of how you can train the color segmenter.
+    * [Sequential Scene Parsing](costar_perception/sequential_scene_parsing): use bulletphysics and previous scene to improve the pose accuracy of objects. <br> Paper: [Temporal and Physical Reasoning for Perception-Based Robotic Manipulation](https://arxiv.org/abs/1710.03948)
   * [Robot](costar_robot/Readme.md): utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Gripper: utilities for integrating different grippers into UI
  
