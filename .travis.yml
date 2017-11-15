@@ -68,11 +68,11 @@ before_install:
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
   - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
+  - $CI_SOURCE_PATH/install_bullet.sh
   - sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
   - sudo apt-get update 
   - sudo apt-get install libopencv-nonfree-dev mongodb
   - sudo apt-get install ros-indigo-moveit-ros-visualization # hack to force install
-  - sudo pip install bullet3
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep to install dependencies.
   - sudo rosdep init
