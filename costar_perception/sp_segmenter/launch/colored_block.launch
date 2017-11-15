@@ -2,7 +2,7 @@
   <!-- This is for running detection of nodes and links without setting all the parameters. Unstable launch file, will change often. -->
   <!-- Object file Name without extension-->
 
-  <arg name="object"         default="wood_cube,wood_cube,wood_cube,wood_cube,wood_cube,wood_cube", doc="these are the object model files being displayed in order of their label id numbers"/>
+  <arg name="object"         default="wood_cube,wood_cube,wood_cube,wood_cube" doc="these are the object model files being displayed in order of their label id numbers" />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data" doc="SP segmenter data folder" />
   <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
