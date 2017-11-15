@@ -381,6 +381,7 @@ void RosSceneHypothesisAssessor::processDetectedObjectMsgs()
 		this->scene_graph_pub.publish(this->generateSceneGraphMsgs());
 		std_msgs::Empty done_msg;
 		this->done_message_pub.publish(done_msg);
+		std::cerr << "Published done message.\n";
 	}
 
 	this->mtx_.unlock();
@@ -463,6 +464,7 @@ void RosSceneHypothesisAssessor::processHypotheses()
 	
 	std_msgs::Empty done_msg;
 	this->done_message_pub.publish(done_msg);
+	std::cerr << "Published done message.\n";
 
 	this->scene_graph_pub.publish(this->generateSceneGraphMsgs());
 
