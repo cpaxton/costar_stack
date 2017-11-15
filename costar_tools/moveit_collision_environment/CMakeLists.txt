@@ -155,6 +155,7 @@ target_link_libraries(planning_scene_generator collision_env ${catkin_LIBRARIES}
 
 ## Declare a C++ executable
 add_executable(moveit_collision_environment src/main_collision_env.cpp)
+add_dependencies(moveit_collision_environment moveit_collision_environment_generate_messages_cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
