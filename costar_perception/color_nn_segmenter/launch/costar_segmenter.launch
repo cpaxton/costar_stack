@@ -6,6 +6,7 @@
   <arg name="model_directory"          default="$(find color_nn_segmenter)/models" doc="Directory that contains the model data."/>
   <arg name="model_name"               default="rgby_wood_block" doc="The name of the model to be loaded/saved."/>
   <arg name="background_labels"        default="wood_block" doc="Names of excluded labels, separated with comma. Points with these color label will be removed from the labelled cloud."/>
+  <arg name="foreground_labels"        default="red_block,blue_block" doc="Names of foreground labels, separated with comma."/>
 
   <!-- Training settings -->
   <arg name="training_data_directory"  default="$(find color_nn_segmenter)/training_data" doc="Location of the training data that contains color category folders to be trained"/>
@@ -69,6 +70,8 @@
     <param name="use_plane_segmentation"    type="bool"  value="$(arg use_plane_segmentation)" />
 
     <param name="background_labels"         type="str"   value="$(arg background_labels)" />
+    <param name="foreground_labels"         type="str"   value="$(arg foreground_labels)" />
+    
     <param name="send_label_as_rgb"         type="bool"  value="$(arg send_label_as_rgb)" />
   </node>
 

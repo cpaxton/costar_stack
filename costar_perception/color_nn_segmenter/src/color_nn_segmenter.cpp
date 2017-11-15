@@ -101,7 +101,7 @@ bool ColorNnSegmenter::trainModel(const std::string &training_data_directory, co
 	}
 
 	// Find all training files
-	std::map<std::string,std::vector<std::string> > filepath_in_model; 
+	std::map<std::string,std::vector<std::string> > filepath_in_model;
 	for (fs::directory_iterator model_iter(p); model_iter != end_iter; ++model_iter)
 	{
 		if (fs::is_directory(model_iter->status()))
@@ -314,26 +314,42 @@ bool ColorNnSegmenter::loadModel(const std::string &model_dat_file_path)
 	return true;
 }
 
-
-void ColorNnSegmenter::setBackgroundColorLabel(const std::string &ignored_labels)
+void ColorNnSegmenter::setColorLabels(const std::string& foreground_labels, const std::string ignored_labels)
 {
 	background_label_index_map.clear();
+	remap_color_label = true;
 	std::vector<std::string> ignored_label_list;
-	boost::split(ignored_label_list,ignored_labels,boost::is_any_of(","));
+	std::vector<std::string> foreground_label_list;
+	boost::split(ignored_label_list, ignored_labels,boost::is_any_of(","));
+	boost::split(foreground_label_list, foreground_labels,boost::is_any_of(","));
 
-	std::map<std::string,unsigned int> inverted_label_map;
-	for (std::map<unsigned int, std::string>::const_iterator it = label_index_map.begin(); it != label_index_map.end(); ++it)
+	std::map<std::string, unsigned int> new_labels_to_id;
+
+	for(const auto& label : ignored_label_list)
 	{
-		inverted_label_map[it->second] = it->first;
+		new_labels_to_id[label] = 0;
 	}
 
-	for (std::vector<std::string>::const_iterator it = ignored_label_list.begin(); it != ignored_label_list.end(); ++it)
+    int i = 1;
+	for(const auto& label : foreground_label_list)
 	{
-		if (inverted_label_map.find(*it)!=inverted_label_map.end())
-		{
-			std::cerr << "Ignored color label: " << *it <<  " with index: " << inverted_label_map[*it] << std::endl;
-			background_label_index_map.insert(inverted_label_map[*it]);	
-		}
+		new_labels_to_id[label] = i;
+		i++;
+	}
+
+	for(const auto& label_idx : label_index_map )
+	{
+        auto current_str = label_idx.second;
+        auto current_id = label_idx.first;
+        if(new_labels_to_id.find(current_str) == new_labels_to_id.end())
+        {
+        	// if they didn't specify a mapping it goes in the background
+        	remapped_label_index_map[current_id] = 0;
+        }
+        else
+        {
+        	remapped_label_index_map[current_id] = new_labels_to_id[current_str];
+        }
 	}
 }
 
@@ -375,14 +391,18 @@ PointCloudXYZL::Ptr ColorNnSegmenter::segment(const PointCloudXYZRGB &input_clou
 			// use the nearest neighboor to find the color label
 			const int &nearest_neighboor_pt_idx = point_idx_knn[0];
 			const unsigned int &label = model_cloud->points[nearest_neighboor_pt_idx].label;
-			if (background_label_index_map.find(label) == background_label_index_map.end())
+			
+			if (remap_color_label)
 			{
-				target_point.label = label;
-			}
-			else
-			{
-				target_point.label = 0;
-				// segmentation_result->points[idx] = ignored_point;
+				if (remapped_label_index_map.find(label) == remapped_label_index_map.end())
+				{
+					std::cerr<< "Point with unmapped label index found, make sure color labels have been set for every possible object.\n";
+				}
+				else
+				{
+					// update the label according to the remapping
+					target_point.label = remapped_label_index_map[label];
+				}
 			}
 		}
 	}

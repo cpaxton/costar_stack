@@ -9,12 +9,12 @@
 
   <!-- Training settings -->
   <arg name="training_data_directory"  default="$(find color_nn_segmenter)/training_data" doc="Location of the training data that contains color category folders to be trained"/>
-  <arg name="kmeans_point_per_model"   default="1" doc="The number of kmeans points per color category"/>
+  <arg name="kmeans_point_per_model"   default="1" doc="The number of kmeans clust center points per color category. 1 if colors are always the same, higher numbers (2-4) for small amounts of variation."/>
   <arg name="save_new_model"           default="true" />
   <arg name="save_directory"           default="$(find color_nn_segmenter)/models" doc="Target directory for saving the new model"/>
 
   <!-- Ros topic settings -->
-  <arg name="send_label_as_rgb"        default="true" doc="Send the color label index as the red channel in the rgb point cloud"/>
+  <arg name="send_label_as_rgb"        default="true" doc="Send the color label index as the red channel in the rgb point cloud, done as a hack to get around bugs in the pcl PointXYZL class."/>
   <arg name="cloud_input_topic"        default="/camera/depth_registered/points" doc="Name of the point cloud topic to be segmented"/>
   <arg name="segmented_cloud_topic"    default="seg_label_cloud" doc="Name of the topic to publish segmented cloud that contains PointXYZL"/>
   <arg name="visualized_cloud_topic"   default="visualized_cloud_topic" doc="Name of the topic to publish segmented cloud in rviz-compatible point cloud"/>
