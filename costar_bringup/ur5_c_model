@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-roscore && \
-  gnome-terminal \
-    --tab -e 'roslaunch costar_bringup ur5_c_model.launch' \
-    --tab -e 'roslaunch color_nn_segmenter segmenter.launch'

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# This loads the table position and starts a color segmenter. This is set up
+# for use with data collection.
+ roslaunch color_nn_segmenter costar_segmenter.launch \
+  load_table:=true \
+  load_existing_model:=true \
+  model_name:=rgby_wood_white_bin \
+  background_labels:=wood_block,white_bin \
+  foreground_labels:=blue_block,green_block,red_block,yellow_block \
+  kmeans_point_per_model:=2 table_tf:=ar_marker_2
