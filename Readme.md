@@ -37,7 +37,7 @@ Check out [installation instructions](docs/install.md).
 
 We are working on experimental install scripts:
   - [ROS Indigo/Ubuntu 14.04 LTS](install_indigo.sh)
-  - [ROS Kinetic/Ubuntu 16.04 LTS](install_kinetic.sh) -- not yet supported
+  - [ROS Kinetic/Ubuntu 16.04 LTS](install_kinetic.sh)
 
 ## Tests
 
