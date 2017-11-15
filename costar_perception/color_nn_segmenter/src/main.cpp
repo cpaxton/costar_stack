@@ -157,6 +157,7 @@ int main(int argc, char* argv[])
 	std::string model_name;
 	nh.param("model_name",model_name,std::string("model"));
 
+    // load all the models, they are retrieved in lexicographic order
 	if (load_existing_model)
 	{
 		std::string model_directory;
@@ -222,9 +223,12 @@ int main(int argc, char* argv[])
 	nh.param("use_plane_segmentation",use_table,false);
 	nh.param("send_label_as_rgb",label_as_rgb,true);
 
-	std::string background_labels;
+	std::string background_labels, foreground_labels;
 	nh.param("background_labels",background_labels,std::string(""));
-	color_based_segmenter.setBackgroundColorLabel(background_labels);
+	nh.param("foreground_labels",foreground_labels,std::string(""));
+
+    // update the remapped labels
+	color_based_segmenter.setColorLabels(foreground_labels,background_labels);
 
 	if (use_table)
 	{
