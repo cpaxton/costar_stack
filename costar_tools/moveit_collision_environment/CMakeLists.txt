@@ -146,6 +146,7 @@ add_library(planning_scene_generator
   src/planning_scene_generator.cpp
   include/planning_scene_generator.h
 )
+add_dependencies(planning_scene_generator moveit_collision_environment_generate_messages_cpp)
 target_link_libraries(planning_scene_generator collision_env ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ## Add cmake target dependencies of the library
