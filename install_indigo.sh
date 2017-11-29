@@ -27,8 +27,7 @@ git clone https://github.com/cpaxton/iiwa_stack.git
 git clone https://github.com/ros-industrial/robotiq.git  
 git clone https://github.com/jhu-lcsr/ObjRecRANSAC.git  
 git clone https://github.com/jbohren/rqt_dot.git  
-git clone https://github.com/sniekum/ar_track_alvar.git  
-git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
+git clone https://github.com/ros-perception/ar_track_alvar.git
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git
 git clone https://github.com/xqms/ur_modern_driver.git --branch thread_safety
 rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
