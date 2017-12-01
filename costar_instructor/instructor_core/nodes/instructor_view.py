@@ -738,6 +738,9 @@ class Instructor(QWidget):
                 node.set_alt_view(False)
             self.regenerate_tree()
 
+    def notify(self, msg):
+        self.info_textbox.notify(msg)
+
 # Run and Stop -----------------------------------------------------------------
     def servo_button_cb(self):
         if self.running__ == True:

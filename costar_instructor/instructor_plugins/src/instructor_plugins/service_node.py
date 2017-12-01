@@ -29,12 +29,10 @@ class ServiceNode(Node):
     def __init__(self, name, label, color,service_description, display_name = None):
         super(ServiceNode,self).__init__(name,label,color)
         self.ready_color = color
-        self.status_msg = ''
-        self.running = False
-        self.finished_with_success = None
-        self.needs_reset = False
         self.service_description = service_description
         self.display_name = display_name
+        self.service_thread = None
+        self.reset_self()
 
     def get_node_type(self):
         return 'SERVICE'
@@ -43,11 +41,16 @@ class ServiceNode(Node):
         return 'Service'
 
     def reset_self(self):
+        if self.service_thread is not None and self.service_thread.is_alive():
+            rospy.logwarn('joining' + str(self) + self.name_)
+            #self.service_thread.join()
+            #rospy.logwarn(' done joining' + str(self) + self.name_)
         self.service_thread = Thread(target=self.make_service_call, args=('',1))
         self.running = False
         self.finished_with_success = None
         self.needs_reset = False
         self.set_color(self.ready_color)
+        self.status_msg = ''
 
     def execute(self):
         if self.display_name is not None:
@@ -59,8 +62,9 @@ class ServiceNode(Node):
             rospy.loginfo('%s already [%s], needs reset'%(running_service,self.get_status()))
             return self.get_status()
         else:
+            rospy.logwarn("running? " + str(self.running) + "; " + str(self.finished_with_success))
             if not self.running: # Thread is not running
-                if self.finished_with_success == None: # Service was never called
+                if self.finished_with_success is None: # Service was never called
                     try:
                         self.service_thread.start()
                         rospy.loginfo('%s running'%running_service)
@@ -71,6 +75,7 @@ class ServiceNode(Node):
                         rospy.logwarn(self.status_msg)
                         self.running = False
                         self.needs_reset = True
+                        rospy.logerr('failed -- %s'%self.status_msg)
                         return self.set_status('FAILURE -- %s'%self.status_msg)
                         
             else:# If thread is running
@@ -88,6 +93,7 @@ class ServiceNode(Node):
                         rospy.logwarn(self.status_msg)
                         self.running = False
                         self.needs_reset = True
+                        rospy.logerr('failed -- %s'%self.status_msg)
                         return self.set_status('FAILURE -- %s'%self.status_msg)
 
     #def make_service_call(self,request,*args):
