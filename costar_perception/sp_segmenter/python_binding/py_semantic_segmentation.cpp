@@ -12,9 +12,9 @@
 #include "sp_segmenter/semantic_segmentation.h"
 using namespace boost::python;
 
-void printAllObjectTransformInformation(std::vector<objectTransformInformation> & pose_estimation)
+void printAllObjectTransformInformation(std::vector<ObjectTransformInformation> & pose_estimation)
 {
-    for (std::vector<objectTransformInformation>::const_iterator it = pose_estimation.begin(); 
+    for (std::vector<ObjectTransformInformation>::const_iterator it = pose_estimation.begin(); 
         it!=pose_estimation.end(); ++it)
     {
         std::cerr << *it;
@@ -55,15 +55,15 @@ BOOST_PYTHON_MODULE(SemanticSegmentationPy)
         .def("setSceneVisibility", &ModelObjRecRANSACParameter::setSceneVisibility)
     ;
 
-    class_<objectTransformInformation>("objectTransformInformation")
-        .def_readwrite("transform_name", &objectTransformInformation::transform_name_)
-        .def_readwrite("model_name", &objectTransformInformation::model_name_)
-        .def_readwrite("model_index", &objectTransformInformation::model_index_)
-        .def_readwrite("model_name", &objectTransformInformation::model_name_)
+    class_<ObjectTransformInformation>("ObjectTransformInformation")
+        .def_readwrite("transform_name", &ObjectTransformInformation::transform_name_)
+        .def_readwrite("model_name", &ObjectTransformInformation::model_name_)
+        .def_readwrite("model_index", &ObjectTransformInformation::model_index_)
+        .def_readwrite("model_name", &ObjectTransformInformation::model_name_)
     ;
 
-    class_<std::vector<objectTransformInformation> >("vectorOfObjectTransformInformation")
-        .def(vector_indexing_suite< std::vector<objectTransformInformation>, true>())
+    class_<std::vector<ObjectTransformInformation> >("vectorOfObjectTransformInformation")
+        .def(vector_indexing_suite< std::vector<ObjectTransformInformation>, true>())
     ;
 
     class_<SemanticSegmentation>("SemanticSegmentation")

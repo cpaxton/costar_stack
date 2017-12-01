@@ -2,8 +2,8 @@
 template <typename NumericType>
 void SemanticSegmentation::addModelSymmetricProperty(const std::string &model_name, const NumericType &roll, const NumericType &pitch, const NumericType &yaw, const NumericType &step, const std::string &preferred_axis)
 {
-    objectSymmetry symmetric_property;
-    object_dict_[model_name] = objectSymmetry(roll, pitch, yaw, preferred_axis, step);
+    ObjectSymmetry symmetric_property;
+    object_dict_[model_name] = ObjectSymmetry(roll, pitch, yaw, preferred_axis, step);
 }
 template <typename NumericType>
 void SemanticSegmentation::setMinConfidenceObjRecRANSAC(const NumericType &min_confidence)
@@ -33,6 +33,14 @@ template <typename NumericType>
 void SemanticSegmentation::setHierFeaRatio(const NumericType &ratio)
 {
     this->hier_ratio_ = float(ratio);
+}
+
+
+template <typename NumericType>
+void SemanticSegmentation::setPoseConsistencyMaximumDistance(const NumericType &distance)
+{
+    double max_distance = distance;
+    segmented_object_tree_.setMaxDistance(max_distance);
 }
 
 template <typename NumericType>

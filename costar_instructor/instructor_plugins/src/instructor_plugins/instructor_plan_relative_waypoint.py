@@ -154,7 +154,7 @@ class NodePlanRelativeWaypoint(ServiceNode):
             # Send Servo Command
             rospy.logwarn('Single Planned Move Started')
             result = pose_servo_proxy(msg)
-            if 'FAILED' in str(result.ack):
+            if 'FAILURE' in str(result.ack):
                 rospy.logwarn('Servo failed with reply: '+ str(result.ack))
                 self.finished_with_success = False
                 return

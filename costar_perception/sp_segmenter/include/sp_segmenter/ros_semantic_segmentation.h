@@ -8,6 +8,7 @@
 #include <geometry_msgs/PoseArray.h>
 
 // for TF services
+#include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
@@ -36,13 +37,11 @@
 // ros service messages for segmenting gripper
 #include "sp_segmenter/SegmentInGripper.h"
 
-class segmentedObjectTF
+struct segmentedObjectTF
 {
-private:
     tf::Transform transform;
-public:
     std::string TFname;
-    segmentedObjectTF(const objectTransformInformation &input);
+    segmentedObjectTF(const ObjectTransformInformation &input, const std::string &ns);
     segmentedObjectTF();
     tf::StampedTransform generateStampedTransform(const std::string &parent) const;
 };
@@ -65,15 +64,16 @@ public:
 #endif
 
 protected:
+    void processExternalSegmentationResult(const std_msgs::Empty &input_msgs);
     bool getAndSaveTable (const sensor_msgs::PointCloud2 &pc);
     void updateCloudData (const sensor_msgs::PointCloud2 &pc);
     void initializeSemanticSegmentationFromRosParam();
-    void populateTFMap(std::vector<objectTransformInformation> all_poses);
+    void populateTFMap(std::vector<ObjectTransformInformation> all_poses);
 
-#ifdef SCENE_PARSING
-    objrec_hypothesis_msgs::AllModelHypothesis generateAllModelHypothesis() const;
     costar_objrec_msgs::DetectedObjectList last_object_list_;
     sensor_msgs::PointCloud2 last_segmented_cloud_;
+#ifdef SCENE_PARSING
+    objrec_hypothesis_msgs::AllModelHypothesis generateAllModelHypothesis() const;
     bool getLastHypotheses (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 #endif
 
@@ -83,6 +83,7 @@ protected:
     // TF related
     bool hasTF;
 
+    std::string frame_namespace_;
     std::string targetNormalObjectTF;
     std::vector<segmentedObjectTF> segmentedObjectTFV;
 
@@ -102,7 +103,7 @@ protected:
     unsigned int table_corner_published;
     std::string POINTS_IN, POINTS_OUT, POSES_OUT;
     ros::Publisher pc_pub, pose_pub, detected_object_pub, table_corner_pub;
-    ros::Subscriber pc_sub;
+    ros::Subscriber pc_sub, external_segmentation_sub;
     unsigned int number_of_segmentation_done;
     
     std::vector<pcl::PointCloud<PointT>::Ptr, Eigen::aligned_allocator<pcl::PointCloud<PointT>::Ptr> > cloud_vec;

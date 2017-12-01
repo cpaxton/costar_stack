@@ -31,6 +31,10 @@ class NodeActionSGripperOpenGUI(NodeGUI):
         self.note = NoteField('(1 = true, 0 = false)','green')
         self.layout_.addWidget(self.wait_finish)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'open',int(self.wait_finish.get()))
@@ -48,6 +52,10 @@ class NodeActionSGripperCloseGUI(NodeGUI):
         self.note = NoteField('(1 = true, 0 = false)','green')
         self.layout_.addWidget(self.wait_finish)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'close',int(self.wait_finish.get()))
@@ -65,6 +73,10 @@ class NodeActionSGripperBasicModeGUI(NodeGUI):
         self.note = NoteField('(1 = true, 0 = false)','green')
         self.layout_.addWidget(self.wait_finish)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'basic_mode',int(self.wait_finish.get()))
@@ -82,6 +94,10 @@ class NodeActionSGripperPinchModeGUI(NodeGUI):
         self.note = NoteField('(1 = true, 0 = false)','green')
         self.layout_.addWidget(self.wait_finish)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'pinch_mode',int(self.wait_finish.get()))
@@ -99,6 +115,10 @@ class NodeActionSGripperWideModeGUI(NodeGUI):
         self.note = NoteField('(1 = true, 0 = false)','green')
         self.layout_.addWidget(self.wait_finish)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'wide_mode',int(self.wait_finish.get()))
@@ -116,6 +136,10 @@ class NodeActionSGripperScissorModeGUI(NodeGUI):
         self.note = NoteField('(1 = true, 0 = false)','green')
         self.layout_.addWidget(self.wait_finish)
         self.layout_.addWidget(self.note)
+    def save_data(self,data):
+        return data
+    def load_data(self,data):
+        pass
     def generate(self):
         if all([self.name.full(),self.wait_finish.full()]):
             return NodeActionSGripper(self.get_name(),self.get_label(),'scissor_mode',int(self.wait_finish.get()))
@@ -128,9 +152,9 @@ class NodeActionSGripper(ServiceNode):
     def __init__(self,name,label,gripper_command,wait_finish):
         self.gripper_command = gripper_command
         if self.gripper_command == 'open':
-            self.type = 'OPEN S GRIPPER'
+            self.type = 'OPEN GRIPPER'
         elif self.gripper_command == 'close':
-            self.type = 'CLOSE S GRIPPER'
+            self.type = 'CLOSE GRIPPER'
         elif self.gripper_command == 'basic_mode':
             self.type = 'SET BASIC GRASP'
         elif self.gripper_command == 'scissor_mode':

@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
   tf
   costar_objrec_msgs
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,11 +68,10 @@ find_package(Boost REQUIRED COMPONENTS thread)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  RetainedCollision.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -81,10 +81,10 @@ find_package(Boost REQUIRED COMPONENTS thread)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -146,6 +146,7 @@ add_library(planning_scene_generator
   src/planning_scene_generator.cpp
   include/planning_scene_generator.h
 )
+add_dependencies(planning_scene_generator moveit_collision_environment_generate_messages_cpp)
 target_link_libraries(planning_scene_generator collision_env ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ## Add cmake target dependencies of the library
@@ -155,6 +156,7 @@ target_link_libraries(planning_scene_generator collision_env ${catkin_LIBRARIES}
 
 ## Declare a C++ executable
 add_executable(moveit_collision_environment src/main_collision_env.cpp)
+add_dependencies(moveit_collision_environment moveit_collision_environment_generate_messages_cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

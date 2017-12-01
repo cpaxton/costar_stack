@@ -17,7 +17,7 @@ double generateRandomOrientation(const int &symmetricProperties)
 /// return true on success false on failure
 bool test_symmetry(Eigen::Quaternion<float> right_side_up_q,
 	               Eigen::Quaternion<float> up_side_down_q,
-	               objectSymmetry sym,
+	               ObjectSymmetry sym,
 	               bool is_equivalent = true)
 {
 
@@ -68,8 +68,8 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	std::stringstream ss;
-	objectSymmetry link(180.,180.,90.);
-	objectSymmetry node(90.,90.,90.);
+	ObjectSymmetry link(180.,180.,90.);
+	ObjectSymmetry node(90.,90.,90.);
 
 
 	Eigen::Quaternion<float> right_side_up_q(0.55944, 0.57531, -0.40931, -0.43418);

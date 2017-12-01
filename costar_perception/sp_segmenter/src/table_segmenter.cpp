@@ -50,6 +50,9 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
     
     // Retrieve the convex hull.
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr convexHull(new pcl::PointCloud<pcl::PointXYZRGBA>);
+    std::size_t largest_region_index = 0;
+    std::size_t max_region_size = 0;
+
     if (regions.size() > 0) {
     	std::cerr << "Number of possible table regions: " << regions.size() << std::endl;
         std::cerr<<"Visualize region"<<std::endl;
@@ -57,6 +60,10 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
     		std::cerr << "Region" << i <<" size: " << regions[i].getCount() << std::endl;
     		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr contour (new pcl::PointCloud<pcl::PointXYZRGBA>);
     		contour->points = regions[i].getContour();
+    		if (max_region_size < regions[i].getCount())
+    		{
+    			largest_region_index = i;
+    		}
 
     		if (viewer)
     		{
@@ -71,7 +78,7 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getTableConvexHull(pcl::PointCloud<pcl::
     	} 
 
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr boundary(new pcl::PointCloud<pcl::PointXYZRGBA>);
-        boundary->points = regions[0].getContour();
+        boundary->points = regions[largest_region_index].getContour();
         
         pcl::ConvexHull<pcl::PointXYZRGBA> hull;
         hull.setInputCloud(boundary);

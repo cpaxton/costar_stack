@@ -1,0 +1,11 @@
+# Object physical properties
+object_property:
+  node_uniform:
+    mass: 1.0
+    friction: 1.0
+    rolling_friction: 1.0
+
+  link_uniform:
+    mass: 1.0
+    friction: 1.0
+    rolling_friction: 1.0

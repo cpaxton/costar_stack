@@ -46,7 +46,7 @@ class SmartWaypointManager:
 
         self.get_assignment_service = rospy.ServiceProxy('/predicator/get_assignment', predicator_msgs.srv.GetAssignment)
 
-        self.detected_objects = rospy.Subscriber(ns + '/detected_object_list', DetectedObjectList, self.detected_objects_cb)
+        self.detected_objects = rospy.Subscriber('/costar/detected_object_list', DetectedObjectList, self.detected_objects_cb)
 
         if not broadcaster is None:
             self.broadcaster = broadcaster
@@ -74,9 +74,14 @@ class SmartWaypointManager:
         self._reset_objs()
         self.obj_class = {}
         
-        self.available_obj_classes = rospy.get_param("/costar/smartmove/available_objects")
-        self.available_regions = rospy.get_param("/costar/smartmove/regions")
-        self.available_references = rospy.get_param("/costar/smartmove/references")
+        if rospy.has_param("/costar/smartmove/"):
+            self.available_obj_classes = rospy.get_param("/costar/smartmove/available_objects")
+            self.available_regions = rospy.get_param("/costar/smartmove/regions")
+            self.available_references = rospy.get_param("/costar/smartmove/references")
+        else:
+            self.available_obj_classes = []
+            self.available_regions = []
+            self.available_references = []
 
     def _reset_objs(self):
         self.objs = []

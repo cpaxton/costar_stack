@@ -39,6 +39,11 @@ __all__ += ['EnableCollisionGUI']
 __all__ += ['DisableCollisionGUI']
 __all__ += ['PlanToHomeGUI', 'MoveToHomeGUI']
 
+__all__ += ['NodeWaitForMessageGUI']
+
+
+__all__ += ['NodeRepeatUntilGUI', 'NodeLearningSequenceGUI', 'NodeLearnedSequenceGUI', 'NodeDummyConditionalGUI','NodeDummyRobotActionGUI']
+
 ### Sample Nodes
 from sample_nodes import NodeActionSampleGUI
 from sample_nodes import NodeQuerySampleGUI
@@ -85,3 +90,7 @@ from query import DisableCollisionGUI
 
 from home import PlanToHomeGUI
 from home import MoveToHomeGUI
+
+from instructor_wait_for_message import NodeWaitForMessageGUI
+
+from instructor_learning import NodeRepeatUntilGUI, NodeLearningSequenceGUI, NodeLearnedSequenceGUI, NodeDummyConditionalGUI, NodeDummyRobotActionGUI

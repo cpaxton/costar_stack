@@ -132,22 +132,22 @@ class Instructor(QWidget):
         self.app_ = app
         self.types__ = ['LOGIC',
                 'ACTION',
-                'CONDITION',
                 'TASK',
+                'CONDITION',
                 'PROCESS',
                 'SERVICE',
                 'VARIABLE']
         self.colors__ = ['blue',
                 'green',
+                'sea_green',
                 'purple',
-                'orange',
                 'pink',
                 'gray',
                 'gray']
         self.labels__ = ['BUILDING BLOCKS',
-                'ROBOT ACTIONS',
+                'BASIC ACTIONS',
+                'ADVANCED ACTIONS',
                 'SYSTEM KNOWLEDGE',
-                'TASK MODEL',
                 'PROCESSES',
                 'SERVICE',
                 'VARIABLES']
@@ -516,7 +516,7 @@ class Instructor(QWidget):
             self.component_widgets[t] = w
             self.component_layout.addWidget(w)
 
-        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['green_light'],'large')
+        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['orange'],'large')
         # self.node_container = ListContainer('NODES','NODES',colors['pink'],'large')
         self.subtree_container.show()
         self.subtree_container.register_callbacks(self.collapse_unused,self.subtree_selected_callback)
@@ -567,7 +567,7 @@ class Instructor(QWidget):
         self.info_textbox.hide()
 
     def calibrate_cb(self):
-        self.info_textbox.notify('Calibrating...')
+        #self.info_textbox.notify('Calibrating...')
         self.toast('Please wait... calibrating...')
         self.calibrate_button.setEnabled(False)
         service_name = '/calibrate'
@@ -576,21 +576,21 @@ class Instructor(QWidget):
         self.calibrate_button.setEnabled(True)
 
     def detect_objects_cb(self):
-        self.info_textbox.notify('Detecting objects...')
+        #self.info_textbox.notify('Detecting objects...')
         self.toast('Please wait... Detecting Objects')
         self.detect_objects_button.setEnabled(False)
-        service_name = '/SPServer/SPSegmenter'
+        service_name = '/costar_perception/segmenter'
         self.send_service_command(service_name)
-        self.info_textbox.notify('Detecting objects...DONE')
+        #self.info_textbox.notify('Detecting objects...DONE')
         self.detect_objects_button.setEnabled(True)
 
     def update_scene_cb(self):
-        self.info_textbox.notify('Updating Scene objects...')
+        #self.info_textbox.notify('Updating Scene objects...')
         self.toast('Please wait... Updating Scene')
         self.update_scene_button.setEnabled(False)
         service_name = '/planningSceneGenerator/planningSceneGenerator'
         self.send_service_command(service_name)
-        self.info_textbox.notify('Updating Scene...DONE')
+        #self.info_textbox.notify('Updating Scene...DONE')
         self.update_scene_button.setEnabled(True)
 
     def stop_robot_trajectory_cb(self):
@@ -804,7 +804,7 @@ class Instructor(QWidget):
             self.regenerate_tree(True)
             pass
 
-    def stop_tree(self):
+    def stop_tree(self, notify=True):
         self.notification_dialog.notify('Task Tree stopped')
         self.stop_robot_trajectory_cb()
         self.run_timer_.stop()
@@ -1316,7 +1316,7 @@ class Instructor(QWidget):
     
     def add_child_cb(self):
         if self.current_node_type != None:
-            self.info_textbox.notify('adding node of type ' + str(self.current_node_type))
+            self.info_textbox.notify('Adding node of type ' + str(self.current_node_type))
             if self.root_node is None:
                 self.notification_dialog.notify('First create a root node under BUILDING BLOCKS', 'warn')
             if self.left_selected_node == None:
@@ -1339,7 +1339,7 @@ class Instructor(QWidget):
                         self.node_leftclick_cb(current_name)
 
     def add_sibling_before_cb(self):
-        print 'adding sibling node of type ' + self.current_node_type
+        self.info_textbox.notify('Adding sibling node of type ' + self.current_node_type)
         if self.current_node_type != None:
             if self.left_selected_node == None:
               self.notification_dialog.notify('There is no left sibling node selected')
@@ -1439,7 +1439,7 @@ class Instructor(QWidget):
             # Stop Execution if running
             if self.root_node is not None:
                 self.dot_widget.zoom_image(1, center=True)
-                self.stop_tree()
+                self.stop_tree(notify=False)
 
                 # self.root_node = None
 
@@ -1572,14 +1572,26 @@ class Instructor(QWidget):
           self.app_.exit()
 
 # MAIN #######################################################
-if __name__ == '__main__':
-  rospy.init_node('instructor_view',anonymous=True)
-  app = QApplication(sys.argv)
-  wrapper = Instructor(app)
-  # Running
-  app.exec_()
-  # Done
+def main():
+    rospy.init_node('instructor_view',anonymous=True)
+    app = QApplication(sys.argv)
+    wrapper = Instructor(app)
+    app.exec_()
 
+if __name__ == '__main__':
+  # rospy.init_node('instructor_view',anonymous=True)
+  # app = QApplication(sys.argv)
+  # wrapper = Instructor(app)
+  # # Running
+  # app.exec_()
+  # Done
+  profile = False
+  
+  if profile:
+    import cProfile
+    cProfile.run('main()')
+  else:
+    main()
 
 
 

@@ -47,8 +47,6 @@ dist: trusty
 sudo: required
 language:
   - generic
-cache:
-  - apt
 
 # Configuration variables. All variables are global now, but this can be used to
 # trigger a build matrix for different ROS distributions if desired.
@@ -59,6 +57,7 @@ env:
     - CI_SOURCE_PATH=$(pwd)
     - CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
     - ROS_PARALLEL_JOBS='-j8 -l6'
+    - PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages
 #- ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
 
 ################################################################################
@@ -67,11 +66,16 @@ env:
 before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-  # Do not build/test costar-perception: it requires OpenCV-nonfree, which is not automatically installed.
-  - touch $CI_SOURCE_PATH/costar_perception/CATKIN_IGNORE
   - sudo apt-get update -qq
   - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
-  # - sudo apt-get install -y ros-$ROS_DISTRO-fcl ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-moveit-full liburdfdom-headers-dev ros-$ROS_DISTRO-control-msgs ros-$ROS_DISTRO-gazebo-ros-control ros-$ROS_DISTRO-python-orocos-kdl xdot ros-$ROS_DISTRO-ros-control ros-$ROS_DISTRO-universal-robot ros-$ROS_DISTRO-ur-msgs ros-$ROS_DISTRO-octomap-msgs ros-$ROS_DISTRO-object-recognition-msgs ros-$ROS_DISTRO-realtime-tools ros-$ROS_DISTRO-soem ros-$ROS_DISTRO-gazebo-plugins ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-socketcan-interface ros-$ROS_DISTRO-rqt-gui ros-$ROS_DISTRO-rqt-gui-py ros-$ROS_DISTRO-position-controllers ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-state-controller ros-$ROS_DISTRO-robot-state-publisher ros-$ROS_DISTRO-joint-trajectory-controller ros-$ROS_DISTRO-openni2-launch
+  - $CI_SOURCE_PATH/install_bullet.sh
+  - sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
+  - sudo apt-get update 
+  - sudo apt-get install libopencv-nonfree-dev mongodb
+  - sudo add-apt-repository --yes ppa:v-launchpad-jochen-sprickerhof-de/pcl 
+  - sudo apt-get update 
+  - sudo apt-get install libpcl-all 
+  - sudo apt-get install ros-indigo-moveit-ros-visualization # hack to force install
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep to install dependencies.
   - sudo rosdep init
@@ -83,8 +87,9 @@ install:
   - cd ~/costar_ws
   - catkin init
   - cd ~/costar_ws/src
-  - git clone https://github.com/SalvoVirga/iiwa_stack.git  
+  - git clone https://github.com/cpaxton/iiwa_stack.git  
   - git clone https://github.com/ros-industrial/robotiq.git  
+  - git clone https://github.com/jhu-lcsr/ObjRecRANSAC.git  
   - git clone https://github.com/jbohren/rqt_dot.git  
   - git clone https://github.com/sniekum/ar_track_alvar.git  
   - git clone https://github.com/sniekum/ar_track_alvar_msgs.git  
