@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+gnome-terminal \
+  --tab -e 'roslaunch costar_bringup ur5_c_model.launch' 
+  --tab -e 'bash -c "sleep 2 && roslaunch color_nn_segmenter segmenter.launch"'

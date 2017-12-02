@@ -60,6 +60,8 @@ There is a more detailed [startup guide](docs/startup.md).
   * [Robot](costar_robot/Readme.md): utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Gripper: utilities for integrating different grippers into UI
  
+For more information on how to collect data for the "block stacking" task, check out [the block stacking data collection notes](docs/collect_data.md)
+
 ### Tools
 
 Packages used for data collection, maintaining MoveIt planning scene, and other purposes
