@@ -244,7 +244,7 @@ class WaypointManagerDialog(QWidget):
                 try:
                     add_waypoint_proxy = rospy.ServiceProxy('/instructor_core/AddWaypoint',AddWaypoint)
                     msg = AddWaypointRequest()
-                    msg.name = '/' + self.new_fixed_name + '--' + str(index)
+                    msg.name = "/%s--%03d"%(self.new_fixed_name, str(index))
                     msg.world_pose = tf_c.toMsg(F_waypoint)
                     self.info_textbox.notify(add_waypoint_proxy(msg).ack)
                     self.update_waypoints()

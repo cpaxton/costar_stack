@@ -983,6 +983,12 @@ class CostarArm(CostarComponent):
                 (code2,res2) = self.planner.getPlan(T,q_2,obj=obj)
 
                 if ((not res2 is None) and len(res2.planned_trajectory.joint_trajectory.points) > 0):
+                    q_3 = res.planned_trajectory.joint_trajectory.points[-1].positions
+                    print(q_2,q_3)
+                    dist = np.linalg.norm(np.array(q_2)-np.array(q_3))
+                    if dist > 2 * backup_dist:
+                        rospy.logwarn("Backoff failed for pose %i: distance was %f vs %f"%(sequence_number,dist,2*backup_dist))
+                        continue
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
                     rospy.sleep(0.1)
 

@@ -47,7 +47,7 @@
     name="table_tf_publisher"
     type="static_transform_publisher"
     pkg="tf"
-    args="0.7 0.0 0.02 0 0 0 /base_link $(arg table_frame) 100">
+    args="0.7 0.0 0.0 0 0 0 /base_link $(arg table_frame) 100"> # was at +0.02
   </node>
   <node unless="$(arg fake_table_frame)"
     name="table_tf_publisher"
