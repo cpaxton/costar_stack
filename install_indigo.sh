@@ -1,9 +1,12 @@
 #!/usr/bin/env sh
-
  
 cd ~
 mkdir -p costar_ws/src
 cd ~/costar_ws
+
+# Install ROS basics if they do not already exist
+sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool \
+  python-catkin-tools ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros-base
 source /opt/ros/indigo/setup.bash
 sudo apt-get update -qq
 
