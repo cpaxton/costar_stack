@@ -189,9 +189,6 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     {
         std::string name = cur_name[i];
         std::string desc = descriptions[i];
-        std::cerr << "!!!!!!!!!!!!!!!!!\n";
-        std::cerr << name << ", " << desc << "\n";
-
         this->addModel(mesh_path, name, desc, model_obj_ransac_parameter[name]);
     }
     this->addModelSymmetricProperty(objectDict);
