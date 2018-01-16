@@ -41,7 +41,7 @@
   <arg name="setObjectOrientation" default="true" doc="use specified TF as Object preferred orientation" />
   <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
   <arg name="gripperTF"      default="gripper_center" doc="The gripper tf where target object would be attached" />
-  <arg name="useObjectPersistence" default="true" doc="use Rtree to check for existing objects to preserve orientation and TF names" />
+  <arg name="useObjectPersistence" default="false" doc="use Rtree to check for existing objects to preserve orientation and TF names" />
   <arg name="max_distance_persistence" default="0.025" doc="Maximum allowed distance for a pose to be considered as the previous pose" />
 
   <arg name="NodeName"       default="costar_sp_segmenter" doc="The name of the ros topic" />
