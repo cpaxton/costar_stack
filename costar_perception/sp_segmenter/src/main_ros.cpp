@@ -296,6 +296,7 @@ int main(int argc, char** argv)
     //get parameter for mesh path and curname
     nh.param("mesh_path", mesh_path,std::string("data/mesh/"));
     std::vector<std::string> cur_name = stringVectorArgsReader(nh, "cur_name", std::string("drill"));
+    std::vector<std::string> desc_name = stringVectorArgsReader(nh, "descriptions", std::string("drill"));
     
     //get symmetry parameter of the objects
     objectDict = fillDictionary(nh, cur_name);
@@ -304,11 +305,12 @@ int main(int argc, char** argv)
     {
     	// add all models. model_id starts in model_name start from 1.
     	std::string temp_cur = cur_name.at(model_id);
-    	objrec->AddModel(mesh_path + temp_cur, temp_cur);
-        model_name[model_id+1] = temp_cur;
+    	std::string temp_desc = descriptions.at(model_id);
+    	objrec->AddModel(mesh_path + temp_cur, temp_desc);
+        model_name[model_id+1] = temp_desc;
         model_name_map[temp_cur] = model_id+1;
-        ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
-        objectTFIndex[temp_cur] = 0;
+        ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_desc);
+        objectTFIndex[temp_desc] = 0;
         mesh_set.push_back(mesh_buf);
     }
     if( pcl::console::find_switch(argc, argv, "-v") == true )
