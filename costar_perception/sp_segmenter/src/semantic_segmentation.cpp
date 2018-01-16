@@ -587,7 +587,6 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory,
             combined_ObjRecRANSAC_->setParams(parameter.object_visibility_,parameter.scene_visibility_);
             combined_ObjRecRANSAC_->setUseCUDA(use_cuda_);
         }
-        std::cerr << ">>> " << (model_path + model_name) << " " << model_description << "\n";
         combined_ObjRecRANSAC_->AddModel(model_path + model_name, model_description);
         this->number_of_cloud_models_++;
     }
@@ -596,10 +595,10 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory,
         this->setUseCombinedObjRecRANSAC(false);
         std::cerr << "Using individual ObjRecRANSAC for each model.\n";
         cloud_idx_map[number_of_cloud_models_] = model_description;
-        model_name_map_[model_name] = number_of_cloud_models_;
+        model_name_map_[model_description] = number_of_cloud_models_;
         this->number_of_cloud_models_++;
 
-        if (individual_ObjRecRANSAC_.find(model_name)!=individual_ObjRecRANSAC_.end())
+        if (individual_ObjRecRANSAC_.find(model_description)!=individual_ObjRecRANSAC_.end())
         {
             return;
         }
@@ -608,16 +607,15 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory,
             boost::shared_ptr<greedyObjRansac> new_obj_ransac(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_));
             new_obj_ransac->setParams(parameter.object_visibility_,parameter.scene_visibility_);
             new_obj_ransac->setUseCUDA(use_cuda_);
-            std::cerr << ">>> " << (model_path + model_name) << " " << model_description << "\n";
             new_obj_ransac->AddModel(model_path + model_name, model_description);
             individual_ObjRecRANSAC_[model_description] = new_obj_ransac;
             boost::shared_ptr<boost::mutex> new_lock(new boost::mutex());
             objrecransac_lock_[model_description] = new_lock;
         }
     }
-    ModelT mesh_buf = LoadMesh(model_path + model_name, model_name);  
+    ModelT mesh_buf = LoadMesh(model_path + model_name, model_description);  
     mesh_set_.push_back(mesh_buf);
-    object_class_transform_index_[model_name] = 0;
+    object_class_transform_index_[model_description] = 0;
 }
 
 
