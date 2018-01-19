@@ -14,7 +14,7 @@ sudo apt-get update -qq
 sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
 
 # Set up PCL 1.7.2
-sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl 
+sudo add-apt-repository --yes ppa:v-launchpad-jochen-sprickerhof-de/pcl 
 sudo apt-get update 
 sudo apt-get install libpcl-all 
 
