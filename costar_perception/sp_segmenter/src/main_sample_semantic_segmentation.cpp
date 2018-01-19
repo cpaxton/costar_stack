@@ -42,8 +42,8 @@ int main(int argc, char** argv)
     segmenter.addModelSymmetricProperty("node_uniform", 90, 90, 90, 90, "z");
     // The order of adding mesh should be consistent to the name of svm.
     // For example, in this sample code, the svm file is link_node_svm, so link should be added before node)
-    segmenter.addModel("./data/mesh", "link_uniform", link_param);
-    segmenter.addModel("./data/mesh", "node_uniform", node_param);
+    segmenter.addModel("./data/mesh", "link_uniform", "link", link_param);
+    segmenter.addModel("./data/mesh", "node_uniform", "node", node_param);
 #endif
     bool use_table = true;
     if (use_table)

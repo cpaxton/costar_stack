@@ -2,6 +2,7 @@
   <!-- This is for running detection of nodes and links without setting all the parameters. Unstable launch file, will change often. -->
   <!-- Object file Name without extension-->
   <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM, for example link,node,sander when launching sp_segmenter." />
+  <arg name="descriptions"         default="link,node" doc="Object mesh names. Must be specified in the same order as in the SVM, for example link,node,sander when launching sp_segmenter." />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data" doc="SP segmenter data folder" />
   <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />

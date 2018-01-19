@@ -11,11 +11,8 @@ Panels:
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /Planned Path1
-        - /PointCloud24
-        - /Image1
-        - /Image2
       Splitter Ratio: 0.413174
-    Tree Height: 517
+    Tree Height: 460
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -143,6 +140,62 @@ Visualization Manager:
           Value: false
         shoulder_link:
           Value: false
+        sweep--0:
+          Value: true
+        sweep--1:
+          Value: true
+        sweep--10:
+          Value: true
+        sweep--11:
+          Value: true
+        sweep--12:
+          Value: true
+        sweep--13:
+          Value: true
+        sweep--14:
+          Value: true
+        sweep--15:
+          Value: true
+        sweep--16:
+          Value: true
+        sweep--17:
+          Value: true
+        sweep--18:
+          Value: true
+        sweep--19:
+          Value: true
+        sweep--2:
+          Value: true
+        sweep--20:
+          Value: true
+        sweep--21:
+          Value: true
+        sweep--22:
+          Value: true
+        sweep--23:
+          Value: true
+        sweep--24:
+          Value: true
+        sweep--25:
+          Value: true
+        sweep--26:
+          Value: true
+        sweep--27:
+          Value: true
+        sweep--3:
+          Value: true
+        sweep--4:
+          Value: true
+        sweep--5:
+          Value: true
+        sweep--6:
+          Value: true
+        sweep--7:
+          Value: true
+        sweep--8:
+          Value: true
+        sweep--9:
+          Value: true
         table_frame:
           Value: false
         tool0_controller:
@@ -212,6 +265,62 @@ Visualization Manager:
             place3:
               {}
             place4:
+              {}
+            sweep--0:
+              {}
+            sweep--1:
+              {}
+            sweep--10:
+              {}
+            sweep--11:
+              {}
+            sweep--12:
+              {}
+            sweep--13:
+              {}
+            sweep--14:
+              {}
+            sweep--15:
+              {}
+            sweep--16:
+              {}
+            sweep--17:
+              {}
+            sweep--18:
+              {}
+            sweep--19:
+              {}
+            sweep--2:
+              {}
+            sweep--20:
+              {}
+            sweep--21:
+              {}
+            sweep--22:
+              {}
+            sweep--23:
+              {}
+            sweep--24:
+              {}
+            sweep--25:
+              {}
+            sweep--26:
+              {}
+            sweep--27:
+              {}
+            sweep--3:
+              {}
+            sweep--4:
+              {}
+            sweep--5:
+              {}
+            sweep--6:
+              {}
+            sweep--7:
+              {}
+            sweep--8:
+              {}
+            sweep--9:
               {}
       Update Interval: 0
       Value: true
@@ -378,6 +487,7 @@ Visualization Manager:
         Show Robot Visual: true
       Value: true
     - Class: moveit_rviz_plugin/Trajectory
+      Color Enabled: false
       Enabled: true
       Interrupt Display: false
       Links:
@@ -438,11 +548,13 @@ Visualization Manager:
       Loop Animation: false
       Name: Trajectory
       Robot Alpha: 0.5
+      Robot Color: 150; 50; 150
       Robot Description: robot_description
       Show Robot Collision: false
       Show Robot Visual: true
       Show Trail: false
       State Display Time: 0.05 s
+      Trail Step Size: 1
       Trajectory Topic: /costar/display_trajectory
       Value: true
     - Class: rviz/InteractiveMarkers
@@ -518,6 +630,7 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: moveit_rviz_plugin/Trajectory
+      Color Enabled: false
       Enabled: false
       Interrupt Display: false
       Links:
@@ -529,11 +642,13 @@ Visualization Manager:
       Loop Animation: true
       Name: Planned Path
       Robot Alpha: 0.5
+      Robot Color: 150; 50; 150
       Robot Description: robot_description
       Show Robot Collision: false
       Show Robot Visual: true
       Show Trail: false
       State Display Time: 0.05 s
+      Trail Step Size: 1
       Trajectory Topic: /costar/display_trajectory
       Value: false
     - Class: rviz/Axes
@@ -591,7 +706,7 @@ Visualization Manager:
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: PointCloud2
+      Name: segmenter
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
@@ -609,7 +724,7 @@ Visualization Manager:
       Max Value: 1
       Median window: 5
       Min Value: 0
-      Name: Image
+      Name: depth image
       Normalize Range: true
       Queue Size: 2
       Transport Hint: raw
@@ -621,7 +736,7 @@ Visualization Manager:
       Max Value: 1
       Median window: 5
       Min Value: 0
-      Name: Image
+      Name: rgb image
       Normalize Range: true
       Queue Size: 2
       Transport Hint: raw
@@ -651,7 +766,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.40349
+      Distance: 2.05622
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -663,10 +778,10 @@ Visualization Manager:
         Z: 0.244679
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.5548
+      Pitch: 0.4898
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.27831
+      Yaw: 5.00831
     Saved: ~
 Window Geometry:
   Displays:
@@ -674,17 +789,23 @@ Window Geometry:
   Height: 1151
   Hide Left Dock: false
   Hide Right Dock: true
-  Image:
+  Planned Path - Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000446fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000001b00000297000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000338000000c90000000000000000fb0000000a0049006d00610067006501000002b8000000d10000001600fffffffb0000000a0049006d006100670065010000038f000000d20000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000004d00000044600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000446fc020000000dfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000001b0000025e000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000160064006500700074006800200069006d006100670065010000027f000000d70000001600fffffffb0000001200720067006200200069006d006100670065010000035c000001050000001600fffffffb0000000a0049006d006100670065010000038f000000d20000000000000000fb00000026005400720061006a006500630074006f007200790020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb0000002a0050006c0061006e006e00650064002000500061007400680020002d00200053006c00690064006500720000000000ffffffff0000004300ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000004d00000044600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
     collapsed: false
   Tool Properties:
     collapsed: false
+  Trajectory - Slider:
+    collapsed: false
   Views:
     collapsed: true
   Width: 1600
   X: 0
   Y: 25
+  depth image:
+    collapsed: false
+  rgb image:
+    collapsed: false
