@@ -8,7 +8,6 @@ Panels:
         - /Status1
         - /TF1
         - /TF1/Frames1
-        - /TF1/Tree1/camera_link1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /Planned Path1
@@ -90,6 +89,22 @@ Visualization Manager:
       Frames:
         00 Home:
           Value: false
+        A0:
+          Value: true
+        A0 over:
+          Value: true
+        A1 left:
+          Value: true
+        A2 left:
+          Value: true
+        A3 left:
+          Value: true
+        A4 left:
+          Value: true
+        AN right:
+          Value: true
+        AN right down:
+          Value: true
         All Enabled: false
         a1:
           Value: false
@@ -100,7 +115,7 @@ Visualization Manager:
         a4:
           Value: false
         ar_marker_0:
-          Value: false
+          Value: true
         base:
           Value: false
         base_link:
@@ -136,32 +151,44 @@ Visualization Manager:
         obj_blue_cube_2:
           Value: true
         obj_blue_cube_3:
-          Value: true
+          Value: false
+        obj_blue_cube_4:
+          Value: false
         obj_green_cube_1:
           Value: true
         obj_green_cube_2:
-          Value: true
-        obj_green_cube_3:
-          Value: true
+          Value: false
         obj_red_cube_1:
           Value: true
+        obj_red_cube_2:
+          Value: false
+        obj_red_cube_3:
+          Value: false
         obj_yellow_cube_1:
           Value: true
+        obj_yellow_cube_2:
+          Value: false
         objects/blue_cube/1:
           Value: false
         objects/blue_cube/2:
           Value: false
         objects/blue_cube/3:
           Value: false
+        objects/blue_cube/4:
+          Value: false
         objects/green_cube/1:
           Value: false
         objects/green_cube/2:
           Value: false
-        objects/green_cube/3:
-          Value: false
         objects/red_cube/1:
           Value: false
+        objects/red_cube/2:
+          Value: false
+        objects/red_cube/3:
+          Value: false
         objects/yellow_cube/1:
+          Value: false
+        objects/yellow_cube/2:
           Value: false
         place1:
           Value: false
@@ -179,15 +206,21 @@ Visualization Manager:
           Value: false
         seg/obj_blue_cube_3:
           Value: false
+        seg/obj_blue_cube_4:
+          Value: false
         seg/obj_green_cube_1:
           Value: false
         seg/obj_green_cube_2:
           Value: false
-        seg/obj_green_cube_3:
-          Value: false
         seg/obj_red_cube_1:
           Value: false
+        seg/obj_red_cube_2:
+          Value: false
+        seg/obj_red_cube_3:
+          Value: false
         seg/obj_yellow_cube_1:
+          Value: false
+        seg/obj_yellow_cube_2:
           Value: false
         shoulder_link:
           Value: false
@@ -273,6 +306,8 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
+              ar_marker_0:
+                {}
               seg/obj_blue_cube_1:
                 obj_blue_cube_1:
                   {}
@@ -282,23 +317,48 @@ Visualization Manager:
               seg/obj_blue_cube_3:
                 obj_blue_cube_3:
                   {}
+              seg/obj_blue_cube_4:
+                obj_blue_cube_4:
+                  {}
               seg/obj_green_cube_1:
                 obj_green_cube_1:
                   {}
               seg/obj_green_cube_2:
                 obj_green_cube_2:
                   {}
-              seg/obj_green_cube_3:
-                obj_green_cube_3:
-                  {}
               seg/obj_red_cube_1:
                 obj_red_cube_1:
+                  {}
+              seg/obj_red_cube_2:
+                obj_red_cube_2:
+                  {}
+              seg/obj_red_cube_3:
+                obj_red_cube_3:
                   {}
               seg/obj_yellow_cube_1:
                 obj_yellow_cube_1:
                   {}
+              seg/obj_yellow_cube_2:
+                obj_yellow_cube_2:
+                  {}
           world:
             00 Home:
+              {}
+            A0:
+              {}
+            A0 over:
+              {}
+            A1 left:
+              {}
+            A2 left:
+              {}
+            A3 left:
+              {}
+            A4 left:
+              {}
+            AN right:
+              {}
+            AN right down:
               {}
             a1:
               {}
@@ -338,15 +398,21 @@ Visualization Manager:
               {}
             objects/blue_cube/3:
               {}
+            objects/blue_cube/4:
+              {}
             objects/green_cube/1:
               {}
             objects/green_cube/2:
               {}
-            objects/green_cube/3:
-              {}
             objects/red_cube/1:
               {}
+            objects/red_cube/2:
+              {}
+            objects/red_cube/3:
+              {}
             objects/yellow_cube/1:
+              {}
+            objects/yellow_cube/2:
               {}
             place1:
               {}
@@ -856,7 +922,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.12101
+      Distance: 1.05789
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -868,10 +934,10 @@ Visualization Manager:
         Z: 0.224583
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.584801
+      Pitch: 0.734801
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.25331
+      Yaw: 5.64331
     Saved: ~
 Window Geometry:
   Displays:

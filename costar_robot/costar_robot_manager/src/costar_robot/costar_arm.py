@@ -1036,14 +1036,15 @@ class CostarArm(CostarComponent):
         # move back to original tform
         return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.attach, velocity, acceleration, True)
 
-    '''
-    SmartMove Release:
-    - takes list of waypoints and loops over them
-    - moves in some distance (hard coded initially?)
-    - open gripper
-    - move back
-    '''
     def smartmove_release(self, stamp, possible_goals, distance, velocity, acceleration):
+        '''
+        SmartMove Release:
+        - takes list of waypoints and loops over them
+        - moves in some distance (hard coded initially?)
+        - open gripper
+        - move back
+        '''
+
         # Execute the list of waypoints to the selected object
         # open gripper
 
@@ -1055,10 +1056,10 @@ class CostarArm(CostarComponent):
         return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.detach, velocity, acceleration, False)
 
 
-    '''
-    Wrapper for the RELEASE service
-    '''
     def smartmove_release_cb(self, req):
+        '''
+        Wrapper for the RELEASE service
+        '''
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
@@ -1066,10 +1067,10 @@ class CostarArm(CostarComponent):
         distance = req.backoff
         return self.smartmove_release(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
-    '''
-    Wrapper for the GRASP service
-    '''
     def smartmove_grasp_cb(self, req):
+        '''
+        Wrapper for the GRASP service
+        '''
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
