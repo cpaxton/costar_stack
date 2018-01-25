@@ -140,6 +140,7 @@ class CostarArm(CostarComponent):
         self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_cb)
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
+        self.smartmove_grasp_srv = self.make_service('SmartPlace',SmartMove,self.smartmove_place_cb)
         self.smartmove_query_srv = self.make_service('Query',SmartMove,self.query_cb)
         self.enable_collisions_srv = self.make_service('EnableCollision',Object,self.enable_collision_cb)
         self.disable_collisions_srv = self.make_service('DisableCollision',Object,self.disable_collision_cb)
@@ -871,7 +872,8 @@ class CostarArm(CostarComponent):
                     dist_from_table,
                     self.max_dist_from_table))
                 continue
-
+    
+            # Get metrics for the best distance to a matching objet
             valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = False, obj_name = obj)
 
             if best_q is None or len(best_q) == 0:
@@ -1034,7 +1036,11 @@ class CostarArm(CostarComponent):
         # backup transform is [0, 0, -distance]
         # call /costar/gripper/close
         # move back to original tform
-        return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.attach, velocity, acceleration, True)
+        return self.smartmove_multipurpose_gripper(stamp,
+                possible_goals,
+                distance, self.attach, velocity, acceleration,
+                True # is backup in the grasp frame?
+                )
 
     def smartmove_release(self, stamp, possible_goals, distance, velocity, acceleration):
         '''
@@ -1055,6 +1061,21 @@ class CostarArm(CostarComponent):
 
         return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.detach, velocity, acceleration, False)
 
+    def smartmove_place_cb(self, req):
+        stamp = self.acquire()
+        distance = req.backoff
+        T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
+        pose = req.pose
+        T = T_base_world.Inverse()*pm.fromMsg(pose)
+        # Create list of waypoints for a place action
+        list_of_waypoints = [(0.,T,req.name,str(req.name)+"_goal")]
+        return self.smartmove_multipurpose_gripper(stamp,
+                list_of_waypoints, # list of waypoints
+                distance, # backup distance
+                self.detach, # detach object
+                req.vel, req.accel,
+                False, # is backup in table frame
+                )
 
     def smartmove_release_cb(self, req):
         '''
