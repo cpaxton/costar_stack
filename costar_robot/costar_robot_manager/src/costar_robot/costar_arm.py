@@ -1078,25 +1078,25 @@ class CostarArm(CostarComponent):
         distance = req.backoff
         return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
-    '''
-    Wrapper for the QUERY service
-    '''
     def query_cb(self,req):
-       list_of_waypoints = self.query(req)
-       if len(list_of_waypoints) == 0:
-           return "FAILURE"
-       else:
-           # set param and publish TF frame appropriately under reserved name
-           if self.last_query is not None and self.last_query == req:
-               # return idx + 1
-               self.last_query_idx += 1
-               if self.last_query_idx >= len(list_of_waypoints):
-                   self.last_query_idx = 0
-           else:
-               self.last_query = req
-               self.last_query_idx = 0
+        '''
+        Wrapper for the QUERY service. This gets the list of waypoints matching some criteria.
+        '''
+        list_of_waypoints = self.query(req)
+        if len(list_of_waypoints) == 0:
+            return "FAILURE"
+        else:
+            # set param and publish TF frame appropriately under reserved name
+            if self.last_query is not None and self.last_query == req:
+                # return idx + 1
+                self.last_query_idx += 1
+                if self.last_query_idx >= len(list_of_waypoints):
+                    self.last_query_idx = 0
+            else:
+                self.last_query = req
+                self.last_query_idx = 0
            
-           dist,T,object_t,name = list_of_waypoints[self.last_query_idx]          
-           self.query_frame = pm.toTf(T)
+            dist,T,object_t,name = list_of_waypoints[self.last_query_idx]          
+            self.query_frame = pm.toTf(T)
 
-           return "SUCCESS"
+            return "SUCCESS"
