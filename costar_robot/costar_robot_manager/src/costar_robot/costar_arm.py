@@ -47,7 +47,6 @@ class CostarArm(CostarComponent):
             closed_form_IK_solver = None,
             default_distance = 0.05,
             state_validity_penalty = 1e5,
-            table_frame = "table_frame",
             max_dist_from_table = 0.75,
             dof=7,
             debug=False,

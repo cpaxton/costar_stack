@@ -46,12 +46,12 @@
       - ar_marker_0
       - ar_marker_1
       - ar_marker_3
-      - table_frame
+      - table_center
       - world
     </rosparam>
 
     <rosparam param="reference_frames">
-      - table_frame
+      - table_center
     </rosparam>
     
     <remap from="/detected_object_list" to="/costar/detected_object_list" />
@@ -80,7 +80,7 @@
           - table
       - name: table
         members:
-          - table_frame
+          - table_center
     </rosparam>
 
   </node>

@@ -2,7 +2,7 @@
 
   <arg name="handeye_output" default="screen"/>
   <arg name="use_filtered_marker_tf" default="false" />
-  <arg name="table_frame" default="table_frame"/>
+  <arg name="table_frame" default="table_center"/>
   <arg name="table_ar_marker" default="ar_marker_3"/>
   <arg name="fake_table_frame" default="true"/>
   <arg name="table_center" default="0.7 0.0 0.0 0 0 0"/>

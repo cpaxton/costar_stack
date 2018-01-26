@@ -8,6 +8,7 @@
       <rosparam param="dof">6</rosparam>
       <rosparam param="base_link">PSM1_psm_base_link</rosparam>
       <rosparam param="end_link">PSM1_tool_tip_link_virtual</rosparam>
+      <rosparam param="table_frame">table_center</rosparam>
     </group>
     <group ns="smartmove">
       <rosparam param="available_objects">
