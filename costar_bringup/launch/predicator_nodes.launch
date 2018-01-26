@@ -51,7 +51,7 @@
     </rosparam>
 
     <rosparam param="reference_frames">
-      - world
+      - table_frame
     </rosparam>
     
     <remap from="/detected_object_list" to="/costar/detected_object_list" />

@@ -6,13 +6,12 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1
-        - /TF1/Frames1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
+        - /ALVAR MARKERS1
         - /Planned Path1
       Splitter Ratio: 0.655556
-    Tree Height: 356
+    Tree Height: 948
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -114,6 +113,10 @@ Visualization Manager:
         All Enabled: false
         a1:
           Value: false
+        ar_marker_0:
+          Value: false
+        ar_marker_2:
+          Value: true
         base:
           Value: false
         base_link:
@@ -213,7 +216,7 @@ Visualization Manager:
         sweep--9:
           Value: false
         table_frame:
-          Value: false
+          Value: true
         tool0_controller:
           Value: false
         upper_arm_link:
@@ -238,7 +241,10 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              {}
+              ar_marker_0:
+                {}
+              ar_marker_2:
+                {}
           world:
             00 Home:
               {}
@@ -619,7 +625,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/Marker
       Enabled: false
-      Marker Topic: /ARmarker_points
+      Marker Topic: /camera/ARmarker_points
       Name: ALVAR MARKERS
       Namespaces:
         {}
@@ -798,7 +804,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.05789
+      Distance: 0.816476
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -810,10 +816,10 @@ Visualization Manager:
         Z: 0.224583
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.734801
+      Pitch: 0.349801
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.64331
+      Yaw: 5.25832
     Saved: ~
 Window Geometry:
   Displays:

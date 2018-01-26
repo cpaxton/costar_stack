@@ -154,7 +154,8 @@ class CostarArm(CostarComponent):
         # TODO(ahundt): this is for the KUKA robot. Make sure it still works.
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
 
-        self.status_publisher = self.make_pub('DriverStatus',String,queue_size=1000)
+        self.status_pub = self.make_pub('DriverStatus',String,queue_size=1000)
+        self.info_pub = self.make_pub('info',String,queue_size=1000)
         self.display_pub = self.make_pub('display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.robot = URDF.from_parameter_server()
@@ -629,7 +630,7 @@ class CostarArm(CostarComponent):
     call this when "spinning" to keep updating things
     '''
     def tick(self):
-        self.status_publisher.publish(self.driver_status)
+        self.status_pub.publish(self.driver_status)
         self.update_position()
         self.handle_tick()
     
@@ -978,7 +979,7 @@ class CostarArm(CostarComponent):
 
             rospy.loginfo("Trying sequence number %i: backup_dist: %.3f query_dist: %.3f"%(sequence_number,backup_dist,query_dist))
             # plan to T
-            rospy.sleep(0.1)
+            rospy.sleep(0.01)
             (code,res) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
             if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
                 q_2 = res.planned_trajectory.joint_trajectory.points[-1].positions
@@ -991,14 +992,17 @@ class CostarArm(CostarComponent):
                     if dist > 2 * backup_dist:
                         rospy.logwarn("Backoff failed for pose %i: distance was %f vs %f"%(sequence_number,dist,2*backup_dist))
                         continue
+                    self.status_pub.publish(data="appoach_%s"%obj)
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
                     rospy.sleep(0.1)
 
                     if msg[0:7] == 'SUCCESS':
+                        self.status_pub.publish(data="move_to_grasp_%s"%obj)
                         msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                         rospy.sleep(0.1)
                         
                         if msg[0:7] == 'SUCCESS':
+                            self.status_pub.publish(data="take_%s"%obj)
                             gripper_function(obj)
 
                             traj = res2.planned_trajectory.joint_trajectory
@@ -1012,6 +1016,7 @@ class CostarArm(CostarComponent):
                             traj.points[0].positions = self.q0
                             traj.points[-1].velocities = [0.]*len(self.q0)
                             
+                            self.status_pub.publish(data="backoff_from_%s"%obj)
                             msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                             return msg
                         else:
