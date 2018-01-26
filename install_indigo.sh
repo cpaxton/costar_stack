@@ -25,6 +25,7 @@ sudo apt-get install libopencv-nonfree-dev
 
 catkin init
 cd ~/costar_ws/src
+source /opt/ros/indigo/setup.bash
 git clone https://github.com/cpaxton/costar_stack.git  
 git clone https://github.com/cpaxton/iiwa_stack.git  
 git clone https://github.com/ros-industrial/robotiq.git  
