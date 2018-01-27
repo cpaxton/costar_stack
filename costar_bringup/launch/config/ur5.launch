@@ -26,6 +26,10 @@
         - drill
         - table
         - wood_cube
+        - red_cube
+        - green_cube
+        - blue_cube
+        - yellow_cube
       </rosparam>
       <rosparam param="regions">
         - in_back_of

@@ -56,7 +56,7 @@ class CostarArm(CostarComponent):
         
         self.debug = debug
         self.namespace = namespace
-        self.table_frame = table_frame
+        self.table_frame = rospy.get_param(os.path.join(self.namespace, "robot", "table_frame"))
         self.table_pose = None
         self.max_dist_from_table = max_dist_from_table
 
