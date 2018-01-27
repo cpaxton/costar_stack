@@ -13,12 +13,12 @@ sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-cat
 # Set up PCL 1.7.2
 sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl 
 sudo apt-get update 
-sudo apt-get install libpcl-all 
+sudo apt-get install -y libpcl-all 
 
 # Set up Opencv-nonfree
 sudo add-apt-repository --yes ppa:xqms/opencv-nonfree
 sudo apt-get update 
-sudo apt-get install libopencv-nonfree-dev
+sudo apt-get install -y libopencv-nonfree-dev
 
 catkin init
 cd ~/costar_ws/src
