@@ -149,7 +149,10 @@ public:
     // IMPORTANT: Add model need to follow a particular order if we are using multiple objects.
     // This order should follow the name of SVM directory.
     // For example, if the svm directory name is "link_node_sander_svm", then the order of adding model is: link model, node model, and sander model. 
-    void addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter);
+    void addModel(const std::string &path_to_model_directory,
+                  const std::string &model_name,
+                  const std::string &model_description,
+                  const ModelObjRecRANSACParameter &parameter);
 
 #ifdef SCENE_PARSING
     std::vector<GreedyHypothesis> getHypothesisList() const;

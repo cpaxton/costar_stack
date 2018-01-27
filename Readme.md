@@ -2,6 +2,8 @@
 
 ***Collaborative System for Task Automation and Recognition***
 
+[![Build Status](https://travis-ci.org/cpaxton/costar_stack.svg?branch=master)](https://travis-ci.org/cpaxton/costar_stack)
+
 CoSTAR is an end-user interface for authoring robot task plans developed at Johns Hopkins University. It includes integrated perception and planning capabilities, plus a Behavior Tree based user interface.
 
 [![CoSTAR Expert User Demonstration](https://img.youtube.com/vi/TPXcWU-5qfM/0.jpg)](https://youtu.be/TPXcWU-5qfM "CoSTAR Expert User Demonstration")
@@ -24,12 +26,7 @@ This is a project by members of the JHU Laboratory for Computational Sensing and
 }
 ```
 
-Interested in contributing? Check out the [development guidelines](docs/development.md)
-
-Note: travis build is currently broken.
-
-[![Build Status](https://travis-ci.org/cpaxton/costar_stack.svg?branch=master)](https://travis-ci.org/cpaxton/costar_stack)
-
+Interested in contributing? Check out the [development guidelines](docs/development.md), which are a work in progress.
 
 ## Installation
 
@@ -63,6 +60,8 @@ There is a more detailed [startup guide](docs/startup.md).
   * [Robot](costar_robot/Readme.md): utilities and services allowing high-level control of the robot and integrating these behaviors into the UI. Contains the `CostarArm` component.
   * Gripper: utilities for integrating different grippers into UI
  
+For more information on how to collect data for the "block stacking" task, check out [the block stacking data collection notes](docs/collect_data.md)
+
 ### Tools
 
 Packages used for data collection, maintaining MoveIt planning scene, and other purposes

@@ -11,6 +11,11 @@ from trajectory_msgs.msg import JointTrajectory
 
 # for creating client for ur_modern_driver
 import actionlib
+from actionlib import GoalStatus
+class SimpleGoalState:
+    PENDING = 0
+    ACTIVE = 1
+    DONE = 2
 
 # for actions
 from control_msgs.msg import FollowJointTrajectoryAction
@@ -104,7 +109,7 @@ class CostarUR5Driver(CostarArm):
 
             # wait until robot is at goal
             #while self.moving:
-            while not self.at_goal:
+            while not self.at_goal and self.valid_verify(stamp):
                 if (rospy.Time.now() - start_t).to_sec() > 3:
                     return 'FAILURE - timeout'
                 rate.sleep()

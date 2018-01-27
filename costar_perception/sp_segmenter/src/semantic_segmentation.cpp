@@ -563,7 +563,10 @@ void SemanticSegmentation::setUseCombinedObjRecRANSAC(const bool &use_combined_o
     this->use_combined_objRecRANSAC_ = use_combined_objRecRANSAC;
 }
 
-void SemanticSegmentation::addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter)
+void SemanticSegmentation::addModel(const std::string &path_to_model_directory,
+                                    const std::string &model_name,
+                                    const std::string &model_description,
+                                    const ModelObjRecRANSACParameter &parameter)
 {
     bool success = checkFolderExist(path_to_model_directory);
     if (!success)

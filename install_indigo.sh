@@ -1,9 +1,12 @@
 #!/usr/bin/env sh
-
  
 cd ~
 mkdir -p costar_ws/src
 cd ~/costar_ws
+
+# Install ROS basics if they do not already exist
+sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool \
+  python-catkin-tools ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros-base
 source /opt/ros/indigo/setup.bash
 sudo apt-get update -qq
 
@@ -11,7 +14,7 @@ sudo apt-get update -qq
 sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool python-catkin-tools ros-$ROS_DISTRO-catkin
 
 # Set up PCL 1.7.2
-sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl 
+sudo add-apt-repository --yes ppa:v-launchpad-jochen-sprickerhof-de/pcl 
 sudo apt-get update 
 sudo apt-get install -y libpcl-all 
 

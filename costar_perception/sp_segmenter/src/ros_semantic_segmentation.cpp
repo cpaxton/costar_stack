@@ -180,14 +180,16 @@ void RosSemanticSegmentation::initializeSemanticSegmentationFromRosParam()
     //get parameter for mesh path and cur_name
     nh.param("mesh_path", mesh_path,std::string("data/mesh/"));
     std::vector<std::string> cur_name = stringVectorArgsReader(nh, "cur_name", std::string("drill"));
+    std::vector<std::string> descriptions = stringVectorArgsReader(nh, "descriptions", std::string("drill"));
     //get object parameters
     std::map<std::string, ModelObjRecRANSACParameter> model_obj_ransac_parameter;
     std::map<std::string, ObjectSymmetry> objectDict = fillObjectPropertyDictionary(model_obj_ransac_parameter, nh, cur_name);
     // Add model to the semantic segmentation
-    for (std::vector<std::string>::const_iterator it = cur_name.begin(); it != cur_name.end(); ++it)
+    for (size_t i = 0; i < cur_name.size(); ++i)
     {
-        std::string object_full_path = mesh_path+*it;
-        this->addModel(mesh_path,*it,model_obj_ransac_parameter[*it]);
+        std::string name = cur_name[i];
+        std::string desc = descriptions[i];
+        this->addModel(mesh_path, name, desc, model_obj_ransac_parameter[name]);
     }
     this->addModelSymmetricProperty(objectDict);
 #else
