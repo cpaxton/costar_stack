@@ -25,8 +25,10 @@ def detected_objects_cb(msg):
 	for idx,obj in enumerate(msg.objects):
 		frame_id = obj.id.split('/')[-1]
 		republished_msg.objects[idx].id = frame_id
-		republished_msg.objects[idx].symmetry = ObjectSymmetry(x_symmetries=1, x_rotation = 2 * np.pi,
-			y_symmetries=1, y_rotation = 2 * np.pi, z_symmetries=obj.symmetry.z_symmetries,z_rotation=obj.symmetry.z_rotation)
+                republished_msg.objects[idx].symmetry = obj.symmetry
+                # What was this here for?
+		#republished_msg.objects[idx].symmetry = ObjectSymmetry(x_symmetries=1, x_rotation = 2 * np.pi,
+	    	#	y_symmetries=1, y_rotation = 2 * np.pi, z_symmetries=obj.symmetry.z_symmetries,z_rotation=obj.symmetry.z_rotation)
 		
 		republish_frame_list.append((obj.id,frame_id))
 	
