@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
+        - /TF1/Frames1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /ALVAR MARKERS1
@@ -115,8 +117,6 @@ Visualization Manager:
           Value: false
         ar_marker_0:
           Value: false
-        ar_marker_2:
-          Value: true
         base:
           Value: false
         base_link:
@@ -147,6 +147,22 @@ Visualization Manager:
           Value: false
         new_spot:
           Value: false
+        obj_blue_cube_1:
+          Value: true
+        obj_green_cube_1:
+          Value: true
+        obj_red_cube_1:
+          Value: true
+        obj_yellow_cube_1:
+          Value: true
+        objects/blue_cube/1:
+          Value: false
+        objects/green_cube/1:
+          Value: false
+        objects/red_cube/1:
+          Value: false
+        objects/yellow_cube/1:
+          Value: false
         place1:
           Value: false
         place2:
@@ -156,6 +172,14 @@ Visualization Manager:
         place4:
           Value: false
         preferred_orientation:
+          Value: false
+        seg/obj_blue_cube_1:
+          Value: false
+        seg/obj_green_cube_1:
+          Value: false
+        seg/obj_red_cube_1:
+          Value: false
+        seg/obj_yellow_cube_1:
           Value: false
         shoulder_link:
           Value: false
@@ -215,7 +239,7 @@ Visualization Manager:
           Value: false
         sweep--9:
           Value: false
-        table_frame:
+        table_center:
           Value: true
         tool0_controller:
           Value: false
@@ -243,8 +267,18 @@ Visualization Manager:
             camera_rgb_optical_frame:
               ar_marker_0:
                 {}
-              ar_marker_2:
-                {}
+              seg/obj_blue_cube_1:
+                obj_blue_cube_1:
+                  {}
+              seg/obj_green_cube_1:
+                obj_green_cube_1:
+                  {}
+              seg/obj_red_cube_1:
+                obj_red_cube_1:
+                  {}
+              seg/obj_yellow_cube_1:
+                obj_yellow_cube_1:
+                  {}
           world:
             00 Home:
               {}
@@ -292,9 +326,17 @@ Visualization Manager:
                               {}
                             marker_link:
                               {}
-              table_frame:
+              table_center:
                 {}
             new_spot:
+              {}
+            objects/blue_cube/1:
+              {}
+            objects/green_cube/1:
+              {}
+            objects/red_cube/1:
+              {}
+            objects/yellow_cube/1:
               {}
             place1:
               {}
@@ -804,7 +846,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.816476
+      Distance: 1.00083
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -816,10 +858,10 @@ Visualization Manager:
         Z: 0.224583
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.349801
+      Pitch: 0.474801
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.25832
+      Yaw: 5.65832
     Saved: ~
 Window Geometry:
   Displays:
