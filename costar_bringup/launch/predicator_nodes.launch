@@ -48,10 +48,31 @@
       - ar_marker_3
       - table_center
       - world
+      - red_cube
+      - blue_cube
+      - yellow_cube
+      - green_cube
+      - obj_red_cube_1
+      - obj_red_cube_2
+      - obj_red_cube_3
+      - obj_red_cube_4
+      - obj_blue_cube_1
+      - obj_blue_cube_2
+      - obj_blue_cube_3
+      - obj_blue_cube_4
+      - obj_green_cube_1
+      - obj_green_cube_2
+      - obj_green_cube_3
+      - obj_green_cube_4
+      - obj_yellow_cube_1
+      - obj_yellow_cube_2
+      - obj_yellow_cube_3
+      - obj_yellow_cube_4
     </rosparam>
 
     <rosparam param="reference_frames">
       - table_center
+      - world
     </rosparam>
     
     <remap from="/detected_object_list" to="/costar/detected_object_list" />
@@ -78,6 +99,10 @@
           - node
           - link
           - table
+          - red_cube
+          - blue_cube
+          - green_cube
+          - yello!z!A
       - name: table
         members:
           - table_center
