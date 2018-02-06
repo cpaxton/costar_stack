@@ -35,6 +35,6 @@ git clone https://github.com/ros-perception/ar_track_alvar.git
 git clone https://github.com/gt-ros-pkg/hrl-kdl.git
 git clone https://github.com/xqms/ur_modern_driver.git --branch thread_safety
 rosdep install -y --from-paths ./ --ignore-src --rosdistro $ROS_DISTRO
-$HOME/costar_ws/src/costar_stack/install_bullet.sh
+#$HOME/costar_ws/src/costar_stack/install_bullet.sh
 catkin build --continue
 source ../devel/setup.bash
