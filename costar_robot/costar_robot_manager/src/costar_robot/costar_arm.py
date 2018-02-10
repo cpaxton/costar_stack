@@ -437,6 +437,9 @@ class CostarArm(CostarComponent):
         rospy.logerr("Function 'send_trajectory' not implemented for base class!")
         return "FAILURE -- running base class!"
 
+    def info(self, msg):
+        self.info_pub.publish(data=msg)
+
     '''
     Standard movement call.
     Tries a cartesian move, then if that fails goes into a joint-space move.
@@ -991,17 +994,17 @@ class CostarArm(CostarComponent):
                     if dist > 2 * backup_dist:
                         rospy.logwarn("Backoff failed for pose %i: distance was %f vs %f"%(sequence_number,dist,2*backup_dist))
                         continue
-                    self.status_pub.publish(data="appoach_%s"%obj)
+                    self.info("appoach_%s"%obj)
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
                     rospy.sleep(0.1)
 
                     if msg[0:7] == 'SUCCESS':
-                        self.status_pub.publish(data="move_to_grasp_%s"%obj)
+                        self.info("move_to_grasp_%s"%obj)
                         msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                         rospy.sleep(0.1)
                         
                         if msg[0:7] == 'SUCCESS':
-                            self.status_pub.publish(data="take_%s"%obj)
+                            self.info("take_%s"%obj)
                             gripper_function(obj)
 
                             traj = res2.planned_trajectory.joint_trajectory
@@ -1015,7 +1018,7 @@ class CostarArm(CostarComponent):
                             traj.points[0].positions = self.q0
                             traj.points[-1].velocities = [0.]*len(self.q0)
                             
-                            self.status_pub.publish(data="backoff_from_%s"%obj)
+                            self.info("backoff_from_%s"%obj)
                             msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                             return msg
                         else:
