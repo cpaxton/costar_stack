@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   costar_objrec_msgs
   predicator_core
   predicator_msgs
-  sequential_scene_parsing
 )
 
 catkin_python_setup()
