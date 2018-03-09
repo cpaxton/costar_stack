@@ -582,14 +582,14 @@ class CostarArm(CostarComponent):
     activate servo mode
     '''
     def set_servo_mode_cb(self,req):
-        if req.mode == 'SERVO':
+        if req.mode.upper() == 'SERVO':
             if self.q0 is not None:
                 self.send_q(self.q0,0.1,0.1)
 
             self.driver_status = 'SERVO'
             self.release()
             return 'SUCCESS -- servo mode enabled'
-        elif req.mode == 'DISABLE':
+        elif req.mode.upper() == 'DISABLE':
             self.detach(actuate = False, add_back_to_planning_scene=False)
             self.acquire()
             self.driver_status = 'IDLE'

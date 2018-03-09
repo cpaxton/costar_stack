@@ -1,16 +1,18 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 81
+    Help Height: 0
     Name: Displays
     Property Tree Widget:
       Expanded:
         - /Global Options1
         - /Status1
+        - /PointCloud21
+        - /TF1
         - /TF1/Frames1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
       Splitter Ratio: 0.655556
-    Tree Height: 529
+    Tree Height: 423
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -75,7 +77,7 @@ Visualization Manager:
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.002
-      Style: Spheres
+      Style: Squares
       Topic: /camera/depth_registered/points
       Unreliable: false
       Use Fixed Frame: true
@@ -88,6 +90,8 @@ Visualization Manager:
         00 Home:
           Value: false
         A0 over:
+          Value: true
+        A0 place 1:
           Value: true
         A1 left:
           Value: true
@@ -113,10 +117,6 @@ Visualization Manager:
         a1:
           Value: false
         aaaaaaaaaa:
-          Value: true
-        ar_marker_0:
-          Value: false
-        ar_marker_2:
           Value: true
         asdf:
           Value: true
@@ -164,28 +164,20 @@ Visualization Manager:
           Value: true
         obj_red_cube_1:
           Value: true
-        obj_red_cube_2:
-          Value: true
         obj_yellow_cube_1:
-          Value: true
-        obj_yellow_cube_2:
           Value: true
         objects/blue_cube/1:
           Value: false
         objects/blue_cube/2:
-          Value: true
+          Value: false
         objects/green_cube/1:
           Value: false
         objects/green_cube/2:
-          Value: true
+          Value: false
         objects/red_cube/1:
           Value: false
-        objects/red_cube/2:
-          Value: true
         objects/yellow_cube/1:
           Value: false
-        objects/yellow_cube/2:
-          Value: true
         overnode1:
           Value: true
         overnode2:
@@ -217,19 +209,15 @@ Visualization Manager:
         seg/obj_blue_cube_1:
           Value: false
         seg/obj_blue_cube_2:
-          Value: true
+          Value: false
         seg/obj_green_cube_1:
           Value: false
         seg/obj_green_cube_2:
-          Value: true
+          Value: false
         seg/obj_red_cube_1:
           Value: false
-        seg/obj_red_cube_2:
-          Value: true
         seg/obj_yellow_cube_1:
           Value: false
-        seg/obj_yellow_cube_2:
-          Value: true
         shoulder_link:
           Value: false
         sweep--0:
@@ -314,10 +302,6 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              ar_marker_0:
-                {}
-              ar_marker_2:
-                {}
               seg/obj_blue_cube_1:
                 obj_blue_cube_1:
                   {}
@@ -333,19 +317,15 @@ Visualization Manager:
               seg/obj_red_cube_1:
                 obj_red_cube_1:
                   {}
-              seg/obj_red_cube_2:
-                obj_red_cube_2:
-                  {}
               seg/obj_yellow_cube_1:
                 obj_yellow_cube_1:
-                  {}
-              seg/obj_yellow_cube_2:
-                obj_yellow_cube_2:
                   {}
           world:
             00 Home:
               {}
             A0 over:
+              {}
+            A0 place 1:
               {}
             A1 left:
               {}
@@ -411,11 +391,7 @@ Visualization Manager:
               {}
             objects/red_cube/1:
               {}
-            objects/red_cube/2:
-              {}
             objects/yellow_cube/1:
-              {}
-            objects/yellow_cube/2:
               {}
             overnode1:
               {}
@@ -622,55 +598,6 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
-          base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ee_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-          forearm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          gripper_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          marker_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          shoulder_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          upper_arm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          wrist_1_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          wrist_2_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          wrist_3_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
         Robot Alpha: 0.7
         Show Robot Collision: false
         Show Robot Visual: true
@@ -955,7 +882,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.48705
+      Distance: 1.25049
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -967,20 +894,20 @@ Visualization Manager:
         Z: 0.224583
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.644801
+      Pitch: 0.439801
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.52014
+      Yaw: 5.38514
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1151
+  Height: 1150
   Hide Left Dock: false
   Hide Right Dock: true
   Planned Path - Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000446fc020000000efb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000001b000002a3000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000160064006500700074006800200069006d00610067006501000002c4000000c50000001600fffffffb0000001200720067006200200069006d0061006700650000000398000000c90000001600fffffffb0000000a0049006d006100670065010000038f000000d20000000000000000fb00000026005400720061006a006500630074006f007200790020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb0000002a0050006c0061006e006e00650064002000500061007400680020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb000000160063006f006c006f0072002000690061006d00670065010000038f000000d20000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000004d00000044600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000445fc020000000efb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000001b000001e8000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000160064006500700074006800200069006d00610067006501000002090000011f0000001600fffffffb0000001200720067006200200069006d0061006700650000000398000000c90000001600fffffffb0000000a0049006d006100670065010000038f000000d20000000000000000fb00000026005400720061006a006500630074006f007200790020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb0000002a0050006c0061006e006e00650064002000500061007400680020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb000000160063006f006c006f0072002000690061006d00670065010000032e000001320000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000004d00000044500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
