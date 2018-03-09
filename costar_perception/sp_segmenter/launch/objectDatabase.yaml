@@ -56,7 +56,38 @@ wood_cube:
   x: 90.0
   y: 90.0
   z: 90.0
+  preferred: "z"
+  preferred_step: 90.0
+  pair_width: 0.04
 
+red_cube:
+  x: 90.0
+  y: 90.0
+  z: 90.0
+  preferred: "z"
+  preferred_step: 90.0
+  pair_width: 0.04
+
+blue_cube:
+  x: 90.0
+  y: 90.0
+  z: 90.0
+  preferred: "z"
+  preferred_step: 90.0
+  pair_width: 0.04
+
+green_cube:
+  x: 90.0
+  y: 90.0
+  z: 90.0
+  preferred: "z"
+  preferred_step: 90.0
+  pair_width: 0.04
+
+yellow_cube:
+  x: 90.0
+  y: 90.0
+  z: 90.0
   preferred: "z"
   preferred_step: 90.0
   pair_width: 0.04
@@ -67,3 +98,4 @@ default_object_param:
   voxel_size: 0.004
   scene_visibility: 0.1
   object_visibility: 0.1
+

@@ -47,7 +47,6 @@ class CostarArm(CostarComponent):
             closed_form_IK_solver = None,
             default_distance = 0.05,
             state_validity_penalty = 1e5,
-            table_frame = "table_frame",
             max_dist_from_table = 0.75,
             dof=7,
             debug=False,
@@ -57,7 +56,7 @@ class CostarArm(CostarComponent):
         
         self.debug = debug
         self.namespace = namespace
-        self.table_frame = table_frame
+        self.table_frame = rospy.get_param(os.path.join(self.namespace, "robot", "table_frame"))
         self.table_pose = None
         self.max_dist_from_table = max_dist_from_table
 
@@ -140,6 +139,7 @@ class CostarArm(CostarComponent):
         self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_cb)
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
+        self.smartmove_grasp_srv = self.make_service('SmartPlace',SmartMove,self.smartmove_place_cb)
         self.smartmove_query_srv = self.make_service('Query',SmartMove,self.query_cb)
         self.enable_collisions_srv = self.make_service('EnableCollision',Object,self.enable_collision_cb)
         self.disable_collisions_srv = self.make_service('DisableCollision',Object,self.disable_collision_cb)
@@ -153,7 +153,8 @@ class CostarArm(CostarComponent):
         # TODO(ahundt): this is for the KUKA robot. Make sure it still works.
         self.pt_publisher = rospy.Publisher('/joint_traj_pt_cmd',JointTrajectoryPoint,queue_size=1000)
 
-        self.status_publisher = self.make_pub('DriverStatus',String,queue_size=1000)
+        self.status_pub = self.make_pub('DriverStatus',String,queue_size=1000)
+        self.info_pub = self.make_pub('info',String,queue_size=1000)
         self.display_pub = self.make_pub('display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.robot = URDF.from_parameter_server()
@@ -436,6 +437,9 @@ class CostarArm(CostarComponent):
         rospy.logerr("Function 'send_trajectory' not implemented for base class!")
         return "FAILURE -- running base class!"
 
+    def info(self, msg):
+        self.info_pub.publish(data=msg)
+
     '''
     Standard movement call.
     Tries a cartesian move, then if that fails goes into a joint-space move.
@@ -578,14 +582,14 @@ class CostarArm(CostarComponent):
     activate servo mode
     '''
     def set_servo_mode_cb(self,req):
-        if req.mode == 'SERVO':
+        if req.mode.upper() == 'SERVO':
             if self.q0 is not None:
                 self.send_q(self.q0,0.1,0.1)
 
             self.driver_status = 'SERVO'
             self.release()
             return 'SUCCESS -- servo mode enabled'
-        elif req.mode == 'DISABLE':
+        elif req.mode.upper() == 'DISABLE':
             self.detach(actuate = False, add_back_to_planning_scene=False)
             self.acquire()
             self.driver_status = 'IDLE'
@@ -628,7 +632,7 @@ class CostarArm(CostarComponent):
     call this when "spinning" to keep updating things
     '''
     def tick(self):
-        self.status_publisher.publish(self.driver_status)
+        self.status_pub.publish(self.driver_status)
         self.update_position()
         self.handle_tick()
     
@@ -871,7 +875,8 @@ class CostarArm(CostarComponent):
                     dist_from_table,
                     self.max_dist_from_table))
                 continue
-
+    
+            # Get metrics for the best distance to a matching objet
             valid_pose, best_dist, best_invalid, message_print, message_print_invalid, best_q = self.get_best_distance(T,T_fwd,self.q0, check_closest_only = False, obj_name = obj)
 
             if best_q is None or len(best_q) == 0:
@@ -976,7 +981,7 @@ class CostarArm(CostarComponent):
 
             rospy.loginfo("Trying sequence number %i: backup_dist: %.3f query_dist: %.3f"%(sequence_number,backup_dist,query_dist))
             # plan to T
-            rospy.sleep(0.1)
+            rospy.sleep(0.01)
             (code,res) = self.planner.getPlan(backup_waypoint,self.q0,obj=None)
             if (not res is None) and len(res.planned_trajectory.joint_trajectory.points) > 0:
                 q_2 = res.planned_trajectory.joint_trajectory.points[-1].positions
@@ -989,14 +994,17 @@ class CostarArm(CostarComponent):
                     if dist > 2 * backup_dist:
                         rospy.logwarn("Backoff failed for pose %i: distance was %f vs %f"%(sequence_number,dist,2*backup_dist))
                         continue
+                    self.info("appoach_%s"%obj)
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
                     rospy.sleep(0.1)
 
                     if msg[0:7] == 'SUCCESS':
+                        self.info("move_to_grasp_%s"%obj)
                         msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                         rospy.sleep(0.1)
                         
                         if msg[0:7] == 'SUCCESS':
+                            self.info("take_%s"%obj)
                             gripper_function(obj)
 
                             traj = res2.planned_trajectory.joint_trajectory
@@ -1010,6 +1018,7 @@ class CostarArm(CostarComponent):
                             traj.points[0].positions = self.q0
                             traj.points[-1].velocities = [0.]*len(self.q0)
                             
+                            self.info("backoff_from_%s"%obj)
                             msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                             return msg
                         else:
@@ -1034,16 +1043,21 @@ class CostarArm(CostarComponent):
         # backup transform is [0, 0, -distance]
         # call /costar/gripper/close
         # move back to original tform
-        return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.attach, velocity, acceleration, True)
+        return self.smartmove_multipurpose_gripper(stamp,
+                possible_goals,
+                distance, self.attach, velocity, acceleration,
+                True # is backup in the grasp frame?
+                )
 
-    '''
-    SmartMove Release:
-    - takes list of waypoints and loops over them
-    - moves in some distance (hard coded initially?)
-    - open gripper
-    - move back
-    '''
     def smartmove_release(self, stamp, possible_goals, distance, velocity, acceleration):
+        '''
+        SmartMove Release:
+        - takes list of waypoints and loops over them
+        - moves in some distance (hard coded initially?)
+        - open gripper
+        - move back
+        '''
+
         # Execute the list of waypoints to the selected object
         # open gripper
 
@@ -1054,11 +1068,26 @@ class CostarArm(CostarComponent):
 
         return self.smartmove_multipurpose_gripper(stamp, possible_goals, distance, self.detach, velocity, acceleration, False)
 
+    def smartmove_place_cb(self, req):
+        stamp = self.acquire()
+        distance = req.backoff
+        T_base_world = pm.fromTf(self.listener.lookupTransform(self.world,self.base_link,rospy.Time(0)))
+        pose = req.pose
+        T = T_base_world.Inverse()*pm.fromMsg(pose)
+        # Create list of waypoints for a place action
+        list_of_waypoints = [(0.,T,req.name,str(req.name)+"_goal")]
+        return self.smartmove_multipurpose_gripper(stamp,
+                list_of_waypoints, # list of waypoints
+                distance, # backup distance
+                self.detach, # detach object
+                req.vel, req.accel,
+                False, # is backup in table frame
+                )
 
-    '''
-    Wrapper for the RELEASE service
-    '''
     def smartmove_release_cb(self, req):
+        '''
+        Wrapper for the RELEASE service
+        '''
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
@@ -1066,10 +1095,10 @@ class CostarArm(CostarComponent):
         distance = req.backoff
         return self.smartmove_release(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
-    '''
-    Wrapper for the GRASP service
-    '''
     def smartmove_grasp_cb(self, req):
+        '''
+        Wrapper for the GRASP service
+        '''
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
@@ -1077,25 +1106,25 @@ class CostarArm(CostarComponent):
         distance = req.backoff
         return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
-    '''
-    Wrapper for the QUERY service
-    '''
     def query_cb(self,req):
-       list_of_waypoints = self.query(req)
-       if len(list_of_waypoints) == 0:
-           return "FAILURE"
-       else:
-           # set param and publish TF frame appropriately under reserved name
-           if self.last_query is not None and self.last_query == req:
-               # return idx + 1
-               self.last_query_idx += 1
-               if self.last_query_idx >= len(list_of_waypoints):
-                   self.last_query_idx = 0
-           else:
-               self.last_query = req
-               self.last_query_idx = 0
+        '''
+        Wrapper for the QUERY service. This gets the list of waypoints matching some criteria.
+        '''
+        list_of_waypoints = self.query(req)
+        if len(list_of_waypoints) == 0:
+            return "FAILURE"
+        else:
+            # set param and publish TF frame appropriately under reserved name
+            if self.last_query is not None and self.last_query == req:
+                # return idx + 1
+                self.last_query_idx += 1
+                if self.last_query_idx >= len(list_of_waypoints):
+                    self.last_query_idx = 0
+            else:
+                self.last_query = req
+                self.last_query_idx = 0
            
-           dist,T,object_t,name = list_of_waypoints[self.last_query_idx]          
-           self.query_frame = pm.toTf(T)
+            dist,T,object_t,name = list_of_waypoints[self.last_query_idx]          
+            self.query_frame = pm.toTf(T)
 
-           return "SUCCESS"
+            return "SUCCESS"

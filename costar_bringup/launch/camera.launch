@@ -2,9 +2,10 @@
 
   <arg name="handeye_output" default="screen"/>
   <arg name="use_filtered_marker_tf" default="false" />
-  <arg name="table_frame" default="table_frame"/>
+  <arg name="table_frame" default="table_center"/>
   <arg name="table_ar_marker" default="ar_marker_3"/>
   <arg name="fake_table_frame" default="true"/>
+  <arg name="table_center" default="0.7 0.0 0.0 0 0 0"/>
 
   <!-- setup for two optional cameras -->
   <arg name="camera_id" default="#1" /> <!-- Use device_id such as 1d27/0601@4/14 for multiple primesense--> 
@@ -24,11 +25,11 @@
   </include>
 
   <!-- Launching ar tag program #2-->
-  <group ns="$(arg camera_name)">
+  <group ns="$(arg camera_name)" if="$(arg start_alvar)">
     <arg name="cam_image_topic2" value="/$(arg camera_name)/depth_registered/points" />
     <arg name="cam_info_topic2" value="/$(arg camera_name)/rgb/camera_info" /> 
     <arg name="output_frame2" value="/$(arg camera_name)_rgb_optical_frame" />
-    <node if="$(arg start_alvar)" name="ar_track_alvar_$(arg camera_name)" pkg="ar_track_alvar" type="individualMarkers" respawn="true" output="log" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic2) $(arg cam_info_topic2) $(arg output_frame2)" />
+    <node name="ar_track_alvar_$(arg camera_name)" pkg="ar_track_alvar" type="individualMarkers" respawn="true" output="log" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic2) $(arg cam_info_topic2) $(arg output_frame2)" />
   </group>
 
   <!-- publish preferred orientation -->
@@ -47,7 +48,7 @@
     name="table_tf_publisher"
     type="static_transform_publisher"
     pkg="tf"
-    args="0.7 0.0 0.0 0 0 0 /base_link $(arg table_frame) 100"> # was at +0.02
+    args="$(arg table_center) /base_link $(arg table_frame) 100"> # was at +0.02
   </node>
   <node unless="$(arg fake_table_frame)"
     name="table_tf_publisher"

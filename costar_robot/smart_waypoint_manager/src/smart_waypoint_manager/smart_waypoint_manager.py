@@ -117,6 +117,9 @@ class SmartWaypointManager:
         waypoint_filenames = self.list_service(self.folder).entries
     
         for name in waypoint_filenames:
+          if name[0] == ".":
+            rospy.logerr("skipping " + name)
+            continue
           data = yaml.load(self.load_service(id=name,type=self.folder).text)
           if not data[1] in self.waypoints.keys():
             self.waypoints[data[1]] = []
