@@ -918,7 +918,18 @@ class CostarArm(CostarComponent):
 
         return possible_goals
 
-    def smartmove_multipurpose_gripper(self, stamp, possible_goals, distance, gripper_function, velocity, acceleration, backup_in_gripper_frame):
+    def smartmove_multipurpose_gripper(self,
+            stamp,
+            possible_goals,
+            distance,
+            gripper_function,
+            velocity,
+            acceleration,
+            backup_in_gripper_frame):
+        '''
+        Basic function that handles collecting and aggregating smartmoves
+        '''
+
         list_of_valid_sequence = list()
         list_of_invalid_sequence = list()
         self.backoff_waypoints = []
