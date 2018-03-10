@@ -59,7 +59,7 @@ class GetWaypointsService:
 
         return resp
 
-    def get_waypoints(self, frame_type, predicates, transforms, names, above=False):
+    def get_waypoints(self, frame_type, predicates, transforms, names, constraints):
         '''
         Parameters:
         -----------
@@ -152,15 +152,28 @@ class GetWaypointsService:
 
         for match in res.matching:
             try:
-                (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
+                (trans,rot) = self.listener.lookupTransform(self.world, match, rospy.Time(0))
                 match_tform = pm.fromTf((trans,rot))
 
                 if frame_type in self.obj_symmetries:
                     for rot_matrix in unique_rot_matrix:
                         tform = pm.Frame(rot_matrix)
                         world_tform = match_tform * tform * poses[0]
-                        if above and world_tform.p[2] <= match_tform.p[2] + 0.01:
-                            continue
+                        violated = False
+                        for constraint in constraints:
+                            v1 = match_tform.p[constraint.pose_variable]
+                            v2 = world_tform.p[constraint.pose_variable]
+                            if constraint.greater and not (v2 >= v1 + constraint.threshold):
+                                violated = True
+                                print(match_tform.p, world_tform.p, constraint.pose_variable)
+                                print constraint
+                                break
+                            elif not (v2 <= v1 - constraint.threshold):
+                                violated = True
+                                break
+                        if violated:
+                             continue
+
                         new_poses.append(pm.toMsg(world_tform))
                         new_names.append(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY()))
 
