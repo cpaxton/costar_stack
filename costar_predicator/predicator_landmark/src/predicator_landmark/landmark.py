@@ -59,7 +59,17 @@ class GetWaypointsService:
 
         return resp
 
-    def get_waypoints(self,frame_type,predicates,transforms,names):
+    def get_waypoints(self, frame_type, predicates, transforms, names, above=False):
+        '''
+        Parameters:
+        -----------
+        frame_type: object class to match when generating new frames
+        predicates: other list of predicates to add
+        transforms: used to generate the actual poses
+        names: should be same size as transforms
+        above: prunes list of transforms based on criteria, transforms should
+               be above their parent frame in the world coordinates
+        '''
         self.and_srv.wait_for_service()
 
         if not len(names) == len(transforms):
@@ -143,16 +153,16 @@ class GetWaypointsService:
         for match in res.matching:
             try:
                 (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
-                # for (pose, name) in zip(poses,names):
+                match_tform = pm.fromTf((trans,rot))
 
                 if frame_type in self.obj_symmetries:
                     for rot_matrix in unique_rot_matrix:
                         tform = pm.Frame(rot_matrix)
-                        new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * poses[0]))
+                        world_tform = match_tform * tform * poses[0]
+                        if above and world_tform.p[2] <= match_tform.p[2] + 0.01:
+                            continue
+                        new_poses.append(pm.toMsg(world_tform))
                         new_names.append(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY()))
-
-                        #print match, str(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY())),
-                        # pm.toTf(pm.fromTf((trans,rot)) * tform * poses[0])[0]
 
                         objects.append(match)
 
