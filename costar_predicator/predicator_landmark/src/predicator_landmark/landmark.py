@@ -99,6 +99,7 @@ class GetWaypointsService:
         poses = []
         for tform in transforms:
             poses.append(pm.fromMsg(tform))
+            break # we only do one
 
         if frame_type not in self.obj_symmetries.keys():
             self.obj_symmetries[frame_type] = ObjectSymmetry()
@@ -118,15 +119,6 @@ class GetWaypointsService:
                     quaternion_list.append(rot_matrix.GetQuaternion())
         quaternion_list = np.array(quaternion_list)
         
-        unique_rot_matrix = list()
-        # quaternion_list = np.around(quaternion_list,decimals=5)
-        # b = np.ascontiguousarray(quaternion_list).view(np.dtype((np.void, quaternion_list.dtype.itemsize * quaternion_list.shape[1])))
-        # _, unique_indices = np.unique(b, return_index=True)
-
-        # for index in unique_indices:
-        #     unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
-
-        
         unique_brute_force = list()
         for i in xrange(len(quaternion_list)):
             unique = True
@@ -136,13 +128,11 @@ class GetWaypointsService:
                 else:
                     if abs(quaternion_list[i].dot(quaternion_list[j])) > 0.99:
                         unique = False
-                        # print i, j, ' is not unique', quaternion_list[i], quaternion_list[j]
                         break
             if unique:
                 unique_brute_force.append(i)
-        # print 'unique brute force: ', len(unique_brute_force)
-        # print unique_brute_force
 
+        unique_rot_matrix = list()
         for index in unique_brute_force:
             unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
 
@@ -165,14 +155,16 @@ class GetWaypointsService:
                             v2 = world_tform.p[constraint.pose_variable]
                             if constraint.greater and not (v2 >= v1 + constraint.threshold):
                                 violated = True
-                                print(match_tform.p, world_tform.p, constraint.pose_variable)
-                                print constraint
+                                #print "VIOLATED", constraint
                                 break
-                            elif not (v2 <= v1 - constraint.threshold):
+                            elif not constraint.greater and not (v2 <= v1 - constraint.threshold):
                                 violated = True
+                                #print "VIOLATED", constraint
                                 break
                         if violated:
-                             continue
+                            continue
+                        #else:
+                        #    print match_tform.p, world_tform.p
 
                         new_poses.append(pm.toMsg(world_tform))
                         new_names.append(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY()))
