@@ -9,5 +9,6 @@ float32 backoff # distance to move back when doing grasp or release
 # Restrictions when generating new poses
 # --------------------------------------
 bool above # new poses should only be created above object goals
+costar_robot_msgs/Constraint[] constraints
 ---
 string ack # what happened
