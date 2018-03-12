@@ -826,7 +826,8 @@ class CostarArm(CostarComponent):
                 req.obj_class, # object class to move to
                 req.predicates, # predicates to match
                 [req.pose], # offset/transform from each member of the class
-                [req.name] # placeholder name
+                [req.name], # placeholder name
+                req.constraints,
                 )
 
         if res is None:
@@ -918,7 +919,18 @@ class CostarArm(CostarComponent):
 
         return possible_goals
 
-    def smartmove_multipurpose_gripper(self, stamp, possible_goals, distance, gripper_function, velocity, acceleration, backup_in_gripper_frame):
+    def smartmove_multipurpose_gripper(self,
+            stamp,
+            possible_goals,
+            distance,
+            gripper_function,
+            velocity,
+            acceleration,
+            backup_in_gripper_frame):
+        '''
+        Basic function that handles collecting and aggregating smartmoves
+        '''
+
         list_of_valid_sequence = list()
         list_of_invalid_sequence = list()
         self.backoff_waypoints = []
