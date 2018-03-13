@@ -155,6 +155,7 @@ class CostarArm(CostarComponent):
 
         self.status_pub = self.make_pub('DriverStatus',String,queue_size=1000)
         self.info_pub = self.make_pub('info',String,queue_size=1000)
+        self.object_pub = self.make_pub('SmartMove/object',String,queue_size=1000)
         self.display_pub = self.make_pub('display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.robot = URDF.from_parameter_server()
@@ -437,8 +438,9 @@ class CostarArm(CostarComponent):
         rospy.logerr("Function 'send_trajectory' not implemented for base class!")
         return "FAILURE -- running base class!"
 
-    def info(self, msg):
+    def info(self, msg, object_name):
         self.info_pub.publish(data=msg)
+        self.object_pub.publish(data=object_name)
 
     '''
     Standard movement call.
@@ -1006,17 +1008,17 @@ class CostarArm(CostarComponent):
                     if dist > 2 * backup_dist:
                         rospy.logwarn("Backoff failed for pose %i: distance was %f vs %f"%(sequence_number,dist,2*backup_dist))
                         continue
-                    self.info("appoach_%s"%obj)
+                    self.info("appoach_%s"%obj, obj)
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
                     rospy.sleep(0.1)
 
                     if msg[0:7] == 'SUCCESS':
-                        self.info("move_to_grasp_%s"%obj)
+                        self.info("move_to_grasp_%s"%obj, obj)
                         msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                         rospy.sleep(0.1)
                         
                         if msg[0:7] == 'SUCCESS':
-                            self.info("take_%s"%obj)
+                            self.info("take_%s"%obj, obj)
                             gripper_function(obj)
 
                             traj = res2.planned_trajectory.joint_trajectory
@@ -1030,7 +1032,7 @@ class CostarArm(CostarComponent):
                             traj.points[0].positions = self.q0
                             traj.points[-1].velocities = [0.]*len(self.q0)
                             
-                            self.info("backoff_from_%s"%obj)
+                            self.info("backoff_from_%s"%obj, obj)
                             msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                             return msg
                         else:
