@@ -1142,7 +1142,7 @@ class CostarArm(CostarComponent):
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
-            return "FAILURE -- no suitable points found"
+            return "FAILURE -- no suitable waypoints found for release"
         distance = req.backoff
         return self.smartmove_release(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
@@ -1153,7 +1153,7 @@ class CostarArm(CostarComponent):
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
-            return "FAILURE -- no suitable points found"
+            return "FAILURE -- no suitable waypoints found for grasp"
         distance = req.backoff
         return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
