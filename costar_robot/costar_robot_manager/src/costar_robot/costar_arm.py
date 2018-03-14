@@ -137,6 +137,7 @@ class CostarArm(CostarComponent):
         self.plan_home_srv = self.make_service('PlanToHome',ServoToPose,self.plan_to_home_cb)
         self.smartmove = self.make_service('SmartMove',SmartMove,self.smart_move_cb)
         self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_cb)
+        self.js_plan = self.make_service('PlanToJointState',ServoToJointState,self.plan_to_joints_cb)
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
         self.smartmove_grasp_srv = self.make_service('SmartPlace',SmartMove,self.smartmove_place_cb)
@@ -516,16 +517,52 @@ class CostarArm(CostarComponent):
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILURE -- not in servo mode'
 
-    '''
-    Standard move call.
-    Make a joint space move to a destination.
-    '''
     def servo_to_joints_cb(self,req):
+        if self.driver_status == 'SERVO':
+
+            # Check acceleration and velocity limits
+            (acceleration, velocity) = self.check_req_speed_params(req)
+
+            stamp = self.acquire()
+
+            # inverse kinematics
+            traj = self.planner.getJointMove(req.target.position,
+                self.q0,
+                self.base_steps,
+                self.steps_per_meter,
+                self.steps_per_radians,
+                time_multiplier = (1./velocity),
+                percent_acc = acceleration,
+                use_joint_move = True,
+                table_frame = self.table_pose)
+
+            # Send command
+            if len(traj.points) > 0:
+                if stamp is not None:
+                    rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
+                    res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
+                    self.release()
+                else:
+                    res = 'FAILURE -- could not preempt current arm control.'
+                return res
+            else:
+                rospy.logerr('SIMPLE DRIVER -- IK failed')
+                return 'FAILURE -- no trajectory points'
+        else:
+            rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
+            return 'FAILURE -- not in servo mode'
+
+    def plan_to_joints_cb(self,req):
 
         if self.driver_status == 'SERVO':
             # Check acceleration and velocity limits
             (acceleration, velocity) = self.check_req_speed_params(req) 
-            return 'FAILURE -- not yet implemented!'
+            stamp = self.acquire()
+
+            # Send command
+            pt = JointTrajectoryPoint()
+            (code,res) = self.planner.getPlan(q_goal=req.target.position,q=self.q0)
+            return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
 
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
