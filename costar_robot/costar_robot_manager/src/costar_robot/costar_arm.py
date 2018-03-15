@@ -137,6 +137,7 @@ class CostarArm(CostarComponent):
         self.plan_home_srv = self.make_service('PlanToHome',ServoToPose,self.plan_to_home_cb)
         self.smartmove = self.make_service('SmartMove',SmartMove,self.smart_move_cb)
         self.js_servo = self.make_service('ServoToJointState',ServoToJointState,self.servo_to_joints_cb)
+        self.js_plan = self.make_service('PlanToJointState',ServoToJointState,self.plan_to_joints_cb)
         self.smartmove_release_srv = self.make_service('SmartRelease',SmartMove,self.smartmove_release_cb)
         self.smartmove_grasp_srv = self.make_service('SmartGrasp',SmartMove,self.smartmove_grasp_cb)
         self.smartmove_grasp_srv = self.make_service('SmartPlace',SmartMove,self.smartmove_place_cb)
@@ -155,6 +156,7 @@ class CostarArm(CostarComponent):
 
         self.status_pub = self.make_pub('DriverStatus',String,queue_size=1000)
         self.info_pub = self.make_pub('info',String,queue_size=1000)
+        self.object_pub = self.make_pub('SmartMove/object',String,queue_size=1000)
         self.display_pub = self.make_pub('display_trajectory',DisplayTrajectory,queue_size=1000)
 
         self.robot = URDF.from_parameter_server()
@@ -437,8 +439,9 @@ class CostarArm(CostarComponent):
         rospy.logerr("Function 'send_trajectory' not implemented for base class!")
         return "FAILURE -- running base class!"
 
-    def info(self, msg):
+    def info(self, msg, object_name):
         self.info_pub.publish(data=msg)
+        self.object_pub.publish(data=object_name)
 
     '''
     Standard movement call.
@@ -514,16 +517,52 @@ class CostarArm(CostarComponent):
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
             return 'FAILURE -- not in servo mode'
 
-    '''
-    Standard move call.
-    Make a joint space move to a destination.
-    '''
     def servo_to_joints_cb(self,req):
+        if self.driver_status == 'SERVO':
+
+            # Check acceleration and velocity limits
+            (acceleration, velocity) = self.check_req_speed_params(req)
+
+            stamp = self.acquire()
+
+            # inverse kinematics
+            traj = self.planner.getJointMove(req.target.position,
+                self.q0,
+                self.base_steps,
+                self.steps_per_meter,
+                self.steps_per_radians,
+                time_multiplier = (1./velocity),
+                percent_acc = acceleration,
+                use_joint_move = True,
+                table_frame = self.table_pose)
+
+            # Send command
+            if len(traj.points) > 0:
+                if stamp is not None:
+                    rospy.logwarn("Robot moving to " + str(traj.points[-1].positions))
+                    res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
+                    self.release()
+                else:
+                    res = 'FAILURE -- could not preempt current arm control.'
+                return res
+            else:
+                rospy.logerr('SIMPLE DRIVER -- IK failed')
+                return 'FAILURE -- no trajectory points'
+        else:
+            rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
+            return 'FAILURE -- not in servo mode'
+
+    def plan_to_joints_cb(self,req):
 
         if self.driver_status == 'SERVO':
             # Check acceleration and velocity limits
             (acceleration, velocity) = self.check_req_speed_params(req) 
-            return 'FAILURE -- not yet implemented!'
+            stamp = self.acquire()
+
+            # Send command
+            pt = JointTrajectoryPoint()
+            (code,res) = self.planner.getPlan(q_goal=req.target.position,q=self.q0)
+            return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
 
         else:
             rospy.logerr('SIMPLE DRIVER -- Not in servo mode')
@@ -1006,17 +1045,17 @@ class CostarArm(CostarComponent):
                     if dist > 2 * backup_dist:
                         rospy.logwarn("Backoff failed for pose %i: distance was %f vs %f"%(sequence_number,dist,2*backup_dist))
                         continue
-                    self.info("appoach_%s"%obj)
+                    self.info("appoach_%s"%obj, obj)
                     msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
                     rospy.sleep(0.1)
 
                     if msg[0:7] == 'SUCCESS':
-                        self.info("move_to_grasp_%s"%obj)
+                        self.info("move_to_grasp_%s"%obj, obj)
                         msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                         rospy.sleep(0.1)
                         
                         if msg[0:7] == 'SUCCESS':
-                            self.info("take_%s"%obj)
+                            self.info("take_%s"%obj, obj)
                             gripper_function(obj)
 
                             traj = res2.planned_trajectory.joint_trajectory
@@ -1030,7 +1069,7 @@ class CostarArm(CostarComponent):
                             traj.points[0].positions = self.q0
                             traj.points[-1].velocities = [0.]*len(self.q0)
                             
-                            self.info("backoff_from_%s"%obj)
+                            self.info("backoff_from_%s"%obj, obj)
                             msg = self.send_and_publish_planning_result(res2,stamp,acceleration,velocity)
                             return msg
                         else:
@@ -1103,7 +1142,7 @@ class CostarArm(CostarComponent):
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
-            return "FAILURE -- no suitable points found"
+            return "FAILURE -- no suitable waypoints found for release"
         distance = req.backoff
         return self.smartmove_release(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
@@ -1114,7 +1153,7 @@ class CostarArm(CostarComponent):
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
-            return "FAILURE -- no suitable points found"
+            return "FAILURE -- no suitable waypoints found for grasp"
         distance = req.backoff
         return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
