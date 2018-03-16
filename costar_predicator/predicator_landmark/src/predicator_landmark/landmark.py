@@ -156,9 +156,11 @@ class GetWaypointsService:
                             if constraint.greater and not (v2 >= v1 + constraint.threshold):
                                 violated = True
                                 #print "VIOLATED", constraint
+                                rospy.logwarn("constraint violation: " + str(v2)  + "<" + str(v1))
                                 break
                             elif not constraint.greater and not (v2 <= v1 - constraint.threshold):
                                 violated = True
+                                rospy.logwarn("constraint violation: " + str(v2)  + ">" + str(v1))
                                 #print "VIOLATED", constraint
                                 break
                         if violated:

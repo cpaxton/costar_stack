@@ -871,10 +871,12 @@ class CostarArm(CostarComponent):
 
         if res is None:
             # no poses found that meet the query!
+            rospy.logerr("No waypoints found for query")
             return []
 
         (poses,names,objects) = res
         if poses is None:
+            rospy.logerr("No poses found for query")
             return []
 
         selected_objs, selected_names = [], []
@@ -983,6 +985,8 @@ class CostarArm(CostarComponent):
                 rospy.logwarn('Stopping action because robot has been preempted by another process,')
                 return "FAILURE -- Robot has been preempted by another process"
 
+            rospy.loginfo("check: " + str(dist) + " " + str(name))
+
             if backup_in_gripper_frame:
                 backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
                 backup_waypoint = T * backup_waypoint
@@ -1026,6 +1030,7 @@ class CostarArm(CostarComponent):
         # print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
         for sequence_number, (backup_waypoint,T,obj,backup_dist,query_dist,name) in enumerate(sequence_to_execute,1):
+            rospy.loginfo(str(sequence_number) + " moving to " + str(name))
             if not self.valid_verify(stamp):
                 rospy.logwarn('Stopping action because robot has been preempted by another process,')
                 return "FAILURE -- Robot has been preempted by another process"
@@ -1155,6 +1160,7 @@ class CostarArm(CostarComponent):
         if len(list_of_waypoints) == 0:
             return "FAILURE -- no suitable waypoints found for grasp"
         distance = req.backoff
+        rospy.loginfo("making smart grasp request")
         return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
     def query_cb(self,req):
