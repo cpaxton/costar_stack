@@ -378,6 +378,7 @@ class CostarArm(CostarComponent):
             traj = res.planned_trajectory.joint_trajectory
             
             if stamp is not None:
+                rospy.loginfo("Sending trajectory of length " + str(len(traj.points)))
                 res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
             else:
                 res = 'FAILURE -- could not preempt current arm control.'
@@ -426,6 +427,7 @@ class CostarArm(CostarComponent):
             # Send command
             pt = JointTrajectoryPoint()
             (code,res) = self.planner.getPlan(q_goal=self.home_q,q=self.q0)
+            rospy.loginfo("Planning returned code:" + str(code))
             return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
@@ -562,6 +564,7 @@ class CostarArm(CostarComponent):
             # Send command
             pt = JointTrajectoryPoint()
             (code,res) = self.planner.getPlan(q_goal=req.target.position,q=self.q0)
+            rospy.loginfo("Planning returned code:" + str(code))
             return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
 
         else:
