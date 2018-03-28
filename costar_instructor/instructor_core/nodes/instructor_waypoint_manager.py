@@ -88,6 +88,7 @@ class WaypointManager(object):
             if name[0] == '.':
                 # Ignore invalid waypoints
                 continue
+            rospy.logwarn("loading global waypoint " + str(name))
             pose = yaml.load(self.load_service(id=name,type='instructor_waypoint').text)
             self.waypoints['/' + name] = pose
             self.add_waypoint_marker('/' + name)
@@ -99,7 +100,7 @@ class WaypointManager(object):
             if name[0] == '.':
                 # Ignore invalid waypoints
                 continue
-            rospy.logwarn("loading " + str(name))
+            rospy.logwarn("loading relative waypoint " + str(name))
             data = yaml.load(self.load_service(id=name,type='instructor_relative_waypoint').text)
             self.relative_waypoints['/' + name] = data
             self.add_relative_waypoint_marker('/' + name)
