@@ -959,7 +959,8 @@ class CostarArm(CostarComponent):
 
         joint = JointState()
         # joint.position = self.ik(T,self.q0)
-        rospy.loginfo("[QUERY] There are %i of valid poses and %i of invalid poses"%(number_of_valid_query_poses,number_of_invalid_query_poses))
+        rospy.loginfo("[QUERY] There are %i valid poses and %i invalid poses" % 
+                (number_of_valid_query_poses, number_of_invalid_query_poses))
 
         return possible_goals
 
