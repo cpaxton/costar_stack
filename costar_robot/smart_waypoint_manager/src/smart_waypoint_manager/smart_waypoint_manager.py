@@ -190,7 +190,8 @@ class SmartWaypointManager:
 
             xyz, rpy = [], []
             for dim in og_trans:
-                if abs(dim) < 0.025:
+                # TODO: test to see if we should re-enable this
+                if abs(dim) < 0.0001:
                     xyz.append(0.)
                 else:
                     xyz.append(dim)

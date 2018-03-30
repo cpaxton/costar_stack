@@ -144,21 +144,25 @@ class GetWaypointsService:
             try:
                 (trans,rot) = self.listener.lookupTransform(self.world, match, rospy.Time(0))
                 match_tform = pm.fromTf((trans,rot))
+                rospy.loginfo("Checking " + str(match) + " from " + str(self.world))
 
                 if frame_type in self.obj_symmetries:
                     for rot_matrix in unique_rot_matrix:
                         tform = pm.Frame(rot_matrix)
                         world_tform = match_tform * tform * poses[0]
                         violated = False
+
                         for constraint in constraints:
                             v1 = match_tform.p[constraint.pose_variable]
                             v2 = world_tform.p[constraint.pose_variable]
                             if constraint.greater and not (v2 >= v1 + constraint.threshold):
                                 violated = True
                                 #print "VIOLATED", constraint
+                                rospy.logwarn("constraint violation: " + str(v2)  + "<" + str(v1))
                                 break
                             elif not constraint.greater and not (v2 <= v1 - constraint.threshold):
                                 violated = True
+                                rospy.logwarn("constraint violation: " + str(v2)  + ">" + str(v1))
                                 #print "VIOLATED", constraint
                                 break
                         if violated:

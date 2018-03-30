@@ -6,6 +6,7 @@
   <arg name="table_ar_marker" default="ar_marker_3"/>
   <arg name="fake_table_frame" default="true"/>
   <arg name="table_center" default="0.7 0.0 0.0 0 0 0"/>
+  <arg name="cart_base_link" default="base_link"/>
 
   <!-- setup for two optional cameras -->
   <arg name="camera_id" default="#1" /> <!-- Use device_id such as 1d27/0601@4/14 for multiple primesense--> 
@@ -62,6 +63,7 @@
     <arg name="tableTF" value="$(arg table_frame)"/>
     <arg name="file_extension" value="stl"/>
     <arg name="renewTable" value="false"/>
+    <arg name="baseLinkName" value="$(arg cart_base_link)"/>
   </include>
 
 </launch>

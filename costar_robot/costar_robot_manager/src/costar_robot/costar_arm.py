@@ -378,6 +378,7 @@ class CostarArm(CostarComponent):
             traj = res.planned_trajectory.joint_trajectory
             
             if stamp is not None:
+                rospy.loginfo("Sending trajectory of length " + str(len(traj.points)))
                 res = self.send_trajectory(traj,stamp,acceleration,velocity,cartesian=False)
             else:
                 res = 'FAILURE -- could not preempt current arm control.'
@@ -426,6 +427,7 @@ class CostarArm(CostarComponent):
             # Send command
             pt = JointTrajectoryPoint()
             (code,res) = self.planner.getPlan(q_goal=self.home_q,q=self.q0)
+            rospy.loginfo("Planning returned code:" + str(code))
             return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
         else:
             rospy.logerr('DRIVER -- not in servo mode!')
@@ -562,6 +564,7 @@ class CostarArm(CostarComponent):
             # Send command
             pt = JointTrajectoryPoint()
             (code,res) = self.planner.getPlan(q_goal=req.target.position,q=self.q0)
+            rospy.loginfo("Planning returned code:" + str(code))
             return self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
 
         else:
@@ -871,10 +874,12 @@ class CostarArm(CostarComponent):
 
         if res is None:
             # no poses found that meet the query!
+            rospy.logerr("No waypoints found for query")
             return []
 
         (poses,names,objects) = res
         if poses is None:
+            rospy.logerr("No poses found for query")
             return []
 
         selected_objs, selected_names = [], []
@@ -954,7 +959,8 @@ class CostarArm(CostarComponent):
 
         joint = JointState()
         # joint.position = self.ik(T,self.q0)
-        rospy.loginfo("[QUERY] There are %i of valid poses and %i of invalid poses"%(number_of_valid_query_poses,number_of_invalid_query_poses))
+        rospy.loginfo("[QUERY] There are %i valid poses and %i invalid poses" % 
+                (number_of_valid_query_poses, number_of_invalid_query_poses))
 
         return possible_goals
 
@@ -982,6 +988,8 @@ class CostarArm(CostarComponent):
             if not self.valid_verify(stamp):
                 rospy.logwarn('Stopping action because robot has been preempted by another process,')
                 return "FAILURE -- Robot has been preempted by another process"
+
+            rospy.loginfo("check: " + str(dist) + " " + str(name))
 
             if backup_in_gripper_frame:
                 backup_waypoint = kdl.Frame(kdl.Vector(-distance,0.,0.))
@@ -1026,6 +1034,7 @@ class CostarArm(CostarComponent):
         # print 'Number of sequence to execute:', len(sequence_to_execute)
         msg = None
         for sequence_number, (backup_waypoint,T,obj,backup_dist,query_dist,name) in enumerate(sequence_to_execute,1):
+            rospy.loginfo(str(sequence_number) + " moving to " + str(name))
             if not self.valid_verify(stamp):
                 rospy.logwarn('Stopping action because robot has been preempted by another process,')
                 return "FAILURE -- Robot has been preempted by another process"
@@ -1155,6 +1164,7 @@ class CostarArm(CostarComponent):
         if len(list_of_waypoints) == 0:
             return "FAILURE -- no suitable waypoints found for grasp"
         distance = req.backoff
+        rospy.loginfo("making smart grasp request")
         return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
     def query_cb(self,req):

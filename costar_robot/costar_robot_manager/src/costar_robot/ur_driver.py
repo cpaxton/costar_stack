@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import rospy
 import numpy as np
 import tf_conversions.posemath as pm
@@ -87,6 +89,7 @@ class CostarUR5Driver(CostarArm):
             return 'FAILURE - preempted'
 
         if self.simulation:
+            rospy.logwarn("Simulation mode is active")
             if not linear:
                 for pt in traj.points[:-1]:
                     if not cartesian:
@@ -122,13 +125,19 @@ class CostarUR5Driver(CostarArm):
             self.set_goal(traj.points[-1].positions)
 
         goal = FollowJointTrajectoryGoal(trajectory=traj)
+        for i, pt in enumerate(traj.points):
+            print("Pt =", i, pt.positions)
 
         if self.valid_verify(stamp):
             self.client.send_goal(goal)
             # max time before returning = 30 s
             done = False
             #while self.valid_verify(stamp) and not done:
+            rospy.loginfo("Waiting for UR...")
             self.client.wait_for_result()#rospy.Duration.from_sec(1.0))
+            rospy.loginfo("Done waiting for UR.")
+        else:
+            return "FAILURE - preempted before trajectory sent"
 
         # Check to make sure we weren't preempted.
         if not self.valid_verify(stamp):

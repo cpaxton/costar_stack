@@ -9,10 +9,11 @@ Panels:
         - /PointCloud21
         - /TF1
         - /TF1/Frames1
+        - /Robot Model1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
       Splitter Ratio: 0.655556
-    Tree Height: 423
+    Tree Height: 567
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -87,39 +88,7 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        00 Home:
-          Value: false
-        A0 over:
-          Value: true
-        A0 place 1:
-          Value: true
-        A1 left:
-          Value: true
-        A1 right:
-          Value: true
-        A2 left:
-          Value: true
-        A2 right:
-          Value: true
-        A3 left:
-          Value: true
-        A3 right:
-          Value: true
-        A4 left:
-          Value: true
-        A4 right:
-          Value: true
-        AN right:
-          Value: true
-        AN right down:
-          Value: true
         All Enabled: false
-        a1:
-          Value: false
-        aaaaaaaaaa:
-          Value: true
-        asdf:
-          Value: true
         base:
           Value: false
         base_link:
@@ -134,6 +103,8 @@ Visualization Manager:
           Value: false
         camera_rgb_optical_frame:
           Value: false
+        cart_base_link:
+          Value: true
         ee_link:
           Value: false
         endpoint:
@@ -142,139 +113,15 @@ Visualization Manager:
           Value: false
         forearm_link:
           Value: false
-        grabgreen:
-          Value: true
-        grabnode1:
-          Value: true
         gripper_center:
           Value: false
         gripper_link:
           Value: false
         marker_link:
           Value: false
-        new_spot:
-          Value: false
-        obj_blue_cube_1:
-          Value: true
-        obj_blue_cube_2:
-          Value: true
-        obj_green_cube_1:
-          Value: true
-        obj_green_cube_2:
-          Value: true
-        obj_red_cube_1:
-          Value: true
-        obj_yellow_cube_1:
-          Value: true
-        objects/blue_cube/1:
-          Value: false
-        objects/blue_cube/2:
-          Value: false
-        objects/green_cube/1:
-          Value: false
-        objects/green_cube/2:
-          Value: false
-        objects/red_cube/1:
-          Value: false
-        objects/yellow_cube/1:
-          Value: false
-        overnode1:
-          Value: true
-        overnode2:
-          Value: true
-        pickupgreen:
-          Value: true
-        place1:
-          Value: false
-        place2:
-          Value: false
-        place3:
-          Value: false
-        place4:
-          Value: false
-        placeonred:
-          Value: true
-        point1:
-          Value: true
-        point2:
-          Value: true
-        point3:
-          Value: true
-        point4:
-          Value: true
         preferred_orientation:
           Value: false
-        redcuber:
-          Value: true
-        seg/obj_blue_cube_1:
-          Value: false
-        seg/obj_blue_cube_2:
-          Value: false
-        seg/obj_green_cube_1:
-          Value: false
-        seg/obj_green_cube_2:
-          Value: false
-        seg/obj_red_cube_1:
-          Value: false
-        seg/obj_yellow_cube_1:
-          Value: false
         shoulder_link:
-          Value: false
-        sweep--0:
-          Value: false
-        sweep--1:
-          Value: false
-        sweep--10:
-          Value: false
-        sweep--11:
-          Value: false
-        sweep--12:
-          Value: false
-        sweep--13:
-          Value: false
-        sweep--14:
-          Value: false
-        sweep--15:
-          Value: false
-        sweep--16:
-          Value: false
-        sweep--17:
-          Value: false
-        sweep--18:
-          Value: false
-        sweep--19:
-          Value: false
-        sweep--2:
-          Value: false
-        sweep--20:
-          Value: false
-        sweep--21:
-          Value: false
-        sweep--22:
-          Value: false
-        sweep--23:
-          Value: false
-        sweep--24:
-          Value: false
-        sweep--25:
-          Value: false
-        sweep--26:
-          Value: false
-        sweep--27:
-          Value: false
-        sweep--3:
-          Value: false
-        sweep--4:
-          Value: false
-        sweep--5:
-          Value: false
-        sweep--6:
-          Value: false
-        sweep--7:
-          Value: false
-        sweep--8:
-          Value: false
-        sweep--9:
           Value: false
         table_center:
           Value: true
@@ -302,57 +149,8 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
-              seg/obj_blue_cube_1:
-                obj_blue_cube_1:
-                  {}
-              seg/obj_blue_cube_2:
-                obj_blue_cube_2:
-                  {}
-              seg/obj_green_cube_1:
-                obj_green_cube_1:
-                  {}
-              seg/obj_green_cube_2:
-                obj_green_cube_2:
-                  {}
-              seg/obj_red_cube_1:
-                obj_red_cube_1:
-                  {}
-              seg/obj_yellow_cube_1:
-                obj_yellow_cube_1:
-                  {}
+              {}
           world:
-            00 Home:
-              {}
-            A0 over:
-              {}
-            A0 place 1:
-              {}
-            A1 left:
-              {}
-            A1 right:
-              {}
-            A2 left:
-              {}
-            A2 right:
-              {}
-            A3 left:
-              {}
-            A3 right:
-              {}
-            A4 left:
-              {}
-            A4 right:
-              {}
-            AN right:
-              {}
-            AN right down:
-              {}
-            a1:
-              {}
-            aaaaaaaaaa:
-              {}
-            asdf:
-              {}
             base_link:
               preferred_orientation:
                 {}
@@ -374,107 +172,8 @@ Visualization Manager:
                             marker_link:
                               {}
               table_center:
-                {}
-            grabgreen:
-              {}
-            grabnode1:
-              {}
-            new_spot:
-              {}
-            objects/blue_cube/1:
-              {}
-            objects/blue_cube/2:
-              {}
-            objects/green_cube/1:
-              {}
-            objects/green_cube/2:
-              {}
-            objects/red_cube/1:
-              {}
-            objects/yellow_cube/1:
-              {}
-            overnode1:
-              {}
-            overnode2:
-              {}
-            pickupgreen:
-              {}
-            place1:
-              {}
-            place2:
-              {}
-            place3:
-              {}
-            place4:
-              {}
-            placeonred:
-              {}
-            point1:
-              {}
-            point2:
-              {}
-            point3:
-              {}
-            point4:
-              {}
-            redcuber:
-              {}
-            sweep--0:
-              {}
-            sweep--1:
-              {}
-            sweep--10:
-              {}
-            sweep--11:
-              {}
-            sweep--12:
-              {}
-            sweep--13:
-              {}
-            sweep--14:
-              {}
-            sweep--15:
-              {}
-            sweep--16:
-              {}
-            sweep--17:
-              {}
-            sweep--18:
-              {}
-            sweep--19:
-              {}
-            sweep--2:
-              {}
-            sweep--20:
-              {}
-            sweep--21:
-              {}
-            sweep--22:
-              {}
-            sweep--23:
-              {}
-            sweep--24:
-              {}
-            sweep--25:
-              {}
-            sweep--26:
-              {}
-            sweep--27:
-              {}
-            sweep--3:
-              {}
-            sweep--4:
-              {}
-            sweep--5:
-              {}
-            sweep--6:
-              {}
-            sweep--7:
-              {}
-            sweep--8:
-              {}
-            sweep--9:
-              {}
+                cart_base_link:
+                  {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -578,7 +277,7 @@ Visualization Manager:
       Reference Frame: ar_marker_0
       Value: false
     - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: false
+      Enabled: true
       Move Group Namespace: ""
       Name: PlanningScene
       Planning Scene Topic: /move_group/monitored_planning_scene
@@ -598,10 +297,59 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
+          base_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          ee_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          forearm_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          marker_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          shoulder_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          upper_arm_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_1_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_2_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_3_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
         Robot Alpha: 0.7
         Show Robot Collision: false
         Show Robot Visual: true
-      Value: false
+      Value: true
     - Class: moveit_rviz_plugin/Trajectory
       Color Enabled: false
       Enabled: true
@@ -882,7 +630,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.25049
+      Distance: 1.4964
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -894,20 +642,20 @@ Visualization Manager:
         Z: 0.224583
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.439801
+      Pitch: 0.580204
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.38514
+      Yaw: 6.06014
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1150
+  Height: 1151
   Hide Left Dock: false
   Hide Right Dock: true
   Planned Path - Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000445fc020000000efb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000001b000001e8000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000160064006500700074006800200069006d00610067006501000002090000011f0000001600fffffffb0000001200720067006200200069006d0061006700650000000398000000c90000001600fffffffb0000000a0049006d006100670065010000038f000000d20000000000000000fb00000026005400720061006a006500630074006f007200790020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb0000002a0050006c0061006e006e00650064002000500061007400680020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb000000160063006f006c006f0072002000690061006d00670065010000032e000001320000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000004d00000044500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000446fc020000000efb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006700fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000001b00000278000000e300fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000160064006500700074006800200069006d0061006700650100000299000000e30000001600fffffffb0000001200720067006200200069006d0061006700650000000398000000c90000001600fffffffb0000000a0049006d006100670065010000038f000000d20000000000000000fb00000026005400720061006a006500630074006f007200790020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb0000002a0050006c0061006e006e00650064002000500061007400680020002d00200053006c00690064006500720000000000ffffffff0000004300fffffffb000000160063006f006c006f0072002000690061006d006700650100000382000000df0000001600ffffff000000010000010f00000378fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000378000000b300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006502000000020000046d0000063e00000043fb0000000800540069006d00650100000000000004500000000000000000000004d00000044600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
