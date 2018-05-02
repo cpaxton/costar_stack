@@ -331,8 +331,9 @@ class CostarArm(CostarComponent):
     def smart_move_cb(self,req):
 
         if not self.driver_status == 'SERVO':
+            msg = 'FAILURE -- not in servo mode'
             rospy.logerr('DRIVER -- Not in servo mode!')
-            return 'FAILURE -- not in servo mode'
+            return msg
 
         # Check acceleration and velocity limits
         (acceleration, velocity) = self.check_req_speed_params(req) 
@@ -340,14 +341,15 @@ class CostarArm(CostarComponent):
         stamp = self.acquire()
 
         if len(possible_goals) == 0:
-            return 'FAILURE -- no valid poses found'
+            return 'FAILURE -- no valid poses found. see costar_arm.py'
 
         for (dist,T,obj,name) in possible_goals:
             rospy.logwarn("Trying to move to frame at distance %f"%(dist))
 
             # plan to T
             if not self.valid_verify(stamp):
-                rospy.logwarn('Stopping action because robot has been preempted by another process,')
+                msg = 'FAILURE - Stopping smart move action because robot has been preempted by another process. see costar_arm.py'
+                rospy.logwarn(msg)
                 return msg
             (code,res) = self.planner.getPlan(T,self.q0,obj=obj)
             msg = self.send_and_publish_planning_result(res,stamp,acceleration,velocity)
@@ -1151,7 +1153,7 @@ class CostarArm(CostarComponent):
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
-            return "FAILURE -- no suitable waypoints found for release"
+            return "FAILURE -- no suitable waypoints found for smart release - see costar_arm.py"
         distance = req.backoff
         return self.smartmove_release(stamp, list_of_waypoints, distance, req.vel, req.accel)
 
@@ -1162,7 +1164,7 @@ class CostarArm(CostarComponent):
         stamp = self.acquire()
         list_of_waypoints = self.query(req, True)
         if len(list_of_waypoints) == 0:
-            return "FAILURE -- no suitable waypoints found for grasp"
+            return "FAILURE -- no suitable waypoints found for smart grasp - see costar_arm.py"
         distance = req.backoff
         rospy.loginfo("making smart grasp request")
         return self.smartmove_grasp(stamp, list_of_waypoints, distance, req.vel, req.accel)

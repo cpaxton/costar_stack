@@ -1,0 +1,45 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/cpaxton/catkin_ws/devel/include",
+        "/opt/ros/indigo/include",
+        "/home/cpaxton/catkin_ws/src/robot_model/collada_parser/include",
+        "/home/cpaxton/catkin_ws/src/robot_model/collada_urdf/include",
+        "/home/cpaxton/catkin_ws/src/costar_stack/costar_perception/color_nn_segmenter/include",
+        "/home/cpaxton/catkin_ws/src/costar_plan/costar_planning_interface/include",
+        "/home/cpaxton/catkin_ws/src/dmp/include",
+        "/home/cpaxton/catkin_ws/src/fcl/include",
+        "/home/cpaxton/catkin_ws/src/gazebo_ros_pkgs/gazebo_plugins/include",
+        "/home/cpaxton/catkin_ws/src/gazebo_ros_pkgs/gazebo_ros_control/include",
+        "/home/cpaxton/catkin_ws/src/iiwa_stack/iiwa_hw/include",
+        "/home/cpaxton/catkin_ws/src/iiwa_stack/iiwa_ros/include",
+        "/home/cpaxton/catkin_ws/src/robot_model/kdl_parser/include",
+        "/home/cpaxton/catkin_ws/src/costar_stack/costar_tools/moveit_collision_environment/include",
+        "/home/cpaxton/catkin_ws/src/costar_stack/costar_tools/object_on_table_segmenter/include",
+        "/home/cpaxton/catkin_ws/src/occupancy_grid_utils/include",
+        "/home/cpaxton/catkin_ws/src/robotiq/robotiq_action_server/include",
+        "/home/cpaxton/catkin_ws/src/robotiq/robotiq_c_model_control/include",
+        "/home/cpaxton/catkin_ws/src/robotiq/robotiq_ethercat/include",
+        "/home/cpaxton/catkin_ws/src/robotiq/robotiq_force_torque_sensor/include",
+        "/home/cpaxton/catkin_ws/src/robotiq/robotiq_s_model_control/include",
+        "/home/cpaxton/catkin_ws/src/rosplan/rosplan_interface_mapping/include",
+        "/home/cpaxton/catkin_ws/src/rosplan/rosplan_interface_movebase/include",
+        "/home/cpaxton/catkin_ws/src/rosplan/rosplan_knowledge_base/include",
+        "/home/cpaxton/catkin_ws/src/rosplan/rosplan_planning_system/include",
+        "/home/cpaxton/catkin_ws/src/sdformat/include",
+        "/home/cpaxton/catkin_ws/src/costar_stack/costar_perception/sp_segmenter/include",
+        "/home/cpaxton/catkin_ws/src/universal_robot/ur_kinematics/include",
+        "/home/cpaxton/catkin_ws/src/ur_modern_driver/include",
+        "/home/cpaxton/catkin_ws/src/robot_model/urdf/include",
+        "/home/cpaxton/catkin_ws/src/robot_model/urdf_parser_plugin/include",
+        "/usr/include"
+      ],
+      "name": "Linux"
+    }
+  ]
+}
