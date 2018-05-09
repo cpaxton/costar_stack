@@ -1,0 +1,88 @@
+# IT IS UNLIKELY YOU WANT TO EDIT THIS FILE BY HAND,
+# UNLESS FOR REMOVING ENTRIES.
+# IF YOU WANT TO CHANGE THE ROS ENVIRONMENT VARIABLES
+# USE THE rosinstall TOOL INSTEAD.
+# IF YOU CHANGE IT, USE rosinstall FOR THE CHANGES TO TAKE EFFECT
+- git: {local-name: catkin, uri: 'git@github.com:jbohren-forks/catkin.git', version: dont-overwrite-marker-on-install}
+- git: {local-name: cmake_modules, uri: 'git@github.com:ros/cmake_modules.git', version: 0.4-devel}
+- git: {local-name: common_msgs, uri: 'git@github.com:ros/common_msgs.git', version: indigo-devel}
+- git: {local-name: moveit_msgs, uri: 'git@github.com:ros-planning/moveit_msgs.git',
+    version: indigo-devel}
+- git: {local-name: xdot, uri: 'git@github.com:jbohren/xdot.git', version: hydro-devel}
+- git: {local-name: rqt_dot, uri: 'git@github.com:jbohren/rqt_dot.git', version: master}
+- git: {local-name: orocos_toolchain, uri: 'git@github.com:jhu-lcsr-forks/orocos_toolchain.git',
+    version: master}
+- git: {local-name: orocos_kinematics_dynamics, uri: 'git@github.com:jhu-lcsr-forks/orocos_kinematics_dynamics.git',
+    version: master}
+- git: {local-name: rtt_ros_integration, uri: 'git@github.com:jhu-lcsr-forks/rtt_ros_integration.git',
+    version: hydro-devel}
+- git: {local-name: cartesian_trajectory_msgs, uri: 'git@github.com:jhu-lcsr/cartesian_trajectory_msgs.git',
+    version: devel}
+- git: {local-name: lcsr_tf_tools, uri: 'git@github.com:jhu-lcsr/lcsr_tf_tools.git',
+    version: master}
+- git: {local-name: lcsr_telemanip, uri: 'git@github.com:jhu-lcsr/lcsr_telemanip.git',
+    version: devel}
+- git: {local-name: lcsr_camera_models, uri: 'git@github.com:jhu-lcsr/lcsr_camera_models.git',
+    version: devel}
+- git: {local-name: lcsr_robot_models, uri: 'git@github.com:jhu-lcsr/lcsr_robot_models.git',
+    version: devel}
+- git: {local-name: lcsr_barrett, uri: 'git@github.com:jhu-lcsr/lcsr_barrett.git',
+    version: devel}
+- git: {local-name: barrett_model, uri: 'git@github.com:jhu-lcsr/barrett_model.git',
+    version: devel}
+- git: {local-name: oro_barrett_msgs, uri: 'git@github.com:jhu-lcsr/orocos_barrett_msgs.git',
+    version: devel}
+- git: {local-name: orocos_barrett_utils, uri: 'git@github.com:jhu-lcsr/orocos_barrett_utils.git',
+    version: devel}
+- git: {local-name: ascent, uri: 'git@git.lcsr.jhu.edu:ascent/ascent.git', version: master}
+- git: {local-name: rtt_geometry, uri: 'git@github.com:jhu-lcsr-forks/rtt_geometry.git',
+    version: hydro-devel}
+- git: {local-name: rtt_ros_control, uri: 'git@github.com:jhu-lcsr/rtt_ros_control.git',
+    version: devel}
+- git: {local-name: conman, uri: 'git@github.com:jbohren/conman.git', version: devel}
+- git: {local-name: lcsr_controllers, uri: 'git@github.com:jhu-lcsr/lcsr_controllers.git',
+    version: devel}
+- git: {local-name: lcsr_ros_orocos_tools, uri: 'git@github.com:jhu-lcsr/lcsr_ros_orocos_tools.git',
+    version: devel}
+- git: {local-name: lcsr_rtt_components, uri: 'git@github.com:jhu-lcsr/lcsr_rtt_components.git',
+    version: master}
+- git: {local-name: orocos_barrett_components, uri: 'git@github.com:jhu-lcsr/orocos_barrett_components.git',
+    version: devel}
+- git: {local-name: moveit_core, uri: 'git@github.com:ros-planning/moveit_core.git',
+    version: indigo-devel}
+- git: {local-name: moveit_ros, uri: 'git@github.com:jhu-lcsr-forks/moveit_ros.git',
+    version: indigo-devel}
+- git: {local-name: fcl, uri: 'git@github.com:jhu-lcsr-forks/fcl.git', version: master}
+- git: {local-name: barrett_moveit, uri: 'git@github.com:jhu-lcsr/barrett_moveit.git',
+    version: devel}
+- hg: {local-name: sdformat, uri: 'ssh://hg@bitbucket.org/jbohren/sdformat', version: sdf_1.4}
+- hg: {local-name: gazebo, uri: 'ssh://hg@bitbucket.org/jbohren/gazebo', version: disable-moi-rescaling}
+- git: {local-name: gazebo_ros_pkgs, uri: 'git@github.com:jhu-lcsr-forks/gazebo_ros_pkgs.git',
+    version: hydro-devel}
+- git: {local-name: rtt_gazebo, uri: 'git@github.com:jhu-lcsr/rtt_gazebo.git', version: master}
+- git: {local-name: mvp_objrec, uri: 'git@github.com:tum-mvp/mvp_objrec.git', version: master}
+- git: {local-name: ObjRecRANSAC, uri: 'git@github.com:tum-mvp/ObjRecRANSAC.git',
+    version: master}
+- git: {local-name: realtime_urdf_filter, uri: 'git@github.com:jhu-lcsr-forks/realtime_urdf_filter.git',
+    version: devel}
+- git: {local-name: freenect_stack, uri: 'git@github.com:jhu-lcsr-forks/freenect_stack.git',
+    version: master}
+- git: {local-name: rgbd_launch, uri: 'git@github.com:jhu-lcsr-forks/rgbd_launch.git',
+    version: depth-registered-filtered}
+- git: {local-name: openni_launch, uri: 'git@github.com:jhu-lcsr-forks/openni_launch.git',
+    version: depth-registered-filtered}
+- git: {local-name: rviz, uri: 'git@github.com:jhu-lcsr-forks/rviz.git', version: stereo-fixes}
+- git: {local-name: rviz_virtual_shadow, uri: 'git@github.com:jhu-lcsr/rviz_virtual_shadow.git',
+    version: master}
+- git: {local-name: predicator, uri: 'git@git.lcsr.jhu.edu:nri/predicator.git'}
+- git: {local-name: instructor, uri: 'git@git.lcsr.jhu.edu:nri/instructor.git'}
+- git: {local-name: librarian, uri: 'git@git.lcsr.jhu.edu:nri/librarian.git'}
+- git: {local-name: beetree, uri: 'git@github.com:futureneer/beetree.git'}
+- git: {local-name: dmp, uri: 'git@github.com:cpaxton/dmp.git'}
+- git: {local-name: two_arm_collaboration, uri: 'git@git.lcsr.jhu.edu:nri/two_arm_collaboration.git'}
+- git: {local-name: geometer, uri: 'git@github.com:jbohren/geometer.git'}
+- git: {local-name: ur5, uri: 'git@github.com:amedwards/universal_robot.git'}
+- git: {local-name: dvrk-ros, uri: 'git@github.com:cpaxton/dvrk-ros.git'}
+- git: {local-name: cisst-ros, uri: 'http://github.com/jhu-cisst/cisst-ros.git'}
+- git: {local-name: germ, uri: 'git@github.com:cpaxton/germ.git'}
+- git: {local-name: grid, uri: 'git@git.lcsr.jhu.edu:cpaxton3/grid.git'}
