@@ -62,18 +62,35 @@ There is a more detailed [startup guide](docs/startup.md).
  
 For more information on how to collect data for the "block stacking" task, check out [the block stacking data collection notes](docs/collect_data.md)
 
-### Tools
+### [costar_tools](costar_tools/Readme.md)
 
-Packages used for data collection, maintaining MoveIt planning scene, and other purposes
-
-  * [Object on Table Segmenter](costar_tools/object_on_table_segmenter/README.md): Utility for dataset collection. It provides a simple process for defining regions of a scene that are table, object, robot etc and generates files according
-  * [moveit_collision_environment](costar_tools/moveit_collision_environment/README.md): Publishes a MoveIt planning scene that contains the collision object and table that is detected via TF frames defined for those objects. 
-
+- data collection with an rgbd camera
+    - [Object on Table Segmenter](costar_tools/object_on_table_segmenter/README.md): Utility for dataset collection with depth cameras. It provides a simple process for defining regions of a scene that are table, object, robot etc and generates files accordingly.
+- Locating AR Tag markers with a known shape in an image
+    - [alvar_data_collection](costar_tools/alvar_data_collection/README.md): utilities to define the black and white printed AR tags we use for [ar_track_alvar](https://github.com/ros-perception/ar_track_alvar), which define the positions and orientations of objects in space (see the video above).
 
 More minor utilities:
 
-  * [object_symmetry_republisher](costar_tools/object_symmetry_republisher/Readme.md): Takes in object information from perception (for example, sp_segmenter) and outputs poses for possible symmetries of that object.
+- making changes to robot path planning scenes with [MoveIt](https://moveit.ros.org/)
+    - [moveit_collision_environment](costar_tools/moveit_collision_environment/README.md): Publishes a [MoveIt](https://moveit.ros.org/) planning scene that contains the collision object and table that is detected via TF frames defined for those objects.
+- handling symmetrical objects
+  - [object_symmetry_republisher](costar_tools/object_symmetry_republisher/Readme.md): Takes in object information from perception (for example, sp_segmenter) and outputs poses for possible symmetries of that object.
     
+### Sister repositories
+
+These are repositories that have been integrated with costar_stack, though not necessarily required depending on your setup.
+Also see the [.travis.yml](.travis.yml) in this repository for additional repositories that have been used with costar_stack.
+
+- [github.com/jhu-lcsr-forks/universal_robot](https://github.com/jhu-lcsr-forks/universal_robot) UR5 robot model
+- [handeye_calib_camodocal](https://github.com/jhu-lcsr/handeye_calib_camodocal): Used to determine where the camera and robot base are when they are moved around.
+- https://github.com/cpaxton/iiwa_stack.git kuka iiwa robot model
+- https://github.com/ros-industrial/robotiq.git  
+- https://github.com/jhu-lcsr/ObjRecRANSAC.git  
+- https://github.com/jbohren/rqt_dot.git  
+- https://github.com/ros-perception/ar_track_alvar.git
+- https://github.com/gt-ros-pkg/hrl-kdl.git
+- https://github.com/xqms/ur_modern_driver.git --branch thread_safety
+
 
 ## Contact
 
