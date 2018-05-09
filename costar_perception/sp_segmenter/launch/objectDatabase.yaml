@@ -1,6 +1,8 @@
 # Choose the axis that needs to be consistent between runs
 # by setting preferred.
 
+# See github.com/tum-mvp/mvp_objrec for additional explanation of these settings.
+#
 # Pair width should be roughly half the extent of the visible object
 # part. This means, for each object point p there should be (at least) one
 # point q (from the same object) such that ||p - q|| <= 'pairwidth'.
@@ -58,7 +60,7 @@ wood_cube:
   z: 90.0
   preferred: "z"
   preferred_step: 90.0
-  pair_width: 0.04
+  pair_width: 0.03
 
 red_cube:
   x: 90.0
@@ -66,7 +68,7 @@ red_cube:
   z: 90.0
   preferred: "z"
   preferred_step: 90.0
-  pair_width: 0.04
+  pair_width: 0.03
 
 blue_cube:
   x: 90.0
@@ -74,7 +76,7 @@ blue_cube:
   z: 90.0
   preferred: "z"
   preferred_step: 90.0
-  pair_width: 0.04
+  pair_width: 0.03
 
 green_cube:
   x: 90.0
@@ -82,7 +84,7 @@ green_cube:
   z: 90.0
   preferred: "z"
   preferred_step: 90.0
-  pair_width: 0.04
+  pair_width: 0.03
 
 yellow_cube:
   x: 90.0
@@ -90,7 +92,7 @@ yellow_cube:
   z: 90.0
   preferred: "z"
   preferred_step: 90.0
-  pair_width: 0.04
+  pair_width: 0.03
 
 default_object_param:
 # Contains default parameter for ObjRecRANSAC
