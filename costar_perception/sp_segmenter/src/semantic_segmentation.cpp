@@ -85,7 +85,7 @@ void SemanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_dire
     bool success = checkFolderExist(path_to_shot_directory);
     if (!success)
     {
-        std::cerr << "setDirectorySHOT failed" << std::endl;
+        std::cerr << "setDirectorySHOT failed with directory: " << path_to_shot_directory << std::endl;
         this->shot_loaded_ = false;
         return;
     }
@@ -107,7 +107,7 @@ void SemanticSegmentation::setDirectoryFPFH(const std::string &path_to_fpfh_dire
     bool success = checkFolderExist(path_to_fpfh_directory);
     if (!success)
     {
-        std::cerr << "setDirectoryFPFH failed" << std::endl;
+        std::cerr << "setDirectoryFPFH failed with directory: " << path_to_fpfh_directory << std::endl;
         this->fpfh_loaded_ = false;
         return;
     }
@@ -121,8 +121,8 @@ void SemanticSegmentation::setDirectoryFPFH(const std::string &path_to_fpfh_dire
     fpfh_pooler_set.clear();
     fpfh_pooler_set.resize(2);
     fpfh_pooler_set[1] = boost::shared_ptr<Pooler_L0> (new Pooler_L0(-1));
-    fpfh_pooler_set[1]->LoadSeedsPool(fpfh_path+"dict_fpfh_L0_400.cvmat");
-    std::cerr << "Done.\n";
+    fpfh_pooler_set[1]->LoadSeedsPool(fpfh_path + "dict_fpfh_L0_400.cvmat");
+    std::cerr << "semantic_segmentation.cpp: Done.\n";
 }
 
 void SemanticSegmentation::setDirectorySIFT(const std::string &path_to_sift_directory)
@@ -130,12 +130,12 @@ void SemanticSegmentation::setDirectorySIFT(const std::string &path_to_sift_dire
     bool success = checkFolderExist(path_to_sift_directory);
     if (!success)
     {
-        std::cerr << "setDirectorySIFT failed" << std::endl;
+        std::cerr << "semantic_segmentation.cpp: setDirectorySIFT failed" << std::endl;
         this->sift_loaded_ = false;
         return;
     }
     this->sift_loaded_ = true;
-    std::cerr << "Loading SIFT...\n";
+    std::cerr << "semantic_segmentation.cpp: Loading SIFT...\n";
 
     std::string sift_path = path_to_sift_directory;
     if (sift_path.back() != '/')
@@ -178,13 +178,13 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
     bool success = checkFolderExist(path_to_svm_directory);
     if (!success)
     {
-        std::cerr << "setDirectorySVM failed" << std::endl;
+        std::cerr << "semantic_segmentation.cpp: setDirectorySVM failed" << std::endl;
         this->svm_loaded_ = false;
         return;
     }
     else if ((use_binary_svm_ || use_multi_class_svm_) == false)
     {
-        std::cerr << "Both setUseMultiClassSVM and setUseBinarySVM is false.\nsetDirectorySVM needs at least one of them to be true\n";
+        std::cerr << "semantic_segmentation.cpp: Both setUseMultiClassSVM and setUseBinarySVM is false.\nsetDirectorySVM needs at least one of them to be true\n";
         return;
     }
     this->svm_loaded_ = true;
@@ -192,7 +192,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
     binary_models_.resize(3);
     multi_models_.resize(3);
 
-    std::cerr << "Loading SVM...\n";
+    std::cerr << "semantic_segmentation.cpp: Loading SVM...\n";
     std::cerr << "Use Multi Class SVM = " << use_multi_class_svm_ << std::endl;
     std::cerr << "Use Background Foreground SVM = " << use_binary_svm_ << std::endl;
 
@@ -211,7 +211,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
             if (binary_models_[ll] == NULL)
             {
                 // null pointer exception
-                std::cerr << "Failed to load file: " << (svm_path+"binary_L"+ss.str()+"_f.model").c_str() << std::endl;
+                std::cerr << "semantic_segmentation.cpp: Failed to load file: " << (svm_path+"binary_L"+ss.str()+"_f.model").c_str() << std::endl;
                 this->svm_loaded_ = false;
             }
         }
@@ -221,7 +221,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
             if (multi_models_[ll] == NULL)
             {
                 // null pointer exception
-                std::cerr << "Failed to load file: " << (svm_path+"multi_L"+ss.str()+"_f.model").c_str() << std::endl;
+                std::cerr << "semantic_segmentation.cpp: Failed to load file: " << (svm_path+"multi_L"+ss.str()+"_f.model").c_str() << std::endl;
                 this->svm_loaded_ = false;
             }
         }
@@ -264,53 +264,53 @@ void SemanticSegmentation::loadTableFromFile(const std::string &table_pcd_path)
 {
     pcl::PCDReader reader;
     if( reader.read (table_pcd_path, *table_corner_points_) == 0){
-        std::cerr << "Table load successfully\n";
+        std::cerr << "semantic_segmentation.cpp: Table loaded successfully: " << table_pcd_path << "\n";
         this->have_table_ = true;
         this->setUseTableSegmentation(true);
     }
     else {
         this->have_table_ = false;
-        std::cerr << "Failed to load table. Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
+        std::cerr << "semantic_segmentation.cpp: Failed to load table pcd from: " << table_pcd_path <<" Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
     }
 }
 
 void SemanticSegmentation::initializeSemanticSegmentation()
 {
     if (this->svm_loaded_)
-        std::cerr << "SVM loaded\n";
+        std::cerr << "semantic_segmentation.cpp: SVM loaded\n";
     else
-        std::cerr << "Please set the SVM directory\n";
+        std::cerr << "semantic_segmentation.cpp: Please set the SVM directory\n";
 
     if (this->shot_loaded_)
         std::cerr << "SHOT loaded\n";
     else
-        std::cerr << "Please set the SHOT directory\n";
+        std::cerr << "semantic_segmentation.cpp: Please set the SHOT directory\n";
 
     if (this->compute_pose_)
     {
-        std::cerr << "Number of loaded model = " << this->number_of_cloud_models_ << std::endl;
+        std::cerr << "semantic_segmentation.cpp: Number of loaded models = " << this->number_of_cloud_models_ << std::endl;
         if (this->number_of_cloud_models_ == 0)
-            std::cerr << "No model has been loaded. Please add at least 1 model.\n";
+            std::cerr << "semantic_segmentation.cpp: No models have been loaded. Please add at least 1 model.\n";
         this->class_ready_ = this->number_of_cloud_models_ > 0;
     }
     else
         this->class_ready_ = (this->svm_loaded_ && this->shot_loaded_);
 
     if (this->class_ready_)
-        std::cerr << "Semantic segmentation has initialized properly\n";
+        std::cerr << "semantic_segmentation.cpp: Semantic segmentation has initialized properly\n";
     else
     {
-        std::cerr << "Please resolve the problems before initializing semantic segmentation.\n";
+        std::cerr << "semantic_segmentation.cpp: Please resolve the problems before initializing semantic segmentation.\n";
         return;
     }
 
     if (!use_table_segmentation_) {
-      std::cerr << "WARNING: not using table segmentation!\n";
+      std::cerr << "WARNING: semantic_segmentation.cpp not using table segmentation!\n";
     }
 
     if (this->compute_pose_)
     {
-        std::cerr << "Semantic Segmentation is running with objRecRANSACdetector: ";
+        std::cerr << "semantic_segmentation.cpp: Semantic Segmentation is running with objRecRANSACdetector: ";
         switch (objRecRANSAC_mode_)
         {
             case STANDARD_BEST:
@@ -334,8 +334,8 @@ void SemanticSegmentation::initializeSemanticSegmentation()
         lab_pooler_set[i] = cur_pooler;
     }
 
-    std::cerr << "Hier Feature Ratio = " << hier_ratio_ << std::endl;
-    std::cerr << "Hier Feature Downsample = " << pcl_downsample_ << std::endl;
+    std::cerr << "semantic_segmentation.cpp: Hier Feature Ratio = " << hier_ratio_ << std::endl;
+    std::cerr << "semantic_segmentation.cpp: Hier Feature Downsample = " << pcl_downsample_ << std::endl;
 }
 
 SemanticSegmentation::~SemanticSegmentation()
@@ -355,7 +355,7 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
 {
     if (!this->use_table_segmentation_)
     {
-        std::cerr << "use_table_segmentation is set to false. Please enable it first before trying to do table segmentation.\n";
+        std::cerr << "semantic_segmentation.cpp: use_table_segmentation is set to false. Please enable it first before trying to do table segmentation.\n";
         return false;
     }
 
@@ -379,7 +379,7 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
     table_corner_points_ = getTableConvexHull(full_cloud, viewer, table_distance_threshold_, table_angular_threshold_,table_minimal_inliers_);
 
     if (table_corner_points_->size() < 3) {
-        std::cerr << "Failed segmenting the table. Please check the input point cloud and the table segmentation parameters.\n";
+        std::cerr << "semantic_segmentation.cpp: Failed segmenting the table. Please check the input point cloud and the table segmentation parameters.\n";
         return false;
     }
     
@@ -391,14 +391,14 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
                 save_table_directory+= '/';
             pcl::PCDWriter writer;
             writer.write<PointT> (save_table_directory+"table.pcd", *table_corner_points_, true);
-            std::cerr << "Saved table point cloud in : " << save_table_directory <<"table.pcd\n";
+            std::cerr << "semantic_segmentation.cpp: Saved table point cloud in : " << save_table_directory <<"table.pcd\n";
         }
         else
         {
-            std::cerr << "Failed saving table corner pointcloud in "<< save_table_directory << std::endl;
+            std::cerr << "semantic_segmentation.cpp: Failed saving table corner pointcloud in "<< save_table_directory << std::endl;
         }
     }
-    std::cerr << "Sucessfully segment the table.\n";
+    std::cerr << "semantic_segmentation.cpp: Sucessfully segment the table.\n";
     this->have_table_ = true;
     return true;
 }
@@ -407,13 +407,13 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
 {
     if (!this->class_ready_ || !(this->svm_loaded_ && this->shot_loaded_))
     {
-        std::cerr << "Please initialize semantic segmentation first before doing point cloud segmentation\n";
+        std::cerr << "semantic_segmentation.cpp:  Please initialize semantic segmentation first before doing point cloud segmentation\n";
         return false;
     }
     
     if (input_cloud->size() < 1)
     {
-        std::cerr << "There are no points in the input cloud.\n";
+        std::cerr << "semantic_segmentation.cpp: There are no points in the input cloud.\n";
         return false;
     }
 
@@ -424,7 +424,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
       cropPointCloud(full_cloud, crop_box_target_pose_.inverse(), crop_box_size_);
 
         if (full_cloud->size() < 1){
-            std::cerr << "No cloud available after using crop box.\n";
+            std::cerr << "semantic_segmentation.cpp: No cloud available after using crop box.\n";
             return false;
         }
     }
@@ -444,7 +444,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     {
         if (!have_table_)
         {
-            std::cerr << "Error. Does not has any table data yet, but use_table_segmentation_ flag is set to true\n."; 
+            std::cerr << "semantic_segmentation.cpp: Error. Does not has any table data yet, but use_table_segmentation_ flag is set to true\n."; 
             std::cerr << "Please do table segmentation first, or disable use_table_segmentation_\n.";
             return false;
         }
@@ -454,7 +454,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
 
             if (full_cloud->size() < 1)
             {
-                std::cerr << "No cloud available after removing all object outside the table. Put some objects above the table. \n";
+                std::cerr << "semantic_segmentation.cpp: No cloud available after removing all object outside the table. Put some objects above the table. \n";
                 return false;
             }
 

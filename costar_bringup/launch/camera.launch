@@ -3,7 +3,7 @@
   <arg name="handeye_output" default="screen"/>
   <arg name="use_filtered_marker_tf" default="false" />
   <arg name="table_frame" default="table_center"/>
-  <arg name="table_ar_marker" default="ar_marker_3"/>
+  <arg name="table_ar_marker" default="ar_marker_2"/>
   <arg name="fake_table_frame" default="true"/>
   <arg name="table_center" default="0.7 0.0 0.0 0 0 0"/>
   <arg name="cart_base_link" default="base_link"/>
@@ -36,7 +36,7 @@
   <!-- publish preferred orientation -->
   <node name="preferred_orientation_publisher" type="static_transform_publisher" pkg="tf" args=" 0 0 0 0 0 -1.5708 base_link preferred_orientation 200"/>
 
-  <!-- handeye calibration -->
+  <!-- deprecated handeye calibration, see https://github.com/jhu-lcsr/handeye_calib_camodocal for the current approach -->
   <node name="handeye_calibration_server" type="calibration_server.py" pkg="simple_handeye_calibration" output="$(arg handeye_output)">
     <param name="camera_marker" value="ar_marker_0" unless="$(arg use_filtered_marker_tf)"/>
     <param name="camera_marker" value="filtered/ar_marker_0" if="$(arg use_filtered_marker_tf)"/>

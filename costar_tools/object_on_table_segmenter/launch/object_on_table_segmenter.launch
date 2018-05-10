@@ -15,10 +15,10 @@
 
   <!-- Plane segmentation arguments-->
   <!-- For explanation, check table_seg_params.launch -->
-  <arg name="load_table"               default="false" doc="Use existing table to define region that is excluded from the objects from previous run in catkin_ws/src/costar_stack/costar_tools/object_on_table_segmenter/data/table.pcd"/>
+  <arg name="load_table"               default="false" doc="Use existing table from load_table_path to define region that is excluded from the objects from previous run in catkin_ws/src/costar_stack/costar_tools/object_on_table_segmenter/data/table.pcd"/>
   <arg name="update_table"             default="true" />
-  <arg name="table_tf"                 default="ar_marker_0" doc="Frame that marks the table surface center. An example of this frame would be the TF frame of an AR tag you have placed on the table. Another could simply be the robot base frame, if that is good enough."/>
-  <arg name="use_tf_surface"           default="false" doc="Use xy-plane of the table_tf frame as the table surface"/>
+  <arg name="table_tf"                 default="table_center" doc="Frame that marks the table surface center. An example of this frame would be the TF frame of an AR tag you have placed on the table. Another could simply be the robot base frame, if that is good enough. Common choices include ar_marker_2 ar_marker_1 and table_center"/>
+  <arg name="use_tf_surface"           default="false" doc="Use xy-plane of the frame defined in the table_tf rosparam as the table surface"/>
   <arg name="use_rosbag"               default="false" />
   <arg name="above_table_min"          default="0.02" />
   <arg name="above_table_max"          default="0.5" />
@@ -57,7 +57,7 @@
 
     <param name="environment_only"           type="bool"   value="$(arg environment_only)" />
 
-    <param name="run_auto"                   type="bool"   value="$(arg auto_capture)" />
+    <param name="auto_capture_segmentation"  type="bool"   value="$(arg auto_capture)"  doc="Ask the user to collect segmentation data, or simply run periodically."/>
     <param name="time_step"                  type="double" value="$(arg time_step)" />
     <param name="num_to_capture"             type="int"    value="$(arg num_to_capture)"/>
     <param name="do_cluster"                 type="bool"   value="$(arg do_cluster)" />

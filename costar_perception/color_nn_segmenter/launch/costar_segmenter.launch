@@ -26,7 +26,7 @@
   <arg name="load_table"               default="true"/>
   <arg name="update_table"             default="true" />
   <arg name="load_table_path"          default="$(find object_on_table_segmenter)/data/table.pcd" />
-  <arg name="table_tf"                 default="ar_marker_0" />
+  <arg name="table_tf"                 default="ar_marker_2" />
   <arg name="use_tf_surface"           default="false" />
   <arg name="table_distance_threshold" default="0.01" />
   <arg name="table_angular_threshold"  default="2" />
@@ -34,7 +34,7 @@
   <arg name="use_rosbag"               default="false" />
   <arg name="above_table_min"          default="0.01" />
   <arg name="above_table_max"          default="0.5" />
-  <arg name="plane_seg_viewer"         value="false" />
+  <arg name="plane_seg_viewer"         value="false"  doc="Display the result of table plane segmentation" />
 
   <include file="$(find object_on_table_segmenter)/launch/table_seg_params.launch">
     <arg name="namespace"                value="$(arg node_namespace)" />
