@@ -1,8 +1,31 @@
 # object_on_table_segmenter (BETA)
 
-Author: Felix Jonathan (fjonath1@jhu.edu)
+Authors:
+Felix Jonathan (fjonath1@jhu.edu)
+Andrew Hundt (ahundt@jhu.ed)
 
-This ros package will perform plane segmentation and find the biggest plane found on the input point cloud to be used as a table convex hull. This table convex hull will be used in pcl ExtractPolygonalPrismData to extract objects above the table.
+object_on_table_segmenter is for saving and processing rgbd camera data such as from a kinect, primesense carmine or another sensor. It is used for:
+
+ - Collecting object datasets, particularly when image segmentation is needed
+ - Defining where objects should be considered valid or invalid in a 3D scene
+ - Finding and save the surface of a table on which a robot is sitting
+ - Saving out point clouds in .pcd format from an rgbd camera
+
+## How it works
+
+This ros package will perform plane segmentation and find the biggest plane, such as a table surface, found on the input point cloud to be used as a table convex hull. This table convex hull will be used in pcl ExtractPolygonalPrismData to extract objects above the table.
+
+The convex hull is essentially extruded to make a prism that has the bottom surface located at minAboveTable and upper surface at maxAboveTable. All points inside of the prism will be extracted as objects above the table
+
+While it doesn’t assume that the surface above the table is free of objects, having no objects above the plane helps the algorithm to get the proper biggest plane in the scene.
+
+If the operating surface has vertical sides, such as with a large bin the algorithm should work just fine as long as the bottom surface of the bin has more points than the sides.
+
+We've used this algorithm successfully on:
+
+ - flat table surfaces
+ - tables with a large plate on them
+ - in a large plastic bin with dimensions of about 1.5m x 1m x 30cm.
 
 ## Prerequisites
 
@@ -66,7 +89,7 @@ Before starting make sure your sensor has a full and accurate view of the target
 roslaunch object_on_table_segmenter object_on_table_segmenter.launch tableTF:=ar_marker_2 use_tf_surface:=true above_table_min:=0.01 object:=blue_bin load_table:=true num_to_capture:=200
 ```
 
-1. Here on the first run you put the marker on the table/turntable. 
+1. Here on the first run you put the marker on the table/turntable.
 
 ![Use the AR tag and a vertical area above it to define the object region](ar_tag_sets_plane.jpg)
 
@@ -123,7 +146,7 @@ Files are written as follows:
 
 If clustering is enabled each ground truth may have multiple entries. For example,
 if you want to collect separate data for multiple objects on the table simultaneously.
-Then the gorund truth format will be:
+Then the ground truth format will be:
 
 ```
 <date>_<name>_<entry#>_cluster_<cluster#>_ground_truth.pcd
