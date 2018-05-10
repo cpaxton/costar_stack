@@ -1,4 +1,4 @@
-# Color Nearest Neighboor Segmenter
+# Color Nearest Neighbour Segmenter
 
 Author: Felix Jonathan (fjonath1@jhu.edu)
 
