@@ -28,6 +28,7 @@ public:
 	// Update the plane if the plane data does not exist yet
 	void segmentPlaneIfNotExist(const sensor_msgs::PointCloud2 &input_cloud);
 	// Update the plane data no matter what. User of this function must ensure this class was initialized.
+	// If you aren't sure which version to use, go with segmentPlaneIfNotExist.
 	void segmentPlane(const sensor_msgs::PointCloud2 &input_cloud);
 
 	void enableSavingTableFile(){
