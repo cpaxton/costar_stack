@@ -2,6 +2,8 @@
 
 CloudXYZRGBA::Ptr PlaneSegmenter::cropBox(const CloudXYZRGBA &input_cloud, const Eigen::Affine3f &box_pose, const Eigen::Vector3f &box_size) const
 {
+	Eigen::IOFormat fmt;
+	std::cerr << "PlaneSegmenter::cropBox is being applied. box size: " << box_size.format(fmt);
 	CloudXYZRGBA::Ptr cropped_cloud(new CloudXYZRGBA());
 	pcl::CropBox<pcl::PointXYZRGBA> crop_box;
 	bool is_organized = input_cloud.isOrganized();
@@ -70,7 +72,7 @@ CloudXYZRGBA::Ptr PlaneSegmenter::generatePlaneConvexHull(const CloudXYZRGBA &in
 	unsigned int best_region_idx = 0;
 
 	if (regions.size() > 0) {
-		std::cout << "Number of possible plane regions: " << regions.size() << std::endl;
+		std::cout << "plane_segmenter.cpp: Number of possible plane regions: " << regions.size() << std::endl;
 
 		for (size_t i = 0; i < regions.size(); i++){
 			std::cout << "Region" << i <<" size: " << regions[i].getCount() << std::endl;
@@ -148,7 +150,7 @@ std::vector<CloudXYZRGBA::Ptr> PlaneSegmenter::clusterPointCloud(const CloudXYZR
 			extract.filter(*cloud_cluster);
 			result_cluster.push_back(cloud_cluster);
 
-			std::cerr << "\tCluster size: "<< euclidean_label_indices[i].indices.size() << std::endl;
+			std::cerr << "\tplane_segmenter.cpp: Cluster size: "<< euclidean_label_indices[i].indices.size() << std::endl;
 		}
 	}
 	return result_cluster;
@@ -161,10 +163,10 @@ CloudXYZRGBA::Ptr PlaneSegmenter::segmentAbovePlane(const CloudXYZRGBA &input_cl
 	CloudXYZRGBA::Ptr input_cloud_ptr = input_cloud.makeShared();
 	if (plane_convex_hull.empty())
 	{
-		std::cerr << "Error, the plane convex hull is still empty.\nReturning unsegmented input point cloud\n";
+		std::cerr << "plane_segmenter.cpp: Error, the plane convex hull is still empty.\nReturning unsegmented input point cloud\n";
 		return input_cloud_ptr;
 	}
-	std::cout << "\nSegment object above plane \n";
+	std::cout << "\nplane_segmenter.cpp: Segment object above plane \n";
 	bool is_organized = input_cloud.isOrganized();
 
 	// Prism object.
@@ -173,7 +175,7 @@ CloudXYZRGBA::Ptr PlaneSegmenter::segmentAbovePlane(const CloudXYZRGBA &input_cl
 	prism.setInputPlanarHull(plane_convex_hull.makeShared());
 
 	// from 1 cm above plane to 50 cm above plane
-	std::cerr << "Segmentation range: " << min_above_plane << " to " << max_above_plane << std::endl;
+	std::cerr << "plane_segmenter.cpp: Segmentation range: " << min_above_plane << " to " << max_above_plane << std::endl;
 	prism.setHeightLimits(min_above_plane, max_above_plane);
 	pcl::PointIndices::Ptr objectIndices(new pcl::PointIndices());
 
@@ -243,7 +245,7 @@ void PlaneSegmenter::setPlaneConvexHull(const CloudXYZRGBA &plane_convex_hull)
 {
 	if (plane_convex_hull.empty())
 	{
-		std::cerr << "Error, the input convex hull is empty.\n";
+		std::cerr << "plane_segmenter.cpp: Error, the input convex hull is empty.\n";
 		this->ready = false;
 		return;
 	}

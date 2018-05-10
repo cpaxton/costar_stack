@@ -407,22 +407,22 @@ void RosSemanticSegmentation::updateCloudData (const sensor_msgs::PointCloud2 &p
         nh.param("tableTF", tableTFname,std::string("/tableTF"));
         
         tableTFparent = pc.header.frame_id;
-        ROS_INFO("Looking for Table frame [%s] with parent frame [%s]",(tableTFname.c_str(), tableTFparent.c_str()));
+        ROS_INFO("ros_semantic_segmentation.cpp: Looking for Table frame [%s] with parent frame [%s]",(tableTFname.c_str(), tableTFparent.c_str()));
         if (listener->frameExists(tableTFname) &&
             listener->waitForTransform(tableTFparent,tableTFname,ros::Time::now(),ros::Duration(1.5)))
         {
-            ROS_INFO("Table frame found");
+            ROS_INFO("ros_semantic_segmentation.cpp: Table frame found");
             listener->lookupTransform(tableTFparent,tableTFname,ros::Time(0),table_transform);
             tf::transformTFToEigen(table_transform, this->crop_box_pose_table_);
             Eigen::Quaterniond q(this->crop_box_pose_table_.rotation());
             Eigen::Vector3d t(this->crop_box_pose_table_.translation());
-            printf("Q: %f %f %f %f\tT: %f %f %f\n", q.w(), q.x(), q.y(), q.z(), t.x(), t.y(), t.z());
+            ROS_INFO("ros_semantic_segmentation.cpp: crop box table frame Q: %f %f %f %f\tT: %f %f %f\n", q.w(), q.x(), q.y(), q.z(), t.x(), t.y(), t.z());
             this->has_crop_box_pose_table_ = true;
             this->setUseCropBox(true);
-            ROS_INFO("Crop Box activated");
+            ROS_INFO("ros_semantic_segmentation.cpp: Crop Box activated");
         }
         else
-            ROS_INFO("Fail to find table frame.");
+            ROS_INFO("ros_semantic_segmentation.cpp: Failed to find table frame.");
     }
 
     if (this->use_table_segmentation_)
@@ -558,12 +558,12 @@ pcl::PointCloud<PointT>::Ptr MedianPointCloud(const std::vector<pcl::PointCloud<
 bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     if (!this->class_ready_) {
-        ROS_ERROR("Class is not ready!");
+        ROS_ERROR("ros_semantic_segmentation.cpp: Class is not ready!");
         return false;
     }
     else if (this->need_preferred_tf_)
     {
-        ROS_ERROR("Does not have preferred frame yet. Cannot do semantic segmentation.");
+        ROS_ERROR("ros_semantic_segmentation.cpp: Does not have preferred frame yet. Cannot do semantic segmentation.");
         return false;
     }
     // Service call will run SPSegmenter
@@ -575,16 +575,16 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
     }
     else if(cloud_ready == true )
     {
-        ROS_INFO("Averaging point clouds");
+        ROS_INFO("ros_semantic_segmentation.cpp: Averaging point clouds");
         full_cloud = MedianPointCloud(cloud_vec);
-        ROS_INFO("Averaging point clouds Done");
+        ROS_INFO("ros_semantic_segmentation.cpp: Averaging point clouds Done");
     }
     else
     {
-        ROS_INFO("Need to accumulate more frames!");
+        ROS_INFO("ros_semantic_segmentation.cpp: Need to accumulate more frames!");
         return false;
     }
-    ROS_INFO("Segmenting object...");
+    ROS_INFO("ros_semantic_segmentation.cpp: Segmenting object...");
     this->setCropBoxSize(crop_box_size);
     this->setCropBoxPose(crop_box_pose_table_);
     
@@ -656,7 +656,7 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
         toROSMsg(*segmented_cloud,output_msg);
         output_msg.header.frame_id = inputCloud.header.frame_id;
         pc_pub.publish(output_msg);
-        ROS_INFO("Segmentation Done.");
+        ROS_INFO("ros_semantic_segmentation.cpp: Segmentation Done.");
         return true;
     }
     else return false;
@@ -667,15 +667,15 @@ bool RosSemanticSegmentation::serviceCallback (std_srvs::Empty::Request& request
 bool RosSemanticSegmentation::serviceCallbackGripper (sp_segmenter::SegmentInGripper::Request & request, sp_segmenter::SegmentInGripper::Response& response)
 {
     if (!this->class_ready_) {
-        ROS_ERROR("Class is not ready!");
+        ROS_ERROR("ros_semantic_segmentation.cpp: Class is not ready!");
         return false;
     }
     else if (this->need_preferred_tf_)
     {
-        ROS_ERROR("Does not have preferred frame yet. Cannot do semantic segmentation.");
+        ROS_ERROR("ros_semantic_segmentation.cpp: Does not have preferred frame yet. Cannot do semantic segmentation.");
         return false;
     }
-    ROS_INFO("Segmenting object on gripper...");
+    ROS_INFO("ros_semantic_segmentation.cpp: Segmenting object on gripper...");
     int objRecRANSAC_mode_original = this->objRecRANSAC_mode_;
     // Use the detector for objects in the gripper
     std::string objRecRANSACdetector;
