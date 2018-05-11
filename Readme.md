@@ -73,6 +73,7 @@ More minor utilities:
 
 - making changes to robot path planning scenes with [MoveIt](https://moveit.ros.org/)
     - [moveit_collision_environment](costar_tools/moveit_collision_environment/README.md): Publishes a [MoveIt](https://moveit.ros.org/) planning scene that contains the collision object and table that is detected via TF frames defined for those objects.
+    - To visualize the current configuration run `roslaunch ur5_moveit_config moveit_rviz.launch`
 - handling symmetrical objects
   - [object_symmetry_republisher](costar_tools/object_symmetry_republisher/Readme.md): Takes in object information from perception (for example, sp_segmenter) and outputs poses for possible symmetries of that object.
     
