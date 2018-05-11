@@ -22,10 +22,14 @@
     <param name="update_table"               type="bool"   value="$(arg update_table)" />
     <param name="load_table_path"            type="str"    value="$(arg load_table_path)" />
     <param name="table_tf"                   type="str"    value="$(arg table_tf)"/>
-    <param name="table_crop_box_x"           type="double" value="0.5" doc="The x axis distance in meters from the table frame to which the table box should be cropped to, total dimeinsion will be twice this value."/>
-    <param name="table_crop_box_y"           type="double" value="0.5" doc="The y axis distance in meters from the table frame to which the table box should be cropped to, total dimeinsion will be twice this value." />
-    <param name="table_crop_box_z"           type="double" value="0.5" doc="The z size in meters of the region around which the table box should be defined and cropped to." />
-    <param name="tf_frame_based_table_hull_size" type="double" value="0.5" doc="Size in meters from which the table hull will be determined based on the tf frame defined in the table_tf rosparam." />
+    <!-- The x axis distance in meters from the table frame to which the table box should be cropped to, total dimeinsion will be twice this value. -->
+    <param name="table_crop_box_x"           type="double" value="0.5"/>
+    <!--The y axis distance in meters from the table frame to which the table box should be cropped to, total dimeinsion will be twice this value.-->
+    <param name="table_crop_box_y"           type="double" value="1.5" />
+    <!--The z size in meters of the region around which the table box should be defined and cropped to.-->
+    <param name="table_crop_box_z"           type="double" value="0.5" />
+    <!-- Size in meters from which the table hull will be determined based on the tf frame defined in the table_tf rosparam -->
+    <param name="tf_frame_based_table_hull_size" type="double" value="1.5" />
 
     <!-- Organized multiplane segmentation parameters. -->
     <!-- See http://docs.pointclouds.org/1.7.0/classpcl_1_1_organized_multi_plane_segmentation.html -->
