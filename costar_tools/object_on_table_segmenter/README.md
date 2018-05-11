@@ -27,6 +27,10 @@ We've used this algorithm successfully on:
  - tables with a large plate on them
  - in a large plastic bin with dimensions of about 1.5m x 1m x 30cm.
 
+A pcd can be saved which contains the convex hull of the table. 
+So if we use loadTable, it will just load the saved pcd as the convex hull to segment the objects on table. 
+Otherwise. It will try to get the table convex hull first before segmenting the objects.
+
 ## Prerequisites
 
 To run this code you need:
