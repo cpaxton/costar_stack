@@ -56,6 +56,7 @@ add_service_files(
   LookupJointStates.srv
   GetList.srv
   Object.srv
+  ForwardKinematics.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

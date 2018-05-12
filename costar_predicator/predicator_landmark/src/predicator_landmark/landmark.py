@@ -90,7 +90,11 @@ class GetWaypointsService:
 
         res = self.and_srv([type_predicate]+predicates)
 
-        print "Found matches: " + str(res.matching)
+        if len(res.matching) == 0:
+            rospy.logerr("Failed to find any matching objects!")
+            return None
+        else:
+            rospy.loginfo("Predicator found matches: " + str(res.matching))
         #print res
 
         if (not res.found) or len(res.matching) < 1:

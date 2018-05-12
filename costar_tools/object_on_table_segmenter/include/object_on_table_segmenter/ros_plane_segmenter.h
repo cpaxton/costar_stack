@@ -27,6 +27,17 @@ public:
 
 	// Update the plane if the plane data does not exist yet
 	void segmentPlaneIfNotExist(const sensor_msgs::PointCloud2 &input_cloud);
+	// Update the plane data no matter what. User of this function must ensure this class was initialized.
+	// If you aren't sure which version to use, go with segmentPlaneIfNotExist.
+	void segmentPlane(const sensor_msgs::PointCloud2 &input_cloud);
+
+	void enableSavingTableFile(){
+		update_table_ = true;
+	}
+
+	void disableSavingTableFile(){
+		update_table_ = false;
+	}
 
 private:
 	bool initialized_;
@@ -38,6 +49,8 @@ private:
 	pcl::PCDReader reader_;
 	tf::TransformListener * listener_;
 	bool use_tf_surface_;
+	Eigen::Vector3f crop_box_size_;
+	double tf_table_hull_size_;
 };
 
 #endif

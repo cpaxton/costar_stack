@@ -28,14 +28,15 @@
 #include "object_on_table_segmenter/ros_plane_segmenter.h"
 
 
-std::string points_in;
+std::string input_point_cloud_topic;
 std::string save_directory, object_name, original_directory, ground_truth_directory;
 int cloud_save_index;
 ros::Subscriber pc_sub;
 pcl::PCDWriter writer;
 double time_step;
 bool keypress = false;
-bool run_auto;
+int key_value = 0;
+bool auto_capture_segmentation;
 int num_to_capture = 0;
 bool do_cluster;
 
@@ -100,11 +101,20 @@ void callback(const sensor_msgs::PointCloud2 &pc)
   if (segmenter.ready and keypress)
   {
     pcl::fromROSMsg(pc, *cloud);
-    cloud_save_index++;
-    saveCloud(*cloud,original_directory,"_original");
-    cloud = segmenter.segmentAbovePlane(*cloud);
-    if (do_cluster) cloud_segmenter_and_save(cloud);
-  	else saveCloud(*cloud,ground_truth_directory,"_ground_truth");
+    if(key_value == 't'){
+      // force update the table plane surface segmentation
+      segmenter.enableSavingTableFile();
+      segmenter.segmentPlane(pc);
+      
+    } else {
+      // get the object segmented from above the table surface
+      cloud_save_index++;
+      saveCloud(*cloud,original_directory,"_original");
+      cloud = segmenter.segmentAbovePlane(*cloud);
+      if (do_cluster) cloud_segmenter_and_save(cloud);
+      else saveCloud(*cloud,ground_truth_directory,"_ground_truth");
+
+    }
   }
   else
   {
@@ -113,13 +123,15 @@ void callback(const sensor_msgs::PointCloud2 &pc)
     if (segmenter.ready)
     {
       std::cerr << "Add new object to the table \n";
-      std::cerr << "Press 's' key to do object on table segmentation \n";
-      std::cerr << "Press 'q' key to exit \n";
+      std::cerr << "Press 's' key to do object on table segmentation. \n";
+      std::cerr << "Press 't' key to update the table itself and overwrite the table file. \n";
+      std::cerr << "Press 'q' key to exit. \n";
     }
     else
     {
-      std::cerr << "Fail perfoming plane segmentation.\n";
+      std::cerr << "Failed to perform plane segmentation.\n";
       std::cerr << "Press the 's' key to retry.\n";
+      std::cerr << "Press the 'q' key to exit.\n";
     }
   }
 }
@@ -141,7 +153,7 @@ int main (int argc, char** argv)
   ros::NodeHandle nh("~");
   
   //getting subscriber parameters
-  nh.param("points_in", points_in,std::string("/camera/depth_registered/points"));
+  nh.param("input_point_cloud_topic", input_point_cloud_topic,std::string("/camera/depth_registered/points"));
 
   //getting save parameters
   nh.param("save_directory",save_directory,std::string("./"));
@@ -152,7 +164,7 @@ int main (int argc, char** argv)
   nh.param("num_to_capture",num_to_capture,200);
 
   nh.param("time_step",time_step,0.1);
-  nh.param("run_auto",run_auto,false);
+  nh.param("auto_capture_segmentation",auto_capture_segmentation,false);
   
   nh.param("do_cluster",do_cluster,true);
 
@@ -167,7 +179,7 @@ int main (int argc, char** argv)
 
   if (just_capture_environment)
   { 
-    pc_sub = nh.subscribe(points_in,1,callbackCaptureEnvironment);
+    pc_sub = nh.subscribe(input_point_cloud_topic,1,callbackCaptureEnvironment);
     ros::Rate r(1);
     while (ros::ok()){
       r.sleep();
@@ -176,25 +188,31 @@ int main (int argc, char** argv)
   }
   else
   {
-    pc_sub = nh.subscribe(points_in,1,callback);
+    pc_sub = nh.subscribe(input_point_cloud_topic,1,callback);
     if (!segmenter.ready)
-      std::cerr << "1) Remove all object from the table\n2) make sure the AR tag you specified is visible\n3) press the 's' key to save the segmentation plane." << std::endl;
+      std::cerr << "1) Remove all objects from the table\n2) make sure the AR tag you specified is visible\n3) press the 's' key to save the segmentation plane, or 't' to create and save a new table segmentation." << std::endl;
     else
     {
       std::cerr << "Press 'q' key to exit \n";
-      std::cerr << "Press 's' key to start object on table segmentation \n";
+      std::cerr << "Press 's' key to start object on table segmentation, or 't' to segment the table itself \n";
     }
 
     ros::Rate r(10); // 10 hz
     int key = 0;
 
-    if (not run_auto) {
+    if (not auto_capture_segmentation) {
       keypress = true;
       while (ros::ok())
       {
         key = getch();
-        if ((key == 's') || (key == 'S'))
+        if ((key == 's') || (key == 'S')){
+          key_value = 's';
           ros::spinOnce();
+        }
+        else if ((key == 't') || (key == 'T')){
+          key_value = 't';
+          ros::spinOnce();
+        }
         else if ((key == 'q') || (key == 'Q'))
           break;
         r.sleep();

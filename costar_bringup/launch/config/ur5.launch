@@ -5,7 +5,14 @@
   <!-- Smartmove params -->
   <group ns="costar">
     <group ns="robot">
-      <rosparam param="home">[0.30, -1.33, -1.80, -0.27, 1.50, 1.60]</rosparam>
+      <rosparam param="home">[-0.202, -0.980, -1.800, -0.278, 1.460, 1.613]</rosparam>
+      <!-- 2018-04-30 new  home under consideration: [-0.202, -0.980, -1.800, -0.278, 1.460, 1.613]
+          To try the last joint off by 90 degrees set joint six to 0.0422.
+          home was formerly: [0.30, -1.33, -1.80, -0.27, 1.50, 1.60]
+           and it has been updated to keep the arm out of the camera frame.
+           Feel free to remove this comment if a sufficient amout of time has
+           passed without any issues.
+       -->
       <rosparam param="dof">6</rosparam>
       <rosparam param="base_link">base_link</rosparam>
       <rosparam param="end_link">ee_link</rosparam>

@@ -84,7 +84,7 @@ pcl::PointCloud<pcl::PointXYZRGBA> convertPointCloudLabelToRChannel(const PointC
 
     for (std::map<std::size_t, std::size_t>::const_iterator it = label_counter.begin(); it!= label_counter.end(); ++it)
     {
-    	std::cerr << "Number of points in label: " << it->first << " = " << it->second << std::endl; 
+    	std::cerr << "color_nn_segmenter/main.cpp: Number of points in label: " << it->first << " = " << it->second << std::endl; 
     }
     return result;
 }
@@ -106,7 +106,7 @@ bool colorSegmenter(std_srvs::Empty::Request& request, std_srvs::Empty::Response
 
 	if (use_table)
 	{
-		ROS_INFO("Removing background with plane segmentation.");
+		ROS_INFO("color_nn_segmenter/main.cpp: Removing background with plane segmentation.");
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZRGBA>());
 		fromROSMsg(cached_cloud,*filtered_cloud);
 		filtered_cloud = plane_segmenter.segmentAbovePlane(*filtered_cloud);
@@ -116,7 +116,7 @@ bool colorSegmenter(std_srvs::Empty::Request& request, std_srvs::Empty::Response
 	{
 		fromROSMsg(cached_cloud,*input_cloud);
 	}
-	ROS_INFO("Performing color based segmentation.");
+	ROS_INFO("color_nn_segmenter/main.cpp: Performing color based segmentation.");
 
 	// std::cerr << "Input cloud size: " << input_cloud->size() << std::endl;
 	PointCloudXYZL::Ptr seg_cloud = color_based_segmenter.segment(*input_cloud);
@@ -142,7 +142,7 @@ bool colorSegmenter(std_srvs::Empty::Request& request, std_srvs::Empty::Response
 
 	pc_vis_pub.publish(output_msg2);
 	seg_done.publish(std_msgs::Empty());
-	ROS_INFO("Done.");
+	ROS_INFO("color_nn_segmenter/main.cpp: Done.");
 	return true;
 }
 
@@ -167,12 +167,12 @@ int main(int argc, char* argv[])
 
 		if (!color_based_segmenter.loadModel(p.string()))
 		{
-			ROS_ERROR("Fail to load the color model.");
+			ROS_ERROR("color_nn_segmenter/main.cpp: Failed to load the color model.");
 			return -1;
 		}
 		else
 		{
-			ROS_INFO("Successfully load the color model.");
+			ROS_INFO("color_nn_segmenter/main.cpp: Successfully loaded the color model.");
 		}
 	}
 	else
@@ -183,14 +183,14 @@ int main(int argc, char* argv[])
 		nh.param("training_data_directory",training_data_directory,std::string(""));
 		nh.param("kmeans_point_per_model",kmeans_point_per_model,5);
 		
-		ROS_INFO("Generating a new color model");
+		ROS_INFO("color_nn_segmenter/main.cpp: Generating a new color model");
 		if (!color_based_segmenter.trainModel(training_data_directory, kmeans_point_per_model))
 		{
-			ROS_ERROR("Fail to generate a new color model.");
+			ROS_ERROR("color_nn_segmenter/main.cpp: Fail to generate a new color model.");
 			return -1;
 		}
 
-		ROS_INFO("New color model generated");
+		ROS_INFO("color_nn_segmenter/main.cpp: New color model generated");
 
 		bool save_new_model;
 		nh.param("save_new_model",save_new_model,true);
@@ -201,16 +201,16 @@ int main(int argc, char* argv[])
 			
 			if (color_based_segmenter.saveModel(save_directory,model_name))
 			{
-				ROS_INFO("New color model saved");	
+				ROS_INFO("color_nn_segmenter/main.cpp: New color model saved");	
 			}
 			else
 			{
-				ROS_WARN("Fail to save the new color model");
+				ROS_WARN("color_nn_segmenter/main.cpp: Fail to save the new color model");
 			}
 		}
 		else
 		{
-			ROS_INFO("Skipped saving the new color model");
+			ROS_INFO("color_nn_segmenter/main.cpp: Skipped saving the new color model");
 		}
 	}
 
