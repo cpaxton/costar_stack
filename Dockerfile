@@ -28,3 +28,7 @@ RUN source /ros_entrypoint.sh \
 	&& cd $CATKIN_WS/src \
 	&& rosdep install -y --from-paths ./ --ignore-src --rosdistro indigo
 
+RUN source /ros_entrypoint.sh \
+	&& cd $CATKIN_WS \
+	&& catkin build
+	
