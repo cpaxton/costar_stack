@@ -100,3 +100,5 @@ CoSTAR is maintained by Chris Paxton (cpaxton@jhu.edu).
 Other core contributors include:
   * Felix Jonathan
   * Andrew Hundt
+
+## Run in Docker
