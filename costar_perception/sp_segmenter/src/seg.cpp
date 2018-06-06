@@ -25,8 +25,14 @@ void splitCloud(pcl::PointCloud<PointLT>::Ptr cloud, std::vector< pcl::PointClou
         
         //std::cerr << it->rgba << " ";
         if( it->label >= cloud_set.size() )
-            exit(0);
-        cloud_set[it->label]->push_back(tmp);
+        {
+            while (it->label >= cloud_set.size())
+            {
+                pcl::PointCloud<myPointXYZ>::Ptr new_cloud(new pcl::PointCloud<myPointXYZ>());
+                cloud_set.push_back(new_cloud);
+            }
+        }
+        cloud_set[it->label]->points.push_back(tmp);
     }
 }
 

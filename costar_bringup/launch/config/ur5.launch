@@ -1,17 +1,29 @@
 <launch>
+  <arg name="use_scene_parsing_pose" />
+  <arg name="use_external_segmenter" />
+
   <!-- Smartmove params -->
   <group ns="costar">
     <group ns="robot">
-      <rosparam param="home">[0.30, -1.33, -1.80, -0.27, 1.50, 1.60]</rosparam>
-      <rosparam param = "dof">6</rosparam>
-      <rosparam param = "base_link">base_link</rosparam>
-      <rosparam param = "end_link">ee_link</rosparam>
-      <rosparam param = "planning_group">manipulator</rosparam>
-      <rosparam param = "joint_weights">[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]</rosparam>
-      <rosparam param = "translation_weight">1.0</rosparam>
-      <rosparam param = "rotation_weight">1.0</rosparam>
-      <rosparam param = "has_planning_scene">true</rosparam>
-      <rosparam param = "has_gripper">true</rosparam>
+      <rosparam param="home">[-0.202, -0.980, -1.800, -0.278, 1.460, 1.613]</rosparam>
+      <!-- 2018-04-30 new  home under consideration: [-0.202, -0.980, -1.800, -0.278, 1.460, 1.613]
+          To try the last joint off by 90 degrees set joint six to 0.0422.
+          home was formerly: [0.30, -1.33, -1.80, -0.27, 1.50, 1.60]
+           and it has been updated to keep the arm out of the camera frame.
+           Feel free to remove this comment if a sufficient amout of time has
+           passed without any issues.
+       -->
+      <rosparam param="dof">6</rosparam>
+      <rosparam param="base_link">base_link</rosparam>
+      <rosparam param="end_link">ee_link</rosparam>
+      <rosparam param="planning_group">manipulator</rosparam>
+      <rosparam param="joint_weights">[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]</rosparam>
+      <rosparam param="translation_weight">1.0</rosparam>
+      <rosparam param="rotation_weight">1.0</rosparam>
+      <rosparam param="has_planning_scene">true</rosparam>
+      <rosparam param="has_gripper">true</rosparam>
+      <rosparam param="table_frame">table_center</rosparam>
+
     </group>
     <group ns="smartmove">
       <rosparam param="available_objects">
@@ -20,6 +32,11 @@
         - link_uniform
         - drill
         - table
+        - wood_cube
+        - red_cube
+        - green_cube
+        - blue_cube
+        - yellow_cube
       </rosparam>
       <rosparam param="regions">
         - in_back_of
@@ -29,6 +46,7 @@
         - up_from
         - down_from
       </rosparam>
+      <rosparam param="N_stack">4</rosparam>
       <!-- Unused reference
           - ar_marker_0
           - ar_marker_1
@@ -38,7 +56,24 @@
       -->
       <rosparam param="references">
         - world
+        - table_center
       </rosparam>
+
+      <group if="$(arg use_scene_parsing_pose)">
+        <rosparam param="scene_parsing_pose">true</rosparam>
+      </group>
+      <group unless="$(arg use_scene_parsing_pose)">
+        <rosparam param="scene_parsing_pose">false</rosparam>
+      </group>
+
+      <group if="$(arg use_external_segmenter)">
+        <rosparam param="sp_segmenter_namespace">/costar_sp_segmenter</rosparam>
+      </group>
+      <group unless="$(arg use_external_segmenter)">
+        <rosparam param="sp_segmenter_namespace">/costar_perception</rosparam>
+      </group>
+      
+      <rosparam param="scene_parsing_namespace">/sequential_scene_parsing</rosparam>
     </group>
   </group>
 </launch>

@@ -48,21 +48,6 @@ class NodeKnowledgeTestGUI(NodeGUI):
 
         ### Git initial list of targets ###
         rospy.loginfo('Waiting for service...')
-        try:
-            rospy.wait_for_service('/predicator/get_possible_assignment',2)
-            rospy.loginfo('FOUND')
-        except:
-            rospy.logerr('Could not find service')
-        try:
-            proxy = rospy.ServiceProxy('predicator/get_possible_assignment', srv.GetTypedList)
-            
-            rospy.loginfo('Found TARGETS:')
-            self.found_assignments = proxy().data
-            rospy.loginfo(self.found_assignments)
-            for a in self.found_assignments:
-                self.ui.target_box.addItem(str(a).upper())
-        except rospy.ServiceException, e:
-            print e
 
         # Finish
         self.reset()
@@ -76,7 +61,34 @@ class NodeKnowledgeTestGUI(NodeGUI):
         self.ui.statement_label.hide()
         self.ui.value_box.setCurrentIndex(0)
         self.ui.knowledge_box.setCurrentIndex(0)
+        self.refresh_data()
         self.ui.target_box.setCurrentIndex(0)
+
+    def refresh_data(self):
+        try:
+            rospy.wait_for_service('/predicator/get_possible_assignment',2)
+            rospy.loginfo('FOUND')
+        except:
+            rospy.logerr('Could not find service')
+        try:
+            proxy = rospy.ServiceProxy('predicator/get_possible_assignment', srv.GetTypedList)
+
+            rospy.loginfo('Found TARGETS:')
+            self.found_assignments = proxy().data
+            rospy.loginfo(self.found_assignments)
+            
+            self.ui.target_box.clear();
+            list_of_items = []
+            for a in self.found_assignments:
+                # self.ui.target_box.addItem(str(a).upper())
+                list_of_items.append(str(a).upper())
+            
+            list_of_items.sort()
+            for item in list_of_items:
+                self.ui.target_box.addItem(item)
+
+        except rospy.ServiceException, e:
+            print e
 
     def reset_knowledge(self):
         self.ui.knowledge_box.clear()
@@ -98,6 +110,10 @@ class NodeKnowledgeTestGUI(NodeGUI):
         obj = str(self.ui.target_box.itemText(index)).lower()
         rospy.loginfo('Selected object ['+str(obj)+']')
         self.selected_target = str(obj)
+        # self.refresh_data()
+        # idx = self.ui.target_box.findText(self.selected_target)
+        # self.ui.target_box.setCurrentIndex(idx)
+
         self.reset_knowledge()
         self.ui.knowledge_box.show()
         self.ui.knowledge_label.show()

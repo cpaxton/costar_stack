@@ -20,7 +20,7 @@ void ModelObjRecRANSACParameter::setSceneVisibility(const double &scene_visibili
     this->scene_visibility_ = scene_visibility;
 }
 
-ostream& operator<<(ostream& os, const objectTransformInformation &tf_info)
+ostream& operator<<(ostream& os, const ObjectTransformInformation &tf_info)
 {
     os << "Found object: " << tf_info.model_name_ << " with ID: " << tf_info.transform_name_ 
         << ".\nObjRecRANSAC Confidence: " << tf_info.confidence_ 
@@ -30,7 +30,7 @@ ostream& operator<<(ostream& os, const objectTransformInformation &tf_info)
     return os;
 }
 
-bool objectTransformInformation::operator==(const objectTransformInformation& other) const
+bool ObjectTransformInformation::operator==(const ObjectTransformInformation& other) const
 {
     return this->transform_name_ == other.transform_name_
         && this->model_name_ == other.model_name_
@@ -41,7 +41,7 @@ bool objectTransformInformation::operator==(const objectTransformInformation& ot
 }
 
 SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_flag_(false), use_crop_box_(false), 
-    use_binary_svm_(true), use_multi_class_svm_(false), number_of_added_models_(0), use_table_segmentation_(false), 
+    use_binary_svm_(true), use_multi_class_svm_(false), number_of_cloud_models_(0), use_table_segmentation_(false), 
     pcl_downsample_(0.003), hier_ratio_(0.1), compute_pose_(false), use_combined_objRecRANSAC_(false), use_cuda_(false),
     use_shot_(true), use_fpfh_(false), use_sift_(false)
 {
@@ -74,6 +74,10 @@ SemanticSegmentation::SemanticSegmentation() : class_ready_(false), visualizer_f
     this->table_distance_threshold_ = 0.02;
     this->table_angular_threshold_ =  2.0;
     this->table_minimal_inliers_ =  5000;
+
+#ifdef USE_OBJRECRANSAC
+    this->use_external_segmentation_ = false;
+#endif
 }
 
 void SemanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_directory)
@@ -81,7 +85,7 @@ void SemanticSegmentation::setDirectorySHOT(const std::string &path_to_shot_dire
     bool success = checkFolderExist(path_to_shot_directory);
     if (!success)
     {
-        std::cerr << "setDirectorySHOT failed" << std::endl;
+        std::cerr << "setDirectorySHOT failed with directory: " << path_to_shot_directory << std::endl;
         this->shot_loaded_ = false;
         return;
     }
@@ -103,7 +107,7 @@ void SemanticSegmentation::setDirectoryFPFH(const std::string &path_to_fpfh_dire
     bool success = checkFolderExist(path_to_fpfh_directory);
     if (!success)
     {
-        std::cerr << "setDirectoryFPFH failed" << std::endl;
+        std::cerr << "setDirectoryFPFH failed with directory: " << path_to_fpfh_directory << std::endl;
         this->fpfh_loaded_ = false;
         return;
     }
@@ -117,8 +121,8 @@ void SemanticSegmentation::setDirectoryFPFH(const std::string &path_to_fpfh_dire
     fpfh_pooler_set.clear();
     fpfh_pooler_set.resize(2);
     fpfh_pooler_set[1] = boost::shared_ptr<Pooler_L0> (new Pooler_L0(-1));
-    fpfh_pooler_set[1]->LoadSeedsPool(fpfh_path+"dict_fpfh_L0_400.cvmat");
-    std::cerr << "Done.\n";
+    fpfh_pooler_set[1]->LoadSeedsPool(fpfh_path + "dict_fpfh_L0_400.cvmat");
+    std::cerr << "semantic_segmentation.cpp: Done.\n";
 }
 
 void SemanticSegmentation::setDirectorySIFT(const std::string &path_to_sift_directory)
@@ -126,12 +130,12 @@ void SemanticSegmentation::setDirectorySIFT(const std::string &path_to_sift_dire
     bool success = checkFolderExist(path_to_sift_directory);
     if (!success)
     {
-        std::cerr << "setDirectorySIFT failed" << std::endl;
+        std::cerr << "semantic_segmentation.cpp: setDirectorySIFT failed" << std::endl;
         this->sift_loaded_ = false;
         return;
     }
     this->sift_loaded_ = true;
-    std::cerr << "Loading SIFT...\n";
+    std::cerr << "semantic_segmentation.cpp: Loading SIFT...\n";
 
     std::string sift_path = path_to_sift_directory;
     if (sift_path.back() != '/')
@@ -174,13 +178,13 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
     bool success = checkFolderExist(path_to_svm_directory);
     if (!success)
     {
-        std::cerr << "setDirectorySVM failed" << std::endl;
+        std::cerr << "semantic_segmentation.cpp: setDirectorySVM failed" << std::endl;
         this->svm_loaded_ = false;
         return;
     }
     else if ((use_binary_svm_ || use_multi_class_svm_) == false)
     {
-        std::cerr << "Both setUseMultiClassSVM and setUseBinarySVM is false.\nsetDirectorySVM needs at least one of them to be true\n";
+        std::cerr << "semantic_segmentation.cpp: Both setUseMultiClassSVM and setUseBinarySVM is false.\nsetDirectorySVM needs at least one of them to be true\n";
         return;
     }
     this->svm_loaded_ = true;
@@ -188,7 +192,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
     binary_models_.resize(3);
     multi_models_.resize(3);
 
-    std::cerr << "Loading SVM...\n";
+    std::cerr << "semantic_segmentation.cpp: Loading SVM...\n";
     std::cerr << "Use Multi Class SVM = " << use_multi_class_svm_ << std::endl;
     std::cerr << "Use Background Foreground SVM = " << use_binary_svm_ << std::endl;
 
@@ -207,7 +211,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
             if (binary_models_[ll] == NULL)
             {
                 // null pointer exception
-                std::cerr << "Failed to load file: " << (svm_path+"binary_L"+ss.str()+"_f.model").c_str() << std::endl;
+                std::cerr << "semantic_segmentation.cpp: Failed to load file: " << (svm_path+"binary_L"+ss.str()+"_f.model").c_str() << std::endl;
                 this->svm_loaded_ = false;
             }
         }
@@ -217,7 +221,7 @@ void SemanticSegmentation::setDirectorySVM(const std::string &path_to_svm_direct
             if (multi_models_[ll] == NULL)
             {
                 // null pointer exception
-                std::cerr << "Failed to load file: " << (svm_path+"multi_L"+ss.str()+"_f.model").c_str() << std::endl;
+                std::cerr << "semantic_segmentation.cpp: Failed to load file: " << (svm_path+"multi_L"+ss.str()+"_f.model").c_str() << std::endl;
                 this->svm_loaded_ = false;
             }
         }
@@ -260,53 +264,53 @@ void SemanticSegmentation::loadTableFromFile(const std::string &table_pcd_path)
 {
     pcl::PCDReader reader;
     if( reader.read (table_pcd_path, *table_corner_points_) == 0){
-        std::cerr << "Table load successfully\n";
+        std::cerr << "semantic_segmentation.cpp: Table loaded successfully: " << table_pcd_path << "\n";
         this->have_table_ = true;
         this->setUseTableSegmentation(true);
     }
     else {
         this->have_table_ = false;
-        std::cerr << "Failed to load table. Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
+        std::cerr << "semantic_segmentation.cpp: Failed to load table pcd from: " << table_pcd_path <<" Remove all objects, put the ar_tag marker in the center of the table and it will get anew table data\n";
     }
 }
 
 void SemanticSegmentation::initializeSemanticSegmentation()
 {
     if (this->svm_loaded_)
-        std::cerr << "SVM loaded\n";
+        std::cerr << "semantic_segmentation.cpp: SVM loaded\n";
     else
-        std::cerr << "Please set the SVM directory\n";
+        std::cerr << "semantic_segmentation.cpp: Please set the SVM directory\n";
 
     if (this->shot_loaded_)
         std::cerr << "SHOT loaded\n";
     else
-        std::cerr << "Please set the SHOT directory\n";
+        std::cerr << "semantic_segmentation.cpp: Please set the SHOT directory\n";
 
     if (this->compute_pose_)
     {
-        std::cerr << "Number of loaded model = " << this->number_of_added_models_ << std::endl;
-        if (this->number_of_added_models_ == 0)
-            std::cerr << "No model has been loaded. Please add at least 1 model.\n";
-        this->class_ready_ = (this->number_of_added_models_ > 0 && this->svm_loaded_ && this->shot_loaded_);
+        std::cerr << "semantic_segmentation.cpp: Number of loaded models = " << this->number_of_cloud_models_ << std::endl;
+        if (this->number_of_cloud_models_ == 0)
+            std::cerr << "semantic_segmentation.cpp: No models have been loaded. Please add at least 1 model.\n";
+        this->class_ready_ = this->number_of_cloud_models_ > 0;
     }
     else
         this->class_ready_ = (this->svm_loaded_ && this->shot_loaded_);
 
     if (this->class_ready_)
-        std::cerr << "Semantic segmentation has initialized properly\n";
+        std::cerr << "semantic_segmentation.cpp: Semantic segmentation has initialized properly\n";
     else
     {
-        std::cerr << "Please resolve the problems before initializing semantic segmentation.\n";
+        std::cerr << "semantic_segmentation.cpp: Please resolve the problems before initializing semantic segmentation.\n";
         return;
     }
 
     if (!use_table_segmentation_) {
-      std::cerr << "WARNING: not using table segmentation!\n";
+      std::cerr << "WARNING: semantic_segmentation.cpp not using table segmentation!\n";
     }
 
     if (this->compute_pose_)
     {
-        std::cerr << "Semantic Segmentation is running with objRecRANSACdetector: ";
+        std::cerr << "semantic_segmentation.cpp: Semantic Segmentation is running with objRecRANSACdetector: ";
         switch (objRecRANSAC_mode_)
         {
             case STANDARD_BEST:
@@ -330,8 +334,8 @@ void SemanticSegmentation::initializeSemanticSegmentation()
         lab_pooler_set[i] = cur_pooler;
     }
 
-    std::cerr << "Hier Feature Ratio = " << hier_ratio_ << std::endl;
-    std::cerr << "Hier Feature Downsample = " << pcl_downsample_ << std::endl;
+    std::cerr << "semantic_segmentation.cpp: Hier Feature Ratio = " << hier_ratio_ << std::endl;
+    std::cerr << "semantic_segmentation.cpp: Hier Feature Downsample = " << pcl_downsample_ << std::endl;
 }
 
 SemanticSegmentation::~SemanticSegmentation()
@@ -351,7 +355,7 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
 {
     if (!this->use_table_segmentation_)
     {
-        std::cerr << "use_table_segmentation is set to false. Please enable it first before trying to do table segmentation.\n";
+        std::cerr << "semantic_segmentation.cpp: use_table_segmentation is set to false. Please enable it first before trying to do table segmentation.\n";
         return false;
     }
 
@@ -373,8 +377,9 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
     }
 
     table_corner_points_ = getTableConvexHull(full_cloud, viewer, table_distance_threshold_, table_angular_threshold_,table_minimal_inliers_);
+
     if (table_corner_points_->size() < 3) {
-        std::cerr << "Failed segmenting the table. Please check the input point cloud and the table segmentation parameters.\n";
+        std::cerr << "semantic_segmentation.cpp: Failed segmenting the table. Please check the input point cloud and the table segmentation parameters.\n";
         return false;
     }
     
@@ -386,29 +391,29 @@ bool SemanticSegmentation::getTableSurfaceFromPointCloud(const pcl::PointCloud<p
                 save_table_directory+= '/';
             pcl::PCDWriter writer;
             writer.write<PointT> (save_table_directory+"table.pcd", *table_corner_points_, true);
-            std::cerr << "Saved table point cloud in : " << save_table_directory <<"table.pcd\n";
+            std::cerr << "semantic_segmentation.cpp: Saved table point cloud in : " << save_table_directory <<"table.pcd\n";
         }
         else
         {
-            std::cerr << "Failed saving table corner pointcloud in "<< save_table_directory << std::endl;
+            std::cerr << "semantic_segmentation.cpp: Failed saving table corner pointcloud in "<< save_table_directory << std::endl;
         }
     }
-    std::cerr << "Sucessfully segment the table.\n";
+    std::cerr << "semantic_segmentation.cpp: Sucessfully segment the table.\n";
     this->have_table_ = true;
     return true;
 }
 
 bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, pcl::PointCloud<pcl::PointXYZL>::Ptr &result)
 {
-    if (!this->class_ready_)
+    if (!this->class_ready_ || !(this->svm_loaded_ && this->shot_loaded_))
     {
-        std::cerr << "Please initialize semantic segmentation first before doing point cloud segmentation\n";
+        std::cerr << "semantic_segmentation.cpp:  Please initialize semantic segmentation first before doing point cloud segmentation\n";
         return false;
     }
     
     if (input_cloud->size() < 1)
     {
-        std::cerr << "There are no points in the input cloud.\n";
+        std::cerr << "semantic_segmentation.cpp: There are no points in the input cloud.\n";
         return false;
     }
 
@@ -419,7 +424,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
       cropPointCloud(full_cloud, crop_box_target_pose_.inverse(), crop_box_size_);
 
         if (full_cloud->size() < 1){
-            std::cerr << "No cloud available after using crop box.\n";
+            std::cerr << "semantic_segmentation.cpp: No cloud available after using crop box.\n";
             return false;
         }
     }
@@ -439,7 +444,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
     {
         if (!have_table_)
         {
-            std::cerr << "Error. Does not has any table data yet, but use_table_segmentation_ flag is set to true\n."; 
+            std::cerr << "semantic_segmentation.cpp: Error. Does not has any table data yet, but use_table_segmentation_ flag is set to true\n."; 
             std::cerr << "Please do table segmentation first, or disable use_table_segmentation_\n.";
             return false;
         }
@@ -449,7 +454,7 @@ bool SemanticSegmentation::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ
 
             if (full_cloud->size() < 1)
             {
-                std::cerr << "No cloud available after removing all object outside the table. Put some objects above the table. \n";
+                std::cerr << "semantic_segmentation.cpp: No cloud available after removing all object outside the table. Put some objects above the table. \n";
                 return false;
             }
 
@@ -558,7 +563,10 @@ void SemanticSegmentation::setUseCombinedObjRecRANSAC(const bool &use_combined_o
     this->use_combined_objRecRANSAC_ = use_combined_objRecRANSAC;
 }
 
-void SemanticSegmentation::addModel(const std::string &path_to_model_directory, const std::string &model_name, const ModelObjRecRANSACParameter &parameter)
+void SemanticSegmentation::addModel(const std::string &path_to_model_directory,
+                                    const std::string &model_name,
+                                    const std::string &model_description,
+                                    const ModelObjRecRANSACParameter &parameter)
 {
     bool success = checkFolderExist(path_to_model_directory);
     if (!success)
@@ -570,7 +578,7 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
     if (model_path.back() != '/')
         model_path += "/";
 
-    if (use_combined_objRecRANSAC_ || !use_multi_class_svm_)
+    if (use_combined_objRecRANSAC_ || !(use_multi_class_svm_ || use_external_segmentation_))
     {
         std::cerr << "Using combined ObjRecRANSAC.\n";
         if (combined_ObjRecRANSAC_ == NULL)
@@ -580,17 +588,30 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
             combined_ObjRecRANSAC_->setUseCUDA(use_cuda_);
         }
         combined_ObjRecRANSAC_->AddModel(model_path + model_name, model_name);
-        this->number_of_added_models_++;
+        this->number_of_cloud_models_++;
     }
     else
     {
+        this->setUseCombinedObjRecRANSAC(false);
         std::cerr << "Using individual ObjRecRANSAC for each model.\n";
-        individual_ObjRecRANSAC_.push_back(boost::shared_ptr<greedyObjRansac>(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_)));
-        individual_ObjRecRANSAC_[number_of_added_models_]->setParams(parameter.object_visibility_,parameter.scene_visibility_);
-        individual_ObjRecRANSAC_[number_of_added_models_]->setUseCUDA(use_cuda_);
-        individual_ObjRecRANSAC_[number_of_added_models_]->AddModel(model_path + model_name, model_name);
-        model_name_map_[model_name] = number_of_added_models_;
-        this->number_of_added_models_++;
+        cloud_idx_map[number_of_cloud_models_] = model_name;
+        model_name_map_[model_name] = number_of_cloud_models_;
+        this->number_of_cloud_models_++;
+
+        if (individual_ObjRecRANSAC_.find(model_name)!=individual_ObjRecRANSAC_.end())
+        {
+            return;
+        }
+        else
+        {
+            boost::shared_ptr<greedyObjRansac> new_obj_ransac(new greedyObjRansac(parameter.pair_width_, parameter.voxel_size_));
+            new_obj_ransac->setParams(parameter.object_visibility_,parameter.scene_visibility_);
+            new_obj_ransac->setUseCUDA(use_cuda_);
+            new_obj_ransac->AddModel(model_path + model_name, model_name);
+            individual_ObjRecRANSAC_[model_name] = new_obj_ransac;
+            boost::shared_ptr<boost::mutex> new_lock(new boost::mutex());
+            objrecransac_lock_[model_name] = new_lock;
+        }
     }
     ModelT mesh_buf = LoadMesh(model_path + model_name, model_name);  
     mesh_set_.push_back(mesh_buf);
@@ -598,7 +619,7 @@ void SemanticSegmentation::addModel(const std::string &path_to_model_directory, 
 }
 
 
-void SemanticSegmentation::addModelSymmetricProperty(const std::map<std::string, objectSymmetry> &object_dict)
+void SemanticSegmentation::addModelSymmetricProperty(const std::map<std::string, ObjectSymmetry> &object_dict)
 {
     this->object_dict_ = object_dict;
 }
@@ -613,73 +634,86 @@ void SemanticSegmentation::setUsePreferredOrientation(const bool &use_preferred_
     this->use_preferred_orientation_ = use_preferred_orientation;
 }
 
-
-// void SemanticSegmentation::setUsePreferredOrientation(const bool &use_preferred_orientation, const Eigen::Quaterniond &input_preferred_orientation)
-// {
-//     this->use_preferred_orientation_ = use_preferred_orientation;
-//     this->base_rotation_ = input_preferred_orientation;
-// }
-
 void SemanticSegmentation::setUseObjectPersistence(const bool &use_object_persistence)
 {
     this->use_object_persistence_ = use_object_persistence;
 }
 
-std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud)
+void SemanticSegmentation::setUseExternalSegmentation(const bool &use_external_segmentation)
+{
+    this->use_external_segmentation_ = use_external_segmentation;
+}
+
+std::vector<ObjectTransformInformation> SemanticSegmentation::calculateObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud)
 {
     if (!this->class_ready_ || !this->compute_pose_)
     {
         std::cerr << "Please set compute pose to true and initialize semantic segmentation before calculating obj transform\n";
-        return std::vector<objectTransformInformation>();
+        return std::vector<ObjectTransformInformation>();
     }
+    
+#ifdef SCENE_PARSING
+    hypothesis_list_.clear();
+#endif
 
     std::vector<poseT> all_poses;
 
     if( viewer )
     {
         std::cerr<<"Visualize after pose computation"<<std::endl;
-        viewer->setWindowName("Computed Pose");
+        viewer->setWindowName("Input labelled cloud");
         viewer->removeAllPointClouds();
         visualizeLabels(labelled_point_cloud, viewer, color_label);
+        viewer->spin();
     }
 
     if (use_multi_class_svm_ && !use_combined_objRecRANSAC_)
     {
         // cloud_set contains separated clouds based on the labelled cloud
-        std::vector< pcl::PointCloud<pcl::PointXYZ>::Ptr > cloud_set(number_of_added_models_+1);
-        for( size_t j = 0 ; j < cloud_set.size() ; j++ )
-            cloud_set[j] = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>()); // object cloud starts from 1
+        std::vector< pcl::PointCloud<pcl::PointXYZ>::Ptr > cloud_set;
+
         std::cerr<<"Split cloud after segmentation"<<std::endl;
         splitCloud(labelled_point_cloud, cloud_set);
 
         std::cerr<<"Calculate poses"<<std::endl;
 
         // loop over all segmented object clouds
-        #pragma omp parallel for schedule(dynamic, 1)
-        for(size_t j = 1 ; j <= number_of_added_models_; j++ )
+        // #pragma omp parallel for schedule(dynamic, 1)
+        for(std::size_t j = 1 ; j < cloud_set.size(); j++ )
         {
-            if( cloud_set[j]->empty() == false )
+            if (cloud_idx_map.find(j-1) == cloud_idx_map.end())
             {
-                std::cerr << "cloud set " << j << " size: " << cloud_set[j]->size() << std::endl;
+                std::cerr << "Cloud is skipped because its label index [" << j << "] is above the known segmentation index.\n";
+                continue;
+            }
+
+            // remove NaN points
+            std::vector<int> indices;
+            pcl::removeNaNFromPointCloud(*cloud_set[j],*cloud_set[j], indices);
+
+            const std::string &object_name = cloud_idx_map[j-1];
+            if(!cloud_set[j]->empty())
+            {
+                std::cerr << object_name << " cloud set " << j << " size: " << cloud_set[j]->size() << std::endl;
                 std::vector<poseT> tmp_poses;
+                objrecransac_lock_[object_name]->lock();
                 switch (objRecRANSAC_mode_)
                 {
                     case STANDARD_BEST:
-                        individual_ObjRecRANSAC_[j-1]->StandardBest(cloud_set[j], tmp_poses);
+                        individual_ObjRecRANSAC_[object_name]->StandardBest(cloud_set[j], tmp_poses);
                         break;
                     case STANDARD_RECOGNIZE:
-                        individual_ObjRecRANSAC_[j-1]->StandardRecognize(cloud_set[j], tmp_poses, min_objrecransac_confidence);
+                        individual_ObjRecRANSAC_[object_name]->StandardRecognize(cloud_set[j], tmp_poses, min_objrecransac_confidence);
                         break;
                     case GREEDY_RECOGNIZE:
-                        individual_ObjRecRANSAC_[j-1]->GreedyRecognize(cloud_set[j], tmp_poses);
+                        individual_ObjRecRANSAC_[object_name]->GreedyRecognize(cloud_set[j], tmp_poses);
                         break;
                     default:
                         std::cerr << "Unsupported objRecRANSACdetector!\n";
                 }
-
                 if (viewer)
                 {
-                    individual_ObjRecRANSAC_[j-1]->visualize(viewer, tmp_poses, color_label[j]);
+                    individual_ObjRecRANSAC_[object_name]->visualize(viewer, tmp_poses, color_label[j]);
                 }
 
                 #pragma omp critical
@@ -688,16 +722,24 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
                 }
 
 #ifdef SCENE_PARSING
-                hypothesis_list_.push_back(individual_ObjRecRANSAC_[j-1]->getLatestAcceptedHypothesis());
+                hypothesis_list_.push_back(individual_ObjRecRANSAC_[object_name]->getLatestAcceptedHypothesis());
 #endif
+                objrecransac_lock_[object_name]->unlock();
             }
         }
 
         if (viewer)
         {
             viewer->spin();
-            for(size_t j = 1 ; j <= number_of_added_models_; j++ )
-                individual_ObjRecRANSAC_[j-1]->clearMesh(viewer, all_poses);
+            for(size_t j = 1 ; j <= cloud_set.size(); j++)
+            {
+                if (cloud_idx_map.find(j-1) == cloud_idx_map.end())
+                {
+                    continue;
+                }
+                const std::string &object_name = cloud_idx_map[j-1];
+                individual_ObjRecRANSAC_[object_name]->clearMesh(viewer, all_poses);
+            }
             viewer->removeAllPointClouds();
         }
     }
@@ -736,31 +778,31 @@ std::vector<objectTransformInformation> SemanticSegmentation::calculateObjTransf
     }
 
     std::map<std::string, unsigned int> object_class_transform_index_no_persistence = object_class_transform_index_;
-    std::map<std::string, unsigned int> &tmpTFIndex = object_class_transform_index_;
+    std::map<std::string, unsigned int> &tmp_tf_index = object_class_transform_index_;
     double current_time = time(0);
     if (segmented_object_tree_.size() == 0 || !use_object_persistence_)
     {
         std::cerr << "create tree\n";
-        // this will create tree and normalize the orientation to the base_rotation_
-        createTree(segmented_object_tree_, object_dict_, all_poses, current_time, tmpTFIndex, base_rotation_);
+        // this will create tree and normalize the orientation to the base_rotation
+        segmented_object_tree_.createNewTree(object_dict_, all_poses, current_time, tmp_tf_index, base_rotation_);
     }
     else
     {
         std::cerr << "update tree\n";
-        updateTree(segmented_object_tree_, object_dict_, all_poses, current_time, tmpTFIndex, base_rotation_);
+        segmented_object_tree_.updateTree(all_poses, current_time, tmp_tf_index);
     }
 
-    std::vector<objectTransformInformation> result = this->getTransformInformationFromTree();
+    std::vector<ObjectTransformInformation> result = this->getTransformInformationFromTree(current_time);
 
     // restore original index if not using object persistance
-    if (!use_object_persistence_) tmpTFIndex = object_class_transform_index_no_persistence;
+    if (!use_object_persistence_) tmp_tf_index = object_class_transform_index_no_persistence;
     return result;
 }
 
-std::vector<objectTransformInformation> SemanticSegmentation::getTransformInformationFromTree()  const
+std::vector<ObjectTransformInformation> SemanticSegmentation::getTransformInformationFromTree(const double &current_time)  const
 {
-    std::vector<objectTransformInformation> result;
-    std::vector<value> sp_segmenter_detected_poses = getAllNodes(segmented_object_tree_);
+    std::vector<ObjectTransformInformation> result;
+    std::vector<value> sp_segmenter_detected_poses = segmented_object_tree_.getRecentNodes(current_time);
 
     std::cerr << "detected poses: " << sp_segmenter_detected_poses.size() << "\n";
     for (std::size_t i = 0; i < sp_segmenter_detected_poses.size(); i++)
@@ -768,26 +810,26 @@ std::vector<objectTransformInformation> SemanticSegmentation::getTransformInform
         const value &v = sp_segmenter_detected_poses.at(i);
 
         const poseT &pose = std::get<1>(v).pose;
-        const std::string &transform_name_ = std::get<1>(v).tfName;
+        const std::string &transform_name_ = std::get<1>(v).frame_name;
         const unsigned int &model_index = std::get<1>(v).index;
-        result.push_back( objectTransformInformation(transform_name_, pose, model_index) );
+        result.push_back( ObjectTransformInformation(transform_name_, pose, model_index) );
     }
 
     return result;
 }
 
-std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
+std::vector<ObjectTransformInformation> SemanticSegmentation::getUpdateOnOneObjTransform(const pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud, const std::string &transform_name, const std::string &object_type)
 {
     if (!this->class_ready_)
     {
         std::cerr << "Please initialize semantic segmentation first before updating one obj transform\n";
-        return std::vector<objectTransformInformation>();
+        return std::vector<ObjectTransformInformation>();
     }    
     std::vector<poseT> all_poses;
     if (use_multi_class_svm_)
     {
         // cloud_set contains separated clouds based on the labelled cloud
-        std::vector< pcl::PointCloud<pcl::PointXYZ>::Ptr > cloud_set(number_of_added_models_+1);
+        std::vector< pcl::PointCloud<pcl::PointXYZ>::Ptr > cloud_set(number_of_cloud_models_+1);
         for( size_t j = 0 ; j < cloud_set.size() ; j++ )
             cloud_set[j] = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>()); // object cloud starts from 1
         std::cerr<<"Split cloud after segmentation"<<std::endl;
@@ -800,21 +842,23 @@ std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjT
         if( cloud_set[objrec_index + 1]->empty() == false )
         {
             std::vector<poseT> tmp_poses;
+            objrecransac_lock_[object_type]->lock();
             switch (objRecRANSAC_mode_)
             {
                 case STANDARD_BEST:
-                    individual_ObjRecRANSAC_[objrec_index]->StandardBest(cloud_set[objrec_index + 1], tmp_poses);
+                    individual_ObjRecRANSAC_[object_type]->StandardBest(cloud_set[objrec_index + 1], tmp_poses);
                     break;
                 case STANDARD_RECOGNIZE:
-                    individual_ObjRecRANSAC_[objrec_index]->StandardRecognize(cloud_set[objrec_index + 1], tmp_poses, min_objrecransac_confidence);
+                    individual_ObjRecRANSAC_[object_type]->StandardRecognize(cloud_set[objrec_index + 1], tmp_poses, min_objrecransac_confidence);
                     break;
                 case GREEDY_RECOGNIZE:
-                    individual_ObjRecRANSAC_[objrec_index]->GreedyRecognize(cloud_set[objrec_index + 1], tmp_poses);
+                    individual_ObjRecRANSAC_[object_type]->GreedyRecognize(cloud_set[objrec_index + 1], tmp_poses);
                     break;
                 default:
                     std::cerr << "Unsupported objRecRANSACdetector!\n";
             }
             all_poses.insert(all_poses.end(), tmp_poses.begin(), tmp_poses.end());
+            objrecransac_lock_[object_type]->unlock();
         }
     }
     else 
@@ -839,20 +883,50 @@ std::vector<objectTransformInformation> SemanticSegmentation::getUpdateOnOneObjT
     }
 
     std::map<std::string, unsigned int> object_class_transform_index_no_persistence = object_class_transform_index_;
-    std::map<std::string, unsigned int> &tmpTFIndex = object_class_transform_index_;
+    std::map<std::string, unsigned int> &tmp_tf_index = object_class_transform_index_;
     double current_time = time(0);
     std::cerr << "update one value on tree\n";
-    updateOneValue(segmented_object_tree_, transform_name, object_dict_, all_poses, current_time, tmpTFIndex, base_rotation_);
+    segmented_object_tree_.updateOneValue(transform_name, all_poses, current_time, tmp_tf_index);
 
-    std::vector<objectTransformInformation> result = this->getTransformInformationFromTree();
+    std::vector<ObjectTransformInformation> result = this->getTransformInformationFromTree(current_time);
 
     // restore original index if not using object persistance
-    if (!use_object_persistence_) tmpTFIndex = object_class_transform_index_no_persistence;
+    if (!use_object_persistence_) tmp_tf_index = object_class_transform_index_no_persistence;
+    return result;
+}
+
+pcl::PointCloud<pcl::PointXYZL>::Ptr SemanticSegmentation::convertRgbChannelToLabelCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
+    const int &channel_to_convert)
+{
+    pcl::PointCloud<pcl::PointXYZL>::Ptr result(new pcl::PointCloud<pcl::PointXYZL>());
+    for (pcl::PointCloud<pcl::PointXYZRGBA>::const_iterator it = input_cloud->begin(); it != input_cloud->end(); ++it)
+    {
+        pcl::PointXYZL point;
+        point.x = it->x;
+        point.y = it->y;
+        point.z = it->z;
+        switch(channel_to_convert)
+        {
+            case RED:
+                point.label = it->r;
+                break;
+            case GREEN:
+                point.label = it->g;
+                break;
+            case BLUE:
+                point.label = it->b;
+                break;
+            case ALL:
+                point.label = it->r + it->g + it->b;
+                break;
+        }
+        result->push_back(point);
+    }
     return result;
 }
 
 bool SemanticSegmentation::segmentAndCalculateObjTransform(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &input_cloud, 
-    pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud_result, std::vector<objectTransformInformation> &object_transform_result)
+    pcl::PointCloud<pcl::PointXYZL>::Ptr &labelled_point_cloud_result, std::vector<ObjectTransformInformation> &object_transform_result)
 {
     bool segmentation_successful = this->segmentPointCloud(input_cloud, labelled_point_cloud_result);
     if (segmentation_successful)

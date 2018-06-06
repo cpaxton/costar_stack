@@ -59,7 +59,17 @@ class GetWaypointsService:
 
         return resp
 
-    def get_waypoints(self,frame_type,predicates,transforms,names):
+    def get_waypoints(self, frame_type, predicates, transforms, names, constraints):
+        '''
+        Parameters:
+        -----------
+        frame_type: object class to match when generating new frames
+        predicates: other list of predicates to add
+        transforms: used to generate the actual poses
+        names: should be same size as transforms
+        above: prunes list of transforms based on criteria, transforms should
+               be above their parent frame in the world coordinates
+        '''
         self.and_srv.wait_for_service()
 
         if not len(names) == len(transforms):
@@ -80,7 +90,11 @@ class GetWaypointsService:
 
         res = self.and_srv([type_predicate]+predicates)
 
-        print "Found matches: " + str(res.matching)
+        if len(res.matching) == 0:
+            rospy.logerr("Failed to find any matching objects!")
+            return None
+        else:
+            rospy.loginfo("Predicator found matches: " + str(res.matching))
         #print res
 
         if (not res.found) or len(res.matching) < 1:
@@ -89,6 +103,7 @@ class GetWaypointsService:
         poses = []
         for tform in transforms:
             poses.append(pm.fromMsg(tform))
+            break # we only do one
 
         if frame_type not in self.obj_symmetries.keys():
             self.obj_symmetries[frame_type] = ObjectSymmetry()
@@ -108,15 +123,6 @@ class GetWaypointsService:
                     quaternion_list.append(rot_matrix.GetQuaternion())
         quaternion_list = np.array(quaternion_list)
         
-        unique_rot_matrix = list()
-        # quaternion_list = np.around(quaternion_list,decimals=5)
-        # b = np.ascontiguousarray(quaternion_list).view(np.dtype((np.void, quaternion_list.dtype.itemsize * quaternion_list.shape[1])))
-        # _, unique_indices = np.unique(b, return_index=True)
-
-        # for index in unique_indices:
-        #     unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
-
-        
         unique_brute_force = list()
         for i in xrange(len(quaternion_list)):
             unique = True
@@ -126,13 +132,11 @@ class GetWaypointsService:
                 else:
                     if abs(quaternion_list[i].dot(quaternion_list[j])) > 0.99:
                         unique = False
-                        # print i, j, ' is not unique', quaternion_list[i], quaternion_list[j]
                         break
             if unique:
                 unique_brute_force.append(i)
-        # print 'unique brute force: ', len(unique_brute_force)
-        # print unique_brute_force
 
+        unique_rot_matrix = list()
         for index in unique_brute_force:
             unique_rot_matrix.append(  pm.Rotation.Quaternion( *quaternion_list[index].tolist() )  )
 
@@ -142,17 +146,36 @@ class GetWaypointsService:
 
         for match in res.matching:
             try:
-                (trans,rot) = self.listener.lookupTransform(self.world,match,rospy.Time(0))
-                # for (pose, name) in zip(poses,names):
+                (trans,rot) = self.listener.lookupTransform(self.world, match, rospy.Time(0))
+                match_tform = pm.fromTf((trans,rot))
+                rospy.loginfo("Checking " + str(match) + " from " + str(self.world))
 
                 if frame_type in self.obj_symmetries:
                     for rot_matrix in unique_rot_matrix:
                         tform = pm.Frame(rot_matrix)
-                        new_poses.append(pm.toMsg(pm.fromTf((trans,rot)) * tform * poses[0]))
-                        new_names.append(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY()))
+                        world_tform = match_tform * tform * poses[0]
+                        violated = False
 
-                        #print match, str(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY())),
-                        # pm.toTf(pm.fromTf((trans,rot)) * tform * poses[0])[0]
+                        for constraint in constraints:
+                            v1 = match_tform.p[constraint.pose_variable]
+                            v2 = world_tform.p[constraint.pose_variable]
+                            if constraint.greater and not (v2 >= v1 + constraint.threshold):
+                                violated = True
+                                #print "VIOLATED", constraint
+                                rospy.logwarn("constraint violation: " + str(v2)  + "<" + str(v1))
+                                break
+                            elif not constraint.greater and not (v2 <= v1 - constraint.threshold):
+                                violated = True
+                                rospy.logwarn("constraint violation: " + str(v2)  + ">" + str(v1))
+                                #print "VIOLATED", constraint
+                                break
+                        if violated:
+                            continue
+                        #else:
+                        #    print match_tform.p, world_tform.p
+
+                        new_poses.append(pm.toMsg(world_tform))
+                        new_names.append(match + "/" + names[0] + "/x%fy%fz%f"%(rot_matrix.GetRPY()))
 
                         objects.append(match)
 

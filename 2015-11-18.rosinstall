@@ -1,0 +1,118 @@
+# GRID ROS INSTALL FILE
+# This file is designed to install the necessary files and dependencies
+# for my research project.
+#
+# sudo apt-get install libtar-dev libprotoc-dev protobuf-compiler google-mock libgsl0-dev ros-indigo-desktop-full ros-indigo-xdot ros-indigo-orocos-* ros-indigo-eigen-* ros-indigo-moveit-ros ros-indigo-rosjava ros-indigo-spacenav-node ros-indigo-razer-hydra ros-indigo-controller-manager ros-indigo-control-toolbox ros-indigo-transmission-interface ros-indigo-joint-limits-interface ros-indigo-controller-manager ros-indigo-controller-manager-msgs ros-indigo-rtt-* ros-indigo-orocos-kdl ros-indigo-orogen ros-indigo-orocos-kinematics-dynamics ros-indigo-orogen
+# sudo apt-get install python-pip python-sklearn
+# sudo pip install dtw pypr
+#
+# Other deps built from source outside of catkin:
+# - libccd git@github.com:danfis/libccd.git
+# - gcgit op git@github.com:jhu-asco/gcop.git
+#
+# As of 2015-11-18 it should be updated for Ubuntu 14.04 and ROS Indigo.
+
+###############################################################################
+# Common #
+# These are common packages used in all ascent workspaces.
+###############################################################################
+
+#- git: {version: 0.4-devel, local-name: cmake_modules, uri: 'git@github.com:ros/cmake_modules.git'}
+
+- git: {version: master, local-name: rqt_dot, uri: 'git@github.com:jbohren/rqt_dot.git'}
+
+#- git: {version: master, local-name: orocos_toolchain, uri: 'git@github.com:jhu-lcsr-forks/orocos_toolchain.git'}
+#- git: {version: master, local-name: orocos_kinematics_dynamics, uri: 'git@github.com:jhu-lcsr-forks/orocos_kinematics_dynamics.git'}
+- git: {version: hydro-devel, local-name: rtt_ros_integration, uri: 'git@github.com:jhu-lcsr-forks/rtt_ros_integration.git'}
+
+- git: {version: devel, local-name: cartesian_trajectory_msgs, uri: 'git@github.com:jhu-lcsr/cartesian_trajectory_msgs.git'}
+- git: {version: master, local-name: lcsr_tf_tools, uri: 'git@github.com:jhu-lcsr/lcsr_tf_tools.git'}
+- git: {version: devel, local-name: lcsr_telemanip, uri: 'git@github.com:jhu-lcsr/lcsr_telemanip.git'}
+- git: {version: devel, local-name: lcsr_camera_models, uri: 'git@github.com:jhu-lcsr/lcsr_camera_models.git'}
+- git: {version: devel, local-name: lcsr_robot_models, uri: 'git@github.com:jhu-lcsr/lcsr_robot_models.git'}
+- git: {version: devel, local-name: lcsr_barrett, uri: 'git@github.com:jhu-lcsr/lcsr_barrett.git'}
+- git: {version: master, local-name: lcsr_nettools, uri: 'git@github.com:jhu-lcsr/lcsr_nettools.git'}
+
+- git: {version: devel, local-name: barrett_model, uri: 'git@github.com:jhu-lcsr/barrett_model.git'}
+- git: {version: devel, local-name: oro_barrett_msgs, uri: 'git@github.com:jhu-lcsr/orocos_barrett_msgs.git'}
+- git: {version: devel, local-name: orocos_barrett_utils, uri: 'git@github.com:jhu-lcsr/orocos_barrett_utils.git'}
+
+- git: {version: master, local-name: ascent, uri: 'git@git.lcsr.jhu.edu:ascent/ascent.git'}
+
+################################################################################
+# Slave #
+# These are packages needed to run the slave controllers.
+################################################################################
+
+- git: {version: devel, local-name: conman, uri: 'git@github.com:jbohren/conman.git'}
+- git: {version: master, local-name: reflexxes_type2, uri: 'git@github.com:jhu-lcsr/reflexxes_type2.git'}
+- git: {version: devel, local-name: lcsr_controllers, uri: 'git@github.com:jhu-lcsr/lcsr_controllers.git'}
+- git: {version: devel, local-name: lcsr_ros_orocos_tools, uri: 'git@github.com:jhu-lcsr/lcsr_ros_orocos_tools.git'}
+- git: {version: master, local-name: lcsr_rtt_components, uri: 'git@github.com:jhu-lcsr/lcsr_rtt_components.git'}
+
+- git: {version: devel, local-name: orocos_barrett_components, uri: 'git@github.com:jhu-lcsr/orocos_barrett_components.git'}
+
+################################################################################c
+# Perception #
+# These packages are used for planning.
+################################################################################
+
+- git: {version: master, local-name: fcl, uri: 'git@github.com:jhu-lcsr-forks/fcl.git'}
+- git: {version: devel, local-name: barrett_moveit, uri: 'git@github.com:jhu-lcsr/barrett_moveit.git'}
+
+###############################################################################
+# Sim #
+# These are packages only needed in simulation.
+###############################################################################
+
+- hg: {version: "sdf_1.4", local-name: sdformat, uri: 'ssh://hg@bitbucket.org/jbohren/sdformat'}
+- hg: {version: disable-moi-rescaling, local-name: gazebo, uri: 'ssh://hg@bitbucket.org/jbohren/gazebo'}
+- git: {version: master, local-name: rtt_gazebo, uri: 'git@github.com:jhu-lcsr/rtt_gazebo.git'}
+- git: {version: devel, local-name: lcsr_assembly, uri: 'git@github.com:jhu-lcsr/lcsr_assembly.git'}
+- git: {version: hydro-devel, local-name: gazebo_ros_pkgs, uri: 'git@github.com:jhu-lcsr-forks/gazebo_ros_pkgs.git'}
+
+###############################################################################
+# Perception #
+# These packages are used for perception.
+###############################################################################
+
+# object detection
+- git: {version: master, local-name: mvp_objrec, uri: 'git@github.com:tum-mvp/mvp_objrec.git'}
+- git: {version: master, local-name: ObjRecRANSAC, uri: 'git@github.com:tum-mvp/ObjRecRANSAC.git'}
+- git: {version: assimp3, local-name: realtime_urdf_filter, uri: 'git@github.com:cpaxton/realtime_urdf_filter.git'}
+- git: {version: master, local-name: lcsr_perception, uri: 'git@github.com:jhu-lcsr/lcsr_perception.git'}
+
+# calibration
+#- git: {version: master, local-name: aruco_ros, uri: 'git@github.com:jhu-lcsr-forks/aruco_ros.git'}
+#- git: {version: hydro-devel, local-name: pal_vision_segmentation, uri: 'git@github.com:pal-robotics/pal_vision_segmentation.git'}
+#- git: {version: hydro-devel, local-name: visp_hand2eye_calibration, uri: 'git@github.com:lagadic/visp_hand2eye_calibration.git'}
+#- git: {version: devel, local-name: aruco_hand_eye, uri: 'git@github.com:jhu-lcsr/aruco_hand_eye.git'}
+
+###############################################################################
+# Master #
+# These are packages used for a machine which is going to be used by the
+# operator for visualization.
+###############################################################################
+
+- git: {version: stereo-fixes, local-name: rviz, uri: 'git@github.com:jhu-lcsr-forks/rviz.git'}
+- git: {version: master, local-name: rviz_virtual_shadow, uri: 'git@github.com:jhu-lcsr/rviz_virtual_shadow.git'}
+
+##############################################################################
+# CoSTAR #
+# These are the CoSTAR packages for research on other things
+##############################################################################
+
+- git: {version: master, local-name: predicator, uri: 'git@git.lcsr.jhu.edu:nri/predicator.git'}
+- git: {version: master, local-name: instructor, uri: 'git@git.lcsr.jhu.edu:nri/instructor.git'}
+- git: {version: master, local-name: librarian, uri: 'git@git.lcsr.jhu.edu:nri/librarian.git'}
+- git: {version: master, local-name: beetree, uri: 'git@github.com:futureneer/beetree.git'}
+- git: {version: master, local-name: dmp, uri: 'git@github.com:cpaxton/dmp.git'}
+- git: {version: master, local-name: two_arm_collaboration, uri: 'git@git.lcsr.jhu.edu:nri/two_arm_collaboration.git'}
+- git: {version: master, local-name: germ, uri: 'git@github.com:cpaxton/germ.git'}
+- git: {version: master, local-name: geometer, uri: 'git@github.com:jbohren/geometer.git'}
+
+# ----------------------------- Planning ------------------------------------
+# These packages are used for planning.
+- git: {version: master, local-name: grid, uri: 'git@git.lcsr.jhu.edu:cpaxton3/grid.git'}
+- git: {version: master, local-name: grid_plan, uri: 'git@git.lcsr.jhu.edu:cpaxton3/grid_plan.git'}
+- git: {version: hydro, local-name: hrl_kdl, uri: 'git@github.com:cpaxton/hrl-kdl.git'}

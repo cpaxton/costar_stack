@@ -43,18 +43,18 @@
       name="Move Relative"/>
     <instructor plugin="instructor.NodePlanWaypointGUI"
       type="TASK"
-      group="Motion Planning"
+      group="MOTION PLANNING"
       description="Instructor Plan to Waypoint Action"
       cases="planning"
       name="Plan to Waypoint"/>
     <instructor plugin="instructor.PlanToHomeGUI"
       type="TASK"
-      group="Motion Planning"
+      group="MOTION PLANNING"
       description="Instructor Plan to Home Action"
       cases="planning"
       name="Plan to Home"/>
     <instructor plugin="instructor.NodePlanRelativeWaypointGUI"
-      type="ACTION" group="ROBOT"
+      type="TASK" group="MOTION PLANNING"
       description="Instructor Plan to Relative Waypoint"
       cases=""
       name="Plan Relative"/>
@@ -132,6 +132,14 @@
       description="publish_message"
       cases=""
       name="Publish Message" />
+
+    <instructor plugin="instructor.NodeWaitForMessageGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="wait_message"
+      cases=""
+      name="Wait For Message"/>
+
     <instructor plugin="instructor.NodeActionUpdatePlanningSceneGUI"
       type="CONDITION"
       group="SCENE"
@@ -159,6 +167,37 @@
       cases="planning,perception"
       name="Detect Objects"/>
 
+    <!-- LEARNING OPERATIONS -->
+    <instructor plugin="instructor.NodeRepeatUntilGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Repeat Until Logic Node"
+      cases="dummy"
+      name="Repeat until"/>
+    <instructor plugin="instructor.NodeLearningSequenceGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Learning Sequence Node"
+      cases="dummy"
+      name="Learning Sequence"/>
+    <instructor plugin="instructor.NodeLearnedSequenceGUI"
+      type="LOGIC"
+      group="SYSTEM"
+      description="Learned Sequence Node"
+      cases="dummy"
+      name="Learned Sequence"/>
+    <instructor plugin="instructor.NodeDummyConditionalGUI"
+      type="CONDITION"
+      group="SYSTEM"
+      description="Dummy Conditional Node"
+      cases="dummy"
+      name="Dummy Condition"/>
+    <instructor plugin="instructor.NodeDummyRobotActionGUI"
+      type="TASK"
+      group="HIGH LEVEL"
+      description="Dummy Robot Action Node"
+      cases="dummy"
+      name="Dummy Robot Action"/>
   </export>
 
 </package>

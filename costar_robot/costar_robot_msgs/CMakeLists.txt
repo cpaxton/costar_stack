@@ -36,11 +36,10 @@ find_package(catkin REQUIRED std_msgs geometry_msgs predicator_msgs sensor_msgs 
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  Constraint.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
@@ -57,6 +56,7 @@ add_service_files(
   LookupJointStates.srv
   GetList.srv
   Object.srv
+  ForwardKinematics.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

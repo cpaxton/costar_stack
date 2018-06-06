@@ -347,6 +347,7 @@ class NodeSequence(Node):
 
         for child in self.children_:
             status = child.execute()
+            rospy.logerr(str(child) + ", " + str(status))
 
             if status is None:
                 return self.set_status('FAILURE')

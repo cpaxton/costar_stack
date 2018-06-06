@@ -139,7 +139,7 @@ class Instructor(QWidget):
                 'VARIABLE']
         self.colors__ = ['blue',
                 'green',
-                'orange',
+                'sea_green',
                 'purple',
                 'pink',
                 'gray',
@@ -516,7 +516,7 @@ class Instructor(QWidget):
             self.component_widgets[t] = w
             self.component_layout.addWidget(w)
 
-        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['green_light'],'large')
+        self.subtree_container = ListContainer('SUBTREES','SUBTREES',colors['orange'],'large')
         # self.node_container = ListContainer('NODES','NODES',colors['pink'],'large')
         self.subtree_container.show()
         self.subtree_container.register_callbacks(self.collapse_unused,self.subtree_selected_callback)
@@ -579,7 +579,7 @@ class Instructor(QWidget):
         #self.info_textbox.notify('Detecting objects...')
         self.toast('Please wait... Detecting Objects')
         self.detect_objects_button.setEnabled(False)
-        service_name = '/SPServer/SPSegmenter'
+        service_name = '/costar_perception/segmenter'
         self.send_service_command(service_name)
         #self.info_textbox.notify('Detecting objects...DONE')
         self.detect_objects_button.setEnabled(True)
@@ -737,6 +737,9 @@ class Instructor(QWidget):
             for node in self.current_tree.itervalues():
                 node.set_alt_view(False)
             self.regenerate_tree()
+
+    def notify(self, msg):
+        self.info_textbox.notify(msg)
 
 # Run and Stop -----------------------------------------------------------------
     def servo_button_cb(self):
@@ -1572,14 +1575,26 @@ class Instructor(QWidget):
           self.app_.exit()
 
 # MAIN #######################################################
-if __name__ == '__main__':
-  rospy.init_node('instructor_view',anonymous=True)
-  app = QApplication(sys.argv)
-  wrapper = Instructor(app)
-  # Running
-  app.exec_()
-  # Done
+def main():
+    rospy.init_node('instructor_view',anonymous=True)
+    app = QApplication(sys.argv)
+    wrapper = Instructor(app)
+    app.exec_()
 
+if __name__ == '__main__':
+  # rospy.init_node('instructor_view',anonymous=True)
+  # app = QApplication(sys.argv)
+  # wrapper = Instructor(app)
+  # # Running
+  # app.exec_()
+  # Done
+  profile = False
+  
+  if profile:
+    import cProfile
+    cProfile.run('main()')
+  else:
+    main()
 
 
 

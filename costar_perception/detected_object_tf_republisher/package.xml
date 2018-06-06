@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package>
+  <name>detected_object_tf_republisher</name>
+  <version>0.0.0</version>
+  <description>The detected_object_tf_republisher package</description>
+
+  <maintainer email="fjonath1@todo.todo">fjonath1</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>costar_objrec_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <run_depend>costar_objrec_msgs</run_depend>
+  <run_depend>tf</run_depend>
+
+  <export>
+
+  </export>
+</package>

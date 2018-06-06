@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>color_nn_segmenter</name>
+  <version>0.0.0</version>
+  <description>The color_nn_segmenter package</description>
+
+  <maintainer email="fjonath1@jhu.edu">Felix Jonathan</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>object_on_table_segmenter</build_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>object_on_table_segmenter</run_depend>
+
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+  </export>
+</package>

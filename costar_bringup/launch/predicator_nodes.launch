@@ -3,9 +3,18 @@
   <arg name="output" default="screen"/>
   <arg name="publish_values" default="0"/>
 
+  <!-- <arg name="pose_estimator" default="/costar_sp_segmenter" /> -->
+
   <!-- detected objects node -->
+  <node pkg="detected_object_tf_republisher" name="detected_obj_republisher_node" type="det_obj_republisher.py" />
+
   <node pkg="predicator_detected_objects" name="predicator_detected_objects_node" type="detected_objects_node.py">
-    <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
+    <remap from="/detected_object_list" to="/costar/detected_object_list"/>
+  </node>
+
+  <!-- detected objects node -->
+  <node pkg="predicator_scene_structure" name="predicator_scene_structure_node" type="scene_structure_node.py">
+    <remap from="/scene_structure_list" to="/sequential_scene_parsing/scene_structure_list"/>
   </node>
 
   <!-- geometry node -->
@@ -25,12 +34,10 @@
     <rosparam param="frames">
       - obj_link_uniform_1
       - obj_link_uniform_2
-      - obj_link_uniform_3
-      - obj_link_uniform_4
       - obj_node_uniform_1
       - obj_node_uniform_2
-      - obj_node_uniform_3
-      - obj_node_uniform_4
+      - obj_wood_cube_1
+      - obj_wood_cube_2
       - obj_sander_makita_1
       - obj_sander_makita_2
       - gbeam_link_1/gbeam_link
@@ -39,18 +46,41 @@
       - ar_marker_0
       - ar_marker_1
       - ar_marker_3
-      - table_frame
+      - table_center
       - world
+      - red_cube
+      - blue_cube
+      - yellow_cube
+      - green_cube
+      - obj_red_cube_1
+      - obj_red_cube_2
+      - obj_red_cube_3
+      - obj_red_cube_4
+      - obj_blue_cube_1
+      - obj_blue_cube_2
+      - obj_blue_cube_3
+      - obj_blue_cube_4
+      - obj_green_cube_1
+      - obj_green_cube_2
+      - obj_green_cube_3
+      - obj_green_cube_4
+      - obj_yellow_cube_1
+      - obj_yellow_cube_2
+      - obj_yellow_cube_3
+      - obj_yellow_cube_4
     </rosparam>
 
     <rosparam param="reference_frames">
+      - table_center
       - world
     </rosparam>
+    
+    <remap from="/detected_object_list" to="/costar/detected_object_list" />
 
   </node>
 
   <node pkg="predicator_landmark" name="predicator_landmark_service" type="get_waypoints_service.py">
-    <remap from="/detected_object_list" to="/SPServer/detected_object_list"/>
+    <remap from="/detected_object_list" to="/costar/detected_object_list"/>
   </node>
 
   <node name="predicator_fake_class_node"
@@ -69,9 +99,13 @@
           - node
           - link
           - table
+          - red_cube
+          - blue_cube
+          - green_cube
+          - yello!z!A
       - name: table
         members:
-          - table_frame
+          - table_center
     </rosparam>
 
   </node>

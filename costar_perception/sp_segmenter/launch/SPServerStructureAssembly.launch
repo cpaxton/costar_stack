@@ -1,7 +1,8 @@
 <launch>
   <!-- This is for running detection of nodes and links without setting all the parameters. Unstable launch file, will change often. -->
   <!-- Object file Name without extension-->
-  <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM." />
+  <arg name="object"         default="link_uniform,node_uniform" doc="Object mesh names. Must be specified in the same order as in the SVM, for example link,node,sander when launching sp_segmenter." />
+  <arg name="descriptions"         default="link,node" doc="Object mesh names. Must be specified in the same order as in the SVM, for example link,node,sander when launching sp_segmenter." />
   <!--<arg name="data_path"      default="$(find sp_segmenter)/data" doc="SP segmenter data folder" />-->
   <arg name="data_path"      default="$(env HOME)/data" doc="SP segmenter data folder" />
   <arg name="svm_path"       default="link_node_svm" doc="Object svm folder name located in data path" />
@@ -11,11 +12,12 @@
   <arg name="compute_pose"          default="true" />
   <arg name="visualization"         default="false" />
 
-
   <arg name="objRecRANSACdetector"   default="StandardRecognize" doc="ObjeRecRANSAC detection options (case sensitive): StandardRecognize - standard ObjRecRANSAC routine.   StandardBest - Get best pose only or all pose above minConfidence.  GreedyRecognize - greedy detector finding highest confidence object then deleting those pixels." />
   <arg name="objRecRANSACdetectorInGripper"   default="StandardBest" doc="same as ObjectRecRANSACdetector, but this is triggered by the Gripper specific service callback" />
   <arg name="minConfidence"  default="0.20" doc="(float) confidence threshold for recognizing objects with ObjRecRANSAC" />
   <arg name="use_cuda"       default="true" doc="Use NVidia CUDA GPU acceleration to speed up pose estimation. When true and CUDA not available, prints warnings then runs without cuda "/>
+
+  <arg name="use_external_segmentation" default="false" doc="This will make the sp_segmenter to just perform pose estimation with the assumption that the point cloud input's Red channel is the label of the object class."/>
 
   <arg name="useMedianFilter" default="false" doc="Apply median filter to point cloud input before processing it" />
   <arg name="maxFrames"       default="15" doc="Maximum frame averaged for svm segmentation "/>
@@ -36,8 +38,9 @@
   <arg name="preferredOrientation" default="world" doc="use this TF as the preferred object orientation" />
   <arg name="gripperTF"      default="gripper_center" doc="The gripper tf where target object would be attached" />
   <arg name="useObjectPersistence" default="false" doc="use Rtree to check for existing objects to preserve orientation and TF names" />
+  <arg name="max_distance_persistence" default="0.025" doc="Maximum allowed distance for a pose to be considered as the previous pose" />
 
-  <arg name="NodeName"       default="SPServer" doc="The name of the ros topic" />
+  <arg name="NodeName"       default="costar_perception" doc="The name of the ros topic" />
 
   <!-- SPSegmenterNode subscriber/publisher args -->
   <arg name="pcl_in"         default="/camera/depth_registered/points" />
@@ -45,7 +48,7 @@
   <arg name="poses_out"      default="poses_out"/>
   <arg name="useTF"          default="true" doc="Whether use TF frames instead of pose array for object pose representation" />
   <!--<node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p $(arg params)" launch-prefix="valgrind - -log-file=$(env HOME)/valgrind.log">  -->
-  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p " output="screen"> 
+  <node pkg="sp_segmenter" type="SPSegmenterServer" name="$(arg NodeName)" args="-p " output="screen" > 
     <param name="compute_pose"   type="bool"   value="$(arg compute_pose)"/>
     <param name="visualization"  type="bool"   value="$(arg visualization)"/>
     <!-- SPSegmenterNode Node arg pass -->
@@ -78,9 +81,11 @@
     <param name="useMultiClassSVM"   type="bool" value="$(arg useMultiClassSVM)" />
     <param name="maxFrames"   type="int"  value="$(arg maxFrames)" />
     <param name="useMedianFilter"   type="bool"  value="$(arg useMedianFilter)" />
+    <param name="use_external_segmentation" type="bool" value="$(arg use_external_segmentation)" />
     
     <param name="GripperTF"  type="str" value="$(arg gripperTF)"/>
     <param name="useObjectPersistence"   type="bool" value="$(arg useObjectPersistence)" />
+    <param name="max_distance_persistence"  type="double" value="$(arg max_distance_persistence)"/>
 
     <param name="setObjectOrientation"   type="bool" value="$(arg setObjectOrientation)" />
     <param name="preferredOrientation" type="str" value="$(arg preferredOrientation)" />

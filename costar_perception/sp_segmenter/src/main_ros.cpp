@@ -29,10 +29,10 @@
 
 
 bool hasTF;
-objectRtree sp_segmenter_poses;
+SpatialPose sp_segmenter_poses;
 
 // for orientation normalization
-std::map<std::string, objectSymmetry> objectDict;
+std::map<std::string, ObjectSymmetry> objectDict;
 std::map<std::string, unsigned int> objectTFIndex; // keep information about TF index
 
 bool compute_pose = true;
@@ -185,12 +185,12 @@ void callback(const sensor_msgs::PointCloud2 &pc) {
 			std::cout << "# Poses found: " << all_poses.size() << std::endl;
             
             // normalize symmetric object Orientation
-            if (!hasTF) createTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
-            else updateTree(sp_segmenter_poses, objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            if (!hasTF) sp_segmenter_poses.createTree(objectDict, all_poses, ros::Time::now().toSec(), objectTFIndex);
+            else sp_segmenter_poses.updateTree(all_poses, ros::Time::now().toSec(), objectTFIndex);
             hasTF = true;
             
             all_poses.clear();
-            all_poses = getAllPoses(sp_segmenter_poses);
+            all_poses = sp_segmenter_poses.getAllPoses();
 
 			for (poseT &p: all_poses) {
 				geometry_msgs::Pose pmsg;
@@ -296,6 +296,7 @@ int main(int argc, char** argv)
     //get parameter for mesh path and curname
     nh.param("mesh_path", mesh_path,std::string("data/mesh/"));
     std::vector<std::string> cur_name = stringVectorArgsReader(nh, "cur_name", std::string("drill"));
+    std::vector<std::string> desc_name = stringVectorArgsReader(nh, "descriptions", std::string("drill"));
     
     //get symmetry parameter of the objects
     objectDict = fillDictionary(nh, cur_name);
@@ -304,11 +305,12 @@ int main(int argc, char** argv)
     {
     	// add all models. model_id starts in model_name start from 1.
     	std::string temp_cur = cur_name.at(model_id);
-    	objrec->AddModel(mesh_path + temp_cur, temp_cur);
-        model_name[model_id+1] = temp_cur;
+    	std::string temp_desc = descriptions.at(model_id);
+    	objrec->AddModel(mesh_path + temp_cur, temp_desc);
+        model_name[model_id+1] = temp_desc;
         model_name_map[temp_cur] = model_id+1;
-        ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_cur);
-        objectTFIndex[temp_cur] = 0;
+        ModelT mesh_buf = LoadMesh(mesh_path + temp_cur + ".obj", temp_desc);
+        objectTFIndex[temp_desc] = 0;
         mesh_set.push_back(mesh_buf);
     }
     if( pcl::console::find_switch(argc, argv, "-v") == true )

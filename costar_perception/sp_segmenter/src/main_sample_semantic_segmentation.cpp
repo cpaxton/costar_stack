@@ -42,8 +42,8 @@ int main(int argc, char** argv)
     segmenter.addModelSymmetricProperty("node_uniform", 90, 90, 90, 90, "z");
     // The order of adding mesh should be consistent to the name of svm.
     // For example, in this sample code, the svm file is link_node_svm, so link should be added before node)
-    segmenter.addModel("./data/mesh", "link_uniform", link_param);
-    segmenter.addModel("./data/mesh", "node_uniform", node_param);
+    segmenter.addModel("./data/mesh", "link_uniform", "link", link_param);
+    segmenter.addModel("./data/mesh", "node_uniform", "node", node_param);
 #endif
     bool use_table = true;
     if (use_table)
@@ -86,11 +86,11 @@ int main(int argc, char** argv)
         {
             std::cerr << "Object point cloud segmentation is successful.\n";
 #ifdef USE_OBJRECRANSAC
-            std::vector<objectTransformInformation> pose_estimation = segmenter.calculateObjTransform(segmented_point_cloud_labels);
+            std::vector<ObjectTransformInformation> pose_estimation = segmenter.calculateObjTransform(segmented_point_cloud_labels);
             if (pose_estimation.size() > 0)
             {
                 std::cerr << "Object transform calculated successfully.\n";
-                for (std::vector<objectTransformInformation>::const_iterator it = pose_estimation.begin(); it!=pose_estimation.end(); ++it)
+                for (std::vector<ObjectTransformInformation>::const_iterator it = pose_estimation.begin(); it!=pose_estimation.end(); ++it)
                 {
                     std::cerr << *it;
                 }
