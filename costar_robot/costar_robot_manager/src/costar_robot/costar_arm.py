@@ -175,6 +175,7 @@ class CostarArm(CostarComponent):
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
         rospy.loginfo('Setting joint names to: %s'%(str(self.joint_names)))
 
+        # joint priority in the solver, not mass
         self.joint_weights = rospy.get_param(os.path.join(self.namespace + '/robot/', "joint_weights"))
         if not isinstance(self.joint_weights, list) and not len(self.joint_weights) == self.dof:
             raise RuntimeError('loaded bad weights: %s'%(str(self.joint_weights)))
