@@ -11,8 +11,9 @@ RUN rm /bin/sh \
 	
 RUN source /ros_entrypoint.sh \
 	&& mkdir -p $CATKIN_WS/src \
+	&& cd $CATKIN_WS \
+	&& catkin init \
 	&& cd $CATKIN_WS/src \
-	&& catkin_init_workspace \
 	&& git clone https://github.com/ICRA2017/costar_stack.git \
 	&& git clone https://github.com/SalvoVirga/iiwa_stack.git \
 	&& git clone https://github.com/ros-industrial/robotiq.git \
@@ -22,6 +23,18 @@ RUN source /ros_entrypoint.sh \
 	&& git clone https://github.com/gt-ros-pkg/hrl-kdl.git \
 	&& git clone https://github.com/xqms/ur_modern_driver.git --branch thread_safety \
 	&& git clone https://github.com/jhu-lcsr/ObjRecRANSAC.git
+
+RUN apt-get update && apt-get install -y \
+	software-properties-common \
+	&& rm -rf /var/lib/apt/lists
+
+RUN add-apt-repository --yes ppa:v-launchpad-jochen-sprickerhof-de/pcl  \
+	&& apt-get update && apt-get install -y libpcl-all \
+	&& rm -rf /var/lib/apt/lists
+
+RUN add-apt-repository --yes ppa:xqms/opencv-nonfree \
+	&& apt-get update && apt-get install -y libopencv-nonfree-dev \
+	&& rm -rf /var/lib/apt/lists
 
 RUN source /ros_entrypoint.sh \
 	&& apt-get update \
