@@ -82,6 +82,7 @@ More minor utilities:
 These are repositories that have been integrated with costar_stack, though not necessarily required depending on your setup.
 Also see the [.travis.yml](.travis.yml) in this repository for additional repositories that have been used with costar_stack.
 
+- [https://github.com/ahundt/robotics_setup/blob/master/costar.sh](robotics_setup) - automated installation script
 - [github.com/jhu-lcsr-forks/universal_robot](https://github.com/jhu-lcsr-forks/universal_robot) UR5 robot model
 - [handeye_calib_camodocal](https://github.com/jhu-lcsr/handeye_calib_camodocal): Used to determine where the camera and robot base are when they are moved around.
 - https://github.com/cpaxton/iiwa_stack.git kuka iiwa robot model
