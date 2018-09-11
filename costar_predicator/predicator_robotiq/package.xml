@@ -42,8 +42,8 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>predicator_core</build_depend>
   <build_depend>predicator_msgs</build_depend>
-  <build_depend>robotiq_c_model_control</build_depend>
-  <build_depend>robotiq_s_model_control</build_depend>
+  <!--<build_depend>robotiq_c_model_control</build_depend>
+  <build_depend>robotiq_s_model_control</build_depend>-->
   <run_depend>predicator_core</run_depend>
   <run_depend>predicator_msgs</run_depend>
   <run_depend>robotiq_c_model_control</run_depend>

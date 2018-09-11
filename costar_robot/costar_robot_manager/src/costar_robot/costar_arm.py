@@ -175,6 +175,7 @@ class CostarArm(CostarComponent):
         self.joint_names = [joint.name for joint in self.robot.joints[:self.dof]]
         rospy.loginfo('Setting joint names to: %s'%(str(self.joint_names)))
 
+        # joint priority in the solver, not mass
         self.joint_weights = rospy.get_param(os.path.join(self.namespace + '/robot/', "joint_weights"))
         if not isinstance(self.joint_weights, list) and not len(self.joint_weights) == self.dof:
             raise RuntimeError('loaded bad weights: %s'%(str(self.joint_weights)))
@@ -196,6 +197,7 @@ class CostarArm(CostarComponent):
         # self.robot_state.joint_state.name = self.joint_names
 
         has_gripper = rospy.get_param(os.path.join(self.namespace, "robot", "has_gripper"))
+
         has_planning_scene = rospy.get_param(os.path.join(self.namespace, "robot", "has_planning_scene"))
 
         if has_gripper:
@@ -661,6 +663,7 @@ class CostarArm(CostarComponent):
     '''
     # TODO: Modify this part
     def handle_tick(self):
+        #print "tick"
         br = tf.TransformBroadcaster()
         br.sendTransform((0,0,0),tf.transformations.quaternion_from_euler(0,0,0),rospy.Time.now(),"/endpoint",self.end_link)
         if not self.base_link == "base_link":

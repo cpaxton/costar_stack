@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- dvrk bringup -->
+  <arg name="master" default="MTMR"/>
+  <arg name="slave" default="PSM1"/>
+  <arg name="arms_config" default="$(find dvrk_config)/jhu-dVRK/console-MTMR-PSM1-MTML-PSM2-Teleop.json"/>
+
+  <!-- set to dvrk to hide extra options -->
+  <arg name="case" default=""/>
+
+  <include file="$(find dvrk_robot)/launch/dvrk_master_slave_rviz.launch">
+    <arg name="master" value="$(arg master)"/>
+    <arg name="slave" value="$(arg slave)"/>
+    <arg name="config" value="$(arg arms_config)"/>
+  </include>
+
+  <!-- CoSTAR bringup -->
+  <include file="$(find costar_bringup)/launch/utilities.launch">
+    <arg name="instructor_cases" value="$(arg case)"/>
+  </include>
+  <include file="$(find costar_robot_manager)/launch/simple_psm_driver.launch"/>
+  <include file="$(find costar_bringup)/launch/config/dvrk.launch"/>
+  <node name="predicator_dvrk" pkg="predicator_dvrk" type="simple_predicator_dvrk.py"/>
+
+
+  <!-- Interactive Marker -->
+  <node name="instructor_marker" pkg="costar_robot_manager" type="instructor_marker.py"/>
+
+  <!-- Gripper -->
+  <node name= "simple_psm_gripper" pkg="gripper_dvrk" type="psm_gripper.py" />
+
+</launch>

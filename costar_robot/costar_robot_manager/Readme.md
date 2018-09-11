@@ -15,10 +15,10 @@ This code is the CoSTAR robot manager. It provides simple services for instantia
     roslaunch instructor_core instructor.launch
     
   - To launch dvrk rviz:  
-    roslaunch dvrk_robot dvrk_arm_rviz.launch arm:=PSM1 config:=/PATH/TO/CATKIN_WS/src/cisst-saw/sawIntuitiveResearchKit/share/console-PSM1_KIN_SIMULATED.json
+    roslaunch dvrk_robot dvrk_arm_rviz.launch arm:=PSM2 config:=/PATH/TO/CATKIN_WS/src/cisst-saw/sawIntuitiveResearchKit/share/console-PSM2_KIN_SIMULATED.json
   
   - To launch dvrk console application only:  
-    rosrun dvrk_robot dvrk_console_json -j /PATH/TO/CATKIN_WS/src/cisst-saw/sawIntuitiveResearchKit/share/console-PSM1_KIN_SIMULATED.json
+    rosrun dvrk_robot dvrk_console_json -j /PATH/TO/CATKIN_WS/src/cisst-saw/sawIntuitiveResearchKit/share/console-PSM2_KIN_SIMULATED.json
     
   - To set up the environment for running driver launch script:  
     roslaunch costar_bringup utilities.launch

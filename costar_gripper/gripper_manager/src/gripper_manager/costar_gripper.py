@@ -11,20 +11,26 @@ class CostarGripper(CostarComponent):
       input_topic, # topic on which we receive messages from the gripper
       output_topic, # topic on which we send messages to the gripper
       InputMsgType, # type of input message
-      OutputMsgType, # tpye of output message
+      OutputMsgType, # type of output message
       GripperPredicatorType, # construct a predicator node to send status info
       ns, # operating namespace
       verbose, # verbose or not
       *args, **kwargs):
 
     self.verbose = verbose
-    self.predicator = GripperPredicatorType(
-        start_subscriber=False,
-        publish_predicates=True,
-        gripper_name=name)
 
-    self.sub = rospy.Subscriber(input_topic, InputMsgType, self.status_cb)
-    self.pub = rospy.Publisher(output_topic, OutputMsgType, queue_size = 100)
+    if GripperPredicatorType is not None:
+      self.predicator = GripperPredicatorType(
+          start_subscriber=False,
+          publish_predicates=True,
+          gripper_name=name)
+    else:
+      self.predicator = None
+
+    if InputMsgType is not None:
+      self.sub = rospy.Subscriber(input_topic, InputMsgType, self.status_cb)
+    if OutputMsgType is not None:
+      self.pub = rospy.Publisher(output_topic, OutputMsgType, queue_size = 100)
     self.open = rospy.Service(join(ns,"open"), Empty, self.open_gripper)
     self.close = rospy.Service(join(ns,"close"), Empty, self.close_gripper)
     self.wide_mode_srv = rospy.Service(join(ns,"wide_mode"), Empty, self.wide_mode)
@@ -71,8 +77,8 @@ class CostarGripper(CostarComponent):
 
   def status_cb(self,msg):
       if self.verbose:
-          rospy.loginfo(self.statusInterpreter(msg))
-      self.predicator.handle(msg)
-      self.predicator.tick()
+        rospy.loginfo(self.statusInterpreter(msg))
+      if self.predicator is not None:
+        self.predicator.handle(msg)
 
 

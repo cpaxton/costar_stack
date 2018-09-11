@@ -38,6 +38,7 @@ class RobotInterface():
         self.sound_pub = sound_pub
         self.driver_status = 'NOT CONNECTED'
         self.status_label.setText('ROBOT MODE: [NOT CONNECTED]')
+        self.status_label.hide()
 
     def driver_status_cb(self,msg):
         mode = str(msg.data)
@@ -47,9 +48,11 @@ class RobotInterface():
 
     def update_status(self):
         if self.driver_status == 'TEACH':
-            self.status_label.setStyleSheet('background-color:'+colors['blue'].normal+'; color:#ffffff')
+            self.teach_btn.set_color(colors['blue'])
+            #self.status_label.setStyleSheet('background-color:'+colors['blue'].normal+'; color:#ffffff')
         elif self.driver_status == 'SERVO':
-            self.status_label.setStyleSheet('background-color:'+colors['green'].normal+'; color:#ffffff')
+            self.servo_btn.set_color(colors['green'])
+            #self.status_label.setStyleSheet('background-color:'+colors['green'].normal+'; color:#ffffff')
         elif self.driver_status == 'IDLE':
             self.status_label.setStyleSheet('background-color:'+colors['gray_light'].normal+'; color:#ffffff')
         elif self.driver_status == 'IDLE - WARN':

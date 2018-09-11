@@ -3,12 +3,16 @@
   <group ns="costar">
     <rosparam param="home">[0.30, -1.33, -1.80, -0.27, 1.50, 1.60]</rosparam>
     <group ns="robot">
+      <!--gripper not programmed in the same way as UR5/IIWA -->
       <rosparam param="has_gripper">false</rosparam>
-      <rosparam param="has_planning_scene">false</rosparam>
       <rosparam param="dof">6</rosparam>
+      <rosparam param="joint_weights">[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]</rosparam>
+      <rosparam param="translation_weight">1.0</rosparam>
+      <rosparam param="rotation_weight">1.0</rosparam>
       <rosparam param="base_link">PSM1_psm_base_link</rosparam>
       <rosparam param="end_link">PSM1_tool_tip_link_virtual</rosparam>
       <rosparam param="table_frame">table_center</rosparam>
+      <rosparam param="has_planning_scene">false</rosparam>
     </group>
     <group ns="smartmove">
       <rosparam param="available_objects">
