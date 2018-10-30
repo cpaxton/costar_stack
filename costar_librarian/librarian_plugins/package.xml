@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>librarian_plugins</name>
-  <version>0.4.0</version>
+  <version>1.5.0</version>
   <description>Set of plugins for Librarian</description>
 
   <maintainer email="chris.paxton.cs@gmail.com">Chris Paxton</maintainer>
