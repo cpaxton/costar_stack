@@ -92,6 +92,7 @@ Also see the [.travis.yml](.travis.yml) in this repository for additional reposi
 - https://github.com/ros-perception/ar_track_alvar.git
 - https://github.com/gt-ros-pkg/hrl-kdl.git
 - https://github.com/xqms/ur_modern_driver.git --branch thread_safety
+- https://github.com/jhu-lcsr/costar_objects - object models including blocks and bin
 
 
 ## Contact
